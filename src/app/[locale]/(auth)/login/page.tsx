@@ -1,0 +1,171 @@
+import React from "react";
+import { redirect } from "next/navigation";
+import { getDictionary } from "@/lib/localization";
+import { createSession } from "@/lib/auth/session";
+import { RoleType } from "@prisma/client";
+import { Sparkles, GraduationCap } from "lucide-react";
+
+export default async function LoginPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  const dict = getDictionary(locale);
+
+  async function handleLogin(formData: FormData) {
+    "use server";
+    const email = formData.get("email")?.toString() || "";
+    const roleInput = formData.get("role")?.toString() || "PARENT";
+
+    // Map selected persona or email to role
+    let role: RoleType = RoleType.PARENT;
+    let name = "ولي أمر تجريبي";
+
+    if (email.includes("school") || roleInput === "SCHOOL_ADMIN") {
+      role = RoleType.SCHOOL_ADMIN;
+      name = "مدير المدرسة";
+    } else if (email.includes("admin") || roleInput === "SUPER_ADMIN") {
+      role = RoleType.SUPER_ADMIN;
+      name = "المشرف العام (Super Admin)";
+    } else if (email.includes("teacher") || roleInput === "TEACHER") {
+      role = RoleType.TEACHER;
+      name = "الأستاذ أحمد المنصوري";
+    } else if (email.includes("student") || roleInput === "STUDENT") {
+      role = RoleType.STUDENT;
+      name = "زيد طارق (طالب)";
+    } else if (roleInput === "FINANCE_ADMIN") {
+      role = RoleType.FINANCE_ADMIN;
+      name = "المسؤول المالي";
+    }
+
+    await createSession({
+      id: "demo-user-" + role.toLowerCase(),
+      email: email || `${role.toLowerCase()}@kidsarabicacademy.internal`,
+      name,
+      role,
+      locale,
+    });
+
+    // Role-based redirects
+    if (role === RoleType.STUDENT) {
+      redirect(`/${locale}/student`);
+    } else if (role === RoleType.TEACHER) {
+      redirect(`/${locale}/teacher`);
+    } else if (role === RoleType.SUPER_ADMIN || role === RoleType.SCHOOL_ADMIN) {
+      redirect(`/${locale}/admin`);
+    } else {
+      redirect(`/${locale}/parent`);
+    }
+  }
+
+  return (
+    <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
+      <div className="w-full max-w-md space-y-8 bg-white p-8 sm:p-10 rounded-3xl border border-slate-200/80 shadow-xl shadow-slate-200/50">
+        <div className="text-center space-y-2">
+          <div className="w-12 h-12 rounded-2xl gradient-brand flex items-center justify-center text-white mx-auto shadow-md shadow-brand-500/20">
+            <GraduationCap className="w-7 h-7" />
+          </div>
+          <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
+            {dict.auth.signInTitle}
+          </h1>
+          <p className="text-xs text-slate-500 max-w-xs mx-auto">
+            {dict.auth.signInSubtitle}
+          </p>
+        </div>
+
+        {/* Credentials Form */}
+        <form action={handleLogin} className="space-y-4">
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1.5">
+              {dict.auth.emailLabel}
+            </label>
+            <input
+              name="email"
+              type="email"
+              placeholder="parent.tariq@example.com"
+              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 text-start"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1.5">
+              {dict.auth.passwordLabel}
+            </label>
+            <input
+              name="password"
+              type="password"
+              defaultValue="Password123!"
+              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 text-start"
+            />
+          </div>
+
+          <button
+            type="submit"
+            className="w-full py-3 px-4 rounded-xl text-sm font-bold text-white gradient-brand shadow-md shadow-brand-500/25 hover:opacity-95 transition-all mt-2"
+          >
+            {dict.auth.submitSignIn}
+          </button>
+        </form>
+
+        {/* Fast Development Personas */}
+        <div className="pt-6 border-t border-slate-100 space-y-3">
+          <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700">
+            <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+            <span>{dict.auth.demoAccountsTitle}</span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            <form action={handleLogin}>
+              <input type="hidden" name="role" value="PARENT" />
+              <input type="hidden" name="email" value="parent.tariq@example.com" />
+              <button
+                type="submit"
+                className="w-full p-2.5 rounded-xl bg-blue-50 text-blue-800 hover:bg-blue-100 font-semibold border border-blue-200 text-center transition-colors"
+              >
+                {locale === "ar" ? "👨‍👧 ولي أمر (Parent)" : `👨‍👧 ${dict.roles.parent}`}
+              </button>
+            </form>
+
+            <form action={handleLogin}>
+              <input type="hidden" name="role" value="STUDENT" />
+              <input type="hidden" name="email" value="zayd@kidsarabicacademy.internal" />
+              <button
+                type="submit"
+                className="w-full p-2.5 rounded-xl bg-purple-50 text-purple-800 hover:bg-purple-100 font-semibold border border-purple-200 text-center transition-colors"
+              >
+                {locale === "ar" ? "🎒 طالب (Student)" : `🎒 ${dict.roles.student}`}
+              </button>
+            </form>
+
+            <form action={handleLogin}>
+              <input type="hidden" name="role" value="TEACHER" />
+              <input type="hidden" name="email" value="ustadh.ahmed@kidsarabicacademy.internal" />
+              <button
+                type="submit"
+                className="w-full p-2.5 rounded-xl bg-emerald-50 text-emerald-800 hover:bg-emerald-100 font-semibold border border-emerald-200 text-center transition-colors"
+              >
+                {locale === "ar" ? "👨‍🏫 معلّم (Teacher)" : `👨‍🏫 ${dict.roles.teacher}`}
+              </button>
+            </form>
+
+            <form action={handleLogin}>
+              <input type="hidden" name="role" value="SUPER_ADMIN" />
+              <input type="hidden" name="email" value="superadmin@kidsarabicacademy.internal" />
+              <button
+                type="submit"
+                className="w-full p-2.5 rounded-xl bg-amber-50 text-amber-800 hover:bg-amber-100 font-semibold border border-amber-200 text-center transition-colors"
+              >
+                {locale === "ar" ? "⚡ مدير (Admin)" : `⚡ ${dict.roles.admin}`}
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <div className="text-center text-[11px] text-slate-400">
+          <p>{dict.auth.defaultPasswordNotice} <span className="font-mono font-bold text-slate-600">Password123!</span></p>
+        </div>
+      </div>
+    </div>
+  );
+}

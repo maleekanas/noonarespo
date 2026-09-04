@@ -1,0 +1,784 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// -----------------------------------------------------------------------------
+// 1. IDENTITY & AUTHENTICATION
+// -----------------------------------------------------------------------------
+
+enum UserStatus {
+  PENDING_VERIFICATION
+  ACTIVE
+  SUSPENDED
+  ARCHIVED
+}
+
+enum RoleType {
+  SUPER_ADMIN
+  SCHOOL_ADMIN
+  ACADEMIC_ADMIN
+  FINANCE_ADMIN
+  TEACHER
+  PARENT
+  STUDENT
+  SUPPORT_AGENT
+}
+
+model User {
+  id               String       @id @default(uuid())
+  email            String       @unique
+  passwordHash     String
+  status           UserStatus   @default(ACTIVE)
+  localePreference String       @default("ar")
+  mfaEnabled       Boolean      @default(false)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  userRoles        UserRole[]
+  studentProfile   StudentProfile?
+  parentProfile    ParentProfile?
+  teacherProfile   TeacherProfile?
+  adminProfile     AdministratorProfile?
+  auditLogs        AuditLog[]
+
+  @@map("users")
+}
+
+model Role {
+  id              String           @id @default(uuid())
+  name            RoleType         @unique
+  description     String?
+  userRoles       UserRole[]
+  rolePermissions RolePermission[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id              String           @id @default(uuid())
+  action          String           @unique // e.g. "classes:create", "attendance:record"
+  description     String?
+  rolePermissions RolePermission[]
+
+  @@map("permissions")
+}
+
+model UserRole {
+  id        String   @id @default(uuid())
+  userId    String
+  roleId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, roleId])
+  @@map("user_roles")
+}
+
+model RolePermission {
+  id           String     @id @default(uuid())
+  roleId       String
+  permissionId String
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String?
+  action     String   // e.g. "USER_LOGIN", "ATTENDANCE_RECORDED", "INVOICE_ISSUED"
+  resource   String   // e.g. "ClassSession", "Invoice", "StudentProfile"
+  resourceId String?
+  ipAddress  String?
+  userAgent  String?
+  diffJson   String?  // JSON snapshot of changed fields
+  createdAt  DateTime @default(now())
+
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("audit_logs")
+}
+
+// -----------------------------------------------------------------------------
+// 2. PEOPLE & RELATIONSHIPS
+// -----------------------------------------------------------------------------
+
+enum AgeGroup {
+  AGE_4_6
+  AGE_7_10
+  AGE_11_13
+  AGE_14_16
+}
+
+enum RelationshipType {
+  FATHER
+  MOTHER
+  LEGAL_GUARDIAN
+}
+
+model StudentProfile {
+  id             String    @id @default(uuid())
+  userId         String    @unique
+  firstName      String
+  lastName       String
+  dateOfBirth    DateTime
+  gender         String?
+  nationality    String?
+  nativeLanguage String    @default("ar")
+  ageGroup       AgeGroup
+  notesInternal  String?   // Strictly internal teacher/admin notes; NEVER exposed to parent/child
+
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  relationships  ParentStudentRelationship[]
+  enrollments    ClassEnrollment[]
+  attendance     AttendanceRecord[]
+  submissions    AssignmentSubmission[]
+  assessmentAttempts AssessmentAttempt[]
+  badges         StudentBadge[]
+  pointTxs       PointTransaction[]
+  streaks        LearningStreak[]
+  certificates   Certificate[]
+
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@map("student_profiles")
+}
+
+model ParentProfile {
+  id                   String    @id @default(uuid())
+  userId               String    @unique
+  firstName            String
+  lastName             String
+  phoneNumber          String
+  emergencyContactName String?
+  emergencyPhone       String?
+  billingAddress       String?
+
+  user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  relationships        ParentStudentRelationship[]
+  subscriptions        Subscription[]
+  invoices             Invoice[]
+
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  @@map("parent_profiles")
+}
+
+model TeacherProfile {
+  id                   String    @id @default(uuid())
+  userId               String    @unique
+  firstName            String
+  lastName             String
+  bioEn                String?
+  bioAr                String?
+  qualifications       String?
+  certifications       String?
+  experienceYears      Int       @default(0)
+  hourlyRateMinorUnits Int       @default(2500) // Default $25.00/hr in minor units
+  languagesSpoken      String?   // Comma separated, e.g. "Arabic, English"
+  isActive             Boolean   @default(true)
+
+  user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assignments          TeacherAssignment[]
+  sessions             ClassSession[]
+  feedbacks            TeacherFeedback[]
+  compensations        TeacherCompensation[]
+
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  @@map("teacher_profiles")
+}
+
+model AdministratorProfile {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  firstName String
+  lastName  String
+  scope     RoleType @default(SCHOOL_ADMIN)
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("administrator_profiles")
+}
+
+model ParentStudentRelationship {
+  id               String           @id @default(uuid())
+  parentId         String
+  studentId        String
+  relationshipType RelationshipType @default(FATHER)
+  isPrimaryContact Boolean          @default(true)
+  consentGivenAt   DateTime         @default(now())
+
+  parent           ParentProfile    @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  student          StudentProfile   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  createdAt        DateTime         @default(now())
+
+  @@unique([parentId, studentId])
+  @@map("parent_student_relationships")
+}
+
+// -----------------------------------------------------------------------------
+// 3. ACADEMIC DOMAIN (PROGRAMS, COURSES, LEVELS, CLASSES)
+// -----------------------------------------------------------------------------
+
+enum ProgramType {
+  ARABIC_FOUNDATIONS
+  READING_PROGRAM
+  WRITING_PROGRAM
+  SPEAKING_PROGRAM
+  LISTENING_PROGRAM
+  QURAN_TAJWEED
+  ISLAMIC_STUDIES
+}
+
+model Program {
+  id          String      @id @default(uuid())
+  type        ProgramType @unique
+  titleEn     String
+  titleAr     String
+  descriptionEn String?
+  descriptionAr String?
+  iconName    String?
+  courses     Course[]
+
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@map("programs")
+}
+
+model Course {
+  id          String        @id @default(uuid())
+  programId   String
+  titleEn     String
+  titleAr     String
+  descriptionEn String?
+  descriptionAr String?
+  program     Program       @relation(fields: [programId], references: [id], onDelete: Cascade)
+  levels      CourseLevel[]
+
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@map("courses")
+}
+
+model CourseLevel {
+  id          String        @id @default(uuid())
+  courseId    String
+  levelCode   String        // e.g. "L1", "A1", "PRE_A1"
+  titleEn     String
+  titleAr     String
+  targetAge   AgeGroup      @default(AGE_7_10)
+  course      Course        @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  classGroups ClassGroup[]
+  assessments Assessment[]
+
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@map("course_levels")
+}
+
+enum ClassType {
+  GROUP
+  PRIVATE_1_ON_1
+}
+
+model ClassGroup {
+  id            String             @id @default(uuid())
+  courseLevelId String
+  name          String
+  classType     ClassType          @default(GROUP)
+  capacityMax   Int                @default(6) // Default 6 students for optimal interaction
+  isActive      Boolean            @default(true)
+
+  courseLevel   CourseLevel        @relation(fields: [courseLevelId], references: [id], onDelete: Cascade)
+  enrollments   ClassEnrollment[]
+  assignments   TeacherAssignment[]
+  sessions      ClassSession[]
+  homeworkTasks Assignment[]
+
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  @@map("class_groups")
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  TRANSFERRED
+  COMPLETED
+  DROPPED
+}
+
+model ClassEnrollment {
+  id           String           @id @default(uuid())
+  studentId    String
+  classGroupId String
+  status       EnrollmentStatus @default(ACTIVE)
+  enrolledAt   DateTime         @default(now())
+
+  student      StudentProfile   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  classGroup   ClassGroup       @relation(fields: [classGroupId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, classGroupId])
+  @@map("class_enrollments")
+}
+
+enum TeacherRoleInClass {
+  PRIMARY
+  ASSISTANT
+  SUBSTITUTE
+}
+
+model TeacherAssignment {
+  id           String             @id @default(uuid())
+  teacherId    String
+  classGroupId String
+  role         TeacherRoleInClass @default(PRIMARY)
+
+  teacher      TeacherProfile     @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  classGroup   ClassGroup         @relation(fields: [classGroupId], references: [id], onDelete: Cascade)
+
+  createdAt    DateTime           @default(now())
+
+  @@unique([teacherId, classGroupId])
+  @@map("teacher_assignments")
+}
+
+// -----------------------------------------------------------------------------
+// 4. SCHEDULING & ATTENDANCE
+// -----------------------------------------------------------------------------
+
+enum SessionStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  RESCHEDULED
+}
+
+model ClassSession {
+  id           String             @id @default(uuid())
+  classGroupId String
+  teacherId    String
+  startTimeUtc DateTime
+  endTimeUtc   DateTime
+  status       SessionStatus      @default(SCHEDULED)
+  meetingUrl   String?
+  recordingUrl String?
+
+  classGroup   ClassGroup         @relation(fields: [classGroupId], references: [id], onDelete: Cascade)
+  teacher      TeacherProfile     @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  attendance   AttendanceRecord[]
+
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  @@map("class_sessions")
+}
+
+enum AttendanceStatus {
+  PRESENT
+  LATE
+  EXCUSED_ABSENCE
+  ABSENT
+}
+
+model AttendanceRecord {
+  id        String           @id @default(uuid())
+  sessionId String
+  studentId String
+  status    AttendanceStatus @default(PRESENT)
+  notes     String?
+
+  session   ClassSession     @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  student   StudentProfile   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime         @default(now())
+
+  @@unique([sessionId, studentId])
+  @@map("attendance_records")
+}
+
+// -----------------------------------------------------------------------------
+// 5. ASSIGNMENTS & ASSESSMENTS
+// -----------------------------------------------------------------------------
+
+model Assignment {
+  id           String                 @id @default(uuid())
+  classGroupId String
+  titleEn      String
+  titleAr      String
+  instructions String
+  voicePromptUrl String?
+  dueDateUtc   DateTime
+
+  classGroup   ClassGroup             @relation(fields: [classGroupId], references: [id], onDelete: Cascade)
+  submissions  AssignmentSubmission[]
+
+  createdAt    DateTime               @default(now())
+  updatedAt    DateTime               @updatedAt
+
+  @@map("assignments")
+}
+
+enum SubmissionStatus {
+  SUBMITTED
+  GRADED
+  RETURNED
+}
+
+model AssignmentSubmission {
+  id           String            @id @default(uuid())
+  assignmentId String
+  studentId    String
+  audioUrl     String?
+  textContent  String?
+  status       SubmissionStatus  @default(SUBMITTED)
+  submittedAt  DateTime          @default(now())
+
+  assignment   Assignment        @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  student      StudentProfile    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  feedback     TeacherFeedback?
+
+  @@unique([assignmentId, studentId])
+  @@map("assignment_submissions")
+}
+
+model TeacherFeedback {
+  id                   String               @id @default(uuid())
+  submissionId         String               @unique
+  teacherId            String
+  score                Int                  // 0-100
+  parentVisibleFeedback String              // Constructive & encouraging text
+  internalTeacherNotes String?              // Strictly hidden from students/parents
+
+  submission           AssignmentSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  teacher              TeacherProfile       @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+
+  @@map("teacher_feedbacks")
+}
+
+enum AssessmentType {
+  PLACEMENT_TEST
+  WEEKLY_QUIZ
+  MONTHLY_EXAM
+  MIDTERM
+  FINAL_EXAM
+}
+
+model Assessment {
+  id            String              @id @default(uuid())
+  courseLevelId String
+  type          AssessmentType      @default(WEEKLY_QUIZ)
+  titleEn       String
+  titleAr       String
+  durationMin   Int                 @default(30)
+
+  courseLevel   CourseLevel         @relation(fields: [courseLevelId], references: [id], onDelete: Cascade)
+  questions     AssessmentQuestion[]
+  attempts      AssessmentAttempt[]
+
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  @@map("assessments")
+}
+
+enum QuestionType {
+  MULTIPLE_CHOICE
+  TRUE_FALSE
+  MATCHING
+  FILL_BLANK
+  ESSAY
+  AUDIO_RESPONSE
+  VOICE_RECORDING
+}
+
+model AssessmentQuestion {
+  id           String           @id @default(uuid())
+  assessmentId String
+  type         QuestionType     @default(MULTIPLE_CHOICE)
+  promptEn     String
+  promptAr     String
+  points       Int              @default(10)
+
+  assessment   Assessment       @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  options      QuestionOption[]
+
+  @@map("assessment_questions")
+}
+
+model QuestionOption {
+  id         String             @id @default(uuid())
+  questionId String
+  optionText String
+  isCorrect  Boolean            @default(false)
+
+  question   AssessmentQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@map("question_options")
+}
+
+model AssessmentAttempt {
+  id           String         @id @default(uuid())
+  assessmentId String
+  studentId    String
+  score        Int            @default(0)
+  isCompleted  Boolean        @default(false)
+  completedAt  DateTime?
+
+  assessment   Assessment     @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  student      StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  createdAt    DateTime       @default(now())
+
+  @@map("assessment_attempts")
+}
+
+// -----------------------------------------------------------------------------
+// 6. GAMIFICATION & RECOGNITION
+// -----------------------------------------------------------------------------
+
+model Badge {
+  id          String         @id @default(uuid())
+  code        String         @unique // e.g. "READING_CHAMPION", "GRAMMAR_MASTER", "QURAN_STAR", "PERFECT_ATTENDANCE"
+  titleEn     String
+  titleAr     String
+  iconUrl     String
+  xpReward    Int            @default(100)
+  studentBadges StudentBadge[]
+
+  @@map("badges")
+}
+
+model StudentBadge {
+  id        String         @id @default(uuid())
+  studentId String
+  badgeId   String
+  awardedAt DateTime       @default(now())
+
+  student   StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  badge     Badge          @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, badgeId])
+  @@map("student_badges")
+}
+
+model PointTransaction {
+  id          String         @id @default(uuid())
+  studentId   String
+  pointsDelta Int
+  reason      String         // e.g. "ATTENDANCE_AWARD", "HOMEWORK_EXCELLENCE"
+  createdAt   DateTime       @default(now())
+
+  student     StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@map("point_transactions")
+}
+
+model LearningStreak {
+  id           String         @id @default(uuid())
+  studentId    String         @unique
+  currentCount Int            @default(1)
+  longestCount Int            @default(1)
+  lastActiveAt DateTime       @default(now())
+
+  student      StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@map("learning_streaks")
+}
+
+model Certificate {
+  id                 String         @id @default(uuid())
+  studentId          String
+  verificationCode   String         @unique
+  titleEn            String
+  titleAr            String
+  studentNameSnapshot String
+  courseNameSnapshot String
+  pdfUrl             String?
+  issuedAt           DateTime       @default(now())
+
+  student            StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@map("certificates")
+}
+
+// -----------------------------------------------------------------------------
+// 7. FINANCIAL OPERATIONS (INTEGERS IN MINOR UNITS)
+// -----------------------------------------------------------------------------
+
+enum PlanType {
+  INDIVIDUAL
+  FAMILY
+  GROUP
+  PRIVATE_1_ON_1
+}
+
+enum BillingInterval {
+  MONTHLY
+  QUARTERLY
+  ANNUALLY
+}
+
+model Plan {
+  id              String          @id @default(uuid())
+  type            PlanType        @default(GROUP)
+  nameEn          String
+  nameAr          String
+  interval        BillingInterval @default(MONTHLY)
+  priceMinorUnits Int             // e.g. 7900 for $79.00
+  currency        String          @default("USD")
+  isActive        Boolean         @default(true)
+
+  subscriptions   Subscription[]
+
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@map("plans")
+}
+
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELLED
+  UNPAID
+}
+
+model Subscription {
+  id                 String             @id @default(uuid())
+  parentId           String
+  planId             String
+  status             SubscriptionStatus @default(ACTIVE)
+  currentPeriodStart DateTime           @default(now())
+  currentPeriodEnd   DateTime
+
+  parent             ParentProfile      @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  plan               Plan               @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  @@map("subscriptions")
+}
+
+enum InvoiceStatus {
+  DRAFT
+  ISSUED
+  PAID
+  VOID
+  UNCOLLECTIBLE
+}
+
+model Invoice {
+  id                 String        @id @default(uuid())
+  invoiceNumber      String        @unique
+  parentId           String
+  subtotalMinorUnits Int
+  taxMinorUnits      Int           @default(0)
+  totalMinorUnits    Int
+  currency           String        @default("USD")
+  status             InvoiceStatus @default(ISSUED)
+  dueDate            DateTime
+
+  parent             ParentProfile @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  items              InvoiceItem[]
+  payments           Payment[]
+
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  @@map("invoices")
+}
+
+model InvoiceItem {
+  id               String   @id @default(uuid())
+  invoiceId        String
+  description      String
+  amountMinorUnits Int
+  quantity         Int      @default(1)
+
+  invoice          Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@map("invoice_items")
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+}
+
+model Payment {
+  id                    String        @id @default(uuid())
+  invoiceId             String
+  provider              String        @default("MOCK") // MOCK, STRIPE, PAYPAL, MOLLIE
+  providerTransactionId String?
+  amountMinorUnits      Int
+  currency              String        @default("USD")
+  status                PaymentStatus @default(SUCCEEDED)
+  idempotencyKey        String        @unique
+
+  invoice               Invoice       @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  refunds               Refund[]
+
+  createdAt             DateTime      @default(now())
+
+  @@map("payments")
+}
+
+model Refund {
+  id               String   @id @default(uuid())
+  paymentId        String
+  amountMinorUnits Int
+  reason           String?
+  processedAt      DateTime @default(now())
+
+  payment          Payment  @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+
+  @@map("refunds")
+}
+
+model TeacherCompensation {
+  id               String         @id @default(uuid())
+  teacherId        String
+  periodMonth      Int            // 1-12
+  periodYear       Int            // e.g. 2026
+  hoursTaught      Float          @default(0)
+  rateMinorUnits   Int            // Teacher hourly rate
+  bonusMinorUnits  Int            @default(0)
+  totalMinorUnits  Int
+  isPaid           Boolean        @default(false)
+  paidAt           DateTime?
+
+  teacher          TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@map("teacher_compensations")
+}

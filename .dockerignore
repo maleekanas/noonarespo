@@ -1,0 +1,15 @@
+Dockerfile
+.dockerignore
+node_modules
+.next
+.git
+.gitignore
+*.md
+!README.md
+.env*.local
+tests
+coverage
+.system_generated
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

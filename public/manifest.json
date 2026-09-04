@@ -1,0 +1,21 @@
+{
+  "name": "أكاديمية براعم العربية للأطفال | Kids Arabic Academy",
+  "short_name": "براعم العربية",
+  "description": "المنصة العالمية لتعليم اللغة العربية والقرآن الكريم للأطفال عبر فصول حية وتفاعلية",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#F8FAFC",
+  "theme_color": "#4F46E5",
+  "dir": "auto",
+  "lang": "ar",
+  "categories": ["education", "kids", "languages"],
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

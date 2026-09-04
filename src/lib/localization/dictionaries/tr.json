@@ -1,0 +1,141 @@
+{
+  "common": {
+    "siteName": "Arapça Çocuk Akademisi",
+    "siteTagline": "Dünya genelindeki çocuklar için ilham verici Arapça ve Kur'an eğitimi",
+    "login": "Giriş Yap",
+    "register": "Veli Kaydı",
+    "logout": "Çıkış Yap",
+    "dashboard": "Kontrol Paneli",
+    "profile": "Profil",
+    "settings": "Ayarlar",
+    "back": "Geri",
+    "next": "İleri",
+    "save": "Kaydet",
+    "cancel": "İptal",
+    "loading": "Yükleniyor...",
+    "language": "Dil",
+    "arabic": "العربية",
+    "english": "English",
+    "dutch": "Nederlands",
+    "turkish": "Türkçe",
+    "italian": "Italiano",
+    "spanish": "Español"
+  },
+  "nav": {
+    "home": "Ana Sayfa",
+    "programs": "Programlar",
+    "ageGroups": "Yaş Grupları",
+    "howItWorks": "Nasıl Çalışır",
+    "pricing": "Fiyatlandırma",
+    "about": "Hakkımızda",
+    "contact": "İletişim"
+  },
+  "hero": {
+    "badge": "🎓 Çocuklar İçin Dünyanın Öncü Çevrimiçi Arapça Akademisi",
+    "title": "Çocuğunuza Arapçayı Severek ve Akıcı Bir Şekilde Konuşma Gücü Verin",
+    "subtitle": "4-16 yaş arası çocuklara özel hazırlanmış, canlı etkileşimli dersler, sertifikalı eğitmenler ve oyunlaştırılmış müfredatı bir araya getiren kapsamlı eğitim platformu.",
+    "ctaPrimary": "Çocuğunuzu Hemen Kaydedin",
+    "ctaSecondary": "Programları İnceleyin",
+    "activeLearners": "5.000+ Aktif Öğrenci",
+    "activeLearnersSub": "30'dan fazla ülkede aktif öğrenci",
+    "certifiedTeachers": "150+ Sertifikalı Eğitmen",
+    "certifiedTeachersSub": "Tam zamanlı sertifikalı eğitmenler",
+    "parentRating": "4.9/5 Veli Memnuniyeti",
+    "parentRatingSub": "Düzenli takip ve yüksek memnuniyet"
+  },
+  "programs": {
+    "title": "Kapsamlı Akademik Programlar",
+    "subtitle": "Farklı seviyeler ve yaş grupları için tasarlanmış 7 özel öğrenme yolu",
+    "tag": "Öğrenme Yolları",
+    "accreditedCurriculum": "Akredite ve Yapılandırılmış Müfredat",
+    "foundations": "Arapça Temelleri ve Harfler",
+    "reading": "Okuma Akıcılığı ve Anlama",
+    "writing": "Yazma ve Hat Sanatı",
+    "speaking": "Konuşma ve Doğru Telaffuz",
+    "listening": "Dinleme ve İşitsel Anlama",
+    "quran": "Kur'an Okuma ve Tecvid",
+    "islamicStudies": "İslami İlimler ve Değerler"
+  },
+  "ageGroups": {
+    "title": "Yaşa Göre Sınıf Grupları",
+    "subtitle": "En yüksek bireysel ilgi için en fazla 6 öğrenciyle sınırlı küçük grup dersleri",
+    "tag": "Yaş Grupları",
+    "smallClasses": "Mikro sınıflar (en fazla 6 öğrenci)",
+    "sprouts": "Minik Tomurcuklar (4 - 6 Yaş)",
+    "explorers": "Küçük Kaşifler (7 - 10 Yaş)",
+    "navigators": "Orta Düzey Rehberler (11 - 13 Yaş)",
+    "scholars": "Genç Alimler (14 - 16 Yaş)"
+  },
+  "pricing": {
+    "tag": "Esnek Planlar",
+    "title": "Her Aileye Uygun Paketler",
+    "subtitle": "Etkileşimli grup dersleri ve birebir özel ders seçenekleri",
+    "perMonth": "/ ay",
+    "groupTitle": "Grup Dersleri",
+    "groupBadge": "En Etkileşimli",
+    "groupDesc": "Öğrenme sevgisini ve dostça rekabeti teşvik eden küçük etkileşimli gruplar",
+    "groupCta": "Grup Paketini Seç",
+    "groupFeatures": [
+      "Haftada 2 canlı etkileşimli video dersi",
+      "Sınıf başına en fazla 6 öğrenci",
+      "Sürekli etkileşimli ödevler ve değerlendirmeler",
+      "Veliler için haftalık detaylı ilerleme raporları"
+    ],
+    "privateTitle": "Birebir Özel Dersler",
+    "privateBadge": "En Yüksek Başarı ve Özelleştirme",
+    "privateTag": "Çocuğunuza Özel Eğitmen",
+    "privateDesc": "Çocuğunuzun hızına ve hedeflerine göre %100 kişiselleştirilmiş öğrenme planı",
+    "privateCta": "Özel Eğitmenle Başlayın",
+    "privateFeatures": [
+      "Çocuğunuza özel birebir sertifikalı eğitmen",
+      "Ders saatlerinde tam esneklik",
+      "Telaffuz, mahreç ve akıcılık üzerine yoğun odaklanma",
+      "İstediğiniz zaman tekrar izlenebilir ders kayıtları"
+    ],
+    "familyTitle": "Aile Paketi",
+    "familyBadge": "Aile İndirimi",
+    "familyDesc": "Tek veli hesabı altında kardeşler için özel indirim ve birleşik özellikler",
+    "familyCta": "Aile Paketini Seç",
+    "familyFeatures": [
+      "Çocuklar arasında kolay geçiş sağlayan tek veli paneli",
+      "İkinci çocuktan itibaren %25 indirim",
+      "Birleşik faturalandırma ve aileye özel destek",
+      "Tüm oyunlara, hikayelere ve Kur'an stüdyosuna tam erişim"
+    ]
+  },
+  "safetyBanner": {
+    "badge": "Çocuk Koruma ve Tam Gizlilik İlkeleri",
+    "title": "Çocuklarınızı Korumak İçin Tasarlanmış %100 Güvenilir Öğrenme Ortamı",
+    "desc": "Sıfır reklam, öğrenciler arası denetimsiz doğrudan mesajlaşma yok ve platform erişimi doğrudan veli gözetiminde. Tüm medya ve kayıtlar uluslararası güvenlik protokolleriyle şifrelenir.",
+    "cta": "Şimdi Aile Hesabı Açın"
+  },
+  "roles": {
+    "student": "Öğrenci",
+    "parent": "Veli",
+    "teacher": "Öğretmen",
+    "admin": "Yönetim",
+    "finance": "Mali İşler"
+  },
+  "auth": {
+    "signInTitle": "Arapça Çocuk Akademisine Giriş",
+    "signInSubtitle": "Tekrar hoş geldiniz! Kontrol panelinize erişmek için bilgilerinizi girin",
+    "emailLabel": "E-posta Adresi",
+    "passwordLabel": "Şifre",
+    "submitSignIn": "Giriş Yap",
+    "forgotPassword": "Şifrenizi mi unuttunuz?",
+    "noAccount": "Hesabınız yok mu?",
+    "registerNow": "Veli olarak kaydolun",
+    "demoAccountsTitle": "Geliştirme için hızlı demo hesaplar:",
+    "defaultPasswordNotice": "Tüm demo hesaplar için varsayılan şifre:"
+  },
+  "footer": {
+    "copyright": "Tüm hakları saklıdır © 2026 Arapça Çocuk Akademisi.",
+    "privacyPolicy": "Çocuk Güvenliği ve Gizlilik Politikası",
+    "termsOfService": "Kullanım Şartları",
+    "safetyBadge": "%100 Reklamsız ve Çocuklar İçin Güvenli Öğrenme Ortamı",
+    "platformDescription": "COPPA ve GDPR-K çocuk gizlilik standartlarına tam uyumlu, uzman eğitmenler gözetiminde etkileşimli müfredat sunan güvenli eğitim platformu.",
+    "securitySection": "Gizlilik ve Güvenlik",
+    "madeWithLovePrefix": "Özen ve sevgiyle",
+    "madeWithLove": "çocuklarımıza Kur'an dilini öğretmek için hazırlandı"
+  }
+}

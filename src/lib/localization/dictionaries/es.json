@@ -1,0 +1,141 @@
+{
+  "common": {
+    "siteName": "Academia Árabe para Niños",
+    "siteTagline": "Inspirando el aprendizaje del idioma árabe y el Corán para niños en todo el mundo",
+    "login": "Iniciar Sesión",
+    "register": "Registro de Padres",
+    "logout": "Cerrar Sesión",
+    "dashboard": "Panel",
+    "profile": "Perfil",
+    "settings": "Configuración",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "loading": "Cargando...",
+    "language": "Idioma",
+    "arabic": "العربية",
+    "english": "English",
+    "dutch": "Nederlands",
+    "turkish": "Türkçe",
+    "italian": "Italiano",
+    "spanish": "Español"
+  },
+  "nav": {
+    "home": "Inicio",
+    "programs": "Programas",
+    "ageGroups": "Grupos de Edad",
+    "howItWorks": "Cómo Funciona",
+    "pricing": "Planes y Precios",
+    "about": "Sobre Nosotros",
+    "contact": "Contacto"
+  },
+  "hero": {
+    "badge": "🎓 La Academia Digital de Árabe Líder en el Mundo para Niños",
+    "title": "Empodera a tu Hijo para Hablar, Leer y Amar el Árabe",
+    "subtitle": "Una plataforma educativa integral que combina clases interactivas en vivo, educadores certificados y un plan de estudios lúdico diseñado para niños de 4 a 16 años.",
+    "ctaPrimary": "Inscribe a tu Hijo Hoy",
+    "ctaSecondary": "Explora los Programas",
+    "activeLearners": "5,000+ Alumnos Activos",
+    "activeLearnersSub": "Estudiantes activos en más de 30 países",
+    "certifiedTeachers": "150+ Profesores Certificados",
+    "certifiedTeachersSub": "Educadores certificados a tiempo completo",
+    "parentRating": "4.9/5 Satisfacción de Padres",
+    "parentRatingSub": "Seguimiento continuo y alta satisfacción"
+  },
+  "programs": {
+    "title": "Programas Académicos Integrales",
+    "subtitle": "7 rutas de aprendizaje diseñadas a medida para diferentes edades y niveles de habilidad",
+    "tag": "Rutas de Aprendizaje",
+    "accreditedCurriculum": "Plan de Estudios Acreditado y Estructurado",
+    "foundations": "Fundamentos del Árabe y Alfabeto",
+    "reading": "Fluidez Lectora y Comprensión",
+    "writing": "Escritura y Caligrafía",
+    "speaking": "Conversación y Pronunciación",
+    "listening": "Escucha y Comprensión Auditiva",
+    "quran": "Lectura del Corán y Taywid",
+    "islamicStudies": "Estudios Islámicos y Valores"
+  },
+  "ageGroups": {
+    "title": "Clases por Grupos de Edad",
+    "subtitle": "Grupos reducidos de máximo 6 alumnos para una atención personalizada óptima",
+    "tag": "Grupos de Edad",
+    "smallClasses": "Microgrupos (máximo 6 alumnos)",
+    "sprouts": "Pequeños Brotes (4 - 6 años)",
+    "explorers": "Jóvenes Exploradores (7 - 10 años)",
+    "navigators": "Navegantes Intermedios (11 - 13 años)",
+    "scholars": "Jóvenes Eruditos (14 - 16 años)"
+  },
+  "pricing": {
+    "tag": "Planes Flexibles",
+    "title": "Planes adaptados a cada familia",
+    "subtitle": "Opciones diversas que incluyen clases grupales interactivas y clases privadas 1 a 1",
+    "perMonth": "/ mes",
+    "groupTitle": "Clases Grupales",
+    "groupBadge": "Más Interactivo",
+    "groupDesc": "Grupos pequeños e interactivos que fomentan la sana competencia y el amor por el estudio",
+    "groupCta": "Elegir Plan Grupal",
+    "groupFeatures": [
+      "2 clases interactivas en vivo por semana",
+      "Máximo 6 alumnos por grupo",
+      "Tareas y evaluaciones interactivas continuas",
+      "Informes semanales detallados para los padres"
+    ],
+    "privateTitle": "Clases Privadas (1 a 1)",
+    "privateBadge": "Máxima Personalización y Rendimiento",
+    "privateTag": "Tutor Privado Exclusivo",
+    "privateDesc": "Plan de aprendizaje 100% personalizado según el ritmo y los objetivos de tu hijo",
+    "privateCta": "Comenzar con Tutor Privado",
+    "privateFeatures": [
+      "Profesor certificado 1 a 1 exclusivo para tu hijo",
+      "Flexibilidad total en horarios y fechas",
+      "Enfoque intensivo en fonética, pronunciación y fluidez",
+      "Grabaciones de las clases disponibles para repasar"
+    ],
+    "familyTitle": "Plan Familiar",
+    "familyBadge": "Descuento Familiar",
+    "familyDesc": "Descuento especial y funciones unificadas para hermanos bajo una sola cuenta de padre",
+    "familyCta": "Elegir Plan Familiar",
+    "familyFeatures": [
+      "Un solo panel para alternar fácilmente entre hijos",
+      "25% de descuento a partir del segundo hijo",
+      "Facturación unificada y soporte dedicado para familias",
+      "Acceso completo a todos los juegos, biblioteca y estudio Corán"
+    ]
+  },
+  "safetyBanner": {
+    "badge": "Carta de Protección Infantil y Privacidad Total",
+    "title": "Un Entorno de Aprendizaje 100% Confiable Diseñado para Proteger a tus Hijos",
+    "desc": "Cero publicidad, cero mensajería directa no supervisada entre alumnos, y acceso restringido bajo supervisión directa de los padres. Todos los archivos y grabaciones están cifrados según protocolos internacionales.",
+    "cta": "Registra la Cuenta Familiar Ahora"
+  },
+  "roles": {
+    "student": "Estudiante",
+    "parent": "Padre / Tutor",
+    "teacher": "Profesor",
+    "admin": "Administración",
+    "finance": "Finanzas"
+  },
+  "auth": {
+    "signInTitle": "Iniciar Sesión en Academia Árabe para Niños",
+    "signInSubtitle": "¡Bienvenido de nuevo! Ingresa tus credenciales para acceder a tu panel",
+    "emailLabel": "Correo Electrónico",
+    "passwordLabel": "Contraseña",
+    "submitSignIn": "Iniciar Sesión",
+    "forgotPassword": "¿Olvidaste tu contraseña?",
+    "noAccount": "¿No tienes una cuenta?",
+    "registerNow": "Regístrate como padre",
+    "demoAccountsTitle": "Cuentas demo rápidas para desarrollo:",
+    "defaultPasswordNotice": "Contraseña demo por defecto para todas las cuentas:"
+  },
+  "footer": {
+    "copyright": "Todos los derechos reservados © 2026 Academia Árabe para Niños.",
+    "privacyPolicy": "Seguridad Infantil y Política de Privacidad",
+    "termsOfService": "Términos de Servicio",
+    "safetyBadge": "Entorno de aprendizaje 100% libre de publicidad y seguro para niños",
+    "platformDescription": "Una plataforma totalmente segura para niños que cumple con los estándares de privacidad COPPA y GDPR-K, con planes de estudio interactivos supervisados por educadores certificados.",
+    "securitySection": "Privacidad y Seguridad",
+    "madeWithLovePrefix": "Hecho con",
+    "madeWithLove": "para que nuestros hijos aprendan la lengua del Corán"
+  }
+}

@@ -1,0 +1,141 @@
+{
+  "common": {
+    "siteName": "Arabic Kids Academy",
+    "siteTagline": "Inspiring Arabic language and Quran learning for children worldwide",
+    "login": "Sign In",
+    "register": "Parent Registration",
+    "logout": "Sign Out",
+    "dashboard": "Dashboard",
+    "profile": "Profile",
+    "settings": "Settings",
+    "back": "Back",
+    "next": "Next",
+    "save": "Save",
+    "cancel": "Cancel",
+    "loading": "Loading...",
+    "language": "Language",
+    "arabic": "العربية",
+    "english": "English",
+    "dutch": "Nederlands",
+    "turkish": "Türkçe",
+    "italian": "Italiano",
+    "spanish": "Español"
+  },
+  "nav": {
+    "home": "Home",
+    "programs": "Programs",
+    "ageGroups": "Age Groups",
+    "howItWorks": "How It Works",
+    "pricing": "Pricing",
+    "about": "About Us",
+    "contact": "Contact"
+  },
+  "hero": {
+    "badge": "🎓 The Leading Online Arabic Academy for Kids Worldwide",
+    "title": "Empower Your Child to Speak, Read & Love Arabic",
+    "subtitle": "An integrated educational platform combining live interactive classes, certified educators, and gamified curriculum designed specifically for ages 4 to 16.",
+    "ctaPrimary": "Enroll Your Child Today",
+    "ctaSecondary": "Explore Programs",
+    "activeLearners": "5,000+ Active Students",
+    "activeLearnersSub": "Active learners across 30+ countries",
+    "certifiedTeachers": "150+ Certified Teachers",
+    "certifiedTeachersSub": "Full-time certified educators",
+    "parentRating": "4.9/5 Parent Satisfaction",
+    "parentRatingSub": "Consistent rating and ongoing support"
+  },
+  "programs": {
+    "title": "Comprehensive Academic Programs",
+    "subtitle": "7 tailored learning tracks designed for different proficiency levels and age groups",
+    "tag": "Learning Tracks",
+    "accreditedCurriculum": "Accredited & Structured Curriculum",
+    "foundations": "Arabic Foundations & Letters",
+    "reading": "Reading Fluency & Comprehension",
+    "writing": "Writing & Penmanship",
+    "speaking": "Conversation & Pronunciation",
+    "listening": "Listening & Audio Comprehension",
+    "quran": "Quran Reading & Tajweed",
+    "islamicStudies": "Islamic Studies & Values"
+  },
+  "ageGroups": {
+    "title": "Age-Tailored Cohorts",
+    "subtitle": "Small group classes capped at 6 students for maximum individual attention",
+    "tag": "Age Groups",
+    "smallClasses": "Micro-cohorts (max 6 students)",
+    "sprouts": "Little Sprouts (Ages 4 - 6)",
+    "explorers": "Junior Explorers (Ages 7 - 10)",
+    "navigators": "Intermediate Navigators (Ages 11 - 13)",
+    "scholars": "Young Scholars (Ages 14 - 16)"
+  },
+  "pricing": {
+    "tag": "Flexible Plans",
+    "title": "Plans Tailored for Every Family",
+    "subtitle": "Diverse options including interactive group classes and 1-on-1 private tutoring",
+    "perMonth": "/ month",
+    "groupTitle": "Group Classes",
+    "groupBadge": "Most Interactive",
+    "groupDesc": "Small interactive groups that inspire friendly competition and love for learning",
+    "groupCta": "Select Group Plan",
+    "groupFeatures": [
+      "2 live interactive video classes per week",
+      "Capped at max 6 students per class",
+      "Continuous interactive assignments & quizzes",
+      "Weekly detailed progress reports for parents"
+    ],
+    "privateTitle": "Private Lessons (1-on-1)",
+    "privateBadge": "Highest Achievement & Customization",
+    "privateTag": "Dedicated Private Tutor",
+    "privateDesc": "100% personalized learning pathway tailored to your child's pace and goals",
+    "privateCta": "Start with Private Tutor",
+    "privateFeatures": [
+      "Dedicated 1-on-1 certified teacher for your child",
+      "Complete flexibility in scheduling & timings",
+      "Intensive focus on phonetics, pronunciation & fluency",
+      "Session recordings accessible anytime for review"
+    ],
+    "familyTitle": "Family Plan",
+    "familyBadge": "Family Savings",
+    "familyDesc": "Special discount and unified features for siblings under one parent account",
+    "familyCta": "Select Family Plan",
+    "familyFeatures": [
+      "Single parent dashboard to switch between children",
+      "25% discount on the second child and beyond",
+      "Unified billing & dedicated family support",
+      "Full access to all games, library & Quran studio"
+    ]
+  },
+  "safetyBanner": {
+    "badge": "Child Protection & Complete Privacy Charter",
+    "title": "A 100% Trusted Learning Environment Designed to Protect Your Children",
+    "desc": "Zero ads, zero unsupervised peer-to-peer student messaging, and access restricted under direct parental supervision. All media and recordings are encrypted and protected by international security protocols.",
+    "cta": "Register Family Account Now"
+  },
+  "roles": {
+    "student": "Student",
+    "parent": "Parent",
+    "teacher": "Teacher",
+    "admin": "Administration",
+    "finance": "Finance"
+  },
+  "auth": {
+    "signInTitle": "Sign In to Arabic Kids Academy",
+    "signInSubtitle": "Welcome back! Enter your account credentials to access your dashboard",
+    "emailLabel": "Email Address",
+    "passwordLabel": "Password",
+    "submitSignIn": "Sign In",
+    "forgotPassword": "Forgot password?",
+    "noAccount": "Don't have an account?",
+    "registerNow": "Register as a Parent",
+    "demoAccountsTitle": "Quick Development Demo Personas:",
+    "defaultPasswordNotice": "Default demo password for all accounts:"
+  },
+  "footer": {
+    "copyright": "All rights reserved © 2026 Arabic Kids Academy.",
+    "privacyPolicy": "Child Safety & Privacy Policy",
+    "termsOfService": "Terms of Service",
+    "safetyBadge": "100% Ad-Free & Child-Safe Learning Environment",
+    "platformDescription": "A completely child-safe platform adhering to COPPA & GDPR-K digital privacy standards, featuring interactive educational curricula supervised by certified educators.",
+    "securitySection": "Privacy & Security",
+    "madeWithLovePrefix": "Crafted with",
+    "madeWithLove": "for our children to learn the language of the Quran"
+  }
+}

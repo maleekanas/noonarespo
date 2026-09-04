@@ -1,0 +1,141 @@
+{
+  "common": {
+    "siteName": "Arabische Kids Academie",
+    "siteTagline": "Inspirerend Arabisch taal- en Koranonderwijs voor kinderen wereldwijd",
+    "login": "Inloggen",
+    "register": "Ouder Registratie",
+    "logout": "Uitloggen",
+    "dashboard": "Dashboard",
+    "profile": "Profiel",
+    "settings": "Instellingen",
+    "back": "Terug",
+    "next": "Volgende",
+    "save": "Opslaan",
+    "cancel": "Annuleren",
+    "loading": "Laden...",
+    "language": "Taal",
+    "arabic": "العربية",
+    "english": "English",
+    "dutch": "Nederlands",
+    "turkish": "Türkçe",
+    "italian": "Italiano",
+    "spanish": "Español"
+  },
+  "nav": {
+    "home": "Home",
+    "programs": "Programma's",
+    "ageGroups": "Leeftijdsgroepen",
+    "howItWorks": "Hoe het werkt",
+    "pricing": "Tarieven",
+    "about": "Over ons",
+    "contact": "Contact"
+  },
+  "hero": {
+    "badge": "🎓 De toonaangevende online Arabische academie voor kinderen wereldwijd",
+    "title": "Geef uw kind de kracht om met liefde en vloeiend Arabisch te spreken",
+    "subtitle": "Een geïntegreerd educatief platform dat interactieve live lessen, gecertificeerde docenten en een speels curriculum combineert voor leeftijden van 4 tot 16 jaar.",
+    "ctaPrimary": "Schrijf uw kind vandaag in",
+    "ctaSecondary": "Ontdek programma's",
+    "activeLearners": "5.000+ Actieve Leerlingen",
+    "activeLearnersSub": "Actieve leerlingen in meer dan 30 landen",
+    "certifiedTeachers": "150+ Gecertificeerde Docenten",
+    "certifiedTeachersSub": "Voltijdse gecertificeerde docenten",
+    "parentRating": "4.9/5 Oudertevredenheid",
+    "parentRatingSub": "Consistente waardering en continue opvolging"
+  },
+  "programs": {
+    "title": "Uitgebreide Academische Programma's",
+    "subtitle": "7 op maat gemaakte leertrajecten afgestemd op verschillende niveaus en leeftijden",
+    "tag": "Leertrajecten",
+    "accreditedCurriculum": "Geaccrediteerd en gestructureerd curriculum",
+    "foundations": "Arabische Basis & Alfabet",
+    "reading": "Leesvaardigheid & Vloeiendheid",
+    "writing": "Schrijven & Kalligrafie",
+    "speaking": "Conversatie & Uitspraak",
+    "listening": "Luisteren & Begrijpend Luisteren",
+    "quran": "Koran Recitatie & Tajweed",
+    "islamicStudies": "Islamitische Studies & Waarden"
+  },
+  "ageGroups": {
+    "title": "Cohortgroepen op Leeftijd",
+    "subtitle": "Kleine groepslessen beperkt tot maximaal 6 leerlingen voor optimale individuele aandacht",
+    "tag": "Leeftijdsgroepen",
+    "smallClasses": "Kleine groepen (max 6 kinderen)",
+    "sprouts": "Kleine Knoppen (4 - 6 jaar)",
+    "explorers": "Jonge Ontdekkers (7 - 10 jaar)",
+    "navigators": "Middelbare Navigators (11 - 13 jaar)",
+    "scholars": "Jonge Geleerden (14 - 16 jaar)"
+  },
+  "pricing": {
+    "tag": "Flexibele Abonnementen",
+    "title": "Pakketten geschikt voor elk gezin",
+    "subtitle": "Diverse opties waaronder interactieve groepslessen en 1-op-1 privélessen",
+    "perMonth": "/ maand",
+    "groupTitle": "Groepslessen",
+    "groupBadge": "Meest Interactief",
+    "groupDesc": "Kleine interactieve groepen die vriendschappelijke competitie en leergierigheid stimuleren",
+    "groupCta": "Kies groepspakket",
+    "groupFeatures": [
+      "2 live interactieve videolessen per week",
+      "Maximaal 6 leerlingen per klas",
+      "Doorlopende interactieve opdrachten en toetsen",
+      "Wekelijkse gedetailleerde voortgangsrapporten voor ouders"
+    ],
+    "privateTitle": "Privélessen (1-op-1)",
+    "privateBadge": "Hoogste Maatwerk & Resultaat",
+    "privateTag": "Toegewijde privédocent",
+    "privateDesc": "100% gepersonaliseerd leertraject afgestemd op het tempo en de doelen van uw kind",
+    "privateCta": "Start met privédocent",
+    "privateFeatures": [
+      "Toegewijde 1-op-1 gecertificeerde docent voor uw kind",
+      "Volledige flexibiliteit in planning en tijdstippen",
+      "Intensieve focus op fonetiek, uitspraak en vloeiendheid",
+      "Lesopnames altijd beschikbaar voor herhaling"
+    ],
+    "familyTitle": "Gezinspakket",
+    "familyBadge": "Familiekorting",
+    "familyDesc": "Speciale korting en uniforme functies voor broers en zussen onder één ouderaccount",
+    "familyCta": "Kies gezinspakket",
+    "familyFeatures": [
+      "Eén dashboard om eenvoudig tussen kinderen te wisselen",
+      "25% korting vanaf het tweede kind",
+      "Geconsolideerde facturatie en toegewijde gezinsondersteuning",
+      "Volledige toegang tot alle spellen, bibliotheek en Koranstudio"
+    ]
+  },
+  "safetyBanner": {
+    "badge": "Handvest voor kindbescherming en privacy",
+    "title": "Een 100% vertrouwde leeromgeving ontworpen om uw kinderen te beschermen",
+    "desc": "Geen advertenties, geen directe ongecontroleerde communicatie tussen leerlingen onderling en toegang onder direct ouderlijk toezicht. Alle media en opnames zijn versleuteld en beveiligd met internationale protocollen.",
+    "cta": "Registreer nu een gezinsaccount"
+  },
+  "roles": {
+    "student": "Leerling",
+    "parent": "Ouder / Verzorger",
+    "teacher": "Docent",
+    "admin": "Administratie",
+    "finance": "Financiën"
+  },
+  "auth": {
+    "signInTitle": "Inloggen bij Arabische Kids Academie",
+    "signInSubtitle": "Welkom terug! Voer uw inloggegevens in om toegang te krijgen tot uw dashboard",
+    "emailLabel": "E-mailadres",
+    "passwordLabel": "Wachtwoord",
+    "submitSignIn": "Inloggen",
+    "forgotPassword": "Wachtwoord vergeten?",
+    "noAccount": "Nog geen account?",
+    "registerNow": "Registreer als ouder",
+    "demoAccountsTitle": "Snelle ontwikkelingsdemo accounts:",
+    "defaultPasswordNotice": "Standaard demowachtwoord voor alle accounts:"
+  },
+  "footer": {
+    "copyright": "Alle rechten voorbehouden © 2026 Arabische Kids Academie.",
+    "privacyPolicy": "Kindveiligheid & Privacybeleid",
+    "termsOfService": "Gebruiksvoorwaarden",
+    "safetyBadge": "100% Advertentievrije en kindveilige leeromgeving",
+    "platformDescription": "Een volledig kindveilig platform dat voldoet aan COPPA- en GDPR-K-privacynormen, met interactieve curricula onder toezicht van gecertificeerde docenten.",
+    "securitySection": "Privacy & Veiligheid",
+    "madeWithLovePrefix": "Gemaakt met",
+    "madeWithLove": "om onze kinderen de taal van de Koran te leren"
+  }
+}
