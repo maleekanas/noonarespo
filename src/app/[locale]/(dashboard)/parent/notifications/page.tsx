@@ -2,6 +2,7 @@ import React from "react";
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
 import { notificationService } from "@/server/services/NotificationService";
+import { requireParentProfile } from "@/lib/auth/currentUser";
 import {
   Bell,
   CheckCheck,
@@ -17,7 +18,8 @@ export default async function ParentNotificationsPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const parentId = "parent-1";
+  const { profile } = await requireParentProfile(locale);
+  const parentId = profile.id;
   const notifications = await notificationService.getNotifications(parentId);
 
   async function handleMarkAllRead() {
