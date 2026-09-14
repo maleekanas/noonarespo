@@ -3,6 +3,7 @@ import Link from "next/link";
 import { revalidatePath } from "next/cache";
 import { communicationRepository } from "@/server/repositories/CommunicationRepository";
 import { communicationService } from "@/server/services/CommunicationService";
+import { requireParentProfile } from "@/lib/auth/currentUser";
 import {
   Send,
   ShieldCheck,
@@ -14,7 +15,8 @@ export default async function ParentMessagesPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const parentId = "parent-1";
+  const { profile } = await requireParentProfile(locale);
+  const parentId = profile.id;
   const teacherId = "teacher-1";
   const studentId = "student-1";
 
