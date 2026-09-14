@@ -22,8 +22,6 @@ export default async function ParentReviewsPage({
 
   const summary = await reviewService.getTeacherReviewSummary("teacher-1");
 
-  const summary = await reviewService.getTeacherReviewSummary("teacher-1");
-
   return (
     <div className="container mx-auto px-4 py-8 max-w-5xl">
       {/* Top Header */}

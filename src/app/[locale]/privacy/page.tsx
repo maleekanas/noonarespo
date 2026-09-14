@@ -113,8 +113,8 @@ export default async function PrivacyPolicyPage({
           </h2>
           <p>
             {isAr
-              ? "يحق لولي الأمر في أي وقت طلب تصدير نسخة كاملة من سجلات طفله التعليمية (بصيغتي JSON و CSV)، أو طلب حذف الحساب وجميع التسجيلات الصوتية فورياً من خوادمنا بشكل نهائي عبر لوحة تحكم ولي الأمر أو بمراسلة مسؤول حماية البيانات: privacy@kidsarabicacademy.com."
-              : "Parents may at any time review, download an automated export of their child's educational data (in JSON and CSV formats), or permanently delete the child's account and all associated voice recordings by contacting our Data Protection Officer at privacy@kidsarabicacademy.com."}
+              ? "يحق لولي الأمر في أي وقت طلب تصدير نسخة كاملة من سجلات طفله التعليمية (بصيغتي JSON و CSV)، أو طلب حذف الحساب وجميع التسجيلات الصوتية فورياً من خوادمنا بشكل نهائي عبر لوحة تحكم ولي الأمر أو بمراسلة مسؤول حماية البيانات: privacy@arabickidsacademy.com."
+              : "Parents may at any time review, download an automated export of their child's educational data (in JSON and CSV formats), or permanently delete the child's account and all associated voice recordings by contacting our Data Protection Officer at privacy@arabickidsacademy.com."}
           </p>
         </section>
 

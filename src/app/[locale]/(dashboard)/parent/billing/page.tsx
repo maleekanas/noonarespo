@@ -22,8 +22,6 @@ export default async function ParentBillingPage({
   const parentId = profile.id;
 
   const subscription = await billingService.getParentSubscription(parentId);
-
-  const subscription = await billingService.getParentSubscription(parentId);
   const plan = subscription ? await billingService.getPlanById(subscription.planId) : null;
   const invoices = await billingService.getParentInvoices(parentId);
 
