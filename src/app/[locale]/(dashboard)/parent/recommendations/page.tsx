@@ -2,6 +2,7 @@ import React from "react";
 import Link from "next/link";
 import { userRepository } from "@/server/repositories/UserRepository";
 import { recommendationService } from "@/server/services/RecommendationService";
+import { requireParentProfile } from "@/lib/auth/currentUser";
 import {
   Sparkles,
   BookOpen,
@@ -24,7 +25,8 @@ export default async function ParentRecommendationsPage({
 }) {
   const { locale } = await params;
   const { studentId: queryStudentId } = await searchParams;
-  const parentId = "parent-1";
+  const { profile } = await requireParentProfile(locale);
+  const parentId = profile.id;
 
   const children = await userRepository.getLinkedChildren(parentId);
   const activeStudentId = queryStudentId || (children.length > 0 ? children[0].id : "student-1");
