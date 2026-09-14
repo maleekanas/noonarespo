@@ -9,6 +9,7 @@ import {
   Send,
 } from "lucide-react";
 import { reviewService } from "@/server/services/ReviewService";
+import { requireParentProfile } from "@/lib/auth/currentUser";
 
 export default async function ParentReviewsPage({
   params,
@@ -17,6 +18,9 @@ export default async function ParentReviewsPage({
 }) {
   const { locale } = await params;
   const isAr = locale === "ar";
+  const { profile } = await requireParentProfile(locale);
+
+  const summary = await reviewService.getTeacherReviewSummary("teacher-1");
 
   const summary = await reviewService.getTeacherReviewSummary("teacher-1");
 
@@ -99,8 +103,8 @@ export default async function ParentReviewsPage({
                 const comment = (formData.get("comment") as string) || "معلم رائع ومتميز";
 
                 await reviewService.submitParentReview({
-                  parentId: "parent-1",
-                  parentName: "طارق المنصور",
+                  parentId: profile.id,
+                  parentName: `${profile.firstName} ${profile.lastName}`,
                   teacherId: "teacher-1",
                   teacherName: "أ. أحمد حسن",
                   rating,
