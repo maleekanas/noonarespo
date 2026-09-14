@@ -125,7 +125,7 @@ export default async function PrivacyPolicyPage({
           <p>
             {isAr
               ? "إذا كانت لديكم أي استفسارات أو ملاحظات بخصوص سياسة الخصوصية وحماية الطفل، يرجى التواصل معنا عبر البريد الإلكتروني: compliance@arabickidsacademy.com"
-              : "If you have any questions or feedback regarding our child safety practices or privacy policy, please contact our compliance team at compliance@arabickidsacademy.com.com"}
+              : "If you have any questions or feedback regarding our child safety practices or privacy policy, please contact our compliance team at compliance@arabickidsacademy.com"}
           </p>
         </section>
       </div>
