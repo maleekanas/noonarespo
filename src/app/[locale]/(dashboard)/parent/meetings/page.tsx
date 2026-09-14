@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { communicationRepository } from "@/server/repositories/CommunicationRepository";
 import { communicationService } from "@/server/services/CommunicationService";
 import { userRepository } from "@/server/repositories/UserRepository";
+import { requireParentProfile } from "@/lib/auth/currentUser";
 import {
   Calendar,
   Clock,
@@ -17,7 +18,8 @@ export default async function ParentMeetingsPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const parentId = "parent-1";
+  const { profile } = await requireParentProfile(locale);
+  const parentId = profile.id;
   const teacherId = "teacher-1";
 
   const children = await userRepository.getLinkedChildren(parentId);
