@@ -8,6 +8,7 @@ import {
   Lock,
 } from "lucide-react";
 import { DirectionalIcon } from "@/components/shared/DirectionalIcon";
+import { requireParentProfile } from "@/lib/auth/currentUser";
 
 export default async function ParentCheckoutPage({
   params,
@@ -18,7 +19,8 @@ export default async function ParentCheckoutPage({
 }) {
   const { locale } = await params;
   const { planId: planIdParam, coupon: couponParam } = await searchParams;
-  const parentId = "parent-1";
+  const { profile } = await requireParentProfile(locale);
+  const parentId = profile.id;
 
   const allPlans = await billingService.getAllPlans();
   const selectedPlanId = planIdParam || "plan-group";
