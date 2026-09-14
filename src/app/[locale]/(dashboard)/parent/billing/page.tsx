@@ -1,6 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import { billingService } from "@/server/services/BillingService";
+import { requireParentProfile } from "@/lib/auth/currentUser";
 import {
   CheckCircle2,
   Clock,
@@ -17,7 +18,10 @@ export default async function ParentBillingPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const parentId = "parent-1";
+  const { profile } = await requireParentProfile(locale);
+  const parentId = profile.id;
+
+  const subscription = await billingService.getParentSubscription(parentId);
 
   const subscription = await billingService.getParentSubscription(parentId);
   const plan = subscription ? await billingService.getPlanById(subscription.planId) : null;
