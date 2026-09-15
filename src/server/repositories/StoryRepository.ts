@@ -1,3 +1,5 @@
+import { prisma } from "@/lib/database/prisma";
+
 export type StoryCategory = "PROPHETIC_STORIES" | "ISLAMIC_VALUES" | "LANGUAGE_ADVENTURE";
 
 export interface StoryPage {
@@ -40,9 +42,22 @@ export interface StoryProgress {
   completedAt?: Date;
 }
 
-class InMemoryStoryRepository {
+/**
+ * The story catalog itself (StoryBook: pages, quiz questions) is static app
+ * content bundled with the code, not user data, so it stays as an in-memory
+ * seed here rather than a database table -- same as before.
+ *
+ * StoryProgress (a real student's completion/quiz score per story) is a
+ * different matter: it used to be an in-memory Map that reset on every
+ * serverless cold start, so a real child's story-reading progress and XP
+ * eligibility silently disappeared. It's now backed by a new StoryProgress
+ * Prisma model/table (see prisma/schema.prisma and
+ * src/app/api/admin/apply-story-progress-schema-migration/route.ts), the
+ * same additive-schema-change pattern used for Gradebook and the earlier
+ * Stripe billing columns.
+ */
+class StoryRepository {
   private stories: Map<string, StoryBook> = new Map();
-  private progress: Map<string, StoryProgress> = new Map();
 
   constructor() {
     this.seedStories();
@@ -239,14 +254,36 @@ class InMemoryStoryRepository {
   }
 
   async saveProgress(progress: StoryProgress): Promise<void> {
-    const key = `${progress.studentId}:${progress.storyId}`;
-    this.progress.set(key, progress);
+    await prisma.storyProgress.upsert({
+      where: { studentId_storyId: { studentId: progress.studentId, storyId: progress.storyId } },
+      update: {
+        isCompleted: progress.isCompleted,
+        quizScorePercentage: progress.quizScorePercentage,
+        completedAt: progress.completedAt,
+      },
+      create: {
+        studentId: progress.studentId,
+        storyId: progress.storyId,
+        isCompleted: progress.isCompleted,
+        quizScorePercentage: progress.quizScorePercentage,
+        completedAt: progress.completedAt,
+      },
+    });
   }
 
   async getProgress(studentId: string, storyId: string): Promise<StoryProgress | null> {
-    const key = `${studentId}:${storyId}`;
-    return this.progress.get(key) || null;
+    const row = await prisma.storyProgress.findUnique({
+      where: { studentId_storyId: { studentId, storyId } },
+    });
+    if (!row) return null;
+    return {
+      studentId: row.studentId,
+      storyId: row.storyId,
+      isCompleted: row.isCompleted,
+      quizScorePercentage: row.quizScorePercentage,
+      completedAt: row.completedAt ?? undefined,
+    };
   }
 }
 
-export const storyRepository = new InMemoryStoryRepository();
+export const storyRepository = new StoryRepository();
