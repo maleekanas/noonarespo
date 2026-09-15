@@ -147,6 +147,7 @@ model StudentProfile {
   streaks        LearningStreak[]
   certificates   Certificate[]
   liveSessionGrades LiveSessionGrade[]
+  storyProgress  StoryProgress[]
 
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
@@ -649,6 +650,23 @@ model Certificate {
   student            StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@map("certificates")
+}
+
+model StoryProgress {
+  id                  String         @id @default(uuid())
+  studentId           String
+  storyId             String         // Story catalog id, e.g. "story-nuh-ark" -- the story catalog itself is static app content, not a database table
+  isCompleted         Boolean        @default(false)
+  quizScorePercentage Int            @default(0)
+  completedAt         DateTime?
+
+  student             StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+
+  @@unique([studentId, storyId])
+  @@map("story_progress")
 }
 
 // -----------------------------------------------------------------------------
