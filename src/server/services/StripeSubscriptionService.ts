@@ -138,7 +138,6 @@ export async function createStripeCheckoutSession(params: {
     ...(existingParent?.stripeCustomerId
       ? { customer: existingParent.stripeCustomerId }
       : { customer_email: params.parentEmail }),
-
     line_items: [
       {
         quantity: 1,
@@ -226,6 +225,14 @@ export async function fulfillCheckoutSession(session: Stripe.Checkout.Session): 
     typeof session.subscription === "string" ? session.subscription : session.subscription?.id;
 
   await prisma.$transaction(async (tx) => {
+    // Persist the Stripe Customer id on first sight so the Billing Portal
+    // (self-service cancellation) has a customer to operate on.
+    if (stripeCustomerId) {
+      await tx.parentProfile.updateMany({
+        where: { id: parentId, stripeCustomerId: null },
+        data: { stripeCustomerId },
+      });
+    }
 
     const activeSub = await tx.subscription.findFirst({
       where: { parentId, planId: prismaPlan.id, status: SubscriptionStatus.ACTIVE },
@@ -235,7 +242,6 @@ export async function fulfillCheckoutSession(session: Stripe.Checkout.Session): 
       await tx.subscription.update({
         where: { id: activeSub.id },
         data: { currentPeriodEnd, stripeSubscriptionId: stripeSubscriptionId ?? activeSub.stripeSubscriptionId },
-
       });
     } else {
       await tx.subscription.create({
@@ -246,7 +252,6 @@ export async function fulfillCheckoutSession(session: Stripe.Checkout.Session): 
           currentPeriodStart: now,
           currentPeriodEnd,
           stripeSubscriptionId,
-
         },
       });
     }
@@ -346,7 +351,6 @@ export async function recordRenewalInvoice(invoice: Stripe.Invoice): Promise<voi
           // Backfill for subscriptions created before this id was tracked.
           stripeSubscriptionId: activeSub.stripeSubscriptionId ?? subscriptionId,
         },
-
       });
     }
 
@@ -414,7 +418,6 @@ export async function syncSubscriptionStatus(stripeSub: Stripe.Subscription): Pr
     return;
   }
 
-
   const parentId = stripeSub.metadata?.parentId;
   const planId = stripeSub.metadata?.planId;
   if (!parentId || !planId) return;
@@ -437,4 +440,72 @@ export async function syncSubscriptionStatus(stripeSub: Stripe.Subscription): Pr
     data: currentPeriodEnd
       ? { status, currentPeriodEnd, stripeSubscriptionId: stripeSub.id }
       : { status, stripeSubscriptionId: stripeSub.id },
+  });
+}
 
+/**
+ * Creates a Stripe Billing Portal session for a parent so they can manage or
+ * cancel their subscription themselves (updates payment method, cancels,
+ * downloads invoices — all handled by Stripe's own hosted UI). Requires a
+ * Customer Portal configuration to be active in the Stripe Dashboard for
+ * the account/mode in use (Settings -> Billing -> Customer portal).
+ *
+ * Falls back to looking the customer up by email in Stripe (and persisting
+ * the id we find) for parents whose stripeCustomerId wasn't captured yet --
+ * e.g. subscriptions created before this field existed, or on a preview
+ * deployment where the fulfillment webhook never reached us.
+ */
+export async function createBillingPortalSession(params: {
+  parentId: string;
+  parentEmail: string;
+  locale: string;
+}): Promise<{ url: string } | { error: "NO_STRIPE_CUSTOMER" }> {
+  const stripe = getStripeClient();
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+
+  const parent = await prisma.parentProfile.findUnique({
+    where: { id: params.parentId },
+    select: { stripeCustomerId: true },
+  });
+
+  let customerId = parent?.stripeCustomerId ?? null;
+
+  if (!customerId) {
+    const matches = await stripe.customers.list({ email: params.parentEmail, limit: 1 });
+    if (matches.data[0]) {
+      customerId = matches.data[0].id;
+      await prisma.parentProfile.updateMany({
+        where: { id: params.parentId, stripeCustomerId: null },
+        data: { stripeCustomerId: customerId },
+      });
+
+      // Also backfill the local Subscription's stripeSubscriptionId while
+      // we're here, for a subscription created before this id was tracked
+      // -- otherwise a cancellation made in the portal a moment from now
+      // wouldn't be matchable back to this row by syncSubscriptionStatus.
+      const activeStripeSubs = await stripe.subscriptions.list({
+        customer: customerId,
+        status: "active",
+        limit: 1,
+      });
+      const stripeSubId = activeStripeSubs.data[0]?.id;
+      if (stripeSubId) {
+        await prisma.subscription.updateMany({
+          where: { parentId: params.parentId, status: SubscriptionStatus.ACTIVE, stripeSubscriptionId: null },
+          data: { stripeSubscriptionId: stripeSubId },
+        });
+      }
+    }
+  }
+
+  if (!customerId) {
+    return { error: "NO_STRIPE_CUSTOMER" };
+  }
+
+  const portalSession = await stripe.billingPortal.sessions.create({
+    customer: customerId,
+    return_url: `${appUrl}/${params.locale}/parent/billing`,
+  });
+
+  return { url: portalSession.url };
+}
