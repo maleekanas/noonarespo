@@ -144,6 +144,7 @@
     "demoAccountsTitle": "Cuentas demo rápidas para desarrollo:",
     "defaultPasswordNotice": "Contraseña demo por defecto para todas las cuentas:",
     "invalidCredentials": "Correo electrónico o contraseña incorrectos.",
+    "tooManyAttempts": "Demasiados intentos. Espera un momento e inténtalo de nuevo.",
     "registerTitle": "Crea tu cuenta de padre",
     "registerSubtitle": "Regístrate para comenzar el viaje de aprendizaje de tu hijo con Academia Árabe para Niños",
     "firstNameLabel": "Nombre",

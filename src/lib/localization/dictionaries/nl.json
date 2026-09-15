@@ -144,6 +144,7 @@
     "demoAccountsTitle": "Snelle ontwikkelingsdemo accounts:",
     "defaultPasswordNotice": "Standaard demowachtwoord voor alle accounts:",
     "invalidCredentials": "Onjuist e-mailadres of wachtwoord.",
+    "tooManyAttempts": "Te veel pogingen. Wacht even en probeer het opnieuw.",
     "registerTitle": "Maak uw ouderaccount aan",
     "registerSubtitle": "Registreer om de leerreis van uw kind te starten bij Arabische Kids Academie",
     "firstNameLabel": "Voornaam",

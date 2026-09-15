@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { getDictionary } from "@/lib/localization";
 import { prisma } from "@/lib/database/prisma";
 import { createPasswordResetToken } from "@/lib/auth/passwordReset";
+import { checkRateLimit, getClientIp, RATE_LIMITS } from "@/lib/security/rateLimit";
 import { notificationDispatcherService } from "@/server/services/NotificationDispatcherService";
 import { GraduationCap, Mail, CheckCircle2 } from "lucide-react";
 
@@ -28,7 +29,21 @@ export default async function ForgotPasswordPage({
     "use server";
     const email = formData.get("email")?.toString().trim().toLowerCase() || "";
 
-    if (email) {
+    // Rate limited per IP (stop mass enumeration/spam runs) and per email
+    // (stop one address from being flooded with reset emails). Either limit
+    // being hit silently skips the lookup/send below but still redirects to
+    // the identical "check your email" state, so a limited request can't be
+    // told apart from a normal one.
+    const ip = await getClientIp();
+    const [ipCheck, emailCheck] = await Promise.all([
+      checkRateLimit(`forgot-password:ip:${ip}`, RATE_LIMITS.FORGOT_PASSWORD_PER_IP),
+      email
+        ? checkRateLimit(`forgot-password:email:${email}`, RATE_LIMITS.FORGOT_PASSWORD_PER_EMAIL)
+        : Promise.resolve({ allowed: true }),
+    ]);
+    const rateLimited = !ipCheck.allowed || !emailCheck.allowed;
+
+    if (email && !rateLimited) {
       const user = await prisma.user.findUnique({
         where: { email },
         include: { studentProfile: true, parentProfile: true, teacherProfile: true, adminProfile: true },

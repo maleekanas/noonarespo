@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import { getDictionary } from "@/lib/localization";
 import { createSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/database/prisma";
+import { checkRateLimit, getClientIp, RATE_LIMITS } from "@/lib/security/rateLimit";
 import { RoleType } from "@prisma/client";
 import { GraduationCap, AlertCircle } from "lucide-react";
 
@@ -55,6 +56,14 @@ export default async function RegisterPage({
 
     if (password.length < 8) {
       redirectWithError("weak");
+    }
+
+    // Per-IP only (there's no existing account to key a per-email limit
+    // against yet) -- caps mass fake-account creation from a single source.
+    const ip = await getClientIp();
+    const ipCheck = await checkRateLimit(`register:ip:${ip}`, RATE_LIMITS.REGISTER_PER_IP);
+    if (!ipCheck.allowed) {
+      redirectWithError("ratelimited");
     }
 
     const existingUser = await prisma.user.findUnique({ where: { email } });
@@ -115,6 +124,7 @@ export default async function RegisterPage({
     weak: dict.auth.weakPassword,
     inuse: dict.auth.emailInUse,
     server: dict.auth.registrationError,
+    ratelimited: dict.auth.tooManyAttempts,
   };
 
   return (

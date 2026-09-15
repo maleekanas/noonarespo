@@ -144,6 +144,7 @@
     "demoAccountsTitle": "Quick Development Demo Personas:",
     "defaultPasswordNotice": "Default demo password for all accounts:",
     "invalidCredentials": "Incorrect email or password.",
+    "tooManyAttempts": "Too many attempts. Please wait a bit and try again.",
     "registerTitle": "Create Your Parent Account",
     "registerSubtitle": "Register to start your child's learning journey with Arabic Kids Academy",
     "firstNameLabel": "First Name",

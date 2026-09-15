@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import { getDictionary } from "@/lib/localization";
 import { createSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/database/prisma";
+import { checkRateLimit, getClientIp, RATE_LIMITS } from "@/lib/security/rateLimit";
 import { RoleType } from "@prisma/client";
 import { Sparkles, GraduationCap, AlertCircle, CheckCircle2 } from "lucide-react";
 
@@ -28,6 +29,20 @@ export default async function LoginPage({
 
     if (!email || !password) {
       redirect(`/${locale}/login?error=invalid`);
+    }
+
+    // Rate limit BEFORE touching the database: both per-IP (blunt brute-
+    // force / credential-stuffing protection) and per-email (protects one
+    // account from being hammered from many IPs). Every attempt counts
+    // against the limit, success or failure, which is the standard
+    // brute-force mitigation for a login endpoint.
+    const ip = await getClientIp();
+    const [ipCheck, emailCheck] = await Promise.all([
+      checkRateLimit(`login:ip:${ip}`, RATE_LIMITS.LOGIN_PER_IP),
+      checkRateLimit(`login:email:${email}`, RATE_LIMITS.LOGIN_PER_EMAIL),
+    ]);
+    if (!ipCheck.allowed || !emailCheck.allowed) {
+      redirect(`/${locale}/login?error=ratelimited`);
     }
 
     const user = await prisma.user.findUnique({
@@ -100,6 +115,13 @@ export default async function LoginPage({
           <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-xs font-semibold text-red-700">
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{dict.auth.invalidCredentials ?? "Incorrect email or password."}</span>
+          </div>
+        )}
+
+        {error === "ratelimited" && (
+          <div className="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-xs font-semibold text-amber-800">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            <span>{dict.auth.tooManyAttempts}</span>
           </div>
         )}
 

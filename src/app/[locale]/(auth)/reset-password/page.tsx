@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import { getDictionary } from "@/lib/localization";
 import { prisma } from "@/lib/database/prisma";
 import { isResetTokenValid, verifyAndConsumeResetToken } from "@/lib/auth/passwordReset";
+import { checkRateLimit, getClientIp, RATE_LIMITS } from "@/lib/security/rateLimit";
 import { GraduationCap, AlertCircle, XCircle } from "lucide-react";
 
 export default async function ResetPasswordPage({
@@ -30,6 +31,18 @@ export default async function ResetPasswordPage({
 
     if (!rawToken) {
       redirect(`/${locale}/forgot-password`);
+    }
+
+    // Tokens are 32 random bytes, so brute-forcing one is already
+    // impractical -- this is defense in depth plus a cap on how hard this
+    // endpoint can be hammered generally.
+    const ip = await getClientIp();
+    const ipCheck = await checkRateLimit(
+      `reset-password-submit:ip:${ip}`,
+      RATE_LIMITS.RESET_PASSWORD_SUBMIT_PER_IP
+    );
+    if (!ipCheck.allowed) {
+      redirectWithError("ratelimited");
     }
 
     if (password !== confirmPassword) {
@@ -61,6 +74,7 @@ export default async function ResetPasswordPage({
   const errorMessages: Record<string, string> = {
     mismatch: dict.auth.passwordMismatch,
     weak: dict.auth.weakPassword,
+    ratelimited: dict.auth.tooManyAttempts,
   };
 
   return (

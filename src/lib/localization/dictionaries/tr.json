@@ -144,6 +144,7 @@
     "demoAccountsTitle": "Geliştirme için hızlı demo hesaplar:",
     "defaultPasswordNotice": "Tüm demo hesaplar için varsayılan şifre:",
     "invalidCredentials": "E-posta veya şifre hatalı.",
+    "tooManyAttempts": "Çok fazla deneme yapıldı. Lütfen biraz bekleyip tekrar deneyin.",
     "registerTitle": "Veli Hesabınızı Oluşturun",
     "registerSubtitle": "Çocuğunuzun öğrenme yolculuğuna Arapça Çocuk Akademisi ile başlamak için kaydolun",
     "firstNameLabel": "Ad",

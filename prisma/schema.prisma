@@ -123,6 +123,19 @@ model AuditLog {
   @@map("audit_logs")
 }
 
+// Sliding-window rate limiting for sensitive auth endpoints (login,
+// registration, password reset). One row per attempt; checkRateLimit()
+// prunes rows older than its own window on every call, so this table stays
+// bounded without a separate cleanup job. See src/lib/security/rateLimit.ts.
+model RateLimitAttempt {
+  id        String   @id @default(uuid())
+  key       String // e.g. "login:ip:1.2.3.4" or "login:email:parent@example.com"
+  createdAt DateTime @default(now())
+
+  @@index([key, createdAt])
+  @@map("rate_limit_attempts")
+}
+
 // -----------------------------------------------------------------------------
 // 2. PEOPLE & RELATIONSHIPS
 // -----------------------------------------------------------------------------

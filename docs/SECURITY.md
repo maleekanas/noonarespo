@@ -18,10 +18,10 @@ Child safety and data privacy are foundational architectural concerns for Kids A
 ---
 
 ## 2. Authentication & Authorization Controls
-- **Password Security**: Passwords hashed using bcrypt (cost factor 12) or Argon2id.
+- **Password Security**: Passwords hashed using bcrypt (cost factor 10).
 - **Session Protection**: HttpOnly, Secure, SameSite=Strict cookies with cryptographic session tokens.
 - **Server-Side Policy Checks**: Every server action and route handler runs policy checks from `src/server/policies/` prior to accessing or mutating records. Client-side role claims are never trusted.
-- **CSRF & Rate Limiting**: Next.js Server Actions provide built-in CSRF origin validation. API routes are rate-limited per IP and user account.
+- **CSRF & Rate Limiting**: Next.js Server Actions provide built-in CSRF origin validation. Login, registration, and password-reset requests are rate-limited per IP address (and, for login and password reset, per account as well) via `src/lib/security/rateLimit.ts` -- a sliding window backed by the `rate_limit_attempts` table. Other write endpoints do not yet have dedicated rate limiting.
 
 ---
 

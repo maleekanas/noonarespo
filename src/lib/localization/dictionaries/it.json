@@ -144,6 +144,7 @@
     "demoAccountsTitle": "Account demo rapidi per lo sviluppo:",
     "defaultPasswordNotice": "Password demo predefinita per tutti gli account:",
     "invalidCredentials": "Email o password non corretti.",
+    "tooManyAttempts": "Troppi tentativi. Attendi un momento e riprova.",
     "registerTitle": "Crea il tuo account genitore",
     "registerSubtitle": "Registrati per iniziare il percorso di apprendimento di tuo figlio con l'Accademia Araba per Bambini",
     "firstNameLabel": "Nome",
