@@ -83,6 +83,14 @@ class UserRepository {
     }
   }
 
+  async findPrimaryParentIdByStudentId(studentId: string): Promise<string | null> {
+    const relationship = await prisma.parentStudentRelationship.findFirst({
+      where: { studentId },
+      orderBy: { isPrimaryContact: "desc" },
+    });
+    return relationship?.parentId ?? null;
+  }
+
   async getLinkedChildren(parentId: string): Promise<DomainStudentProfile[]> {
     const relationships = await prisma.parentStudentRelationship.findMany({
       where: { parentId },

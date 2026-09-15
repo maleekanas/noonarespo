@@ -56,15 +56,22 @@ export class GradebookService {
     );
 
     // 2. Dispatch parent notification
+    // Previously hardcoded to "parent-1" (Zayd's demo parent) regardless of
+    // which real student was actually being evaluated -- every real
+    // family's live-session alert was silently going to the wrong (demo)
+    // parent. Now resolved via the real parent<->student link.
     let parentAlertSent = false;
     try {
-      await notificationService.notifyClassPerformance({
-        parentId: "parent-1", // Zayd's parent
-        studentName,
-        stars: safeStars,
-        notes: params.teacherNotesAr || "مشاركة تفاعلية ممتازة وطلاقة في القراءة.",
-      });
-      parentAlertSent = true;
+      const parentId = await userRepository.findPrimaryParentIdByStudentId(params.studentId);
+      if (parentId) {
+        await notificationService.notifyClassPerformance({
+          parentId,
+          studentName,
+          stars: safeStars,
+          notes: params.teacherNotesAr || "مشاركة تفاعلية ممتازة وطلاقة في القراءة.",
+        });
+        parentAlertSent = true;
+      }
     } catch {
       parentAlertSent = false;
     }

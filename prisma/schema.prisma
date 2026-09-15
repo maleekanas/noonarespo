@@ -146,6 +146,7 @@ model StudentProfile {
   pointTxs       PointTransaction[]
   streaks        LearningStreak[]
   certificates   Certificate[]
+  liveSessionGrades LiveSessionGrade[]
 
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
@@ -317,6 +318,7 @@ model ClassGroup {
   assignments   TeacherAssignment[]
   sessions      ClassSession[]
   homeworkTasks Assignment[]
+  liveSessionGrades LiveSessionGrade[]
 
   createdAt     DateTime           @default(now())
   updatedAt     DateTime           @updatedAt
@@ -481,6 +483,26 @@ model TeacherFeedback {
   updatedAt            DateTime             @updatedAt
 
   @@map("teacher_feedbacks")
+}
+
+model LiveSessionGrade {
+  id                  String         @id @default(uuid())
+  studentId           String
+  classGroupId        String
+  sessionDate         DateTime       @default(now())
+  wordsPerMinute      Int
+  makharijScore       Int            // 0-100%
+  participationStars  Int            // 1 to 5
+  teacherNotesAr      String
+  parentAlertSent     Boolean        @default(false)
+  xpAwarded           Int            @default(0)
+
+  student             StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  classGroup          ClassGroup     @relation(fields: [classGroupId], references: [id], onDelete: Cascade)
+
+  createdAt           DateTime       @default(now())
+
+  @@map("live_session_grades")
 }
 
 enum AssessmentType {
