@@ -17,6 +17,7 @@ import {
   Layers,
 } from "lucide-react";
 import { gamificationService } from "@/server/services/GamificationService";
+import { requireStudentProfile } from "@/lib/auth/currentUser";
 
 export default async function StudentDashboardPage({
   params,
@@ -25,7 +26,8 @@ export default async function StudentDashboardPage({
 }) {
   const { locale } = await params;
   const isAr = locale === "ar";
-  const studentId = "student-1";
+  const { profile: studentProfile } = await requireStudentProfile(locale);
+  const studentId = studentProfile.id;
 
   const profile = await gamificationService.getStudentGamification(studentId);
 

@@ -162,6 +162,10 @@ model ParentProfile {
   emergencyContactName String?
   emergencyPhone       String?
   billingAddress       String?
+  // Stripe Customer id (cus_...), persisted once a checkout or renewal has
+  // gone through Stripe, so we can open a self-service Billing Portal
+  // session (manage payment method / cancel) without re-deriving it.
+  stripeCustomerId     String?   @unique
 
   user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   relationships        ParentStudentRelationship[]
@@ -675,6 +679,11 @@ model Subscription {
   status             SubscriptionStatus @default(ACTIVE)
   currentPeriodStart DateTime           @default(now())
   currentPeriodEnd   DateTime
+  // Stripe Subscription id (sub_...) — lets webhook events and the Billing
+  // Portal be matched to the exact local row, instead of only by
+  // {parentId, planId} metadata (which breaks once a parent has cancelled
+  // and re-subscribed, or changed plans).
+  stripeSubscriptionId String?          @unique
 
   parent             ParentProfile      @relation(fields: [parentId], references: [id], onDelete: Cascade)
   plan               Plan               @relation(fields: [planId], references: [id], onDelete: Cascade)

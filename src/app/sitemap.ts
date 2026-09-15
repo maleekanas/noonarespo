@@ -2,7 +2,7 @@ import { MetadataRoute } from "next";
 import { locales } from "@/lib/localization";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://kidsarabicacademy.com";
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.arabickidsacademy.com";
 
   const publicRoutes = ["", "/login", "/privacy", "/terms"];
 

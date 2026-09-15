@@ -9,16 +9,55 @@ import {
   Send,
 } from "lucide-react";
 import { reviewService } from "@/server/services/ReviewService";
+import { requireParentProfile } from "@/lib/auth/currentUser";
+import { userRepository } from "@/server/repositories/UserRepository";
+import { academicRepository } from "@/server/repositories/AcademicRepository";
 
 export default async function ParentReviewsPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ locale: string }>;
+  searchParams: Promise<{ teacherId?: string }>;
 }) {
   const { locale } = await params;
+  const { teacherId: queryTeacherId } = await searchParams;
   const isAr = locale === "ar";
+  const { profile } = await requireParentProfile(locale);
 
-  const summary = await reviewService.getTeacherReviewSummary("teacher-1");
+  // Resolve the real teacher(s) actually assigned to this parent's children,
+  // instead of a single hardcoded "أحمد حسن" spotlight shown to every
+  // parent regardless of who teaches their child.
+  const children = await userRepository.getLinkedChildren(profile.id);
+  const teacherOptionsMap = new Map<string, { teacherId: string; teacherName: string; studentNames: string[] }>();
+  for (const child of children) {
+    const enrollments = await academicRepository.getEnrollmentsByStudentId(child.id);
+    for (const enr of enrollments) {
+      const assignments = await academicRepository.getTeacherAssignmentsByClassGroupId(enr.classGroupId);
+      const assignedTeacherId = assignments[0]?.teacherId;
+      if (!assignedTeacherId) continue;
+      const teacher = await userRepository.findTeacherProfileById(assignedTeacherId);
+      if (!teacher) continue;
+      const existing = teacherOptionsMap.get(assignedTeacherId);
+      const studentName = `${child.firstName} ${child.lastName}`;
+      if (existing) {
+        if (!existing.studentNames.includes(studentName)) existing.studentNames.push(studentName);
+      } else {
+        teacherOptionsMap.set(assignedTeacherId, {
+          teacherId: assignedTeacherId,
+          teacherName: `${teacher.firstName} ${teacher.lastName}`,
+          studentNames: [studentName],
+        });
+      }
+    }
+  }
+  const teacherOptions = Array.from(teacherOptionsMap.values());
+  const activeTeacher =
+    teacherOptions.find((t) => t.teacherId === queryTeacherId) || teacherOptions[0];
+
+  const summary = activeTeacher
+    ? await reviewService.getTeacherReviewSummary(activeTeacher.teacherId)
+    : { averageRating: 0, totalReviewsCount: 0, reviews: [] as Awaited<ReturnType<typeof reviewService.getTeacherReviewSummary>>["reviews"] };
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-5xl">
@@ -43,6 +82,33 @@ export default async function ParentReviewsPage({
         </p>
       </div>
 
+      {/* Teacher Switcher (only when the parent has children with more than one assigned teacher) */}
+      {teacherOptions.length > 1 && (
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 mb-4 text-xs">
+          {teacherOptions.map((t) => (
+            <Link
+              key={t.teacherId}
+              href={`/${locale}/parent/reviews?teacherId=${t.teacherId}`}
+              className={`shrink-0 px-3.5 py-2 rounded-xl font-bold border transition-all ${
+                t.teacherId === activeTeacher?.teacherId
+                  ? "bg-brand-600 text-white border-brand-600"
+                  : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
+              }`}
+            >
+              {t.teacherName}
+            </Link>
+          ))}
+        </div>
+      )}
+
+      {!activeTeacher ? (
+        <div className="bg-white border border-slate-200/90 rounded-3xl p-8 shadow-sm text-center text-sm text-slate-500">
+          {isAr
+            ? "لا يوجد معلم معيّن لأطفالك بعد. سيظهر هنا بمجرد تسجيل طفلك في فصل."
+            : "No teacher is assigned to your children yet. This will appear once your child is enrolled in a class."}
+        </div>
+      ) : (
+      <>
       {/* Teacher Rating Spotlight Card */}
       <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-brand-600 text-white rounded-3xl p-6 sm:p-8 shadow-lg mb-8 flex flex-col md:flex-row items-center justify-between gap-6">
         <div className="flex items-center gap-5">
@@ -51,15 +117,15 @@ export default async function ParentReviewsPage({
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-xl sm:text-2xl font-black">أ. أحمد حسن</h2>
+              <h2 className="text-xl sm:text-2xl font-black">{activeTeacher.teacherName}</h2>
               <span className="px-2.5 py-0.5 bg-white/20 text-xs font-bold rounded-full">
                 {isAr ? "معلم معتمد" : "Verified Teacher"}
               </span>
             </div>
             <p className="text-xs text-amber-100 mt-1">
               {isAr
-                ? "معلم مسارات القراءة والطلاقة والقرآن الكريم والتجويد للأطفال"
-                : "Reading Fluency, Tajweed and Quran Educator for Kids"}
+                ? `معلم طفلك: ${activeTeacher.studentNames.join("، ")}`
+                : `Teaching: ${activeTeacher.studentNames.join(", ")}`}
             </p>
           </div>
         </div>
@@ -88,7 +154,7 @@ export default async function ParentReviewsPage({
           <div className="bg-white border border-slate-200/90 rounded-3xl p-6 shadow-sm space-y-4 sticky top-6">
             <div className="flex items-center gap-2 text-slate-900 font-bold text-sm">
               <Sparkles className="w-4 h-4 text-amber-500" />
-              <span>{isAr ? "أضف تقييمك لـ أ. أحمد حسن" : "Submit Your Review"}</span>
+              <span>{isAr ? `أضف تقييمك لـ ${activeTeacher.teacherName}` : "Submit Your Review"}</span>
             </div>
 
             <form
@@ -99,10 +165,10 @@ export default async function ParentReviewsPage({
                 const comment = (formData.get("comment") as string) || "معلم رائع ومتميز";
 
                 await reviewService.submitParentReview({
-                  parentId: "parent-1",
-                  parentName: "طارق المنصور",
-                  teacherId: "teacher-1",
-                  teacherName: "أ. أحمد حسن",
+                  parentId: profile.id,
+                  parentName: `${profile.firstName} ${profile.lastName}`,
+                  teacherId: activeTeacher.teacherId,
+                  teacherName: activeTeacher.teacherName,
                   rating,
                   titleAr: title,
                   commentAr: comment,
@@ -234,6 +300,8 @@ export default async function ParentReviewsPage({
           </div>
         </div>
       </div>
+      </>
+      )}
     </div>
   );
 }

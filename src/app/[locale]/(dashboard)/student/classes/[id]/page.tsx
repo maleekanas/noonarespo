@@ -5,6 +5,7 @@ import { academicRepository } from "@/server/repositories/AcademicRepository";
 import { schedulingRepository } from "@/server/repositories/SchedulingRepository";
 import { assignmentRepository } from "@/server/repositories/AssignmentRepository";
 import { userRepository } from "@/server/repositories/UserRepository";
+import { requireStudentProfile } from "@/lib/auth/currentUser";
 import {
   Video,
   FileCheck,
@@ -17,6 +18,7 @@ export default async function StudentClassDetailPage({
   params: Promise<{ locale: string; id: string }>;
 }) {
   const { locale, id } = await params;
+  const { profile: studentProfile } = await requireStudentProfile(locale);
   const classGroup = await academicRepository.getClassGroupById(id);
 
   if (!classGroup) {
@@ -35,7 +37,7 @@ export default async function StudentClassDetailPage({
 
   // Get assignments
   const assignments = await assignmentRepository.getAssignmentsByClassGroupId(id);
-  const studentSubmissions = await assignmentRepository.getSubmissionsByStudentId("student-1");
+  const studentSubmissions = await assignmentRepository.getSubmissionsByStudentId(studentProfile.id);
   const submissionMap = new Map(studentSubmissions.map((s) => [s.assignmentId, s]));
 
   return (

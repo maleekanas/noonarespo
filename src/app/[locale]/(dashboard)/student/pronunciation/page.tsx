@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowRight, Mic, Award } from "lucide-react";
 import { pronunciationService } from "@/server/services/PronunciationService";
 import { PronunciationWaveformStudio } from "@/components/pronunciation/PronunciationWaveformStudio";
+import { requireStudentProfile } from "@/lib/auth/currentUser";
 
 export default async function PronunciationStudioPage({
   params,
@@ -11,6 +12,7 @@ export default async function PronunciationStudioPage({
 }) {
   const { locale } = await params;
   const isAr = locale === "ar";
+  await requireStudentProfile(locale);
 
   const phonemes = await pronunciationService.getPhonemeCatalog();
   const minimalPairs = await pronunciationService.getMinimalPairs();
@@ -22,8 +24,9 @@ export default async function PronunciationStudioPage({
     userWaveformSamples: number[];
   }) {
     "use server";
+    const { profile: studentProfile } = await requireStudentProfile(locale);
     const result = await pronunciationService.evaluatePronunciation({
-      studentId: "student-1",
+      studentId: studentProfile.id,
       phonemeId: params.phonemeId,
       audioDurationMs: params.audioDurationMs,
       userWaveformSamples: params.userWaveformSamples,

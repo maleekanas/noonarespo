@@ -126,7 +126,8 @@
     "noAccount": "Nog geen account?",
     "registerNow": "Registreer als ouder",
     "demoAccountsTitle": "Snelle ontwikkelingsdemo accounts:",
-    "defaultPasswordNotice": "Standaard demowachtwoord voor alle accounts:"
+    "defaultPasswordNotice": "Standaard demowachtwoord voor alle accounts:",
+    "invalidCredentials": "Onjuist e-mailadres of wachtwoord."
   },
   "footer": {
     "copyright": "Alle rechten voorbehouden © 2026 Arabische Kids Academie.",

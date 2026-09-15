@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { ArrowRight, BookOpen } from "lucide-react";
 import { storyService } from "@/server/services/StoryService";
 import { InteractiveStoryReader } from "@/components/stories/InteractiveStoryReader";
+import { requireStudentProfile } from "@/lib/auth/currentUser";
 
 export default async function StoryReaderPage({
   params,
@@ -12,6 +13,7 @@ export default async function StoryReaderPage({
 }) {
   const { locale, id } = await params;
   const isAr = locale === "ar";
+  await requireStudentProfile(locale);
 
   const story = await storyService.getStoryDetails(id);
 
@@ -22,8 +24,9 @@ export default async function StoryReaderPage({
   // Server action to evaluate story quiz
   async function submitQuizAction(selectedOptions: Record<string, number>) {
     "use server";
+    const { profile: studentProfile } = await requireStudentProfile(locale);
     const result = await storyService.evaluateStoryQuiz({
-      studentId: "student-1",
+      studentId: studentProfile.id,
       storyId: id,
       selectedOptions,
     });

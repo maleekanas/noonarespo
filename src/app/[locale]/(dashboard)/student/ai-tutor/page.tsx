@@ -2,6 +2,7 @@ import React from "react";
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
 import { aiService } from "@/server/services/AiService";
+import { requireStudentProfile } from "@/lib/auth/currentUser";
 import {
   Sparkles,
   Bot,
@@ -17,7 +18,8 @@ export default async function StudentAiTutorPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const studentId = "student-1"; // Zayd Tariq
+  const { profile: studentProfile } = await requireStudentProfile(locale);
+  const studentId = studentProfile.id;
 
   const history = aiService.getSessionHistory(studentId);
   const aiStatus = aiService.getAiStatus();

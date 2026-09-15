@@ -126,7 +126,8 @@
     "noAccount": "Non hai ancora un account?",
     "registerNow": "Registrati come genitore",
     "demoAccountsTitle": "Account demo rapidi per lo sviluppo:",
-    "defaultPasswordNotice": "Password demo predefinita per tutti gli account:"
+    "defaultPasswordNotice": "Password demo predefinita per tutti gli account:",
+    "invalidCredentials": "Email o password non corretti."
   },
   "footer": {
     "copyright": "Tutti i diritti riservati © 2026 Accademia Araba per Bambini.",

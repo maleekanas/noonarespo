@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowRight, Layers, Sparkles } from "lucide-react";
 import { vocabularyService } from "@/server/services/VocabularyService";
 import { VocabularySrsStudio } from "@/components/vocabulary/VocabularySrsStudio";
+import { requireStudentProfile } from "@/lib/auth/currentUser";
 
 export default async function StudentFlashcardsPage({
   params,
@@ -11,7 +12,8 @@ export default async function StudentFlashcardsPage({
 }) {
   const { locale } = await params;
   const isAr = locale === "ar";
-  const studentId = "student-1";
+  const { profile: studentProfile } = await requireStudentProfile(locale);
+  const studentId = studentProfile.id;
 
   const dueCards = await vocabularyService.getDueCards(studentId);
   const overview = await vocabularyService.getStudentOverview(studentId);

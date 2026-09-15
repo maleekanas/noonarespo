@@ -3,6 +3,7 @@ import Link from "next/link";
 import { revalidatePath } from "next/cache";
 import { gradebookService } from "@/server/services/GradebookService";
 import { academicRepository } from "@/server/repositories/AcademicRepository";
+import { userRepository } from "@/server/repositories/UserRepository";
 import {
   GraduationCap,
   Star,
@@ -28,6 +29,16 @@ export default async function TeacherGradebookPage({
   const classGroups = await academicRepository.getAllClassGroups();
   const activeClass = classGroups.find((c) => c.id === activeClassId) || classGroups[0];
 
+  // Resolve the real roster of the selected class instead of a hardcoded
+  // two-student list -- every teacher used to see the same two demo names
+  // to pick from regardless of which class or students they actually teach.
+  const enrollments = await academicRepository.getEnrollmentsByClassGroupId(activeClassId);
+  const roster = (
+    await Promise.all(
+      enrollments.map((e) => userRepository.findStudentProfileById(e.studentId))
+    )
+  ).filter((s): s is NonNullable<typeof s> => Boolean(s));
+
   const grades = await gradebookService.getClassSessionGrades(activeClassId);
 
   // Compute live averages
@@ -47,8 +58,10 @@ export default async function TeacherGradebookPage({
     const participationStars = Number(formData.get("participationStars") || 5);
     const teacherNotesAr = (formData.get("teacherNotesAr") as string) || "مشاركة تفاعلية ممتازة.";
 
+    if (!studentId) return;
+
     await gradebookService.recordLiveEvaluation({
-      studentId: studentId || "student-1",
+      studentId,
       classGroupId: activeClassId,
       wordsPerMinute,
       makharijScore,
@@ -161,8 +174,17 @@ export default async function TeacherGradebookPage({
                 name="studentId"
                 className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500"
               >
-                <option value="student-1">زيد طارق (المستوى A1)</option>
-                <option value="student-2">مريم طارق (المستوى Pre-A1)</option>
+                {roster.length > 0 ? (
+                  roster.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.firstName} {s.lastName}
+                    </option>
+                  ))
+                ) : (
+                  <option value="" disabled>
+                    لا يوجد طلاب مسجلون في هذا الفصل بعد
+                  </option>
+                )}
               </select>
             </div>
 

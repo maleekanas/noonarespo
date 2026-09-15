@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { schedulingRepository } from "@/server/repositories/SchedulingRepository";
 import { schedulingService } from "@/server/services/SchedulingService";
 import { academicRepository } from "@/server/repositories/AcademicRepository";
+import { userRepository } from "@/server/repositories/UserRepository";
 import {
   Calendar,
   Clock,
@@ -21,6 +22,20 @@ export default async function AdminSchedulePage({
   const sessions = await schedulingRepository.getAllSessions();
   const classGroups = await academicRepository.getAllClassGroups();
 
+  // Resolve the real teacher assigned to each class group (rather than a
+  // hardcoded display name) so the sessions list shows who's actually
+  // teaching each one.
+  const teacherNameByClassGroupId = new Map<string, string>();
+  for (const cg of classGroups) {
+    const assignments = await academicRepository.getTeacherAssignmentsByClassGroupId(cg.id);
+    const teacher = assignments.length > 0
+      ? await userRepository.findTeacherProfileById(assignments[0].teacherId)
+      : null;
+    if (teacher) {
+      teacherNameByClassGroupId.set(cg.id, `${teacher.firstName} ${teacher.lastName}`);
+    }
+  }
+
   async function handleScheduleSession(formData: FormData) {
     "use server";
     const classGroupId = formData.get("classGroupId")?.toString() || "class-reading-a1-cohort1";
@@ -29,10 +44,20 @@ export default async function AdminSchedulePage({
 
     if (!startDateTimeStr) return;
 
+    // Assign the session to the teacher actually assigned to this class
+    // group, instead of a hardcoded id -- fall back to the classGroup's own
+    // teacherId field only if there's no explicit assignment on record.
+    const assignments = await academicRepository.getTeacherAssignmentsByClassGroupId(classGroupId);
+    const teacherId = assignments[0]?.teacherId;
+    if (!teacherId) {
+      console.error(`Scheduling error: no teacher is assigned to class group ${classGroupId}`);
+      return;
+    }
+
     try {
       await schedulingService.scheduleSession({
         classGroupId,
-        teacherId: "teacher-1",
+        teacherId,
         startTimeUtc: new Date(startDateTimeStr),
         durationMinutes: parseInt(durationMinutesStr, 10),
       });
@@ -90,7 +115,11 @@ export default async function AdminSchedulePage({
                     <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-bold text-[11px] border border-emerald-200">
                       مؤكدة
                     </span>
-                    <span className="text-xs text-slate-400">معلم: أ/ أحمد المنصوري</span>
+                    <span className="text-xs text-slate-400">
+                      معلم: {teacherNameByClassGroupId.get(session.classGroupId)
+                        ? `أ/ ${teacherNameByClassGroupId.get(session.classGroupId)}`
+                        : "لم يُحدد بعد"}
+                    </span>
                   </div>
 
                   <h3 className="font-bold text-slate-900 text-base">

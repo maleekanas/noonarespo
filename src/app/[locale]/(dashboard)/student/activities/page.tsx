@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { gamificationService } from "@/server/services/GamificationService";
 import { Flame, Sparkles } from "lucide-react";
 import { PhonicsArcadeStudio } from "@/components/activities/PhonicsArcadeStudio";
+import { requireStudentProfile } from "@/lib/auth/currentUser";
 
 export default async function StudentActivitiesPage({
   params,
@@ -11,7 +12,8 @@ export default async function StudentActivitiesPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const studentId = "student-1";
+  const { profile: studentProfile } = await requireStudentProfile(locale);
+  const studentId = studentProfile.id;
 
   async function handleCompleteActivity() {
     "use server";

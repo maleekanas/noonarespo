@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowRight, Compass, Sparkles } from "lucide-react";
 import { roadmapService } from "@/server/services/RoadmapService";
 import { VisualLearningQuestMap } from "@/components/roadmap/VisualLearningQuestMap";
+import { requireStudentProfile } from "@/lib/auth/currentUser";
 
 export default async function StudentRoadmapPage({
   params,
@@ -11,7 +12,8 @@ export default async function StudentRoadmapPage({
 }) {
   const { locale } = await params;
   const isAr = locale === "ar";
-  const studentId = "student-1";
+  const { profile: studentProfile } = await requireStudentProfile(locale);
+  const studentId = studentProfile.id;
 
   const progress = await roadmapService.getStudentRoadmap(studentId);
 

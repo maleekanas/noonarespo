@@ -12,6 +12,7 @@ import {
   Award,
 } from "lucide-react";
 import { quranService } from "@/server/services/QuranService";
+import { requireStudentProfile } from "@/lib/auth/currentUser";
 
 export default async function QuranStudioPage({
   params,
@@ -23,10 +24,12 @@ export default async function QuranStudioPage({
   const { locale } = await params;
   const { surah: activeSurahId } = await searchParams;
   const isAr = locale === "ar";
+  const { profile: studentProfile } = await requireStudentProfile(locale);
+  const studentId = studentProfile.id;
 
   const surahs = await quranService.getSurahCatalog();
   const currentSurah = surahs.find((s) => s.id === activeSurahId) || surahs[1] || surahs[0]; // Default to Al-Ikhlas or first
-  const pastSubmissions = await quranService.getStudentRecitations("student-1");
+  const pastSubmissions = await quranService.getStudentRecitations(studentId);
 
   const tajweedRulesLegend = [
     { nameAr: "القلقلة (قطب جد)", nameEn: "Qalqalah", colorHex: "#DC2626", bgClass: "bg-rose-50 text-rose-700 border-rose-200" },
@@ -232,7 +235,7 @@ export default async function QuranStudioPage({
             <form action={async () => {
               "use server";
               await quranService.submitRecitation({
-                studentId: "student-1",
+                studentId,
                 surahId: currentSurah.id,
                 durationSeconds: 24,
               });

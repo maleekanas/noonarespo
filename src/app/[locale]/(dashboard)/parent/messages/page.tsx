@@ -3,6 +3,9 @@ import Link from "next/link";
 import { revalidatePath } from "next/cache";
 import { communicationRepository } from "@/server/repositories/CommunicationRepository";
 import { communicationService } from "@/server/services/CommunicationService";
+import { requireParentProfile } from "@/lib/auth/currentUser";
+import { userRepository } from "@/server/repositories/UserRepository";
+import { academicRepository } from "@/server/repositories/AcademicRepository";
 import {
   Send,
   ShieldCheck,
@@ -14,15 +17,37 @@ export default async function ParentMessagesPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const parentId = "parent-1";
-  const teacherId = "teacher-1";
-  const studentId = "student-1";
+  const { profile } = await requireParentProfile(locale);
+  const parentId = profile.id;
 
-  const conv = await communicationRepository.getOrCreateConversation(parentId, teacherId, studentId);
-  const messages = await communicationRepository.getMessages(conv.id);
+  // Resolve the real child + the teacher actually assigned to their class,
+  // instead of a hardcoded demo teacher/student pair -- every parent used to
+  // land in the exact same conversation regardless of who they were.
+  const children = await userRepository.getLinkedChildren(parentId);
+  const studentId = children[0]?.id;
+  let teacherId: string | undefined;
+  let teacherName = "المعلم المسؤول";
+  if (studentId) {
+    const enrollments = await academicRepository.getEnrollmentsByStudentId(studentId);
+    for (const enr of enrollments) {
+      const assignments = await academicRepository.getTeacherAssignmentsByClassGroupId(enr.classGroupId);
+      if (assignments[0]) {
+        teacherId = assignments[0].teacherId;
+        const teacher = await userRepository.findTeacherProfileById(teacherId);
+        if (teacher) teacherName = `${teacher.firstName} ${teacher.lastName}`;
+        break;
+      }
+    }
+  }
+
+  const conv = studentId && teacherId
+    ? await communicationRepository.getOrCreateConversation(parentId, teacherId, studentId)
+    : null;
+  const messages = conv ? await communicationRepository.getMessages(conv.id) : [];
 
   async function handleSendMessage(formData: FormData) {
     "use server";
+    if (!studentId || !teacherId) return;
     const content = formData.get("content")?.toString();
     if (!content || !content.trim()) return;
 
@@ -55,7 +80,7 @@ export default async function ParentMessagesPage({
             التواصل المباشر مع المعلم 💬
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            محادثة آمنة وموثقة مع الأستاذ: أحمد المنصوري (معلم القراءة والتجويد)
+            محادثة آمنة وموثقة مع الأستاذ: {teacherName}
           </p>
         </div>
 
@@ -73,7 +98,7 @@ export default async function ParentMessagesPage({
             أ
           </div>
           <div>
-            <span className="font-bold text-slate-900 text-sm block">الأستاذ أحمد المنصوري</span>
+            <span className="font-bold text-slate-900 text-sm block">الأستاذ {teacherName}</span>
             <span className="text-[11px] text-emerald-600 font-semibold flex items-center gap-1">
               <span className="w-2 h-2 rounded-full bg-emerald-500" />
               <span>متاح للرد والاستشارات التربوية</span>
@@ -92,7 +117,7 @@ export default async function ParentMessagesPage({
               >
                 <div className="flex items-center gap-2 mb-1 text-[11px] text-slate-400">
                   <span className="font-bold text-slate-600">
-                    {isParent ? "أنت (ولي الأمر)" : "الأستاذ أحمد المنصوري"}
+                    {isParent ? "أنت (ولي الأمر)" : `الأستاذ ${teacherName}`}
                   </span>
                   <span>•</span>
                   <span>{new Date(msg.sentAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>

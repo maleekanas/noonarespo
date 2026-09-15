@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { communicationRepository } from "@/server/repositories/CommunicationRepository";
 import { communicationService } from "@/server/services/CommunicationService";
 import { userRepository } from "@/server/repositories/UserRepository";
+import { academicRepository } from "@/server/repositories/AcademicRepository";
+import { requireParentProfile } from "@/lib/auth/currentUser";
 import {
   Calendar,
   Clock,
@@ -17,11 +19,33 @@ export default async function ParentMeetingsPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const parentId = "parent-1";
-  const teacherId = "teacher-1";
+  const { profile } = await requireParentProfile(locale);
+  const parentId = profile.id;
 
   const children = await userRepository.getLinkedChildren(parentId);
   const meetings = await communicationRepository.getMeetingRequestsByParentId(parentId);
+
+  // Resolve a display name for whichever teacher each meeting is actually
+  // with, instead of a single hardcoded "أحمد المنصوري" for every meeting.
+  const teacherNameByTeacherId = new Map<string, string>();
+  for (const teacherId of new Set(meetings.map((m) => m.teacherId))) {
+    const teacher = await userRepository.findTeacherProfileById(teacherId);
+    if (teacher) {
+      teacherNameByTeacherId.set(teacherId, `${teacher.firstName} ${teacher.lastName}`);
+    }
+  }
+
+  // Find the real teacher assigned to a given child's class, instead of a
+  // hardcoded demo teacher id -- every parent used to book a meeting with
+  // the same fake teacher regardless of who actually teaches their child.
+  async function resolveTeacherIdForStudent(studentId: string): Promise<string | undefined> {
+    const enrollments = await academicRepository.getEnrollmentsByStudentId(studentId);
+    for (const enr of enrollments) {
+      const assignments = await academicRepository.getTeacherAssignmentsByClassGroupId(enr.classGroupId);
+      if (assignments[0]) return assignments[0].teacherId;
+    }
+    return undefined;
+  }
 
   async function handleRequestMeeting(formData: FormData) {
     "use server";
@@ -29,7 +53,13 @@ export default async function ParentMeetingsPage({
     const dateStr = formData.get("meetingDate")?.toString();
     const notes = formData.get("notes")?.toString();
 
-    if (!dateStr) return;
+    if (!dateStr || !studentId) return;
+
+    const teacherId = await resolveTeacherIdForStudent(studentId);
+    if (!teacherId) {
+      console.error(`Meeting request error: no teacher is assigned to student ${studentId}`);
+      return;
+    }
 
     await communicationService.requestMeeting({
       parentId,
@@ -94,7 +124,9 @@ export default async function ParentMeetingsPage({
                     >
                       {meeting.status === "CONFIRMED" ? "مؤكد وجاهز" : "بانتظار تأكيد المعلم"}
                     </span>
-                    <span className="text-xs text-slate-400">مع الأستاذ: أحمد المنصوري</span>
+                    <span className="text-xs text-slate-400">
+                      مع الأستاذ: {teacherNameByTeacherId.get(meeting.teacherId) || "لم يُحدد بعد"}
+                    </span>
                   </div>
 
                   <h3 className="text-base font-bold text-slate-900">

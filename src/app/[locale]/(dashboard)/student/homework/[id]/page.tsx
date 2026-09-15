@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { assignmentRepository } from "@/server/repositories/AssignmentRepository";
 import { assignmentService } from "@/server/services/AssignmentService";
+import { requireStudentProfile } from "@/lib/auth/currentUser";
 import {
   Mic,
   Volume2,
@@ -17,13 +18,14 @@ export default async function StudentHomeworkPage({
   params: Promise<{ locale: string; id: string }>;
 }) {
   const { locale, id } = await params;
+  const { profile: studentProfile } = await requireStudentProfile(locale);
   const assignment = await assignmentRepository.getAssignmentById(id);
 
   if (!assignment) {
     notFound();
   }
 
-  const studentId = "student-1";
+  const studentId = studentProfile.id;
   const submission = await assignmentRepository.getSubmission(id, studentId);
   const feedback = submission
     ? await assignmentRepository.getFeedbackBySubmissionId(submission.id)

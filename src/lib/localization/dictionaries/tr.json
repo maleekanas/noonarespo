@@ -126,7 +126,8 @@
     "noAccount": "Hesabınız yok mu?",
     "registerNow": "Veli olarak kaydolun",
     "demoAccountsTitle": "Geliştirme için hızlı demo hesaplar:",
-    "defaultPasswordNotice": "Tüm demo hesaplar için varsayılan şifre:"
+    "defaultPasswordNotice": "Tüm demo hesaplar için varsayılan şifre:",
+    "invalidCredentials": "E-posta veya şifre hatalı."
   },
   "footer": {
     "copyright": "Tüm hakları saklıdır © 2026 Arapça Çocuk Akademisi.",

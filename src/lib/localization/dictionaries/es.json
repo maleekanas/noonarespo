@@ -126,7 +126,8 @@
     "noAccount": "¿No tienes una cuenta?",
     "registerNow": "Regístrate como padre",
     "demoAccountsTitle": "Cuentas demo rápidas para desarrollo:",
-    "defaultPasswordNotice": "Contraseña demo por defecto para todas las cuentas:"
+    "defaultPasswordNotice": "Contraseña demo por defecto para todas las cuentas:",
+    "invalidCredentials": "Correo electrónico o contraseña incorrectos."
   },
   "footer": {
     "copyright": "Todos los derechos reservados © 2026 Academia Árabe para Niños.",

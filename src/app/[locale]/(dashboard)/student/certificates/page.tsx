@@ -6,6 +6,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { PrintButton } from "@/components/shared/PrintButton";
+import { requireStudentProfile } from "@/lib/auth/currentUser";
 
 export default async function StudentCertificatesPage({
   params,
@@ -13,7 +14,8 @@ export default async function StudentCertificatesPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const studentId = "student-1";
+  const { profile: studentProfile } = await requireStudentProfile(locale);
+  const studentId = studentProfile.id;
 
   const cert = await certificateService.getCertificateForStudent(studentId);
 

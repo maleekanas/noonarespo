@@ -2,6 +2,7 @@ import React from "react";
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
 import { placementService } from "@/server/services/PlacementService";
+import { requireStudentProfile } from "@/lib/auth/currentUser";
 import {
   Sparkles,
   Award,
@@ -15,7 +16,8 @@ export default async function StudentPlacementPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const studentId = "student-1";
+  const { profile: studentProfile } = await requireStudentProfile(locale);
+  const studentId = studentProfile.id;
 
   const questions = await placementService.getQuestions();
   const latestResult = await placementService.getLatestResult(studentId);

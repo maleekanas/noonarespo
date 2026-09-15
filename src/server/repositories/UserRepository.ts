@@ -260,6 +260,10 @@ class InMemoryUserRepository {
     return null;
   }
 
+  async findParentProfileById(id: string): Promise<DomainParentProfile | null> {
+    return this.parentProfiles.get(id) || null;
+  }
+
   async findStudentProfileById(id: string): Promise<DomainStudentProfile | null> {
     return this.studentProfiles.get(id) || null;
   }

@@ -1,6 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import { gamificationService } from "@/server/services/GamificationService";
+import { requireStudentProfile } from "@/lib/auth/currentUser";
 import { ShieldCheck } from "lucide-react";
 
 export default async function StudentLeaderboardPage({
@@ -9,7 +10,8 @@ export default async function StudentLeaderboardPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const studentId = "student-1";
+  const { profile: studentProfile } = await requireStudentProfile(locale);
+  const studentId = studentProfile.id;
 
   const leaderboard = await gamificationService.getCohortLeaderboard(studentId);
 
