@@ -38,7 +38,7 @@ export interface RecitationSubmission {
   scoreTajweed: number; // 0-100
   scoreHifz: number; // 0-100
   overallScore: number;
-  teacherFeedbackAr?: string;
+  teacherFeedbackAr?: string | null;
   xpAwarded: number;
   submittedAt: Date;
 }

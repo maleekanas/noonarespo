@@ -30,11 +30,11 @@ export interface DomainStudentProfile {
   firstName: string;
   lastName: string;
   dateOfBirth: Date;
-  gender?: string;
-  nationality?: string;
+  gender?: string | null;
+  nationality?: string | null;
   nativeLanguage: string;
   ageGroup: AgeGroup;
-  notesInternal?: string;
+  notesInternal?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -45,9 +45,9 @@ export interface DomainParentProfile {
   firstName: string;
   lastName: string;
   phoneNumber: string;
-  emergencyContactName?: string;
-  emergencyPhone?: string;
-  billingAddress?: string;
+  emergencyContactName?: string | null;
+  emergencyPhone?: string | null;
+  billingAddress?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -57,13 +57,13 @@ export interface DomainTeacherProfile {
   userId: string;
   firstName: string;
   lastName: string;
-  bioEn?: string;
-  bioAr?: string;
-  qualifications?: string;
-  certifications?: string;
+  bioEn?: string | null;
+  bioAr?: string | null;
+  qualifications?: string | null;
+  certifications?: string | null;
   experienceYears: number;
   hourlyRateMinorUnits: number;
-  languagesSpoken?: string;
+  languagesSpoken?: string | null;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -83,9 +83,9 @@ export interface DomainProgram {
   type: ProgramType;
   titleEn: string;
   titleAr: string;
-  descriptionEn?: string;
-  descriptionAr?: string;
-  iconName?: string;
+  descriptionEn?: string | null;
+  descriptionAr?: string | null;
+  iconName?: string | null;
 }
 
 export interface DomainCourse {
@@ -93,8 +93,8 @@ export interface DomainCourse {
   programId: string;
   titleEn: string;
   titleAr: string;
-  descriptionEn?: string;
-  descriptionAr?: string;
+  descriptionEn?: string | null;
+  descriptionAr?: string | null;
 }
 
 export interface DomainCourseLevel {
@@ -139,8 +139,8 @@ export interface DomainClassSession {
   startTimeUtc: Date;
   endTimeUtc: Date;
   status: SessionStatus;
-  meetingUrl?: string;
-  recordingUrl?: string;
+  meetingUrl?: string | null;
+  recordingUrl?: string | null;
 }
 
 export interface DomainAttendanceRecord {
@@ -148,7 +148,7 @@ export interface DomainAttendanceRecord {
   sessionId: string;
   studentId: string;
   status: AttendanceStatus;
-  notes?: string;
+  notes?: string | null;
   recordedAt: Date;
 }
 
@@ -158,7 +158,7 @@ export interface DomainAssignment {
   titleEn: string;
   titleAr: string;
   instructions: string;
-  voicePromptUrl?: string;
+  voicePromptUrl?: string | null;
   dueDateUtc: Date;
   createdAt: Date;
 }
@@ -167,8 +167,8 @@ export interface DomainAssignmentSubmission {
   id: string;
   assignmentId: string;
   studentId: string;
-  audioUrl?: string;
-  textContent?: string;
+  audioUrl?: string | null;
+  textContent?: string | null;
   status: SubmissionStatus;
   submittedAt: Date;
 }
@@ -179,6 +179,6 @@ export interface DomainTeacherFeedback {
   teacherId: string;
   score: number; // 0-100
   parentVisibleFeedback: string;
-  internalTeacherNotes?: string;
+  internalTeacherNotes?: string | null;
   createdAt: Date;
 }
