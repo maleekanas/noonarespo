@@ -787,17 +787,11 @@ class InMemoryAdministrationRepository {
   }
 
   async updateTeacherRate(teacherId: string, newRateMinorUnits: number): Promise<void> {
-    const teacher = await userRepository.findTeacherProfileById(teacherId);
-    if (teacher) {
-      teacher.hourlyRateMinorUnits = newRateMinorUnits;
-    }
+    await userRepository.updateTeacherProfile(teacherId, { hourlyRateMinorUnits: newRateMinorUnits });
   }
 
   async updateTeacherActiveStatus(teacherId: string, isActive: boolean): Promise<void> {
-    const teacher = await userRepository.findTeacherProfileById(teacherId);
-    if (teacher) {
-      teacher.isActive = isActive;
-    }
+    await userRepository.updateTeacherProfile(teacherId, { isActive });
   }
 }
 
