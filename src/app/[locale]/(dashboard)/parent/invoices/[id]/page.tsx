@@ -2,9 +2,15 @@ import React from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { billingService } from "@/server/services/BillingService";
-import { userRepository } from "@/server/repositories/UserRepository";
+import { requireParentProfile } from "@/lib/auth/currentUser";
+import { prisma } from "@/lib/database/prisma";
 import { GraduationCap } from "lucide-react";
 import { PrintButton } from "@/components/shared/PrintButton";
+
+const PROVIDER_LABELS_AR: Record<string, string> = {
+  STRIPE: "بطاقة بنكية عبر Stripe",
+  MOCK: "بطاقة ائتمانية (تجريبي)",
+};
 
 export default async function ParentInvoiceDetailPage({
   params,
@@ -12,13 +18,28 @@ export default async function ParentInvoiceDetailPage({
   params: Promise<{ locale: string; id: string }>;
 }) {
   const { locale, id } = await params;
-  const invoice = await billingService.getInvoiceById(id);
+  const { profile } = await requireParentProfile(locale);
+
+  // Invoices are always scoped to the logged-in parent — never trust the
+  // URL id alone, so one parent can't view another parent's invoice by
+  // guessing its id.
+  const invoice = await prisma.invoice.findFirst({
+    where: { id, parentId: profile.id },
+    include: { items: true, payments: true },
+  });
 
   if (!invoice) {
     notFound();
   }
 
-  const parent = await userRepository.findParentProfileByUserId("user-parent-1");
+  const discountMinorUnits = Math.max(
+    0,
+    invoice.subtotalMinorUnits - invoice.taxMinorUnits - invoice.totalMinorUnits
+  );
+  const paymentProvider = invoice.payments[0]?.provider;
+  const paymentMethodLabel = paymentProvider
+    ? PROVIDER_LABELS_AR[paymentProvider] || paymentProvider
+    : "—";
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
@@ -75,7 +96,7 @@ export default async function ParentInvoiceDetailPage({
 
           <div className="text-center sm:text-end space-y-1">
             <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-200">
-              مدفوعة بالكامل ✓
+              {invoice.status === "PAID" ? "مدفوعة بالكامل ✓" : invoice.status}
             </span>
             <h3 className="text-lg font-extrabold text-slate-900 block font-mono mt-1">
               {invoice.invoiceNumber}
@@ -91,15 +112,15 @@ export default async function ParentInvoiceDetailPage({
           <div className="space-y-1">
             <span className="font-bold text-slate-900 block text-sm">فاتورة إلى:</span>
             <span className="font-bold text-slate-800 block">
-              {parent ? `${parent.firstName} ${parent.lastName}` : "أ/ طارق المنصور"}
+              {profile.firstName} {profile.lastName}
             </span>
-            <span>العنوان: {parent?.billingAddress || "الرياض، المملكة العربية السعودية"}</span>
-            <span className="block">الهاتف: {parent?.phoneNumber || "+966501234567"}</span>
+            <span>العنوان: {profile.billingAddress || "غير محدد"}</span>
+            <span className="block">الهاتف: {profile.phoneNumber}</span>
           </div>
 
           <div className="space-y-1 sm:text-end">
             <span className="font-bold text-slate-900 block text-sm">تفاصيل السداد:</span>
-            <span>طريقة الدفع: {invoice.paymentMethod}</span>
+            <span>طريقة الدفع: {paymentMethodLabel}</span>
             <span className="block">حالة المعاملة: تم الخصم والتأكيد المباشر</span>
             <span className="block">العملة: {invoice.currency} (الدولار الأمريكي)</span>
           </div>
@@ -117,15 +138,15 @@ export default async function ParentInvoiceDetailPage({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {invoice.lineItems.map((item, idx) => (
-                <tr key={idx} className="text-slate-800">
+              {invoice.items.map((item) => (
+                <tr key={item.id} className="text-slate-800">
                   <td className="py-4 font-bold">{item.description}</td>
                   <td className="py-4 text-center font-medium">{item.quantity}</td>
                   <td className="py-4 text-end font-medium">
-                    {billingService.formatPrice(item.unitPriceMinorUnits, invoice.currency)}
+                    {billingService.formatPrice(item.amountMinorUnits, invoice.currency)}
                   </td>
                   <td className="py-4 text-end font-bold">
-                    {billingService.formatPrice(item.totalMinorUnits, invoice.currency)}
+                    {billingService.formatPrice(item.amountMinorUnits * item.quantity, invoice.currency)}
                   </td>
                 </tr>
               ))}
@@ -143,10 +164,10 @@ export default async function ParentInvoiceDetailPage({
               </span>
             </div>
 
-            {invoice.discountMinorUnits > 0 && (
+            {discountMinorUnits > 0 && (
               <div className="flex items-center justify-between text-emerald-600 font-bold">
                 <span>خصم الكوبون:</span>
-                <span>-{billingService.formatPrice(invoice.discountMinorUnits, invoice.currency)}</span>
+                <span>-{billingService.formatPrice(discountMinorUnits, invoice.currency)}</span>
               </div>
             )}
 
@@ -167,7 +188,7 @@ export default async function ParentInvoiceDetailPage({
         {/* Footer Notes */}
         <div className="pt-6 border-t border-slate-100 text-center text-slate-400 text-[11px] space-y-1">
           <p>شكراً لثقتكم بأكاديمية براعم العربية. نتمنى لأبنائكم رحلة تعليمية مباركة وممتعة.</p>
-          <p>لأي استفسارات بخصوص الفاتورة، يُرجى التواصل مع قسم المالية: billing@kidsarabicacademy.internal</p>
+          <p>لأي استفسارات بخصوص الفاتورة، يُرجى التواصل مع قسم المالية: billing@arabickidsacademy.com</p>
         </div>
       </div>
     </div>
