@@ -127,7 +127,20 @@
     "registerNow": "Registrati come genitore",
     "demoAccountsTitle": "Account demo rapidi per lo sviluppo:",
     "defaultPasswordNotice": "Password demo predefinita per tutti gli account:",
-    "invalidCredentials": "Email o password non corretti."
+    "invalidCredentials": "Email o password non corretti.",
+    "registerTitle": "Crea il tuo account genitore",
+    "registerSubtitle": "Registrati per iniziare il percorso di apprendimento di tuo figlio con l'Accademia Araba per Bambini",
+    "firstNameLabel": "Nome",
+    "lastNameLabel": "Cognome",
+    "phoneLabel": "Numero di telefono",
+    "confirmPasswordLabel": "Conferma password",
+    "submitRegister": "Crea account",
+    "alreadyHaveAccount": "Hai già un account?",
+    "signInLink": "Accedi",
+    "passwordMismatch": "Le password non corrispondono.",
+    "emailInUse": "Questa email è già registrata. Prova ad accedere.",
+    "weakPassword": "La password deve contenere almeno 8 caratteri.",
+    "registrationError": "Impossibile creare l'account. Riprova."
   },
   "footer": {
     "copyright": "Tutti i diritti riservati © 2026 Accademia Araba per Bambini.",

@@ -127,7 +127,20 @@
     "registerNow": "Veli olarak kaydolun",
     "demoAccountsTitle": "Geliştirme için hızlı demo hesaplar:",
     "defaultPasswordNotice": "Tüm demo hesaplar için varsayılan şifre:",
-    "invalidCredentials": "E-posta veya şifre hatalı."
+    "invalidCredentials": "E-posta veya şifre hatalı.",
+    "registerTitle": "Veli Hesabınızı Oluşturun",
+    "registerSubtitle": "Çocuğunuzun öğrenme yolculuğuna Arapça Çocuk Akademisi ile başlamak için kaydolun",
+    "firstNameLabel": "Ad",
+    "lastNameLabel": "Soyad",
+    "phoneLabel": "Telefon Numarası",
+    "confirmPasswordLabel": "Şifreyi Onayla",
+    "submitRegister": "Hesap Oluştur",
+    "alreadyHaveAccount": "Zaten bir hesabınız var mı?",
+    "signInLink": "Giriş yapın",
+    "passwordMismatch": "Şifreler eşleşmiyor.",
+    "emailInUse": "Bu e-posta zaten kayıtlı. Bunun yerine giriş yapmayı deneyin.",
+    "weakPassword": "Şifre en az 8 karakter uzunluğunda olmalıdır.",
+    "registrationError": "Hesabınız oluşturulamadı. Lütfen tekrar deneyin."
   },
   "footer": {
     "copyright": "Tüm hakları saklıdır © 2026 Arapça Çocuk Akademisi.",

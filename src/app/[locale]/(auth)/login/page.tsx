@@ -1,4 +1,5 @@
 import React from "react";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
 import { getDictionary } from "@/lib/localization";
@@ -137,6 +138,13 @@ export default async function LoginPage({
             {dict.auth.submitSignIn}
           </button>
         </form>
+
+        <div className="text-center text-xs text-slate-500">
+          <span>{dict.auth.noAccount} </span>
+          <Link href={`/${locale}/register`} className="font-bold text-brand-600 hover:underline">
+            {dict.auth.registerNow}
+          </Link>
+        </div>
 
         {/* Fast Development Personas — never rendered when
             NEXT_PUBLIC_HIDE_DEMO_SWITCHER=true (set in Production). Buttons

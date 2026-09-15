@@ -184,7 +184,7 @@ export default async function HomePage({
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
             <Link
-              href={`/${locale}/login`}
+              href={`/${locale}/register`}
               className="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-8 py-4 text-base font-bold text-white gradient-brand rounded-2xl shadow-lg shadow-brand-500/25 hover:shadow-brand-500/40 hover:-translate-y-0.5 transition-all"
             >
               <span>{dict.hero.ctaPrimary}</span>
@@ -353,7 +353,7 @@ export default async function HomePage({
               </ul>
             </div>
             <Link
-              href={`/${locale}/login`}
+              href={`/${locale}/register?plan=plan-group`}
               className="mt-8 block text-center py-3 px-4 rounded-xl text-sm font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 transition-colors"
             >
               {dict.pricing.groupCta}
@@ -390,7 +390,7 @@ export default async function HomePage({
               </ul>
             </div>
             <Link
-              href={`/${locale}/login`}
+              href={`/${locale}/register?plan=plan-private`}
               className="mt-8 block text-center py-3 px-4 rounded-xl text-sm font-bold bg-white text-brand-900 hover:bg-slate-100 transition-colors shadow-sm"
             >
               {dict.pricing.privateCta}
@@ -423,7 +423,7 @@ export default async function HomePage({
               </ul>
             </div>
             <Link
-              href={`/${locale}/login`}
+              href={`/${locale}/register?plan=plan-family`}
               className="mt-8 block text-center py-3 px-4 rounded-xl text-sm font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 transition-colors"
             >
               {dict.pricing.familyCta}
@@ -449,7 +449,7 @@ export default async function HomePage({
           </div>
 
           <Link
-            href={`/${locale}/login`}
+            href={`/${locale}/register`}
             className="whitespace-nowrap px-8 py-4 text-sm font-bold text-slate-900 bg-white hover:bg-slate-100 rounded-2xl transition-all shadow-md"
           >
             {dict.safetyBanner.cta}

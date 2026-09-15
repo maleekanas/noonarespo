@@ -127,7 +127,20 @@
     "registerNow": "Registreer als ouder",
     "demoAccountsTitle": "Snelle ontwikkelingsdemo accounts:",
     "defaultPasswordNotice": "Standaard demowachtwoord voor alle accounts:",
-    "invalidCredentials": "Onjuist e-mailadres of wachtwoord."
+    "invalidCredentials": "Onjuist e-mailadres of wachtwoord.",
+    "registerTitle": "Maak uw ouderaccount aan",
+    "registerSubtitle": "Registreer om de leerreis van uw kind te starten bij Arabische Kids Academie",
+    "firstNameLabel": "Voornaam",
+    "lastNameLabel": "Achternaam",
+    "phoneLabel": "Telefoonnummer",
+    "confirmPasswordLabel": "Bevestig wachtwoord",
+    "submitRegister": "Account aanmaken",
+    "alreadyHaveAccount": "Heeft u al een account?",
+    "signInLink": "Inloggen",
+    "passwordMismatch": "Wachtwoorden komen niet overeen.",
+    "emailInUse": "Dit e-mailadres is al geregistreerd. Probeer in te loggen.",
+    "weakPassword": "Het wachtwoord moet minimaal 8 tekens lang zijn.",
+    "registrationError": "We konden uw account niet aanmaken. Probeer het opnieuw."
   },
   "footer": {
     "copyright": "Alle rechten voorbehouden © 2026 Arabische Kids Academie.",

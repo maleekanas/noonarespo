@@ -49,7 +49,9 @@ export default async function ParentDashboardPage({
             {isAr ? "بوابة ولي الأمر الموحدة" : "Unified Parent Portal"}
           </span>
           <h1 className="text-2xl font-extrabold text-slate-900 mt-1">
-            {isAr ? "أهلاً بك، أ/ طارق المنصور 👨‍👧" : "Welcome, Tariq Al-Mansoor 👨‍👧"}
+            {isAr
+              ? `أهلاً بك، أ/ ${profile.firstName} ${profile.lastName} 👨‍👧`
+              : `Welcome, ${profile.firstName} ${profile.lastName} 👨‍👧`}
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
             {isAr

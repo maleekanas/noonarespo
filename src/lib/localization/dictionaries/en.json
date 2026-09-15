@@ -127,7 +127,20 @@
     "registerNow": "Register as a Parent",
     "demoAccountsTitle": "Quick Development Demo Personas:",
     "defaultPasswordNotice": "Default demo password for all accounts:",
-    "invalidCredentials": "Incorrect email or password."
+    "invalidCredentials": "Incorrect email or password.",
+    "registerTitle": "Create Your Parent Account",
+    "registerSubtitle": "Register to start your child's learning journey with Arabic Kids Academy",
+    "firstNameLabel": "First Name",
+    "lastNameLabel": "Last Name",
+    "phoneLabel": "Phone Number",
+    "confirmPasswordLabel": "Confirm Password",
+    "submitRegister": "Create Account",
+    "alreadyHaveAccount": "Already have an account?",
+    "signInLink": "Sign in",
+    "passwordMismatch": "Passwords do not match.",
+    "emailInUse": "This email is already registered. Try signing in instead.",
+    "weakPassword": "Password must be at least 8 characters long.",
+    "registrationError": "We couldn't create your account. Please try again."
   },
   "footer": {
     "copyright": "All rights reserved © 2026 Arabic Kids Academy.",

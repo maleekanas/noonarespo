@@ -127,7 +127,20 @@
     "registerNow": "Regístrate como padre",
     "demoAccountsTitle": "Cuentas demo rápidas para desarrollo:",
     "defaultPasswordNotice": "Contraseña demo por defecto para todas las cuentas:",
-    "invalidCredentials": "Correo electrónico o contraseña incorrectos."
+    "invalidCredentials": "Correo electrónico o contraseña incorrectos.",
+    "registerTitle": "Crea tu cuenta de padre",
+    "registerSubtitle": "Regístrate para comenzar el viaje de aprendizaje de tu hijo con Academia Árabe para Niños",
+    "firstNameLabel": "Nombre",
+    "lastNameLabel": "Apellido",
+    "phoneLabel": "Número de teléfono",
+    "confirmPasswordLabel": "Confirmar contraseña",
+    "submitRegister": "Crear cuenta",
+    "alreadyHaveAccount": "¿Ya tienes una cuenta?",
+    "signInLink": "Iniciar sesión",
+    "passwordMismatch": "Las contraseñas no coinciden.",
+    "emailInUse": "Este correo electrónico ya está registrado. Intenta iniciar sesión.",
+    "weakPassword": "La contraseña debe tener al menos 8 caracteres.",
+    "registrationError": "No pudimos crear tu cuenta. Inténtalo de nuevo."
   },
   "footer": {
     "copyright": "Todos los derechos reservados © 2026 Academia Árabe para Niños.",
