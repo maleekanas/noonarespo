@@ -2,10 +2,13 @@ import React from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { billingService } from "@/server/services/BillingService";
+import { createStripeCheckoutSession } from "@/server/services/StripeSubscriptionService";
+import { isStripeConfigured } from "@/lib/integrations/stripe";
 import {
-  CreditCard,
   ArrowRight,
   Lock,
+  ShieldAlert,
+  Info,
 } from "lucide-react";
 import { DirectionalIcon } from "@/components/shared/DirectionalIcon";
 import { requireParentProfile } from "@/lib/auth/currentUser";
@@ -15,11 +18,11 @@ export default async function ParentCheckoutPage({
   searchParams,
 }: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ planId?: string; coupon?: string }>;
+  searchParams: Promise<{ planId?: string; coupon?: string; cancelled?: string }>;
 }) {
   const { locale } = await params;
-  const { planId: planIdParam, coupon: couponParam } = await searchParams;
-  const { profile } = await requireParentProfile(locale);
+  const { planId: planIdParam, coupon: couponParam, cancelled } = await searchParams;
+  const { session, profile } = await requireParentProfile(locale);
   const parentId = profile.id;
 
   const allPlans = await billingService.getAllPlans();
@@ -31,25 +34,22 @@ export default async function ParentCheckoutPage({
     couponParam
   );
 
+  const stripeReady = isStripeConfigured();
+
   async function handleCheckout(formData: FormData) {
     "use server";
     const planId = formData.get("planId")?.toString() || selectedPlan.id;
     const couponCode = formData.get("couponCode")?.toString() || "";
-    const paymentMethod = (formData.get("paymentMethod")?.toString() || "CREDIT_CARD") as
-      | "CREDIT_CARD"
-      | "APPLE_PAY"
-      | "GOOGLE_PAY"
-      | "PAYPAL"
-      | "MOCK";
 
-    const { invoice } = await billingService.processCheckout({
+    const { url } = await createStripeCheckoutSession({
       parentId,
+      parentEmail: session.email,
       planId,
       couponCode: couponCode || undefined,
-      paymentMethod,
+      locale,
     });
 
-    redirect(`/${locale}/parent/invoices/${invoice.id}`);
+    redirect(url);
   }
 
   return (
@@ -77,6 +77,20 @@ export default async function ParentCheckoutPage({
           <span>تشفير مالي آمن 256-bit SSL</span>
         </div>
       </div>
+
+      {cancelled && (
+        <div className="flex items-center gap-2 px-4 py-3 rounded-2xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-bold">
+          <ShieldAlert className="w-4 h-4 flex-shrink-0" />
+          <span>تم إلغاء عملية الدفع ولم يتم خصم أي مبلغ. يمكنك المحاولة مجدداً في أي وقت.</span>
+        </div>
+      )}
+
+      {!stripeReady && (
+        <div className="flex items-center gap-2 px-4 py-3 rounded-2xl bg-red-50 border border-red-200 text-red-800 text-xs font-bold">
+          <ShieldAlert className="w-4 h-4 flex-shrink-0" />
+          <span>بوابة الدفع غير مُفعّلة حالياً على هذا الموقع. الرجاء المحاولة لاحقاً أو التواصل مع الدعم.</span>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left 2 Cols: Plan Selection & Payment Form */}
@@ -122,106 +136,25 @@ export default async function ParentCheckoutPage({
             <input type="hidden" name="planId" value={selectedPlan.id} />
             <input type="hidden" name="couponCode" value={couponParam || ""} />
 
-            {/* Payment Method Selector */}
             <div className="space-y-3">
               <label className="block text-xs font-bold text-slate-700">
-                2. اختر وسيلة الدفع المعتمدة:
+                2. الدفع الآمن عبر Stripe:
               </label>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <label className="p-3.5 rounded-2xl border-2 border-brand-500 bg-brand-50/30 flex flex-col items-center gap-1.5 cursor-pointer text-center">
-                  <input
-                    type="radio"
-                    name="paymentMethod"
-                    value="CREDIT_CARD"
-                    defaultChecked
-                    className="sr-only"
-                  />
-                  <CreditCard className="w-5 h-5 text-brand-600" />
-                  <span className="text-xs font-bold text-slate-800">بطاقة بنكية</span>
-                  <span className="text-[10px] text-slate-400">Visa / Mada</span>
-                </label>
-
-                <label className="p-3.5 rounded-2xl border border-slate-200 hover:border-slate-300 flex flex-col items-center gap-1.5 cursor-pointer text-center">
-                  <input
-                    type="radio"
-                    name="paymentMethod"
-                    value="APPLE_PAY"
-                    className="sr-only"
-                  />
-                  <span className="text-sm font-bold text-slate-800">Pay</span>
-                  <span className="text-xs font-bold text-slate-800">Apple Pay</span>
-                  <span className="text-[10px] text-slate-400">دفع فوري</span>
-                </label>
-
-                <label className="p-3.5 rounded-2xl border border-slate-200 hover:border-slate-300 flex flex-col items-center gap-1.5 cursor-pointer text-center">
-                  <input
-                    type="radio"
-                    name="paymentMethod"
-                    value="GOOGLE_PAY"
-                    className="sr-only"
-                  />
-                  <span className="text-sm font-bold text-slate-800">G Pay</span>
-                  <span className="text-xs font-bold text-slate-800">Google Pay</span>
-                  <span className="text-[10px] text-slate-400">دفع آمن</span>
-                </label>
-
-                <label className="p-3.5 rounded-2xl border border-slate-200 hover:border-slate-300 flex flex-col items-center gap-1.5 cursor-pointer text-center">
-                  <input
-                    type="radio"
-                    name="paymentMethod"
-                    value="PAYPAL"
-                    className="sr-only"
-                  />
-                  <span className="text-sm font-bold text-blue-600">PayPal</span>
-                  <span className="text-xs font-bold text-slate-800">باي بال</span>
-                  <span className="text-[10px] text-slate-400">عالمي</span>
-                </label>
-              </div>
-            </div>
-
-            {/* Credit Card Input Simulation */}
-            <div className="space-y-4 pt-2 border-t border-slate-100 text-xs">
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">اسم حامل البطاقة</label>
-                <input
-                  defaultValue="طارق المنصور"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-brand-500"
-                />
-              </div>
-
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">رقم البطاقة</label>
-                <input
-                  defaultValue="4242 •••• •••• 4242"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-brand-500 font-mono"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">تاريخ الانتهاء</label>
-                  <input
-                    defaultValue="12/28"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-brand-500 font-mono"
-                  />
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">رمز الأمان CVC</label>
-                  <input
-                    defaultValue="888"
-                    type="password"
-                    maxLength={4}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-brand-500 font-mono"
-                  />
-                </div>
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex items-start gap-3 text-xs text-slate-600">
+                <Info className="w-4 h-4 text-brand-600 flex-shrink-0 mt-0.5" />
+                <span>
+                  سيتم تحويلك إلى صفحة الدفع الآمنة والمعتمدة من Stripe لإدخال بيانات بطاقتك مباشرة.
+                  نحن لا نطّلع على بيانات بطاقتك ولا نخزّنها على خوادمنا إطلاقاً.
+                </span>
               </div>
             </div>
 
             <button
               type="submit"
-              className="w-full py-4 rounded-2xl gradient-brand text-white font-extrabold text-sm shadow-md hover:opacity-95 transition-all flex items-center justify-center gap-2"
+              disabled={!stripeReady}
+              className="w-full py-4 rounded-2xl gradient-brand text-white font-extrabold text-sm shadow-md hover:opacity-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <span>تأكيد الدفع وسداد {billingService.formatPrice(calculation.totalMinorUnits)}</span>
+              <span>المتابعة إلى الدفع الآمن — {billingService.formatPrice(calculation.totalMinorUnits)}</span>
               <DirectionalIcon icon={ArrowRight} locale={locale} className="w-4 h-4" />
             </button>
           </form>
