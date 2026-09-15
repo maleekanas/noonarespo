@@ -1,3 +1,5 @@
+import { prisma } from "@/lib/database/prisma";
+
 export type ReviewStatus = "APPROVED" | "PENDING" | "FLAGGED";
 
 export interface ParentReview {
@@ -14,81 +16,86 @@ export interface ParentReview {
   createdAt: Date;
 }
 
-class InMemoryReviewRepository {
-  private reviews: Map<string, ParentReview> = new Map();
-
-  constructor() {
-    this.seedReviews();
-  }
-
-  private seedReviews() {
-    this.reviews.set("rev-1", {
-      id: "rev-1",
-      parentId: "parent-1", // Tariq Al-Mansoor
-      parentName: "طارق المنصور",
-      teacherId: "teacher-1", // Ustadh Ahmed
-      teacherName: "أ. أحمد حسن",
-      rating: 5,
-      titleAr: "معلم استثنائي وصبر عظيم مع الأطفال",
-      commentAr: "ما شاء الله، أستاذ أحمد بارع جداً في تحبيب ابني زيد في القراءة والطلاقة. أسلوبه مشجع ودائماً يمنح الأطفال الثقة لنطق الكلمات الصعبة. نوصي به بشدة!",
-      status: "APPROVED",
-      adminReplyAr: "شكراً لثقتكم الكريمة أبا زيد، نفخر بكادرنا التعليمي المتميز ونتمنى لزيد دوام التفوق!",
-      createdAt: new Date(Date.now() - 7 * 24 * 3600 * 1000),
-    });
-
-    this.reviews.set("rev-2", {
-      id: "rev-2",
-      parentId: "parent-2", // Omar
-      parentName: "عمر العمري",
-      teacherId: "teacher-1",
-      teacherName: "أ. أحمد حسن",
-      rating: 5,
-      titleAr: "تطور ملحوظ في أحكام التجويد خلال شهر واحد",
-      commentAr: "ابني يوسف كان يتردد في مخارج الحروف، والآن يتقن القلقلة والإخفاء بكل طلاقة بفضل الله ثم أسلوب أستاذ أحمد.",
-      status: "APPROVED",
-      createdAt: new Date(Date.now() - 14 * 24 * 3600 * 1000),
-    });
-  }
-
+class ReviewRepository {
   async getAllReviews(): Promise<ParentReview[]> {
-    return Array.from(this.reviews.values()).sort(
-      (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
-    );
+    const rows = await prisma.parentReview.findMany({ orderBy: { createdAt: "desc" } });
+    return rows.map((row) => this.toReview(row));
   }
 
   async getApprovedReviewsByTeacherId(teacherId: string): Promise<ParentReview[]> {
-    return Array.from(this.reviews.values())
-      .filter((r) => r.teacherId === teacherId && r.status === "APPROVED")
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    const rows = await prisma.parentReview.findMany({
+      where: { teacherId, status: "APPROVED" },
+      orderBy: { createdAt: "desc" },
+    });
+    return rows.map((row) => this.toReview(row));
   }
 
   async getReviewsByParentId(parentId: string): Promise<ParentReview[]> {
-    return Array.from(this.reviews.values())
-      .filter((r) => r.parentId === parentId)
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    const rows = await prisma.parentReview.findMany({
+      where: { parentId },
+      orderBy: { createdAt: "desc" },
+    });
+    return rows.map((row) => this.toReview(row));
   }
 
   async createReview(review: Omit<ParentReview, "id" | "createdAt" | "status">): Promise<ParentReview> {
-    const id = "rev-" + (this.reviews.size + 1);
-    const full: ParentReview = {
-      ...review,
-      id,
-      status: "APPROVED", // Auto-approved for verified enrolled parents in dev mock
-      createdAt: new Date(),
-    };
-    this.reviews.set(id, full);
-    return full;
+    const row = await prisma.parentReview.create({
+      data: {
+        parentId: review.parentId,
+        parentName: review.parentName,
+        teacherId: review.teacherId,
+        teacherName: review.teacherName,
+        rating: review.rating,
+        titleAr: review.titleAr,
+        commentAr: review.commentAr,
+        status: "APPROVED", // Auto-approved for verified enrolled parents, same as before
+        adminReplyAr: review.adminReplyAr,
+      },
+    });
+    return this.toReview(row);
   }
 
   async updateReviewStatus(id: string, status: ReviewStatus, adminReply?: string): Promise<ParentReview | null> {
-    const review = this.reviews.get(id);
-    if (!review) return null;
-    review.status = status;
-    if (adminReply !== undefined) {
-      review.adminReplyAr = adminReply;
-    }
-    return review;
+    const existing = await prisma.parentReview.findUnique({ where: { id } });
+    if (!existing) return null;
+
+    const row = await prisma.parentReview.update({
+      where: { id },
+      data: {
+        status,
+        ...(adminReply !== undefined ? { adminReplyAr: adminReply } : {}),
+      },
+    });
+    return this.toReview(row);
+  }
+
+  private toReview(row: {
+    id: string;
+    parentId: string;
+    parentName: string;
+    teacherId: string;
+    teacherName: string;
+    rating: number;
+    titleAr: string;
+    commentAr: string;
+    status: string;
+    adminReplyAr: string | null;
+    createdAt: Date;
+  }): ParentReview {
+    return {
+      id: row.id,
+      parentId: row.parentId,
+      parentName: row.parentName,
+      teacherId: row.teacherId,
+      teacherName: row.teacherName,
+      rating: row.rating,
+      titleAr: row.titleAr,
+      commentAr: row.commentAr,
+      status: row.status as ReviewStatus,
+      adminReplyAr: row.adminReplyAr ?? undefined,
+      createdAt: row.createdAt,
+    };
   }
 }
 
-export const reviewRepository = new InMemoryReviewRepository();
+export const reviewRepository = new ReviewRepository();

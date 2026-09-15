@@ -152,6 +152,9 @@ model StudentProfile {
   pronunciationAttempts PronunciationAttempt[]
   vocabularyCardProgress VocabularyCardProgress[]
   roadmapNodeProgress RoadmapNodeProgress[]
+  placementAttempts PlacementAttempt[]
+  conversations  Conversation[]
+  meetingRequests MeetingRequest[]
 
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
@@ -177,6 +180,9 @@ model ParentProfile {
   relationships        ParentStudentRelationship[]
   subscriptions        Subscription[]
   invoices             Invoice[]
+  reviews              ParentReview[]
+  conversations        Conversation[]
+  meetingRequests      MeetingRequest[]
 
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
@@ -203,6 +209,9 @@ model TeacherProfile {
   sessions             ClassSession[]
   feedbacks            TeacherFeedback[]
   compensations        TeacherCompensation[]
+  reviews              ParentReview[]
+  conversations        Conversation[]
+  meetingRequests      MeetingRequest[]
 
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
@@ -739,6 +748,131 @@ model RoadmapNodeProgress {
 
   @@unique([studentId, nodeId])
   @@map("roadmap_node_progress")
+}
+
+model PlacementAttempt {
+  id                     String         @id @default(uuid())
+  studentId              String
+  scorePercentage        Int
+  recommendedLevelCode   String         // "PRE_A1" | "A1" | "A2" | "B1"
+  recommendedLevelTitleAr String
+  recommendedLevelTitleEn String
+  answers                Json           // question id -> submitted answer; the placement question bank itself is static app content, not a database table
+
+  student                StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  completedAt            DateTime       @default(now())
+
+  @@map("placement_attempts")
+}
+
+model PartnerSchool {
+  id                String   @id // Stable slug id (e.g. "school-al-noor"), not a generated uuid -- these are real B2B partner institutions, seeded once.
+  nameAr            String
+  nameEn            String
+  type              String   // "ISLAMIC_SCHOOL" | "COMMUNITY_CENTER" | "HOMESCHOOL_COOP"
+  country           String
+  city              String
+  licenseSeatsTotal Int
+  licenseSeatsUsed  Int
+  classesCount      Int
+  studentsCount     Int
+  contactPerson     String
+  contactEmail      String
+  contractStatus    String   // "ACTIVE" | "PENDING_RENEWAL" | "TRIAL"
+  curriculumTrackAr String
+
+  createdAt         DateTime @default(now())
+
+  @@map("partner_schools")
+}
+
+model ParentReview {
+  id           String        @id @default(uuid())
+  parentId     String
+  parentName   String        // Denormalized display name at time of submission
+  teacherId    String
+  teacherName  String        // Denormalized display name at time of submission
+  rating       Int           // 1 to 5 stars
+  titleAr      String
+  commentAr    String
+  status       String        @default("APPROVED") // "APPROVED" | "PENDING" | "FLAGGED"
+  adminReplyAr String?
+
+  parent       ParentProfile @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  teacher      TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  createdAt    DateTime      @default(now())
+
+  @@map("parent_reviews")
+}
+
+model Conversation {
+  id        String          @id @default(uuid())
+  parentId  String
+  teacherId String
+  studentId String
+
+  parent    ParentProfile   @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  teacher   TeacherProfile  @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  student   StudentProfile  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  messages  Message[]
+
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  @@unique([parentId, teacherId, studentId])
+  @@map("conversations")
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  conversationId String
+  senderId       String       // ParentProfile.id or TeacherProfile.id depending on senderRole -- polymorphic, intentionally no FK
+  senderRole     String       // "PARENT" | "TEACHER"
+  content        String
+  isRead         Boolean      @default(false)
+
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  sentAt         DateTime     @default(now())
+
+  @@index([conversationId])
+  @@map("messages")
+}
+
+model MeetingRequest {
+  id               String         @id @default(uuid())
+  parentId         String
+  teacherId        String
+  studentId        String
+  requestedTimeUtc DateTime
+  status           String         @default("PENDING") // "PENDING" | "CONFIRMED" | "CANCELLED" | "COMPLETED"
+  notes            String?
+  meetingUrl       String?
+
+  parent           ParentProfile  @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  teacher          TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  student          StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  createdAt        DateTime       @default(now())
+
+  @@map("meeting_requests")
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String   // ParentProfile.id or TeacherProfile.id depending on recipient -- polymorphic, intentionally no FK
+  title     String
+  message   String
+  type      String   // "ATTENDANCE_ALERT" | "HOMEWORK_GRADED" | "NEW_MESSAGE" | "MEETING_UPDATE" | "LIVE_SESSION_EVALUATION"
+  linkUrl   String?
+  isRead    Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("notifications")
 }
 
 // -----------------------------------------------------------------------------
