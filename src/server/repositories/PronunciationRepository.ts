@@ -1,3 +1,5 @@
+import { prisma } from "@/lib/database/prisma";
+
 export type MakhrajCategory = "TONGUE" | "THROAT" | "LIPS" | "NASAL";
 
 export interface PhonemeSampleWord {
@@ -53,10 +55,23 @@ export interface PronunciationAttempt {
   xpAwarded: number;
 }
 
-class InMemoryPronunciationRepository {
+/**
+ * The phoneme/Makharij and minimal-pair catalogs are static app content
+ * bundled with the code, not user data, so they stay as in-memory seeds
+ * here -- same as before.
+ *
+ * PronunciationAttempt (a real student's recorded pronunciation attempt and
+ * its scores) is different: it used to be an in-memory Map that reset on
+ * every serverless cold start, so a real child's pronunciation practice
+ * history silently disappeared. It's now backed by a new
+ * PronunciationAttempt Prisma model/table (see prisma/schema.prisma and
+ * src/app/api/admin/apply-pronunciation-schema-migration/route.ts), the
+ * same additive-schema-change pattern used for Gradebook, StoryProgress,
+ * and RecitationSubmission.
+ */
+class PronunciationRepository {
   private phonemes: Map<string, PhonemeItem> = new Map();
   private minimalPairs: Map<string, MinimalPair> = new Map();
-  private attempts: Map<string, PronunciationAttempt[]> = new Map();
 
   constructor() {
     this.seedPhonemes();
@@ -290,14 +305,29 @@ class InMemoryPronunciationRepository {
   }
 
   async saveAttempt(attempt: PronunciationAttempt): Promise<void> {
-    const list = this.attempts.get(attempt.studentId) || [];
-    list.unshift(attempt);
-    this.attempts.set(attempt.studentId, list);
+    // The caller-generated `attempt.id` (a timestamp-based string, not a
+    // real database id) and passed-in `recordedAt` are honored for the
+    // fields that matter; the database mints its own real uuid primary key.
+    await prisma.pronunciationAttempt.create({
+      data: {
+        studentId: attempt.studentId,
+        phonemeId: attempt.phonemeId,
+        scorePercentage: attempt.scorePercentage,
+        pitchAccuracy: attempt.pitchAccuracy,
+        clarityScore: attempt.clarityScore,
+        feedbackAr: attempt.feedbackAr,
+        xpAwarded: attempt.xpAwarded,
+        recordedAt: attempt.recordedAt,
+      },
+    });
   }
 
   async getStudentAttempts(studentId: string): Promise<PronunciationAttempt[]> {
-    return this.attempts.get(studentId) || [];
+    return prisma.pronunciationAttempt.findMany({
+      where: { studentId },
+      orderBy: { recordedAt: "desc" },
+    });
   }
 }
 
-export const pronunciationRepository = new InMemoryPronunciationRepository();
+export const pronunciationRepository = new PronunciationRepository();

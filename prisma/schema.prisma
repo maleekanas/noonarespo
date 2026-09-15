@@ -149,6 +149,7 @@ model StudentProfile {
   liveSessionGrades LiveSessionGrade[]
   storyProgress  StoryProgress[]
   recitationSubmissions RecitationSubmission[]
+  pronunciationAttempts PronunciationAttempt[]
 
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
@@ -688,6 +689,23 @@ model RecitationSubmission {
   submittedAt              DateTime      @default(now())
 
   @@map("recitation_submissions")
+}
+
+model PronunciationAttempt {
+  id              String         @id @default(uuid())
+  studentId       String
+  phonemeId       String         // Phoneme catalog id, e.g. "phoneme-dhad" -- the phoneme/Makharij catalog itself is static app content, not a database table
+  scorePercentage Int
+  pitchAccuracy   Int
+  clarityScore    Int
+  feedbackAr      String
+  xpAwarded       Int            @default(0)
+
+  student         StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  recordedAt      DateTime       @default(now())
+
+  @@map("pronunciation_attempts")
 }
 
 // -----------------------------------------------------------------------------
