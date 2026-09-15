@@ -13,17 +13,6 @@ export interface SubscriptionPlan {
   isPopular?: boolean;
 }
 
-export interface ParentSubscription {
-  id: string;
-  parentId: string;
-  planId: string;
-  status: "ACTIVE" | "PAST_DUE" | "CANCELED";
-  currentPeriodStart: Date;
-  currentPeriodEnd: Date;
-  cancelAtPeriodEnd: boolean;
-  createdAt: Date;
-}
-
 export interface DiscountCoupon {
   code: string;
   discountPercentage: number; // e.g. 10 for 10%
@@ -31,55 +20,29 @@ export interface DiscountCoupon {
   isActive: boolean;
 }
 
-export interface InvoiceLineItem {
-  description: string;
-  quantity: number;
-  unitPriceMinorUnits: number;
-  totalMinorUnits: number;
-}
-
-export interface DomainInvoice {
-  id: string;
-  invoiceNumber: string; // e.g. "INV-2026-0901"
-  parentId: string;
-  subscriptionId?: string;
-  subtotalMinorUnits: number;
-  discountMinorUnits: number;
-  taxMinorUnits: number;
-  totalMinorUnits: number;
-  currency: string;
-  status: "PAID" | "PENDING" | "REFUNDED" | "VOID";
-  lineItems: InvoiceLineItem[];
-  paymentMethod: string;
-  paidAt?: Date;
-  createdAt: Date;
-}
-
-export interface TeacherPayrollRecord {
-  id: string;
-  teacherId: string;
-  monthString: string; // "2026-09"
-  completedSessionsCount: number;
-  totalHours: number;
-  hourlyRateMinorUnits: number;
-  grossPayMinorUnits: number;
-  status: "PAID" | "PENDING";
-  paidAt?: Date;
-}
-
+/**
+ * This used to also hold in-memory, never-persisted ParentSubscription /
+ * DomainInvoice / TeacherPayrollRecord data (a handful of seeded fake
+ * records that reset on every serverless cold start). Real subscriptions,
+ * invoices, payments, and teacher payroll are now genuinely persisted via
+ * Prisma -- see StripeSubscriptionService (subscriptions/invoices/payments)
+ * and PayrollService (teacher compensation) -- so this repository is left
+ * with only what's still intentionally static, code-defined business
+ * configuration: the plan catalog and discount coupons. That's a legitimate
+ * design choice for a small business's fixed pricing tiers, not a bug --
+ * changing a price or adding a coupon just means editing this file and
+ * redeploying.
+ */
 class InMemoryFinancialRepository {
   private plans: Map<string, SubscriptionPlan> = new Map();
-  private subscriptions: Map<string, ParentSubscription> = new Map();
   private coupons: Map<string, DiscountCoupon> = new Map();
-  private invoices: Map<string, DomainInvoice> = new Map();
-  private payrollRecords: Map<string, TeacherPayrollRecord> = new Map();
 
   constructor() {
     this.seedDefaults();
   }
 
   private seedDefaults() {
-    // 1. Subscription Plans in integer minor units
+    // Subscription Plans in integer minor units
     const plansCatalog: SubscriptionPlan[] = [
       {
         id: "plan-starter",
@@ -162,23 +125,7 @@ class InMemoryFinancialRepository {
       this.plans.set(p.id, p);
     }
 
-    // 2. Active Parent Subscription for Tariq (parent-1)
-    const now = new Date();
-    const periodStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    const periodEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-
-    this.subscriptions.set("sub-parent-1", {
-      id: "sub-parent-1",
-      parentId: "parent-1",
-      planId: "plan-family",
-      status: "ACTIVE",
-      currentPeriodStart: periodStart,
-      currentPeriodEnd: periodEnd,
-      cancelAtPeriodEnd: false,
-      createdAt: periodStart,
-    });
-
-    // 3. Discount Coupons
+    // Discount Coupons
     this.coupons.set("WELCOME10", {
       code: "WELCOME10",
       discountPercentage: 10,
@@ -191,67 +138,6 @@ class InMemoryFinancialRepository {
       discountPercentage: 20,
       descriptionAr: "خصم الإخوة الإضافي 20%",
       isActive: true,
-    });
-
-    // 4. Invoices
-    this.invoices.set("inv-1", {
-      id: "inv-1",
-      invoiceNumber: "INV-2026-0901",
-      parentId: "parent-1",
-      subscriptionId: "sub-parent-1",
-      subtotalMinorUnits: 14900,
-      discountMinorUnits: 0,
-      taxMinorUnits: 0,
-      totalMinorUnits: 14900,
-      currency: "USD",
-      status: "PAID",
-      lineItems: [
-        {
-          description: "باقة العائلة المتميزة - اشتراك شهر سبتمبر 2026 (تغطية 3 أطفال)",
-          quantity: 1,
-          unitPriceMinorUnits: 14900,
-          totalMinorUnits: 14900,
-        },
-      ],
-      paymentMethod: "بطاقة ائتمانية (Visa •••• 4242)",
-      paidAt: new Date(now.getFullYear(), now.getMonth(), 1, 10, 0, 0),
-      createdAt: new Date(now.getFullYear(), now.getMonth(), 1, 10, 0, 0),
-    });
-
-    this.invoices.set("inv-2", {
-      id: "inv-2",
-      invoiceNumber: "INV-2026-0801",
-      parentId: "parent-1",
-      subtotalMinorUnits: 14900,
-      discountMinorUnits: 0,
-      taxMinorUnits: 0,
-      totalMinorUnits: 14900,
-      currency: "USD",
-      status: "PAID",
-      lineItems: [
-        {
-          description: "باقة العائلة المتميزة - اشتراك شهر أغسطس 2026",
-          quantity: 1,
-          unitPriceMinorUnits: 14900,
-          totalMinorUnits: 14900,
-        },
-      ],
-      paymentMethod: "بطاقة ائتمانية (Visa •••• 4242)",
-      paidAt: new Date(now.getFullYear(), now.getMonth() - 1, 1, 10, 0, 0),
-      createdAt: new Date(now.getFullYear(), now.getMonth() - 1, 1, 10, 0, 0),
-    });
-
-    // 5. Teacher Payroll Record for Ustadh Ahmed (teacher-1)
-    // 16 completed sessions * 0.75 hr (45 min) = 12 hours @ $30/hr (3000 minor units) = $360.00 (36000 minor units)
-    this.payrollRecords.set("pay-teacher-1-2026-09", {
-      id: "pay-teacher-1-2026-09",
-      teacherId: "teacher-1",
-      monthString: "2026-09",
-      completedSessionsCount: 16,
-      totalHours: 12,
-      hourlyRateMinorUnits: 3000,
-      grossPayMinorUnits: 36000,
-      status: "PENDING",
     });
   }
 
@@ -267,61 +153,6 @@ class InMemoryFinancialRepository {
   async getCoupon(code: string): Promise<DiscountCoupon | null> {
     const coupon = this.coupons.get(code.toUpperCase());
     return coupon && coupon.isActive ? coupon : null;
-  }
-
-  // --- Subscriptions ---
-  async getAllSubscriptions(): Promise<ParentSubscription[]> {
-    return Array.from(this.subscriptions.values());
-  }
-
-  async getSubscriptionByParentId(parentId: string): Promise<ParentSubscription | null> {
-    for (const sub of this.subscriptions.values()) {
-      if (sub.parentId === parentId && sub.status === "ACTIVE") {
-        return sub;
-      }
-    }
-    return null;
-  }
-
-  async saveSubscription(sub: ParentSubscription): Promise<ParentSubscription> {
-    this.subscriptions.set(sub.id, sub);
-    return sub;
-  }
-
-  // --- Invoices ---
-  async getAllInvoices(): Promise<DomainInvoice[]> {
-    return Array.from(this.invoices.values()).sort(
-      (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
-    );
-  }
-
-  async getInvoicesByParentId(parentId: string): Promise<DomainInvoice[]> {
-    return Array.from(this.invoices.values())
-      .filter((inv) => inv.parentId === parentId)
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-  }
-
-  async getInvoiceById(id: string): Promise<DomainInvoice | null> {
-    return this.invoices.get(id) || null;
-  }
-
-  async saveInvoice(invoice: DomainInvoice): Promise<DomainInvoice> {
-    this.invoices.set(invoice.id, invoice);
-    return invoice;
-  }
-
-  // --- Payroll ---
-  async getPayrollByTeacherId(teacherId: string): Promise<TeacherPayrollRecord[]> {
-    return Array.from(this.payrollRecords.values()).filter((p) => p.teacherId === teacherId);
-  }
-
-  async getAllPayrollRecords(): Promise<TeacherPayrollRecord[]> {
-    return Array.from(this.payrollRecords.values());
-  }
-
-  async savePayrollRecord(record: TeacherPayrollRecord): Promise<TeacherPayrollRecord> {
-    this.payrollRecords.set(record.id, record);
-    return record;
   }
 }
 

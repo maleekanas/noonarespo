@@ -157,7 +157,12 @@
     "passwordMismatch": "كلمتا المرور غير متطابقتين.",
     "emailInUse": "هذا البريد الإلكتروني مسجل بالفعل. حاول تسجيل الدخول بدلاً من ذلك.",
     "weakPassword": "يجب أن تتكون كلمة المرور من 8 أحرف على الأقل.",
-    "registrationError": "تعذر إنشاء الحساب. يرجى المحاولة مرة أخرى."
+    "registrationError": "تعذر إنشاء الحساب. يرجى المحاولة مرة أخرى.",
+    "termsAgreementPrefix": "بإنشاء حساب، فإنك توافق على",
+    "termsOfServiceLink": "شروط الخدمة",
+    "termsAgreementConnector": "و",
+    "privacyPolicyLink": "سياسة الخصوصية",
+    "termsAgreementSuffix": "."
   },
   "footer": {
     "copyright": "جميع الحقوق محفوظة © 2026 أكاديمية براعم العربية للأطفال.",

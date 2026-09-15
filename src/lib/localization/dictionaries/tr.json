@@ -157,7 +157,12 @@
     "passwordMismatch": "Şifreler eşleşmiyor.",
     "emailInUse": "Bu e-posta zaten kayıtlı. Bunun yerine giriş yapmayı deneyin.",
     "weakPassword": "Şifre en az 8 karakter uzunluğunda olmalıdır.",
-    "registrationError": "Hesabınız oluşturulamadı. Lütfen tekrar deneyin."
+    "registrationError": "Hesabınız oluşturulamadı. Lütfen tekrar deneyin.",
+    "termsAgreementPrefix": "Hesap oluşturarak",
+    "termsOfServiceLink": "Hizmet Şartları'nı",
+    "termsAgreementConnector": "ve",
+    "privacyPolicyLink": "Gizlilik Politikası'nı",
+    "termsAgreementSuffix": " kabul etmiş olursun."
   },
   "footer": {
     "copyright": "Tüm hakları saklıdır © 2026 Arapça Çocuk Akademisi.",

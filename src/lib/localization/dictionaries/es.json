@@ -157,7 +157,12 @@
     "passwordMismatch": "Las contraseñas no coinciden.",
     "emailInUse": "Este correo electrónico ya está registrado. Intenta iniciar sesión.",
     "weakPassword": "La contraseña debe tener al menos 8 caracteres.",
-    "registrationError": "No pudimos crear tu cuenta. Inténtalo de nuevo."
+    "registrationError": "No pudimos crear tu cuenta. Inténtalo de nuevo.",
+    "termsAgreementPrefix": "Al crear una cuenta, aceptas nuestros",
+    "termsOfServiceLink": "Términos de Servicio",
+    "termsAgreementConnector": "y nuestra",
+    "privacyPolicyLink": "Política de Privacidad",
+    "termsAgreementSuffix": "."
   },
   "footer": {
     "copyright": "Todos los derechos reservados © 2026 Academia Árabe para Niños.",

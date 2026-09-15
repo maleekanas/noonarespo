@@ -229,6 +229,18 @@ export default async function RegisterPage({
             />
           </div>
 
+          <p className="text-[11px] leading-relaxed text-slate-500 text-center">
+            {dict.auth.termsAgreementPrefix}{" "}
+            <Link href={`/${locale}/terms`} className="font-bold text-brand-600 hover:underline">
+              {dict.auth.termsOfServiceLink}
+            </Link>{" "}
+            {dict.auth.termsAgreementConnector}{" "}
+            <Link href={`/${locale}/privacy`} className="font-bold text-brand-600 hover:underline">
+              {dict.auth.privacyPolicyLink}
+            </Link>
+            {dict.auth.termsAgreementSuffix}
+          </p>
+
           <button
             type="submit"
             className="w-full py-3 px-4 rounded-xl text-sm font-bold text-white gradient-brand shadow-md shadow-brand-500/25 hover:opacity-95 transition-all mt-2"

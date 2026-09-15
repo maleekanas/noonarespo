@@ -157,7 +157,12 @@
     "passwordMismatch": "Le password non corrispondono.",
     "emailInUse": "Questa email è già registrata. Prova ad accedere.",
     "weakPassword": "La password deve contenere almeno 8 caratteri.",
-    "registrationError": "Impossibile creare l'account. Riprova."
+    "registrationError": "Impossibile creare l'account. Riprova.",
+    "termsAgreementPrefix": "Creando un account, accetti i nostri",
+    "termsOfServiceLink": "Termini di Servizio",
+    "termsAgreementConnector": "e la nostra",
+    "privacyPolicyLink": "Informativa sulla Privacy",
+    "termsAgreementSuffix": "."
   },
   "footer": {
     "copyright": "Tutti i diritti riservati © 2026 Accademia Araba per Bambini.",

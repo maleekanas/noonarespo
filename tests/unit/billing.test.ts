@@ -4,7 +4,6 @@ import { billingService } from "../../src/server/services/BillingService";
 
 describe("Billing & Subscription Engine (Minor Units Precision)", () => {
   const planId = "plan-family"; // $149.00 = 14900 minor units
-  const parentId = "parent-1";
 
   test("Should calculate base checkout price without coupons accurately in minor units", async () => {
     const calc = await billingService.calculateCheckoutPrice(planId);
@@ -30,17 +29,10 @@ describe("Billing & Subscription Engine (Minor Units Precision)", () => {
     assert.equal(billingService.formatPrice(calc.totalMinorUnits), "$119.20");
   });
 
-  test("Should process checkout and create active subscription and paid invoice", async () => {
-    const result = await billingService.processCheckout({
-      parentId,
-      planId: "plan-group", // $89.00 = 8900 minor units
-      couponCode: "WELCOME10", // 10% off -> 8010 minor units
-      paymentMethod: "CREDIT_CARD",
-    });
-
-    assert.equal(result.subscription.status, "ACTIVE");
-    assert.equal(result.invoice.status, "PAID");
-    assert.equal(result.invoice.totalMinorUnits, 8010);
-    assert.ok(result.invoice.invoiceNumber.startsWith("INV-"));
-  });
+  // Real checkout (charging Stripe, creating the real Subscription/Invoice)
+  // is exercised via createStripeCheckoutSession / fulfillCheckoutSession in
+  // StripeSubscriptionService, which needs a real Stripe client and isn't
+  // covered by this plain-unit-test file. BillingService itself no longer
+  // has a processCheckout() -- that was a second, unused mock-payment path
+  // that nothing in the app actually called.
 });

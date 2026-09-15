@@ -1,6 +1,6 @@
 import { administrationRepository } from "@/server/repositories/AdministrationRepository";
 import { academicRepository } from "@/server/repositories/AcademicRepository";
-import { financialRepository } from "@/server/repositories/FinancialRepository";
+import { prisma } from "@/lib/database/prisma";
 
 export type ExportCategory = "ALL" | "STUDENTS" | "CLASSES" | "FINANCIAL" | "AUDIT_LOGS";
 export type ExportFormat = "json" | "csv";
@@ -103,25 +103,31 @@ export class DataExportService {
   }
 
   /**
-   * Export financial transactions, invoices, and payroll in minor units
+   * Export financial transactions, invoices, and payroll in minor units.
+   *
+   * This used to read from FinancialRepository's in-memory demo data (two
+   * fixed fake invoices, one fake subscription, one fake payroll record) --
+   * meaning a real export would never contain a real family's real
+   * invoices. It now reads the real Invoice/Subscription/TeacherCompensation
+   * tables that Stripe checkout and payroll calculation actually write to.
    */
   async exportFinancials(format: ExportFormat = "json"): Promise<ExportResult> {
-    const invoices = await financialRepository.getAllInvoices();
-    const subscriptions = await financialRepository.getAllSubscriptions();
-    const payroll = await financialRepository.getAllPayrollRecords();
+    const [invoices, subscriptions, payroll] = await Promise.all([
+      prisma.invoice.findMany({ include: { payments: true }, orderBy: { createdAt: "desc" } }),
+      prisma.subscription.findMany({ include: { plan: true }, orderBy: { createdAt: "desc" } }),
+      prisma.teacherCompensation.findMany({ orderBy: { createdAt: "desc" } }),
+    ]);
 
     const invoiceRows = invoices.map((inv) => ({
       invoiceNumber: inv.invoiceNumber,
       parentId: inv.parentId,
       subtotalUsd: (inv.subtotalMinorUnits / 100).toFixed(2),
-      discountUsd: (inv.discountMinorUnits / 100).toFixed(2),
       taxUsd: (inv.taxMinorUnits / 100).toFixed(2),
       totalUsd: (inv.totalMinorUnits / 100).toFixed(2),
       currency: inv.currency,
       status: inv.status,
-      paymentMethod: inv.paymentMethod,
+      paymentProvider: inv.payments[0]?.provider || "",
       createdAt: inv.createdAt.toISOString(),
-      paidAt: inv.paidAt ? inv.paidAt.toISOString() : "",
     }));
 
     if (format === "csv") {
@@ -140,6 +146,7 @@ export class DataExportService {
         id: s.id,
         parentId: s.parentId,
         planId: s.planId,
+        planName: s.plan.nameEn,
         status: s.status,
         currentPeriodStart: s.currentPeriodStart.toISOString(),
         currentPeriodEnd: s.currentPeriodEnd.toISOString(),
@@ -147,10 +154,10 @@ export class DataExportService {
       payroll: payroll.map((p) => ({
         id: p.id,
         teacherId: p.teacherId,
-        monthString: p.monthString,
-        totalHours: p.totalHours,
-        grossPayUsd: (p.grossPayMinorUnits / 100).toFixed(2),
-        status: p.status,
+        period: `${p.periodYear}-${String(p.periodMonth).padStart(2, "0")}`,
+        hoursTaught: p.hoursTaught,
+        grossPayUsd: (p.totalMinorUnits / 100).toFixed(2),
+        isPaid: p.isPaid,
       })),
     };
 
@@ -205,9 +212,9 @@ export class DataExportService {
     const [students, classes, invoices, subscriptions, payroll, auditLogs] = await Promise.all([
       administrationRepository.getAllStudentsAdmin(),
       academicRepository.getAllClassGroups(),
-      financialRepository.getAllInvoices(),
-      financialRepository.getAllSubscriptions(),
-      financialRepository.getAllPayrollRecords(),
+      prisma.invoice.findMany({ include: { payments: true } }),
+      prisma.subscription.findMany({ include: { plan: true } }),
+      prisma.teacherCompensation.findMany(),
       administrationRepository.getAuditLogs(),
     ]);
 

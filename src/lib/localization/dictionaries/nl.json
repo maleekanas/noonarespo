@@ -157,7 +157,12 @@
     "passwordMismatch": "Wachtwoorden komen niet overeen.",
     "emailInUse": "Dit e-mailadres is al geregistreerd. Probeer in te loggen.",
     "weakPassword": "Het wachtwoord moet minimaal 8 tekens lang zijn.",
-    "registrationError": "We konden uw account niet aanmaken. Probeer het opnieuw."
+    "registrationError": "We konden uw account niet aanmaken. Probeer het opnieuw.",
+    "termsAgreementPrefix": "Door een account aan te maken, ga je akkoord met onze",
+    "termsOfServiceLink": "Servicevoorwaarden",
+    "termsAgreementConnector": "en ons",
+    "privacyPolicyLink": "Privacybeleid",
+    "termsAgreementSuffix": "."
   },
   "footer": {
     "copyright": "Alle rechten voorbehouden © 2026 Arabische Kids Academie.",

@@ -1,9 +1,18 @@
-import {
-  financialRepository,
-  TeacherPayrollRecord,
-} from "../repositories/FinancialRepository";
+import { prisma } from "@/lib/database/prisma";
+import { SubscriptionStatus, SessionStatus, InvoiceStatus, BillingInterval } from "@prisma/client";
 import { userRepository } from "../repositories/UserRepository";
-import { schedulingRepository } from "../repositories/SchedulingRepository";
+
+export interface TeacherPayrollRecord {
+  id: string;
+  teacherId: string;
+  monthString: string; // "2026-09"
+  completedSessionsCount: number;
+  totalHours: number;
+  hourlyRateMinorUnits: number;
+  grossPayMinorUnits: number;
+  status: "PAID" | "PENDING";
+  paidAt?: Date;
+}
 
 export interface FinanceOverview {
   mrrMinorUnits: number;
@@ -14,60 +23,144 @@ export interface FinanceOverview {
   currency: string;
 }
 
+// Divisor used to normalize a non-monthly plan's price into a comparable
+// Monthly Recurring Revenue contribution (a quarterly plan's MRR share is
+// its price / 3, an annual plan's is its price / 12).
+const MONTHLY_DIVISOR: Record<BillingInterval, number> = {
+  [BillingInterval.MONTHLY]: 1,
+  [BillingInterval.QUARTERLY]: 3,
+  [BillingInterval.ANNUALLY]: 12,
+};
+
+/**
+ * Real, Prisma-backed financial reporting.
+ *
+ * This used to read from FinancialRepository, an in-memory-only mock with
+ * a handful of hardcoded demo invoices/subscriptions/payroll records (and
+ * fallback numbers like "sessions.length || 16" and "totalLiability ||
+ * 36000") -- meaning the admin finance dashboard and every teacher's
+ * payroll page always showed the same fabricated figures no matter what
+ * really happened on the site, even though real Stripe-backed
+ * Subscription/Invoice/Payment rows have been written to Postgres all
+ * along (see StripeSubscriptionService). This service now computes every
+ * number from that real data, and persists computed teacher payroll into
+ * the TeacherCompensation table (which existed in the schema but nothing
+ * ever wrote to).
+ */
 export class PayrollService {
   /**
-   * Computes teacher compensation for completed sessions in a month.
+   * Computes a teacher's real compensation for one calendar month from
+   * their actually-completed class sessions, and upserts it into
+   * TeacherCompensation (by teacher + period) so it persists and can later
+   * be marked paid. Safe to call more than once for the same month.
    */
-  async computeTeacherPayroll(teacherId: string, monthString = "2026-09"): Promise<TeacherPayrollRecord> {
+  async computeTeacherPayroll(
+    teacherId: string,
+    periodYear: number,
+    periodMonth: number // 1-12
+  ): Promise<TeacherPayrollRecord> {
     const teacher = await userRepository.findTeacherProfileById(teacherId);
-    const hourlyRate = teacher?.hourlyRateMinorUnits || 3000; // $30.00 / hr
+    const hourlyRate = teacher?.hourlyRateMinorUnits || 3000; // $30.00/hr fallback only if the teacher has no rate on file
 
-    const sessions = await schedulingRepository.getSessionsByTeacherId(teacherId);
-    // Count sessions
-    const completedCount = sessions.length || 16;
-    const durationHoursPerSession = 0.75; // 45 minutes
-    const totalHours = Math.round(completedCount * durationHoursPerSession);
-    const grossPay = totalHours * hourlyRate; // in minor units
+    const monthStart = new Date(Date.UTC(periodYear, periodMonth - 1, 1));
+    const monthEnd = new Date(Date.UTC(periodYear, periodMonth, 1));
 
-    const record: TeacherPayrollRecord = {
-      id: `pay-${teacherId}-${monthString}`,
+    const completedSessions = await prisma.classSession.findMany({
+      where: {
+        teacherId,
+        status: SessionStatus.COMPLETED,
+        startTimeUtc: { gte: monthStart, lt: monthEnd },
+      },
+      select: { startTimeUtc: true, endTimeUtc: true },
+    });
+
+    const rawHours = completedSessions.reduce((sum, s) => {
+      return sum + (s.endTimeUtc.getTime() - s.startTimeUtc.getTime()) / (1000 * 60 * 60);
+    }, 0);
+    const totalHours = Math.round(rawHours * 100) / 100;
+    const grossPay = Math.round(totalHours * hourlyRate);
+
+    const existing = await prisma.teacherCompensation.findFirst({
+      where: { teacherId, periodYear, periodMonth },
+    });
+
+    const saved = existing
+      ? await prisma.teacherCompensation.update({
+          where: { id: existing.id },
+          data: {
+            hoursTaught: totalHours,
+            rateMinorUnits: hourlyRate,
+            totalMinorUnits: grossPay + existing.bonusMinorUnits,
+          },
+        })
+      : await prisma.teacherCompensation.create({
+          data: {
+            teacherId,
+            periodYear,
+            periodMonth,
+            hoursTaught: totalHours,
+            rateMinorUnits: hourlyRate,
+            bonusMinorUnits: 0,
+            totalMinorUnits: grossPay,
+          },
+        });
+
+    return {
+      id: saved.id,
       teacherId,
-      monthString,
-      completedSessionsCount: completedCount,
+      monthString: `${periodYear}-${String(periodMonth).padStart(2, "0")}`,
+      completedSessionsCount: completedSessions.length,
       totalHours,
       hourlyRateMinorUnits: hourlyRate,
-      grossPayMinorUnits: grossPay,
-      status: "PENDING",
+      grossPayMinorUnits: saved.totalMinorUnits,
+      status: saved.isPaid ? "PAID" : "PENDING",
+      paidAt: saved.paidAt ?? undefined,
     };
-
-    await financialRepository.savePayrollRecord(record);
-    return record;
   }
 
   /**
-   * Computes platform financial KPIs for Finance & Super Admin reconciliation.
+   * Computes platform-wide financial KPIs from real billing data: MRR from
+   * active Subscriptions/Plans, revenue from paid Invoices, and pending
+   * teacher liability from unpaid TeacherCompensation rows. Returns real
+   * zeros when there's nothing yet, rather than a fabricated placeholder.
    */
   async getFinanceOverview(): Promise<FinanceOverview> {
-    const invoices = await financialRepository.getAllInvoices();
-    const payrolls = await financialRepository.getAllPayrollRecords();
+    const [activeSubs, paidInvoiceAgg, invoiceStatusCounts, unpaidCompensationAgg] =
+      await Promise.all([
+        prisma.subscription.findMany({
+          where: { status: SubscriptionStatus.ACTIVE },
+          include: { plan: true },
+        }),
+        prisma.invoice.aggregate({
+          where: { status: InvoiceStatus.PAID },
+          _sum: { totalMinorUnits: true },
+        }),
+        prisma.invoice.groupBy({
+          by: ["status"],
+          _count: { _all: true },
+        }),
+        prisma.teacherCompensation.aggregate({
+          where: { isPaid: false },
+          _sum: { totalMinorUnits: true },
+        }),
+      ]);
 
-    const paidInvoices = invoices.filter((i) => i.status === "PAID");
-    const pendingInvoices = invoices.filter((i) => i.status === "PENDING");
+    const mrrMinorUnits = activeSubs.reduce((sum, sub) => {
+      const divisor = MONTHLY_DIVISOR[sub.plan.interval] ?? 1;
+      return sum + Math.round(sub.plan.priceMinorUnits / divisor);
+    }, 0);
 
-    const totalRevenue = paidInvoices.reduce((sum, i) => sum + i.totalMinorUnits, 0);
-    // MRR is sum of active monthly subscriptions
-    const mrr = totalRevenue > 0 ? 14900 : 0; // $149.00 MRR from active family plan
-
-    const totalLiability = payrolls
-      .filter((p) => p.status === "PENDING")
-      .reduce((sum, p) => sum + p.grossPayMinorUnits, 0);
+    const paidInvoicesCount =
+      invoiceStatusCounts.find((g) => g.status === InvoiceStatus.PAID)?._count._all ?? 0;
+    const pendingInvoicesCount =
+      invoiceStatusCounts.find((g) => g.status === InvoiceStatus.ISSUED)?._count._all ?? 0;
 
     return {
-      mrrMinorUnits: mrr,
-      totalRevenueMinorUnits: totalRevenue,
-      paidInvoicesCount: paidInvoices.length,
-      pendingInvoicesCount: pendingInvoices.length,
-      totalTeacherLiabilityMinorUnits: totalLiability || 36000,
+      mrrMinorUnits,
+      totalRevenueMinorUnits: paidInvoiceAgg._sum.totalMinorUnits ?? 0,
+      paidInvoicesCount,
+      pendingInvoicesCount,
+      totalTeacherLiabilityMinorUnits: unpaidCompensationAgg._sum.totalMinorUnits ?? 0,
       currency: "USD",
     };
   }

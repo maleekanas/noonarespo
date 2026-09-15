@@ -1,11 +1,4 @@
-import {
-  financialRepository,
-  SubscriptionPlan,
-  ParentSubscription,
-  DomainInvoice,
-} from "../repositories/FinancialRepository";
-import { defaultPaymentGateway } from "@/lib/integrations/paymentGateway";
-import { communicationRepository } from "../repositories/CommunicationRepository";
+import { financialRepository, SubscriptionPlan } from "../repositories/FinancialRepository";
 
 export interface CheckoutCalculation {
   plan: SubscriptionPlan;
@@ -74,109 +67,14 @@ export class BillingService {
     };
   }
 
-  /**
-   * Processes subscription checkout, charges payment gateway, creates subscription and invoice.
-   */
-  async processCheckout(params: {
-    parentId: string;
-    planId: string;
-    couponCode?: string;
-    paymentMethod: "CREDIT_CARD" | "APPLE_PAY" | "GOOGLE_PAY" | "PAYPAL" | "MOCK";
-  }): Promise<{
-    subscription: ParentSubscription;
-    invoice: DomainInvoice;
-  }> {
-    const calculation = await this.calculateCheckoutPrice(
-      params.planId,
-      params.couponCode
-    );
-
-    // 1. Process via Payment Gateway
-    const payment = await defaultPaymentGateway.processPayment({
-      amountMinorUnits: calculation.totalMinorUnits,
-      currency: calculation.plan.currency,
-      paymentMethod: params.paymentMethod,
-      description: `Subscription to ${calculation.plan.nameEn}`,
-      metadata: {
-        parentId: params.parentId,
-        planId: params.planId,
-      },
-    });
-
-    if (!payment.success) {
-      throw new Error(`PAYMENT_FAILED: ${payment.errorMessage || "Payment could not be completed"}`);
-    }
-
-    // 2. Create / Renew Subscription
-    const now = new Date();
-    const periodStart = now;
-    const periodEnd = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days
-
-    const subId = `sub-${params.parentId}-${Date.now()}`;
-    const subscription: ParentSubscription = {
-      id: subId,
-      parentId: params.parentId,
-      planId: params.planId,
-      status: "ACTIVE",
-      currentPeriodStart: periodStart,
-      currentPeriodEnd: periodEnd,
-      cancelAtPeriodEnd: false,
-      createdAt: now,
-    };
-    await financialRepository.saveSubscription(subscription);
-
-    // 3. Generate Tax Invoice
-    const invoiceNumber = `INV-${now.getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
-    const invoiceId = `inv-${Date.now()}`;
-
-    const invoice: DomainInvoice = {
-      id: invoiceId,
-      invoiceNumber,
-      parentId: params.parentId,
-      subscriptionId: subId,
-      subtotalMinorUnits: calculation.subtotalMinorUnits,
-      discountMinorUnits: calculation.discountMinorUnits,
-      taxMinorUnits: calculation.taxMinorUnits,
-      totalMinorUnits: calculation.totalMinorUnits,
-      currency: calculation.plan.currency,
-      status: "PAID",
-      lineItems: [
-        {
-          description: `${calculation.plan.nameAr} (${calculation.plan.nameEn})`,
-          quantity: 1,
-          unitPriceMinorUnits: calculation.subtotalMinorUnits,
-          totalMinorUnits: calculation.subtotalMinorUnits,
-        },
-      ],
-      paymentMethod: `${params.paymentMethod} (مؤكد)`,
-      paidAt: now,
-      createdAt: now,
-    };
-    await financialRepository.saveInvoice(invoice);
-
-    // 4. Emit In-App Notification
-    await communicationRepository.addNotification({
-      userId: params.parentId,
-      title: "تم تأكيد اشتراككم بنجاح",
-      message: `تم سداد فاتورة ${invoiceNumber} بمبلغ ${this.formatPrice(calculation.totalMinorUnits)} وتفعيل باقة «${calculation.plan.nameAr}».`,
-      type: "ATTENDANCE_ALERT",
-      linkUrl: `/ar/parent/invoices/${invoiceId}`,
-    });
-
-    return { subscription, invoice };
-  }
-
-  async getParentSubscription(parentId: string): Promise<ParentSubscription | null> {
-    return await financialRepository.getSubscriptionByParentId(parentId);
-  }
-
-  async getParentInvoices(parentId: string): Promise<DomainInvoice[]> {
-    return await financialRepository.getInvoicesByParentId(parentId);
-  }
-
-  async getInvoiceById(invoiceId: string): Promise<DomainInvoice | null> {
-    return await financialRepository.getInvoiceById(invoiceId);
-  }
+  // Real checkout (charging a real card, creating the real Subscription and
+  // Invoice) happens via createStripeCheckoutSession / fulfillCheckoutSession
+  // in StripeSubscriptionService, backed by Prisma and Stripe. This class
+  // used to also have a second, parallel processCheckout() path that
+  // "charged" a mock payment gateway and wrote to the in-memory
+  // FinancialRepository -- nothing in the app ever called it (the real
+  // /parent/checkout page has always used the Stripe path), so it was dead
+  // code that just made it look like there were two checkout systems.
 }
 
 export const billingService = new BillingService();

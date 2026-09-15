@@ -217,7 +217,6 @@ export default async function ParentChildrenPage({
                 <input
                   type="checkbox"
                   required
-                  defaultChecked
                   className="mt-0.5 rounded text-brand-600 focus:ring-brand-500"
                 />
                 <span className="text-[11px] text-slate-600 leading-relaxed">

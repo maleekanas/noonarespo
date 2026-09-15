@@ -157,7 +157,12 @@
     "passwordMismatch": "Passwords do not match.",
     "emailInUse": "This email is already registered. Try signing in instead.",
     "weakPassword": "Password must be at least 8 characters long.",
-    "registrationError": "We couldn't create your account. Please try again."
+    "registrationError": "We couldn't create your account. Please try again.",
+    "termsAgreementPrefix": "By creating an account, you agree to our",
+    "termsOfServiceLink": "Terms of Service",
+    "termsAgreementConnector": "and our",
+    "privacyPolicyLink": "Privacy Policy",
+    "termsAgreementSuffix": "."
   },
   "footer": {
     "copyright": "All rights reserved © 2026 Arabic Kids Academy.",
