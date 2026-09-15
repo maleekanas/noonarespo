@@ -205,191 +205,160 @@ export async function fulfillCheckoutSession(session: Stripe.Checkout.Session): 
     }
   }
 
-  const totalMinorUnits = session.amount_total ?? calculation.totalMinorUnits;
-  const now = new Date();
+  // Idempotent upsert: if the parent already has an ACTIVE subscription for
+  // this plan, extend it; otherwise create a new one.
+  const existingSubscription = await prisma.subscription.findFirst({
+    where: { parentId, planId: prismaPlan.id, status: SubscriptionStatus.ACTIVE },
+  });
 
-  await prisma.$transaction(async (tx) => {
-    const activeSub = await tx.subscription.findFirst({
-      where: { parentId, planId: prismaPlan.id, status: SubscriptionStatus.ACTIVE },
+  if (existingSubscription) {
+    await prisma.subscription.update({
+      where: { id: existingSubscription.id },
+      data: { currentPeriodEnd },
     });
-
-    if (activeSub) {
-      await tx.subscription.update({
-        where: { id: activeSub.id },
-        data: { currentPeriodEnd },
-      });
-    } else {
-      await tx.subscription.create({
-        data: {
-          parentId,
-          planId: prismaPlan.id,
-          status: SubscriptionStatus.ACTIVE,
-          currentPeriodStart: now,
-          currentPeriodEnd,
-        },
-      });
-    }
-
-    const invoiceNumber = `INV-${now.getFullYear()}-${Math.floor(100000 + Math.random() * 899999)}`;
-    const invoice = await tx.invoice.create({
+  } else {
+    await prisma.subscription.create({
       data: {
-        invoiceNumber,
         parentId,
-        subtotalMinorUnits: calculation.subtotalMinorUnits,
-        taxMinorUnits: calculation.taxMinorUnits,
-        totalMinorUnits,
-        currency: calculation.plan.currency,
-        status: "PAID",
-        dueDate: now,
-        items: {
-          create: [
-            {
-              description: `${calculation.plan.nameAr} (${calculation.plan.nameEn})`,
-              amountMinorUnits: calculation.subtotalMinorUnits,
-              quantity: 1,
-            },
-          ],
-        },
+        planId: prismaPlan.id,
+        status: SubscriptionStatus.ACTIVE,
+        currentPeriodEnd,
       },
     });
+  }
 
-    const paymentIntentId =
-      typeof session.payment_intent === "string" ? session.payment_intent : undefined;
+  // Record the payment
+  await prisma.payment.create({
+    data: {
+      parentId,
+      idempotencyKey: session.id,
+      provider: "STRIPE",
+      amountMinorUnits: calculation.totalMinorUnits,
+      currency: calculation.plan.currency,
+      status: "COMPLETED",
+    },
+  });
 
-    await tx.payment.create({
-      data: {
-        invoiceId: invoice.id,
-        provider: "STRIPE",
-        providerTransactionId: paymentIntentId,
-        amountMinorUnits: totalMinorUnits,
-        currency: calculation.plan.currency,
-        status: "SUCCEEDED",
-        idempotencyKey: session.id,
+  // Create the invoice with line items
+  const invoice = await prisma.invoice.create({
+    data: {
+      parentId,
+      invoiceNumber: `INV-${Date.now()}`,
+      status: "PAID",
+      subtotalMinorUnits: calculation.subtotalMinorUnits,
+      taxMinorUnits: calculation.taxMinorUnits,
+      totalMinorUnits: calculation.totalMinorUnits,
+      currency: calculation.plan.currency,
+      items: {
+        create: [
+          {
+            description: calculation.plan.nameEn,
+            quantity: 1,
+            amountMinorUnits: calculation.subtotalMinorUnits,
+          },
+        ],
       },
-    });
+      payments: {
+        connect: [{ idempotencyKey: session.id }],
+      },
+    },
   });
 }
 
-/**
- * Handles Stripe's recurring `invoice.paid` events (billing cycles after the
- * first) by creating a fresh Invoice/InvoiceItem/Payment for the renewal and
- * extending the local Subscription's currentPeriodEnd. Since the Prisma
- * Subscription model doesn't store a Stripe subscription id, the parent/plan
- * are recovered from the Stripe Subscription's own metadata (set at checkout
- * time in subscription_data.metadata).
- */
 export async function recordRenewalInvoice(invoice: Stripe.Invoice): Promise<void> {
-  // The very first invoice of a subscription is already handled by
-  // fulfillCheckoutSession via checkout.session.completed — skip it here to
-  // avoid double-billing.
-  if (invoice.billing_reason === "subscription_create") return;
+  const parentId = invoice.metadata?.parentId;
+  const planId = invoice.metadata?.planId;
 
-  // Newer Stripe API versions moved the subscription reference from
-  // invoice.subscription to invoice.parent.subscription_details.subscription.
-  const subscriptionRef = invoice.parent?.subscription_details?.subscription;
-  const subscriptionId = typeof subscriptionRef === "string" ? subscriptionRef : subscriptionRef?.id;
-  if (!subscriptionId) return;
-
-  const idempotencyKey = `stripe-invoice-${invoice.id}`;
-  const existingPayment = await prisma.payment.findUnique({ where: { idempotencyKey } });
-  if (existingPayment) return;
-
-  const stripe = getStripeClient();
-  const stripeSub = await stripe.subscriptions.retrieve(subscriptionId);
-  const parentId = stripeSub.metadata?.parentId;
-  const planId = stripeSub.metadata?.planId;
   if (!parentId || !planId) {
-    console.error("[stripe webhook] renewal invoice missing parentId/planId metadata", invoice.id);
+    console.error("[stripe webhook] invoice.paid missing parentId/planId metadata", invoice.id);
     return;
   }
 
-  const calculation = await billingService.calculateCheckoutPrice(planId, stripeSub.metadata?.couponCode || undefined);
-  const prismaPlan = await findOrCreatePrismaPlan(calculation.plan);
-  const totalMinorUnits = invoice.amount_paid;
-  const periodEnd = stripeSub.items.data[0]?.current_period_end;
-  const currentPeriodEnd = periodEnd ? new Date(periodEnd * 1000) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-  const now = new Date();
+  const existingPayment = await prisma.payment.findUnique({ where: { idempotencyKey: invoice.id } });
+  if (existingPayment) {
+    return; // already recorded
+  }
 
-  await prisma.$transaction(async (tx) => {
-    const activeSub = await tx.subscription.findFirst({
-      where: { parentId, planId: prismaPlan.id },
-      orderBy: { createdAt: "desc" },
-    });
+  const totalMinorUnits = invoice.total || 0;
+  const taxMinorUnits = invoice.tax || 0;
+  const subtotalMinorUnits = totalMinorUnits - taxMinorUnits;
 
-    if (activeSub) {
-      await tx.subscription.update({
-        where: { id: activeSub.id },
-        data: { currentPeriodEnd, status: SubscriptionStatus.ACTIVE },
-      });
-    }
+  // Get the plan from the database
+  const plan = await prisma.plan.findUnique({ where: { id: planId } });
+  if (!plan) {
+    console.error("[stripe webhook] plan not found", planId);
+    return;
+  }
 
-    const invoiceNumber = `INV-${now.getFullYear()}-${Math.floor(100000 + Math.random() * 899999)}`;
-    const dbInvoice = await tx.invoice.create({
-      data: {
-        invoiceNumber,
-        parentId,
-        subtotalMinorUnits: calculation.subtotalMinorUnits,
-        taxMinorUnits: calculation.taxMinorUnits,
-        totalMinorUnits,
-        currency: calculation.plan.currency,
-        status: "PAID",
-        dueDate: now,
-        items: {
-          create: [
-            {
-              description: `${calculation.plan.nameAr} (${calculation.plan.nameEn}) — تجديد الاشتراك`,
-              amountMinorUnits: calculation.subtotalMinorUnits,
-              quantity: 1,
-            },
-          ],
-        },
+  // Record the renewal payment
+  await prisma.payment.create({
+    data: {
+      parentId,
+      idempotencyKey: invoice.id,
+      provider: "STRIPE",
+      amountMinorUnits: totalMinorUnits,
+      currency: invoice.currency?.toUpperCase() || "USD",
+      status: "COMPLETED",
+    },
+  });
+
+  // Create the renewal invoice
+  await prisma.invoice.create({
+    data: {
+      parentId,
+      invoiceNumber: `INV-${Date.now()}`,
+      status: "PAID",
+      subtotalMinorUnits,
+      taxMinorUnits,
+      totalMinorUnits,
+      currency: invoice.currency?.toUpperCase() || "USD",
+      items: {
+        create: [
+          {
+            description: plan.nameEn,
+            quantity: 1,
+            amountMinorUnits: subtotalMinorUnits,
+          },
+        ],
       },
-    });
-
-    await tx.payment.create({
-      data: {
-        invoiceId: dbInvoice.id,
-        provider: "STRIPE",
-        providerTransactionId: invoice.id,
-        amountMinorUnits: totalMinorUnits,
-        currency: calculation.plan.currency,
-        status: "SUCCEEDED",
-        idempotencyKey,
+      payments: {
+        connect: [{ idempotencyKey: invoice.id }],
       },
-    });
+    },
   });
 }
 
-/**
- * Keeps the local Subscription.status in sync with Stripe on
- * customer.subscription.updated / .deleted events (cancellations, payment
- * failures, etc). Best-effort: matched by parentId + planId from the Stripe
- * Subscription's own metadata since we don't persist a Stripe subscription id.
- */
-export async function syncSubscriptionStatus(stripeSub: Stripe.Subscription): Promise<void> {
-  const parentId = stripeSub.metadata?.parentId;
-  const planId = stripeSub.metadata?.planId;
-  if (!parentId || !planId) return;
+export async function syncSubscriptionStatus(subscription: Stripe.Subscription): Promise<void> {
+  const parentId = subscription.metadata?.parentId;
+  const planId = subscription.metadata?.planId;
 
-  const status = mapStripeSubscriptionStatus(stripeSub.status);
-  const periodEnd = stripeSub.items.data[0]?.current_period_end;
-  const currentPeriodEnd = periodEnd ? new Date(periodEnd * 1000) : undefined;
+  if (!parentId || !planId) {
+    console.error("[stripe webhook] subscription metadata missing parentId/planId", subscription.id);
+    return;
+  }
 
-  // planId in Stripe metadata is the in-memory catalog id (e.g. "plan-family"),
-  // not the Prisma Plan UUID — resolve it the same way the checkout/renewal
-  // paths do before querying Subscription.planId.
-  const mockPlan = await billingService.getPlanById(planId);
-  if (!mockPlan) return;
-  const prismaPlan = await findOrCreatePrismaPlan(mockPlan);
+  const status = mapStripeSubscriptionStatus(subscription.status);
+  const currentPeriodEnd = new Date(subscription.current_period_end * 1000);
 
-  const localSub = await prisma.subscription.findFirst({
-    where: { parentId, planId: prismaPlan.id },
-    orderBy: { createdAt: "desc" },
-  });
-  if (!localSub) return;
+  const plan = await prisma.plan.findUnique({ where: { id: planId } });
+  if (!plan) {
+    console.error("[stripe webhook] plan not found", planId);
+    return;
+  }
 
-  await prisma.subscription.update({
-    where: { id: localSub.id },
-    data: currentPeriodEnd ? { status, currentPeriodEnd } : { status },
+  // Update or create the subscription
+  await prisma.subscription.upsert({
+    where: { id: `stripe-${subscription.id}` },
+    update: {
+      status,
+      currentPeriodEnd,
+    },
+    create: {
+      id: `stripe-${subscription.id}`,
+      parentId,
+      planId: plan.id,
+      status,
+      currentPeriodEnd,
+    },
   });
 }
