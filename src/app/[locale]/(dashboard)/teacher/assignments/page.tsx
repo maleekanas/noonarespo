@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { assignmentRepository } from "@/server/repositories/AssignmentRepository";
 import { assignmentService } from "@/server/services/AssignmentService";
 import { userRepository } from "@/server/repositories/UserRepository";
+import { requireTeacherProfile } from "@/lib/auth/currentUser";
 import {
   FileCheck,
   PlusCircle,
@@ -19,6 +20,7 @@ export default async function TeacherAssignmentsPage({
   searchParams: Promise<{ classGroupId?: string }>;
 }) {
   const { locale } = await params;
+  const { profile } = await requireTeacherProfile(locale);
   const { classGroupId: queryClassId } = await searchParams;
   const defaultClassId = queryClassId || "class-reading-a1-cohort1";
 
@@ -75,7 +77,7 @@ export default async function TeacherAssignmentsPage({
 
     await assignmentService.gradeSubmission({
       submissionId,
-      teacherId: "teacher-1",
+      teacherId: profile.id,
       score: parseInt(scoreStr, 10),
       parentVisibleFeedback: parentFeedback,
       internalTeacherNotes: internalNotes || undefined,

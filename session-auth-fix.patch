@@ -1,0 +1,579 @@
+From c5d3e4e0c7d351236a50a10c0c202657c6368cf6 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Mon, 14 Sep 2026 13:02:46 +0000
+Subject: [PATCH] fix(security): require real login for the dashboard and wire
+ real user identity
+
+Every route under (dashboard) -- parent, teacher, student, admin -- had no
+session check at all and was reachable directly by URL with no login.
+On top of that, every parent- and teacher-facing page independently
+hardcoded "parent-1" / "teacher-1" regardless of who (if anyone) was
+signed in, so every visitor saw and could act on the same single demo
+family's billing, invoices, children, messages, and grading actions.
+
+- Add src/app/[locale]/(dashboard)/layout.tsx: redirects to /login for
+  any dashboard route when there is no session at all.
+- Add src/lib/auth/currentUser.ts: requireParentProfile()/
+  requireTeacherProfile()/requireAdminSession() resolve the *real*
+  ParentProfile/TeacherProfile row for the logged-in user (via Prisma),
+  redirecting appropriately when the role doesn't match.
+- Replace hardcoded parentId/teacherId in all parent/* and teacher/*
+  dashboard pages (billing, checkout, children, progress, reviews,
+  notifications, messages, meetings, weekly reports, recommendations,
+  enroll, payroll, assignments/grading) with the real logged-in
+  person's id.
+- Fix two remaining kidsarabicacademy.com contact emails on the privacy
+  policy page (missed by the earlier robots.ts/sitemap.ts domain fix).
+
+Note: the underlying data repositories (FinancialRepository,
+CommunicationRepository, etc.) are still in-memory mocks seeded only
+with the "parent-1"/"teacher-1" demo records -- a real logged-in user
+will now correctly see an empty dashboard instead of someone else's
+data, but persisting their real activity still requires migrating
+those repositories to Prisma. Student-facing pages (14 files) have the
+same hardcoded-id pattern and were intentionally left out of this pass;
+flagging as a follow-up rather than leaving it unmentioned.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Lw4NFHTzoDtcYLQxEsUX8Q
+---
+ src/app/[locale]/(dashboard)/layout.tsx       | 31 ++++++++
+ .../(dashboard)/parent/billing/page.tsx       |  4 +-
+ .../(dashboard)/parent/checkout/page.tsx      |  4 +-
+ .../(dashboard)/parent/children/page.tsx      |  4 +-
+ .../(dashboard)/parent/enroll/page.tsx        |  4 +-
+ .../(dashboard)/parent/meetings/page.tsx      |  4 +-
+ .../(dashboard)/parent/messages/page.tsx      |  4 +-
+ .../(dashboard)/parent/notifications/page.tsx |  4 +-
+ src/app/[locale]/(dashboard)/parent/page.tsx  |  4 +-
+ .../(dashboard)/parent/progress/page.tsx      |  4 +-
+ .../parent/recommendations/page.tsx           |  4 +-
+ .../parent/reports/weekly/page.tsx            |  4 +-
+ .../(dashboard)/parent/reviews/page.tsx       |  6 +-
+ .../(dashboard)/teacher/assignments/page.tsx  |  4 +-
+ .../(dashboard)/teacher/meetings/page.tsx     |  4 +-
+ .../(dashboard)/teacher/messages/page.tsx     |  4 +-
+ .../(dashboard)/teacher/payroll/page.tsx      |  4 +-
+ src/app/[locale]/privacy/page.tsx             |  8 +-
+ src/lib/auth/currentUser.ts                   | 77 +++++++++++++++++++
+ 19 files changed, 161 insertions(+), 21 deletions(-)
+ create mode 100644 src/app/[locale]/(dashboard)/layout.tsx
+ create mode 100644 src/lib/auth/currentUser.ts
+
+diff --git a/src/app/[locale]/(dashboard)/layout.tsx b/src/app/[locale]/(dashboard)/layout.tsx
+new file mode 100644
+index 0000000..aaabc27
+--- /dev/null
++++ b/src/app/[locale]/(dashboard)/layout.tsx
+@@ -0,0 +1,31 @@
++import { redirect } from "next/navigation";
++import { getSession } from "@/lib/auth/session";
++
++/**
++ * Guards every route under (dashboard) -- parent, teacher, student, admin,
++ * classroom -- behind a real login. Before this file existed, none of
++ * these routes checked who (if anyone) was signed in: they were reachable
++ * directly by URL with no session at all, and every page independently
++ * hardcoded a single demo account's id regardless of who was asking.
++ *
++ * This layout only confirms *someone* is logged in. Role-specific checks
++ * (e.g. "must be a parent") and resolving the real profile row for that
++ * person still happen per-page via src/lib/auth/currentUser.ts, since
++ * each dashboard area needs a different role.
++ */
++export default async function DashboardLayout({
++  children,
++  params,
++}: {
++  children: React.ReactNode;
++  params: Promise<{ locale: string }>;
++}) {
++  const { locale } = await params;
++  const session = await getSession();
++
++  if (!session) {
++    redirect(`/${locale}/login`);
++  }
++
++  return <>{children}</>;
++}
+diff --git a/src/app/[locale]/(dashboard)/parent/billing/page.tsx b/src/app/[locale]/(dashboard)/parent/billing/page.tsx
+index 2119619..80e3be4 100644
+--- a/src/app/[locale]/(dashboard)/parent/billing/page.tsx
++++ b/src/app/[locale]/(dashboard)/parent/billing/page.tsx
+@@ -1,6 +1,7 @@
+ import React from "react";
+ import Link from "next/link";
+ import { billingService } from "@/server/services/BillingService";
++import { requireParentProfile } from "@/lib/auth/currentUser";
+ import {
+   CheckCircle2,
+   Clock,
+@@ -17,7 +18,8 @@ export default async function ParentBillingPage({
+   params: Promise<{ locale: string }>;
+ }) {
+   const { locale } = await params;
+-  const parentId = "parent-1";
++  const { profile } = await requireParentProfile(locale);
++  const parentId = profile.id;
+ 
+   const subscription = await billingService.getParentSubscription(parentId);
+   const plan = subscription ? await billingService.getPlanById(subscription.planId) : null;
+diff --git a/src/app/[locale]/(dashboard)/parent/checkout/page.tsx b/src/app/[locale]/(dashboard)/parent/checkout/page.tsx
+index 62b3f96..99f8663 100644
+--- a/src/app/[locale]/(dashboard)/parent/checkout/page.tsx
++++ b/src/app/[locale]/(dashboard)/parent/checkout/page.tsx
+@@ -8,6 +8,7 @@ import {
+   Lock,
+ } from "lucide-react";
+ import { DirectionalIcon } from "@/components/shared/DirectionalIcon";
++import { requireParentProfile } from "@/lib/auth/currentUser";
+ 
+ export default async function ParentCheckoutPage({
+   params,
+@@ -18,7 +19,8 @@ export default async function ParentCheckoutPage({
+ }) {
+   const { locale } = await params;
+   const { planId: planIdParam, coupon: couponParam } = await searchParams;
+-  const parentId = "parent-1";
++  const { profile } = await requireParentProfile(locale);
++  const parentId = profile.id;
+ 
+   const allPlans = await billingService.getAllPlans();
+   const selectedPlanId = planIdParam || "plan-group";
+diff --git a/src/app/[locale]/(dashboard)/parent/children/page.tsx b/src/app/[locale]/(dashboard)/parent/children/page.tsx
+index f51f78f..989fbaa 100644
+--- a/src/app/[locale]/(dashboard)/parent/children/page.tsx
++++ b/src/app/[locale]/(dashboard)/parent/children/page.tsx
+@@ -3,6 +3,7 @@ import Link from "next/link";
+ import { revalidatePath } from "next/cache";
+ import { userRepository } from "@/server/repositories/UserRepository";
+ import { AgeGroup, RelationshipType } from "@prisma/client";
++import { requireParentProfile } from "@/lib/auth/currentUser";
+ import {
+   Users,
+   UserPlus,
+@@ -18,7 +19,8 @@ export default async function ParentChildrenPage({
+   params: Promise<{ locale: string }>;
+ }) {
+   const { locale } = await params;
+-  const parentId = "parent-1";
++  const { profile } = await requireParentProfile(locale);
++  const parentId = profile.id;
+   const children = await userRepository.getLinkedChildren(parentId);
+ 
+   async function handleAddChild(formData: FormData) {
+diff --git a/src/app/[locale]/(dashboard)/parent/enroll/page.tsx b/src/app/[locale]/(dashboard)/parent/enroll/page.tsx
+index faf758e..f3f2bf4 100644
+--- a/src/app/[locale]/(dashboard)/parent/enroll/page.tsx
++++ b/src/app/[locale]/(dashboard)/parent/enroll/page.tsx
+@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
+ import { userRepository } from "@/server/repositories/UserRepository";
+ import { academicRepository } from "@/server/repositories/AcademicRepository";
+ import { academicService } from "@/server/services/AcademicService";
++import { requireParentProfile } from "@/lib/auth/currentUser";
+ import { Users, BookOpen, CheckCircle2 } from "lucide-react";
+ 
+ export default async function ParentEnrollPage({
+@@ -15,7 +16,8 @@ export default async function ParentEnrollPage({
+ }) {
+   const { locale } = await params;
+   const { studentId: selectedStudentIdParam, program: selectedProgramParam } = await searchParams;
+-  const parentId = "parent-1";
++  const { profile } = await requireParentProfile(locale);
++  const parentId = profile.id;
+ 
+   const children = await userRepository.getLinkedChildren(parentId);
+   const selectedStudentId = selectedStudentIdParam || (children.length > 0 ? children[0].id : "");
+diff --git a/src/app/[locale]/(dashboard)/parent/meetings/page.tsx b/src/app/[locale]/(dashboard)/parent/meetings/page.tsx
+index 1e461b1..53a461e 100644
+--- a/src/app/[locale]/(dashboard)/parent/meetings/page.tsx
++++ b/src/app/[locale]/(dashboard)/parent/meetings/page.tsx
+@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
+ import { communicationRepository } from "@/server/repositories/CommunicationRepository";
+ import { communicationService } from "@/server/services/CommunicationService";
+ import { userRepository } from "@/server/repositories/UserRepository";
++import { requireParentProfile } from "@/lib/auth/currentUser";
+ import {
+   Calendar,
+   Clock,
+@@ -17,7 +18,8 @@ export default async function ParentMeetingsPage({
+   params: Promise<{ locale: string }>;
+ }) {
+   const { locale } = await params;
+-  const parentId = "parent-1";
++  const { profile } = await requireParentProfile(locale);
++  const parentId = profile.id;
+   const teacherId = "teacher-1";
+ 
+   const children = await userRepository.getLinkedChildren(parentId);
+diff --git a/src/app/[locale]/(dashboard)/parent/messages/page.tsx b/src/app/[locale]/(dashboard)/parent/messages/page.tsx
+index 2a3069d..1c57c54 100644
+--- a/src/app/[locale]/(dashboard)/parent/messages/page.tsx
++++ b/src/app/[locale]/(dashboard)/parent/messages/page.tsx
+@@ -3,6 +3,7 @@ import Link from "next/link";
+ import { revalidatePath } from "next/cache";
+ import { communicationRepository } from "@/server/repositories/CommunicationRepository";
+ import { communicationService } from "@/server/services/CommunicationService";
++import { requireParentProfile } from "@/lib/auth/currentUser";
+ import {
+   Send,
+   ShieldCheck,
+@@ -14,7 +15,8 @@ export default async function ParentMessagesPage({
+   params: Promise<{ locale: string }>;
+ }) {
+   const { locale } = await params;
+-  const parentId = "parent-1";
++  const { profile } = await requireParentProfile(locale);
++  const parentId = profile.id;
+   const teacherId = "teacher-1";
+   const studentId = "student-1";
+ 
+diff --git a/src/app/[locale]/(dashboard)/parent/notifications/page.tsx b/src/app/[locale]/(dashboard)/parent/notifications/page.tsx
+index a0ed4de..d9dd47d 100644
+--- a/src/app/[locale]/(dashboard)/parent/notifications/page.tsx
++++ b/src/app/[locale]/(dashboard)/parent/notifications/page.tsx
+@@ -2,6 +2,7 @@ import React from "react";
+ import Link from "next/link";
+ import { revalidatePath } from "next/cache";
+ import { notificationService } from "@/server/services/NotificationService";
++import { requireParentProfile } from "@/lib/auth/currentUser";
+ import {
+   Bell,
+   CheckCheck,
+@@ -17,7 +18,8 @@ export default async function ParentNotificationsPage({
+   params: Promise<{ locale: string }>;
+ }) {
+   const { locale } = await params;
+-  const parentId = "parent-1";
++  const { profile } = await requireParentProfile(locale);
++  const parentId = profile.id;
+   const notifications = await notificationService.getNotifications(parentId);
+ 
+   async function handleMarkAllRead() {
+diff --git a/src/app/[locale]/(dashboard)/parent/page.tsx b/src/app/[locale]/(dashboard)/parent/page.tsx
+index 8b65d4d..5071629 100644
+--- a/src/app/[locale]/(dashboard)/parent/page.tsx
++++ b/src/app/[locale]/(dashboard)/parent/page.tsx
+@@ -18,6 +18,7 @@ import {
+ import { DirectionalIcon } from "@/components/shared/DirectionalIcon";
+ import { userRepository } from "@/server/repositories/UserRepository";
+ import { notificationService } from "@/server/services/NotificationService";
++import { requireParentProfile } from "@/lib/auth/currentUser";
+ 
+ export default async function ParentDashboardPage({
+   params,
+@@ -29,7 +30,8 @@ export default async function ParentDashboardPage({
+   const { locale } = await params;
+   const isAr = locale === "ar";
+   const { studentId: selectedParam } = await searchParams;
+-  const parentId = "parent-1";
++  const { profile } = await requireParentProfile(locale);
++  const parentId = profile.id;
+ 
+   const children = await userRepository.getLinkedChildren(parentId);
+   const selectedStudentId = selectedParam || (children.length > 0 ? children[0].id : "");
+diff --git a/src/app/[locale]/(dashboard)/parent/progress/page.tsx b/src/app/[locale]/(dashboard)/parent/progress/page.tsx
+index a638c2f..14dfd00 100644
+--- a/src/app/[locale]/(dashboard)/parent/progress/page.tsx
++++ b/src/app/[locale]/(dashboard)/parent/progress/page.tsx
+@@ -2,6 +2,7 @@ import React from "react";
+ import Link from "next/link";
+ import { userRepository } from "@/server/repositories/UserRepository";
+ import { progressService } from "@/server/services/ProgressService";
++import { requireParentProfile } from "@/lib/auth/currentUser";
+ import {
+   Sparkles,
+   Award,
+@@ -24,7 +25,8 @@ export default async function ParentProgressPage({
+ }) {
+   const { locale } = await params;
+   const { studentId: selectedParam } = await searchParams;
+-  const parentId = "parent-1";
++  const { profile } = await requireParentProfile(locale);
++  const parentId = profile.id;
+ 
+   const children = await userRepository.getLinkedChildren(parentId);
+   const selectedStudentId = selectedParam || (children.length > 0 ? children[0].id : "");
+diff --git a/src/app/[locale]/(dashboard)/parent/recommendations/page.tsx b/src/app/[locale]/(dashboard)/parent/recommendations/page.tsx
+index 5cc67a6..615ab54 100644
+--- a/src/app/[locale]/(dashboard)/parent/recommendations/page.tsx
++++ b/src/app/[locale]/(dashboard)/parent/recommendations/page.tsx
+@@ -2,6 +2,7 @@ import React from "react";
+ import Link from "next/link";
+ import { userRepository } from "@/server/repositories/UserRepository";
+ import { recommendationService } from "@/server/services/RecommendationService";
++import { requireParentProfile } from "@/lib/auth/currentUser";
+ import {
+   Sparkles,
+   BookOpen,
+@@ -24,7 +25,8 @@ export default async function ParentRecommendationsPage({
+ }) {
+   const { locale } = await params;
+   const { studentId: queryStudentId } = await searchParams;
+-  const parentId = "parent-1";
++  const { profile } = await requireParentProfile(locale);
++  const parentId = profile.id;
+ 
+   const children = await userRepository.getLinkedChildren(parentId);
+   const activeStudentId = queryStudentId || (children.length > 0 ? children[0].id : "student-1");
+diff --git a/src/app/[locale]/(dashboard)/parent/reports/weekly/page.tsx b/src/app/[locale]/(dashboard)/parent/reports/weekly/page.tsx
+index 789fc65..2d92670 100644
+--- a/src/app/[locale]/(dashboard)/parent/reports/weekly/page.tsx
++++ b/src/app/[locale]/(dashboard)/parent/reports/weekly/page.tsx
+@@ -2,6 +2,7 @@ import React from "react";
+ import Link from "next/link";
+ import { userRepository } from "@/server/repositories/UserRepository";
+ import { progressService } from "@/server/services/ProgressService";
++import { requireParentProfile } from "@/lib/auth/currentUser";
+ import {
+   Award,
+   CheckCircle2,
+@@ -19,7 +20,8 @@ export default async function WeeklyReportPage({
+ }) {
+   const { locale } = await params;
+   const { studentId: selectedParam } = await searchParams;
+-  const parentId = "parent-1";
++  const { profile } = await requireParentProfile(locale);
++  const parentId = profile.id;
+ 
+   const children = await userRepository.getLinkedChildren(parentId);
+   const selectedStudentId = selectedParam || (children.length > 0 ? children[0].id : "student-1");
+diff --git a/src/app/[locale]/(dashboard)/parent/reviews/page.tsx b/src/app/[locale]/(dashboard)/parent/reviews/page.tsx
+index 3e0f953..70c9099 100644
+--- a/src/app/[locale]/(dashboard)/parent/reviews/page.tsx
++++ b/src/app/[locale]/(dashboard)/parent/reviews/page.tsx
+@@ -9,6 +9,7 @@ import {
+   Send,
+ } from "lucide-react";
+ import { reviewService } from "@/server/services/ReviewService";
++import { requireParentProfile } from "@/lib/auth/currentUser";
+ 
+ export default async function ParentReviewsPage({
+   params,
+@@ -17,6 +18,7 @@ export default async function ParentReviewsPage({
+ }) {
+   const { locale } = await params;
+   const isAr = locale === "ar";
++  const { profile } = await requireParentProfile(locale);
+ 
+   const summary = await reviewService.getTeacherReviewSummary("teacher-1");
+ 
+@@ -99,8 +101,8 @@ export default async function ParentReviewsPage({
+                 const comment = (formData.get("comment") as string) || "معلم رائع ومتميز";
+ 
+                 await reviewService.submitParentReview({
+-                  parentId: "parent-1",
+-                  parentName: "طارق المنصور",
++                  parentId: profile.id,
++                  parentName: `${profile.firstName} ${profile.lastName}`,
+                   teacherId: "teacher-1",
+                   teacherName: "أ. أحمد حسن",
+                   rating,
+diff --git a/src/app/[locale]/(dashboard)/teacher/assignments/page.tsx b/src/app/[locale]/(dashboard)/teacher/assignments/page.tsx
+index db85521..a16b25a 100644
+--- a/src/app/[locale]/(dashboard)/teacher/assignments/page.tsx
++++ b/src/app/[locale]/(dashboard)/teacher/assignments/page.tsx
+@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
+ import { assignmentRepository } from "@/server/repositories/AssignmentRepository";
+ import { assignmentService } from "@/server/services/AssignmentService";
+ import { userRepository } from "@/server/repositories/UserRepository";
++import { requireTeacherProfile } from "@/lib/auth/currentUser";
+ import {
+   FileCheck,
+   PlusCircle,
+@@ -19,6 +20,7 @@ export default async function TeacherAssignmentsPage({
+   searchParams: Promise<{ classGroupId?: string }>;
+ }) {
+   const { locale } = await params;
++  const { profile } = await requireTeacherProfile(locale);
+   const { classGroupId: queryClassId } = await searchParams;
+   const defaultClassId = queryClassId || "class-reading-a1-cohort1";
+ 
+@@ -75,7 +77,7 @@ export default async function TeacherAssignmentsPage({
+ 
+     await assignmentService.gradeSubmission({
+       submissionId,
+-      teacherId: "teacher-1",
++      teacherId: profile.id,
+       score: parseInt(scoreStr, 10),
+       parentVisibleFeedback: parentFeedback,
+       internalTeacherNotes: internalNotes || undefined,
+diff --git a/src/app/[locale]/(dashboard)/teacher/meetings/page.tsx b/src/app/[locale]/(dashboard)/teacher/meetings/page.tsx
+index 1e78a9e..f8152cd 100644
+--- a/src/app/[locale]/(dashboard)/teacher/meetings/page.tsx
++++ b/src/app/[locale]/(dashboard)/teacher/meetings/page.tsx
+@@ -3,6 +3,7 @@ import Link from "next/link";
+ import { revalidatePath } from "next/cache";
+ import { communicationRepository } from "@/server/repositories/CommunicationRepository";
+ import { communicationService } from "@/server/services/CommunicationService";
++import { requireTeacherProfile } from "@/lib/auth/currentUser";
+ import {
+   Calendar,
+   Clock,
+@@ -15,7 +16,8 @@ export default async function TeacherMeetingsPage({
+   params: Promise<{ locale: string }>;
+ }) {
+   const { locale } = await params;
+-  const teacherId = "teacher-1";
++  const { profile } = await requireTeacherProfile(locale);
++  const teacherId = profile.id;
+   const meetings = await communicationRepository.getMeetingRequestsByTeacherId(teacherId);
+ 
+   async function handleConfirmMeeting(formData: FormData) {
+diff --git a/src/app/[locale]/(dashboard)/teacher/messages/page.tsx b/src/app/[locale]/(dashboard)/teacher/messages/page.tsx
+index b9c3e6a..67dd9c8 100644
+--- a/src/app/[locale]/(dashboard)/teacher/messages/page.tsx
++++ b/src/app/[locale]/(dashboard)/teacher/messages/page.tsx
+@@ -3,6 +3,7 @@ import Link from "next/link";
+ import { revalidatePath } from "next/cache";
+ import { communicationRepository } from "@/server/repositories/CommunicationRepository";
+ import { communicationService } from "@/server/services/CommunicationService";
++import { requireTeacherProfile } from "@/lib/auth/currentUser";
+ import {
+   Send,
+   ShieldCheck,
+@@ -14,7 +15,8 @@ export default async function TeacherMessagesPage({
+   params: Promise<{ locale: string }>;
+ }) {
+   const { locale } = await params;
+-  const teacherId = "teacher-1";
++  const { profile } = await requireTeacherProfile(locale);
++  const teacherId = profile.id;
+   const parentId = "parent-1";
+   const studentId = "student-1";
+ 
+diff --git a/src/app/[locale]/(dashboard)/teacher/payroll/page.tsx b/src/app/[locale]/(dashboard)/teacher/payroll/page.tsx
+index 933f707..b3912ba 100644
+--- a/src/app/[locale]/(dashboard)/teacher/payroll/page.tsx
++++ b/src/app/[locale]/(dashboard)/teacher/payroll/page.tsx
+@@ -2,6 +2,7 @@ import React from "react";
+ import Link from "next/link";
+ import { payrollService } from "@/server/services/PayrollService";
+ import { billingService } from "@/server/services/BillingService";
++import { requireTeacherProfile } from "@/lib/auth/currentUser";
+ import { Clock, FileCheck, ShieldCheck } from "lucide-react";
+ 
+ export default async function TeacherPayrollPage({
+@@ -10,7 +11,8 @@ export default async function TeacherPayrollPage({
+   params: Promise<{ locale: string }>;
+ }) {
+   const { locale } = await params;
+-  const teacherId = "teacher-1";
++  const { profile } = await requireTeacherProfile(locale);
++  const teacherId = profile.id;
+ 
+   const payroll = await payrollService.computeTeacherPayroll(teacherId, "2026-09");
+ 
+diff --git a/src/app/[locale]/privacy/page.tsx b/src/app/[locale]/privacy/page.tsx
+index 463f811..4be34b6 100644
+--- a/src/app/[locale]/privacy/page.tsx
++++ b/src/app/[locale]/privacy/page.tsx
+@@ -113,8 +113,8 @@ export default async function PrivacyPolicyPage({
+           </h2>
+           <p>
+             {isAr
+-              ? "يحق لولي الأمر في أي وقت طلب تصدير نسخة كاملة من سجلات طفله التعليمية (بصيغتي JSON و CSV)، أو طلب حذف الحساب وجميع التسجيلات الصوتية فورياً من خوادمنا بشكل نهائي عبر لوحة تحكم ولي الأمر أو بمراسلة مسؤول حماية البيانات: privacy@kidsarabicacademy.com."
+-              : "Parents may at any time review, download an automated export of their child's educational data (in JSON and CSV formats), or permanently delete the child's account and all associated voice recordings by contacting our Data Protection Officer at privacy@kidsarabicacademy.com."}
++              ? "يحق لولي الأمر في أي وقت طلب تصدير نسخة كاملة من سجلات طفله التعليمية (بصيغتي JSON و CSV)، أو طلب حذف الحساب وجميع التسجيلات الصوتية فورياً من خوادمنا بشكل نهائي عبر لوحة تحكم ولي الأمر أو بمراسلة مسؤول حماية البيانات: privacy@arabickidsacademy.com."
++              : "Parents may at any time review, download an automated export of their child's educational data (in JSON and CSV formats), or permanently delete the child's account and all associated voice recordings by contacting our Data Protection Officer at privacy@arabickidsacademy.com."}
+           </p>
+         </section>
+ 
+@@ -124,8 +124,8 @@ export default async function PrivacyPolicyPage({
+           </h2>
+           <p>
+             {isAr
+-              ? "إذا كانت لديكم أي استفسارات أو ملاحظات بخصوص سياسة الخصوصية وحماية الطفل، يرجى التواصل معنا عبر البريد الإلكتروني: compliance@kidsarabicacademy.com"
+-              : "If you have any questions or feedback regarding our child safety practices or privacy policy, please contact our compliance team at compliance@kidsarabicacademy.com"}
++              ? "إذا كانت لديكم أي استفسارات أو ملاحظات بخصوص سياسة الخصوصية وحماية الطفل، يرجى التواصل معنا عبر البريد الإلكتروني: compliance@arabickidsacademy.com"
++              : "If you have any questions or feedback regarding our child safety practices or privacy policy, please contact our compliance team at compliance@arabickidsacademy.com"}
+           </p>
+         </section>
+       </div>
+diff --git a/src/lib/auth/currentUser.ts b/src/lib/auth/currentUser.ts
+new file mode 100644
+index 0000000..5f3a9ec
+--- /dev/null
++++ b/src/lib/auth/currentUser.ts
+@@ -0,0 +1,77 @@
++import { redirect } from "next/navigation";
++import { RoleType } from "@prisma/client";
++import { getSession, type SessionUser } from "./session";
++import { prisma } from "@/lib/database/prisma";
++
++/**
++ * Every function here does two things at once: (1) confirms someone is
++ * actually logged in with the right role, redirecting to /login if not,
++ * and (2) resolves the *real* profile row for that logged-in person from
++ * the database, instead of ever trusting a hardcoded demo id.
++ *
++ * These were introduced because every dashboard page previously used a
++ * literal "parent-1" / "teacher-1" string regardless of who was logged
++ * in (or whether anyone was logged in at all) -- every visitor saw and
++ * could act on the same demo family's data. Use these instead of ever
++ * writing a hardcoded id again.
++ */
++
++export async function requireSession(locale: string): Promise<SessionUser> {
++  const session = await getSession();
++  if (!session) {
++    redirect(`/${locale}/login`);
++  }
++  return session;
++}
++
++export async function requireParentProfile(locale: string) {
++  const session = await requireSession(locale);
++  if (session.role !== RoleType.PARENT) {
++    redirect(`/${locale}/login`);
++  }
++
++  const profile = await prisma.parentProfile.findUnique({
++    where: { userId: session.id },
++  });
++
++  if (!profile) {
++    // A PARENT-role account with no parent profile row is a data problem,
++    // not a normal "not logged in" case -- send them home rather than
++    // looping them back through login.
++    redirect(`/${locale}`);
++  }
++
++  return { session, profile };
++}
++
++export async function requireTeacherProfile(locale: string) {
++  const session = await requireSession(locale);
++  if (session.role !== RoleType.TEACHER) {
++    redirect(`/${locale}/login`);
++  }
++
++  const profile = await prisma.teacherProfile.findUnique({
++    where: { userId: session.id },
++  });
++
++  if (!profile) {
++    redirect(`/${locale}`);
++  }
++
++  return { session, profile };
++}
++
++const ADMIN_ROLES: RoleType[] = [
++  RoleType.SUPER_ADMIN,
++  RoleType.SCHOOL_ADMIN,
++  RoleType.ACADEMIC_ADMIN,
++  RoleType.FINANCE_ADMIN,
++];
++
++export async function requireAdminSession(locale: string): Promise<SessionUser> {
++  const session = await requireSession(locale);
++  if (!ADMIN_ROLES.includes(session.role)) {
++    redirect(`/${locale}/login`);
++  }
++  return session;
++}
+-- 
+2.43.0
+

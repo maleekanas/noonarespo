@@ -61,6 +61,7 @@ export async function requireStudentProfile(locale: string) {
   return { session, profile };
 }
 
+
 export async function requireTeacherProfile(locale: string) {
   const session = await requireSession(locale);
   if (session.role !== RoleType.TEACHER) {

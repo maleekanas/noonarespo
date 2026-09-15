@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { communicationRepository } from "@/server/repositories/CommunicationRepository";
 import { communicationService } from "@/server/services/CommunicationService";
 import { userRepository } from "@/server/repositories/UserRepository";
+
 import { requireTeacherProfile } from "@/lib/auth/currentUser";
 import {
   Send,
@@ -22,6 +23,7 @@ export default async function TeacherMessagesPage({
   const { conversationId } = await searchParams;
   const { profile } = await requireTeacherProfile(locale);
   const teacherId = profile.id;
+
 
   // Resolve the real parents/students actually messaging this teacher,
   // instead of a single hardcoded "parent-1"/"student-1" conversation that

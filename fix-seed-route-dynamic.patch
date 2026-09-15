@@ -1,0 +1,42 @@
+From 7b5b1f1a589299f10e6d32e88b065c3fab0c64e5 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Tue, 15 Sep 2026 10:52:58 +0000
+Subject: [PATCH] Fix build failure: force dynamic rendering on
+ seed-test-parent route
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+The GET route was being statically pre-rendered at build time (Next.js
+default for GET handlers with no dynamic export), which meant it tried
+to query the database during the build step itself, where DATABASE_URL
+isn't available — causing the build to fail with
+PrismaClientInitializationError. Adding `export const dynamic =
+"force-dynamic"` makes it run only on an actual request, at runtime,
+where the database connection is available.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Lw4NFHTzoDtcYLQxEsUX8Q
+---
+ src/app/api/admin/seed-test-parent/route.ts | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/src/app/api/admin/seed-test-parent/route.ts b/src/app/api/admin/seed-test-parent/route.ts
+index 127ed1a..1dda1dc 100644
+--- a/src/app/api/admin/seed-test-parent/route.ts
++++ b/src/app/api/admin/seed-test-parent/route.ts
+@@ -4,6 +4,11 @@ import { RoleType } from "@prisma/client";
+ import { prisma } from "@/lib/database/prisma";
+ 
+ export const runtime = "nodejs";
++// Without this, Next.js tries to statically pre-render this GET route at
++// build time by actually executing it — with no real request and no
++// database connection available yet — which is what caused the build to
++// fail. Forcing dynamic makes it run only when someone actually visits it.
++export const dynamic = "force-dynamic";
+ 
+ // TEMPORARY, SECRET-PROTECTED, ONE-TIME UTILITY.
+ //
+-- 
+2.43.0
+

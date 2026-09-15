@@ -3,6 +3,7 @@ import Link from "next/link";
 import { revalidatePath } from "next/cache";
 import { userRepository } from "@/server/repositories/UserRepository";
 import { AgeGroup, RelationshipType } from "@prisma/client";
+import { requireParentProfile } from "@/lib/auth/currentUser";
 import {
   Users,
   UserPlus,
@@ -18,7 +19,8 @@ export default async function ParentChildrenPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const parentId = "parent-1";
+  const { profile } = await requireParentProfile(locale);
+  const parentId = profile.id;
   const children = await userRepository.getLinkedChildren(parentId);
 
   async function handleAddChild(formData: FormData) {

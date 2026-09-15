@@ -3,6 +3,7 @@ import Link from "next/link";
 import { revalidatePath } from "next/cache";
 import { communicationRepository } from "@/server/repositories/CommunicationRepository";
 import { communicationService } from "@/server/services/CommunicationService";
+import { requireTeacherProfile } from "@/lib/auth/currentUser";
 import {
   Calendar,
   Clock,
@@ -15,7 +16,8 @@ export default async function TeacherMeetingsPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const teacherId = "teacher-1";
+  const { profile } = await requireTeacherProfile(locale);
+  const teacherId = profile.id;
   const meetings = await communicationRepository.getMeetingRequestsByTeacherId(teacherId);
 
   async function handleConfirmMeeting(formData: FormData) {

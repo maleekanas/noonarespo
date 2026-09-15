@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { userRepository } from "@/server/repositories/UserRepository";
 import { academicRepository } from "@/server/repositories/AcademicRepository";
 import { academicService } from "@/server/services/AcademicService";
+import { requireParentProfile } from "@/lib/auth/currentUser";
 import { Users, BookOpen, CheckCircle2 } from "lucide-react";
 
 export default async function ParentEnrollPage({
@@ -15,7 +16,8 @@ export default async function ParentEnrollPage({
 }) {
   const { locale } = await params;
   const { studentId: selectedStudentIdParam, program: selectedProgramParam } = await searchParams;
-  const parentId = "parent-1";
+  const { profile } = await requireParentProfile(locale);
+  const parentId = profile.id;
 
   const children = await userRepository.getLinkedChildren(parentId);
   const selectedStudentId = selectedStudentIdParam || (children.length > 0 ? children[0].id : "");

@@ -2,6 +2,7 @@ import React from "react";
 import Link from "next/link";
 import { payrollService } from "@/server/services/PayrollService";
 import { billingService } from "@/server/services/BillingService";
+import { requireTeacherProfile } from "@/lib/auth/currentUser";
 import { Clock, FileCheck, ShieldCheck } from "lucide-react";
 
 export default async function TeacherPayrollPage({
@@ -10,7 +11,8 @@ export default async function TeacherPayrollPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const teacherId = "teacher-1";
+  const { profile } = await requireTeacherProfile(locale);
+  const teacherId = profile.id;
 
   const payroll = await payrollService.computeTeacherPayroll(teacherId, "2026-09");
 

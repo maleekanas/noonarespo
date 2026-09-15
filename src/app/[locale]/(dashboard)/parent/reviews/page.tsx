@@ -13,6 +13,7 @@ import { requireParentProfile } from "@/lib/auth/currentUser";
 import { userRepository } from "@/server/repositories/UserRepository";
 import { academicRepository } from "@/server/repositories/AcademicRepository";
 
+
 export default async function ParentReviewsPage({
   params,
   searchParams,
@@ -169,6 +170,7 @@ export default async function ParentReviewsPage({
                   parentName: `${profile.firstName} ${profile.lastName}`,
                   teacherId: activeTeacher.teacherId,
                   teacherName: activeTeacher.teacherName,
+
                   rating,
                   titleAr: title,
                   commentAr: comment,

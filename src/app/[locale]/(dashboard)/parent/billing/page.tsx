@@ -7,6 +7,7 @@ import { prisma } from "@/lib/database/prisma";
 import { SubscriptionStatus } from "@prisma/client";
 import { createBillingPortalSession } from "@/server/services/StripeSubscriptionService";
 import { isStripeConfigured } from "@/lib/integrations/stripe";
+
 import {
   CheckCircle2,
   Clock,
@@ -57,6 +58,7 @@ export default async function ParentBillingPage({
     // failure.
     redirect(`/${locale}/parent/billing?portalError=1`);
   }
+
 
   // Real, Stripe-backed billing data (Prisma) — separate from the demo
   // catalog in BillingService, which is only used here for price formatting.
@@ -158,6 +160,22 @@ export default async function ParentBillingPage({
                   </button>
                 </form>
               )}
+            </div>
+          )}
+
+          {!subscription && (
+            <div className="bg-white rounded-3xl p-8 border border-dashed border-slate-300 text-center space-y-3">
+              <p className="text-sm font-bold text-slate-700">لا يوجد اشتراك نشط حالياً</p>
+              <p className="text-xs text-slate-500">
+                اشترك الآن في إحدى الباقات التعليمية لتفعيل حساب طفلك والبدء بالتعلم
+              </p>
+              <Link
+                href={`/${locale}/parent/checkout`}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl gradient-brand text-white font-bold text-xs shadow-md hover:opacity-95 transition-all"
+              >
+                <PlusCircle className="w-4 h-4" />
+                <span>اختيار باقة والاشتراك</span>
+              </Link>
             </div>
           )}
 
