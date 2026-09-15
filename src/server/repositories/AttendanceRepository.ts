@@ -1,42 +1,22 @@
 import { DomainAttendanceRecord } from "./types";
 import { AttendanceStatus } from "@prisma/client";
+import { prisma } from "@/lib/database/prisma";
 
-class InMemoryAttendanceRepository {
-  private records: Map<string, DomainAttendanceRecord> = new Map();
-
-  constructor() {
-    this.seedDefaults();
-  }
-
-  private seedDefaults() {
-    // Seed sample historical attendance for student-1
-    const statuses = [
-      AttendanceStatus.PRESENT,
-      AttendanceStatus.PRESENT,
-      AttendanceStatus.PRESENT,
-      AttendanceStatus.PRESENT,
-      AttendanceStatus.PRESENT,
-    ];
-
-    statuses.forEach((st, idx) => {
-      const id = `att-seed-${idx + 1}`;
-      this.records.set(id, {
-        id,
-        sessionId: `session-hist-${idx + 1}`,
-        studentId: "student-1",
-        status: st,
-        notes: "حضور مميز وتفاعل متواصل",
-        recordedAt: new Date(Date.now() - (idx + 1) * 7 * 24 * 60 * 60 * 1000),
-      });
-    });
-  }
-
+/**
+ * Prisma-backed repository for per-session attendance records. Previously
+ * in-memory, seeded only with fixed historical demo data for "student-1" --
+ * a real teacher marking a real student present/absent was never actually
+ * saved anywhere durable.
+ */
+class AttendanceRepository {
   async getAttendanceBySessionId(sessionId: string): Promise<DomainAttendanceRecord[]> {
-    return Array.from(this.records.values()).filter((r) => r.sessionId === sessionId);
+    const records = await prisma.attendanceRecord.findMany({ where: { sessionId } });
+    return records.map((r) => ({ ...r, recordedAt: r.createdAt }));
   }
 
   async getAttendanceByStudentId(studentId: string): Promise<DomainAttendanceRecord[]> {
-    return Array.from(this.records.values()).filter((r) => r.studentId === studentId);
+    const records = await prisma.attendanceRecord.findMany({ where: { studentId } });
+    return records.map((r) => ({ ...r, recordedAt: r.createdAt }));
   }
 
   async upsertAttendanceRecord(
@@ -45,28 +25,12 @@ class InMemoryAttendanceRepository {
     status: AttendanceStatus,
     notes?: string
   ): Promise<DomainAttendanceRecord> {
-    // Check if record exists for this session & student
-    for (const r of this.records.values()) {
-      if (r.sessionId === sessionId && r.studentId === studentId) {
-        r.status = status;
-        if (notes !== undefined) r.notes = notes;
-        r.recordedAt = new Date();
-        this.records.set(r.id, r);
-        return r;
-      }
-    }
-
-    const id = "att-" + (this.records.size + 1);
-    const newRecord: DomainAttendanceRecord = {
-      id,
-      sessionId,
-      studentId,
-      status,
-      notes,
-      recordedAt: new Date(),
-    };
-    this.records.set(id, newRecord);
-    return newRecord;
+    const record = await prisma.attendanceRecord.upsert({
+      where: { sessionId_studentId: { sessionId, studentId } },
+      update: { status, notes, createdAt: new Date() },
+      create: { sessionId, studentId, status, notes },
+    });
+    return { ...record, recordedAt: record.createdAt };
   }
 
   async calculateStudentAttendanceRate(studentId: string): Promise<{
@@ -93,4 +57,4 @@ class InMemoryAttendanceRepository {
   }
 }
 
-export const attendanceRepository = new InMemoryAttendanceRepository();
+export const attendanceRepository = new AttendanceRepository();
