@@ -1,0 +1,1194 @@
+From 378ffab917d2c697378a21aa1c65b11a1b157c8a Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Mon, 14 Sep 2026 15:12:07 +0000
+Subject: [PATCH] feat(billing): real Stripe checkout, webhook fulfillment, and
+ persisted billing
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Replaces the fake card-entry checkout form and always-succeeding mock payment
+gateway with a real Stripe Checkout (subscription mode) redirect, plus a
+webhook endpoint that verifies Stripe's signature and persists real
+Subscription/Invoice/InvoiceItem/Payment records via Prisma against the
+logged-in parent's real ParentProfile.id:
+
+- src/lib/integrations/stripe.ts: lazy Stripe SDK client singleton (never
+  crashes a page/build when STRIPE_SECRET_KEY isn't set; only errors when a
+  checkout/webhook path actually needs it)
+- src/server/services/StripeSubscriptionService.ts: creates the Checkout
+  Session (reuses BillingService's existing plan/coupon pricing logic),
+  fulfills checkout.session.completed, records invoice.paid renewals, and
+  syncs subscription status on customer.subscription.updated/deleted. Maps
+  the existing in-memory plan catalog to real Prisma Plan rows on demand
+  (upsert-by-shape, since Plan has no natural unique key besides id).
+- src/app/api/webhooks/stripe/route.ts: verifies the Stripe webhook
+  signature against the raw request body and dispatches to the service above
+- parent/checkout: removes the fake card fields entirely; "Confirm Payment"
+  now redirects to Stripe's own hosted, PCI-compliant payment page
+- parent/checkout/success: post-payment confirmation page
+- parent/billing: now reads real Prisma subscription/invoice data instead of
+  the always-empty-for-real-users in-memory mock
+- parent/invoices/[id]: now scoped to the logged-in parent (previously
+  looked up by URL id alone, with no ownership check) and reads real Prisma
+  data
+
+BillingService/FinancialRepository (the in-memory demo catalog) are left
+untouched — they're still relied on by the admin dashboards, payroll, and
+plan/coupon pricing math, none of which this change touches.
+
+Verified against the actual installed stripe@22.6.2 SDK type definitions
+(this sandbox has no network access to run `prisma generate`, so Prisma
+enum-import errors from a stale generated client are expected locally and
+are unrelated to this change — see tsc output).
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Lw4NFHTzoDtcYLQxEsUX8Q
+---
+ .env.example                                  |   4 +
+ package-lock.json                             |  22 +-
+ package.json                                  |   1 +
+ .../(dashboard)/parent/billing/page.tsx       |  57 ++-
+ .../(dashboard)/parent/checkout/page.tsx      | 141 ++-----
+ .../parent/checkout/success/page.tsx          |  72 ++++
+ .../(dashboard)/parent/invoices/[id]/page.tsx |  51 ++-
+ src/app/api/webhooks/stripe/route.ts          |  74 ++++
+ src/lib/integrations/stripe.ts                |  36 ++
+ .../services/StripeSubscriptionService.ts     | 395 ++++++++++++++++++
+ 10 files changed, 721 insertions(+), 132 deletions(-)
+ create mode 100644 src/app/[locale]/(dashboard)/parent/checkout/success/page.tsx
+ create mode 100644 src/app/api/webhooks/stripe/route.ts
+ create mode 100644 src/lib/integrations/stripe.ts
+ create mode 100644 src/server/services/StripeSubscriptionService.ts
+
+diff --git a/.env.example b/.env.example
+index 9b3340c..c41e9ee 100644
+--- a/.env.example
++++ b/.env.example
+@@ -22,3 +22,7 @@ MEETING_PROVIDER="MOCK"
+ 
+ # Payments
+ PAYMENT_PROVIDER="MOCK"
++
++# Stripe (required for real checkout/billing — leave PAYMENT_PROVIDER=MOCK if unset)
++STRIPE_SECRET_KEY="sk_test_..."
++STRIPE_WEBHOOK_SECRET="whsec_..."
+diff --git a/package-lock.json b/package-lock.json
+index 87f2806..0b558a4 100644
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -16,6 +16,7 @@
+         "next": "15.1.11",
+         "react": "^19.0.0",
+         "react-dom": "^19.0.0",
++        "stripe": "^22.6.2",
+         "tailwind-merge": "^3.0.1",
+         "zod": "^3.24.2"
+       },
+@@ -1510,7 +1511,7 @@
+       "version": "22.20.1",
+       "resolved": "https://registry.npmjs.org/@types/node/-/node-22.20.1.tgz",
+       "integrity": "sha512-EANqOCF9QFyra+4pfxUcX9STKJpCLjMbObVzljIJomAWSnuSIEAvyzEU53GaajbXJEgdh0iEcPL+DGvpUd4k1Q==",
+-      "dev": true,
++      "devOptional": true,
+       "license": "MIT",
+       "dependencies": {
+         "undici-types": "~6.21.0"
+@@ -6547,6 +6548,23 @@
+         "url": "https://github.com/sponsors/sindresorhus"
+       }
+     },
++    "node_modules/stripe": {
++      "version": "22.6.2",
++      "resolved": "https://registry.npmjs.org/stripe/-/stripe-22.6.2.tgz",
++      "integrity": "sha512-PwRE2scocvXqDKPiskMa5vRJEAEkq46W69XyUYmAwrNSLr675lQnfqLwnsndAWizwgihOWw/irLmoFRo3ez7ew==",
++      "license": "MIT",
++      "engines": {
++        "node": ">=18"
++      },
++      "peerDependencies": {
++        "@types/node": ">=18"
++      },
++      "peerDependenciesMeta": {
++        "@types/node": {
++          "optional": true
++        }
++      }
++    },
+     "node_modules/styled-jsx": {
+       "version": "5.1.6",
+       "resolved": "https://registry.npmjs.org/styled-jsx/-/styled-jsx-5.1.6.tgz",
+@@ -7060,7 +7078,7 @@
+       "version": "6.21.0",
+       "resolved": "https://registry.npmjs.org/undici-types/-/undici-types-6.21.0.tgz",
+       "integrity": "sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==",
+-      "dev": true,
++      "devOptional": true,
+       "license": "MIT"
+     },
+     "node_modules/unrs-resolver": {
+diff --git a/package.json b/package.json
+index b655020..d32ff5f 100644
+--- a/package.json
++++ b/package.json
+@@ -22,6 +22,7 @@
+     "next": "15.1.11",
+     "react": "^19.0.0",
+     "react-dom": "^19.0.0",
++    "stripe": "^22.6.2",
+     "tailwind-merge": "^3.0.1",
+     "zod": "^3.24.2"
+   },
+diff --git a/src/app/[locale]/(dashboard)/parent/billing/page.tsx b/src/app/[locale]/(dashboard)/parent/billing/page.tsx
+index 80e3be4..5841083 100644
+--- a/src/app/[locale]/(dashboard)/parent/billing/page.tsx
++++ b/src/app/[locale]/(dashboard)/parent/billing/page.tsx
+@@ -2,6 +2,8 @@ import React from "react";
+ import Link from "next/link";
+ import { billingService } from "@/server/services/BillingService";
+ import { requireParentProfile } from "@/lib/auth/currentUser";
++import { prisma } from "@/lib/database/prisma";
++import { SubscriptionStatus } from "@prisma/client";
+ import {
+   CheckCircle2,
+   Clock,
+@@ -12,6 +14,14 @@ import {
+ } from "lucide-react";
+ import { DirectionalIcon } from "@/components/shared/DirectionalIcon";
+ 
++const SUBSCRIPTION_STATUS_LABELS_AR: Record<SubscriptionStatus, string> = {
++  TRIALING: "فترة تجريبية",
++  ACTIVE: "الاشتراك نشط ومفعل ✓",
++  PAST_DUE: "متأخر السداد",
++  CANCELLED: "ملغى",
++  UNPAID: "غير مدفوع",
++};
++
+ export default async function ParentBillingPage({
+   params,
+ }: {
+@@ -21,9 +31,19 @@ export default async function ParentBillingPage({
+   const { profile } = await requireParentProfile(locale);
+   const parentId = profile.id;
+ 
+-  const subscription = await billingService.getParentSubscription(parentId);
+-  const plan = subscription ? await billingService.getPlanById(subscription.planId) : null;
+-  const invoices = await billingService.getParentInvoices(parentId);
++  // Real, Stripe-backed billing data (Prisma) — separate from the demo
++  // catalog in BillingService, which is only used here for price formatting.
++  const subscription = await prisma.subscription.findFirst({
++    where: { parentId, status: { in: [SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIALING, SubscriptionStatus.PAST_DUE] } },
++    include: { plan: true },
++    orderBy: { createdAt: "desc" },
++  });
++
++  const invoices = await prisma.invoice.findMany({
++    where: { parentId },
++    include: { items: true, payments: true },
++    orderBy: { createdAt: "desc" },
++  });
+ 
+   return (
+     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+@@ -58,22 +78,21 @@ export default async function ParentBillingPage({
+         {/* Left 2 Cols: Active Subscription Card & Invoices */}
+         <div className="lg:col-span-2 space-y-8">
+           {/* Active Subscription Box */}
+-          {plan && subscription && (
++          {subscription && (
+             <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-brand-950 rounded-3xl p-6 sm:p-8 text-white shadow-xl space-y-6">
+               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                 <div className="space-y-1">
+                   <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold border border-emerald-500/30">
+-                    الاشتراك نشط ومفعل ✓
++                    {SUBSCRIPTION_STATUS_LABELS_AR[subscription.status]}
+                   </span>
+                   <h2 className="text-2xl sm:text-3xl font-extrabold mt-2">
+-                    {plan.nameAr}
++                    {subscription.plan.nameAr}
+                   </h2>
+-                  <p className="text-xs text-slate-300">{plan.descriptionAr}</p>
+                 </div>
+ 
+                 <div className="text-start sm:text-end">
+                   <span className="text-3xl font-extrabold text-white block">
+-                    {billingService.formatPrice(plan.priceMinorUnits)}
++                    {billingService.formatPrice(subscription.plan.priceMinorUnits, subscription.plan.currency)}
+                   </span>
+                   <span className="text-xs text-slate-400">شهرياً • شامل الرسوم</span>
+                 </div>
+@@ -91,12 +110,28 @@ export default async function ParentBillingPage({
+                 </div>
+ 
+                 <span className="text-[11px] text-slate-400">
+-                  وسيلة الدفع: بطاقة ائتمانية (Visa •••• 4242)
++                  الدفع معالج بأمان عبر Stripe
+                 </span>
+               </div>
+             </div>
+           )}
+ 
++          {!subscription && (
++            <div className="bg-white rounded-3xl p-8 border border-dashed border-slate-300 text-center space-y-3">
++              <p className="text-sm font-bold text-slate-700">لا يوجد اشتراك نشط حالياً</p>
++              <p className="text-xs text-slate-500">
++                اشترك الآن في إحدى الباقات التعليمية لتفعيل حساب طفلك والبدء بالتعلم
++              </p>
++              <Link
++                href={`/${locale}/parent/checkout`}
++                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl gradient-brand text-white font-bold text-xs shadow-md hover:opacity-95 transition-all"
++              >
++                <PlusCircle className="w-4 h-4" />
++                <span>اختيار باقة والاشتراك</span>
++              </Link>
++            </div>
++          )}
++
+           {/* Invoices History Table */}
+           <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-4">
+             <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+@@ -116,11 +151,11 @@ export default async function ParentBillingPage({
+                         {inv.invoiceNumber}
+                       </span>
+                       <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-bold text-[10px] border border-emerald-200">
+-                        مدفوعة بنجاح
++                        {inv.status === "PAID" ? "مدفوعة بنجاح" : inv.status}
+                       </span>
+                     </div>
+                     <p className="text-xs text-slate-500">
+-                      {inv.lineItems[0]?.description || "اشتراك شهري"}
++                      {inv.items[0]?.description || "اشتراك شهري"}
+                     </p>
+                     <span className="text-[11px] text-slate-400 block">
+                       التاريخ: {inv.createdAt.toISOString().split("T")[0]}
+diff --git a/src/app/[locale]/(dashboard)/parent/checkout/page.tsx b/src/app/[locale]/(dashboard)/parent/checkout/page.tsx
+index 99f8663..82f2815 100644
+--- a/src/app/[locale]/(dashboard)/parent/checkout/page.tsx
++++ b/src/app/[locale]/(dashboard)/parent/checkout/page.tsx
+@@ -2,10 +2,13 @@ import React from "react";
+ import Link from "next/link";
+ import { redirect } from "next/navigation";
+ import { billingService } from "@/server/services/BillingService";
++import { createStripeCheckoutSession } from "@/server/services/StripeSubscriptionService";
++import { isStripeConfigured } from "@/lib/integrations/stripe";
+ import {
+-  CreditCard,
+   ArrowRight,
+   Lock,
++  ShieldAlert,
++  Info,
+ } from "lucide-react";
+ import { DirectionalIcon } from "@/components/shared/DirectionalIcon";
+ import { requireParentProfile } from "@/lib/auth/currentUser";
+@@ -15,11 +18,11 @@ export default async function ParentCheckoutPage({
+   searchParams,
+ }: {
+   params: Promise<{ locale: string }>;
+-  searchParams: Promise<{ planId?: string; coupon?: string }>;
++  searchParams: Promise<{ planId?: string; coupon?: string; cancelled?: string }>;
+ }) {
+   const { locale } = await params;
+-  const { planId: planIdParam, coupon: couponParam } = await searchParams;
+-  const { profile } = await requireParentProfile(locale);
++  const { planId: planIdParam, coupon: couponParam, cancelled } = await searchParams;
++  const { session, profile } = await requireParentProfile(locale);
+   const parentId = profile.id;
+ 
+   const allPlans = await billingService.getAllPlans();
+@@ -31,25 +34,22 @@ export default async function ParentCheckoutPage({
+     couponParam
+   );
+ 
++  const stripeReady = isStripeConfigured();
++
+   async function handleCheckout(formData: FormData) {
+     "use server";
+     const planId = formData.get("planId")?.toString() || selectedPlan.id;
+     const couponCode = formData.get("couponCode")?.toString() || "";
+-    const paymentMethod = (formData.get("paymentMethod")?.toString() || "CREDIT_CARD") as
+-      | "CREDIT_CARD"
+-      | "APPLE_PAY"
+-      | "GOOGLE_PAY"
+-      | "PAYPAL"
+-      | "MOCK";
+ 
+-    const { invoice } = await billingService.processCheckout({
++    const { url } = await createStripeCheckoutSession({
+       parentId,
++      parentEmail: session.email,
+       planId,
+       couponCode: couponCode || undefined,
+-      paymentMethod,
++      locale,
+     });
+ 
+-    redirect(`/${locale}/parent/invoices/${invoice.id}`);
++    redirect(url);
+   }
+ 
+   return (
+@@ -78,6 +78,20 @@ export default async function ParentCheckoutPage({
+         </div>
+       </div>
+ 
++      {cancelled && (
++        <div className="flex items-center gap-2 px-4 py-3 rounded-2xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-bold">
++          <ShieldAlert className="w-4 h-4 flex-shrink-0" />
++          <span>تم إلغاء عملية الدفع ولم يتم خصم أي مبلغ. يمكنك المحاولة مجدداً في أي وقت.</span>
++        </div>
++      )}
++
++      {!stripeReady && (
++        <div className="flex items-center gap-2 px-4 py-3 rounded-2xl bg-red-50 border border-red-200 text-red-800 text-xs font-bold">
++          <ShieldAlert className="w-4 h-4 flex-shrink-0" />
++          <span>بوابة الدفع غير مُفعّلة حالياً على هذا الموقع. الرجاء المحاولة لاحقاً أو التواصل مع الدعم.</span>
++        </div>
++      )}
++
+       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+         {/* Left 2 Cols: Plan Selection & Payment Form */}
+         <div className="lg:col-span-2 space-y-6">
+@@ -122,106 +136,25 @@ export default async function ParentCheckoutPage({
+             <input type="hidden" name="planId" value={selectedPlan.id} />
+             <input type="hidden" name="couponCode" value={couponParam || ""} />
+ 
+-            {/* Payment Method Selector */}
+             <div className="space-y-3">
+               <label className="block text-xs font-bold text-slate-700">
+-                2. اختر وسيلة الدفع المعتمدة:
++                2. الدفع الآمن عبر Stripe:
+               </label>
+-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+-                <label className="p-3.5 rounded-2xl border-2 border-brand-500 bg-brand-50/30 flex flex-col items-center gap-1.5 cursor-pointer text-center">
+-                  <input
+-                    type="radio"
+-                    name="paymentMethod"
+-                    value="CREDIT_CARD"
+-                    defaultChecked
+-                    className="sr-only"
+-                  />
+-                  <CreditCard className="w-5 h-5 text-brand-600" />
+-                  <span className="text-xs font-bold text-slate-800">بطاقة بنكية</span>
+-                  <span className="text-[10px] text-slate-400">Visa / Mada</span>
+-                </label>
+-
+-                <label className="p-3.5 rounded-2xl border border-slate-200 hover:border-slate-300 flex flex-col items-center gap-1.5 cursor-pointer text-center">
+-                  <input
+-                    type="radio"
+-                    name="paymentMethod"
+-                    value="APPLE_PAY"
+-                    className="sr-only"
+-                  />
+-                  <span className="text-sm font-bold text-slate-800">Pay</span>
+-                  <span className="text-xs font-bold text-slate-800">Apple Pay</span>
+-                  <span className="text-[10px] text-slate-400">دفع فوري</span>
+-                </label>
+-
+-                <label className="p-3.5 rounded-2xl border border-slate-200 hover:border-slate-300 flex flex-col items-center gap-1.5 cursor-pointer text-center">
+-                  <input
+-                    type="radio"
+-                    name="paymentMethod"
+-                    value="GOOGLE_PAY"
+-                    className="sr-only"
+-                  />
+-                  <span className="text-sm font-bold text-slate-800">G Pay</span>
+-                  <span className="text-xs font-bold text-slate-800">Google Pay</span>
+-                  <span className="text-[10px] text-slate-400">دفع آمن</span>
+-                </label>
+-
+-                <label className="p-3.5 rounded-2xl border border-slate-200 hover:border-slate-300 flex flex-col items-center gap-1.5 cursor-pointer text-center">
+-                  <input
+-                    type="radio"
+-                    name="paymentMethod"
+-                    value="PAYPAL"
+-                    className="sr-only"
+-                  />
+-                  <span className="text-sm font-bold text-blue-600">PayPal</span>
+-                  <span className="text-xs font-bold text-slate-800">باي بال</span>
+-                  <span className="text-[10px] text-slate-400">عالمي</span>
+-                </label>
+-              </div>
+-            </div>
+-
+-            {/* Credit Card Input Simulation */}
+-            <div className="space-y-4 pt-2 border-t border-slate-100 text-xs">
+-              <div>
+-                <label className="block font-bold text-slate-700 mb-1">اسم حامل البطاقة</label>
+-                <input
+-                  defaultValue="طارق المنصور"
+-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-brand-500"
+-                />
+-              </div>
+-
+-              <div>
+-                <label className="block font-bold text-slate-700 mb-1">رقم البطاقة</label>
+-                <input
+-                  defaultValue="4242 •••• •••• 4242"
+-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-brand-500 font-mono"
+-                />
+-              </div>
+-
+-              <div className="grid grid-cols-2 gap-4">
+-                <div>
+-                  <label className="block font-bold text-slate-700 mb-1">تاريخ الانتهاء</label>
+-                  <input
+-                    defaultValue="12/28"
+-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-brand-500 font-mono"
+-                  />
+-                </div>
+-                <div>
+-                  <label className="block font-bold text-slate-700 mb-1">رمز الأمان CVC</label>
+-                  <input
+-                    defaultValue="888"
+-                    type="password"
+-                    maxLength={4}
+-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-brand-500 font-mono"
+-                  />
+-                </div>
++              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex items-start gap-3 text-xs text-slate-600">
++                <Info className="w-4 h-4 text-brand-600 flex-shrink-0 mt-0.5" />
++                <span>
++                  سيتم تحويلك إلى صفحة الدفع الآمنة والمعتمدة من Stripe لإدخال بيانات بطاقتك مباشرة.
++                  نحن لا نطّلع على بيانات بطاقتك ولا نخزّنها على خوادمنا إطلاقاً.
++                </span>
+               </div>
+             </div>
+ 
+             <button
+               type="submit"
+-              className="w-full py-4 rounded-2xl gradient-brand text-white font-extrabold text-sm shadow-md hover:opacity-95 transition-all flex items-center justify-center gap-2"
++              disabled={!stripeReady}
++              className="w-full py-4 rounded-2xl gradient-brand text-white font-extrabold text-sm shadow-md hover:opacity-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+             >
+-              <span>تأكيد الدفع وسداد {billingService.formatPrice(calculation.totalMinorUnits)}</span>
++              <span>المتابعة إلى الدفع الآمن — {billingService.formatPrice(calculation.totalMinorUnits)}</span>
+               <DirectionalIcon icon={ArrowRight} locale={locale} className="w-4 h-4" />
+             </button>
+           </form>
+diff --git a/src/app/[locale]/(dashboard)/parent/checkout/success/page.tsx b/src/app/[locale]/(dashboard)/parent/checkout/success/page.tsx
+new file mode 100644
+index 0000000..5c589af
+--- /dev/null
++++ b/src/app/[locale]/(dashboard)/parent/checkout/success/page.tsx
+@@ -0,0 +1,72 @@
++import React from "react";
++import Link from "next/link";
++import { CheckCircle2, ArrowRight, Clock } from "lucide-react";
++import { DirectionalIcon } from "@/components/shared/DirectionalIcon";
++import { requireParentProfile } from "@/lib/auth/currentUser";
++import { getStripeClient, isStripeConfigured } from "@/lib/integrations/stripe";
++
++export default async function CheckoutSuccessPage({
++  params,
++  searchParams,
++}: {
++  params: Promise<{ locale: string }>;
++  searchParams: Promise<{ session_id?: string }>;
++}) {
++  const { locale } = await params;
++  const { session_id: sessionId } = await searchParams;
++  await requireParentProfile(locale);
++
++  let paid = false;
++  if (sessionId && isStripeConfigured()) {
++    try {
++      const stripe = getStripeClient();
++      const session = await stripe.checkout.sessions.retrieve(sessionId);
++      paid = session.payment_status === "paid";
++    } catch {
++      // If we can't verify the session (e.g. it belongs to a different
++      // account/mode), fall back to the neutral "processing" message below
++      // rather than showing an error — the webhook is the real source of
++      // truth for fulfillment either way.
++    }
++  }
++
++  return (
++    <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
++      <div className="bg-white rounded-3xl p-8 sm:p-10 border border-slate-200 shadow-sm text-center space-y-6">
++        <div className="w-16 h-16 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto">
++          <CheckCircle2 className="w-9 h-9" />
++        </div>
++
++        {paid ? (
++          <>
++            <h1 className="text-2xl font-extrabold text-slate-900">
++              تم الدفع بنجاح! 🎉
++            </h1>
++            <p className="text-sm text-slate-600 leading-relaxed">
++              شكراً لاشتراكك. تم تأكيد عملية الدفع مع Stripe، وسيتم تفعيل باقتك وإصدار
++              فاتورتك الضريبية خلال لحظات.
++            </p>
++          </>
++        ) : (
++          <>
++            <h1 className="text-2xl font-extrabold text-slate-900">
++              جارٍ تأكيد عملية الدفع...
++            </h1>
++            <div className="flex items-center justify-center gap-2 text-xs text-slate-500">
++              <Clock className="w-4 h-4" />
++              <span>قد تستغرق مزامنة الاشتراك بضع لحظات</span>
++            </div>
++          </>
++        )}
++
++        <Link
++          href={`/${locale}/parent/billing`}
++          className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl gradient-brand text-white font-bold text-sm shadow-md hover:opacity-95 transition-all"
++        >
++          <span>الذهاب إلى الاشتراك والفواتير</span>
++          <DirectionalIcon icon={ArrowRight} locale={locale} className="w-4 h-4" />
++        </Link>
++      </div>
++    </div>
++  );
++}
+diff --git a/src/app/[locale]/(dashboard)/parent/invoices/[id]/page.tsx b/src/app/[locale]/(dashboard)/parent/invoices/[id]/page.tsx
+index 5ca7c32..88aa5df 100644
+--- a/src/app/[locale]/(dashboard)/parent/invoices/[id]/page.tsx
++++ b/src/app/[locale]/(dashboard)/parent/invoices/[id]/page.tsx
+@@ -2,23 +2,44 @@ import React from "react";
+ import Link from "next/link";
+ import { notFound } from "next/navigation";
+ import { billingService } from "@/server/services/BillingService";
+-import { userRepository } from "@/server/repositories/UserRepository";
++import { requireParentProfile } from "@/lib/auth/currentUser";
++import { prisma } from "@/lib/database/prisma";
+ import { GraduationCap } from "lucide-react";
+ import { PrintButton } from "@/components/shared/PrintButton";
+ 
++const PROVIDER_LABELS_AR: Record<string, string> = {
++  STRIPE: "بطاقة بنكية عبر Stripe",
++  MOCK: "بطاقة ائتمانية (تجريبي)",
++};
++
+ export default async function ParentInvoiceDetailPage({
+   params,
+ }: {
+   params: Promise<{ locale: string; id: string }>;
+ }) {
+   const { locale, id } = await params;
+-  const invoice = await billingService.getInvoiceById(id);
++  const { profile } = await requireParentProfile(locale);
++
++  // Invoices are always scoped to the logged-in parent — never trust the
++  // URL id alone, so one parent can't view another parent's invoice by
++  // guessing its id.
++  const invoice = await prisma.invoice.findFirst({
++    where: { id, parentId: profile.id },
++    include: { items: true, payments: true },
++  });
+ 
+   if (!invoice) {
+     notFound();
+   }
+ 
+-  const parent = await userRepository.findParentProfileByUserId("user-parent-1");
++  const discountMinorUnits = Math.max(
++    0,
++    invoice.subtotalMinorUnits - invoice.taxMinorUnits - invoice.totalMinorUnits
++  );
++  const paymentProvider = invoice.payments[0]?.provider;
++  const paymentMethodLabel = paymentProvider
++    ? PROVIDER_LABELS_AR[paymentProvider] || paymentProvider
++    : "—";
+ 
+   return (
+     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+@@ -75,7 +96,7 @@ export default async function ParentInvoiceDetailPage({
+ 
+           <div className="text-center sm:text-end space-y-1">
+             <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-200">
+-              مدفوعة بالكامل ✓
++              {invoice.status === "PAID" ? "مدفوعة بالكامل ✓" : invoice.status}
+             </span>
+             <h3 className="text-lg font-extrabold text-slate-900 block font-mono mt-1">
+               {invoice.invoiceNumber}
+@@ -91,15 +112,15 @@ export default async function ParentInvoiceDetailPage({
+           <div className="space-y-1">
+             <span className="font-bold text-slate-900 block text-sm">فاتورة إلى:</span>
+             <span className="font-bold text-slate-800 block">
+-              {parent ? `${parent.firstName} ${parent.lastName}` : "أ/ طارق المنصور"}
++              {profile.firstName} {profile.lastName}
+             </span>
+-            <span>العنوان: {parent?.billingAddress || "الرياض، المملكة العربية السعودية"}</span>
+-            <span className="block">الهاتف: {parent?.phoneNumber || "+966501234567"}</span>
++            <span>العنوان: {profile.billingAddress || "غير محدد"}</span>
++            <span className="block">الهاتف: {profile.phoneNumber}</span>
+           </div>
+ 
+           <div className="space-y-1 sm:text-end">
+             <span className="font-bold text-slate-900 block text-sm">تفاصيل السداد:</span>
+-            <span>طريقة الدفع: {invoice.paymentMethod}</span>
++            <span>طريقة الدفع: {paymentMethodLabel}</span>
+             <span className="block">حالة المعاملة: تم الخصم والتأكيد المباشر</span>
+             <span className="block">العملة: {invoice.currency} (الدولار الأمريكي)</span>
+           </div>
+@@ -117,15 +138,15 @@ export default async function ParentInvoiceDetailPage({
+               </tr>
+             </thead>
+             <tbody className="divide-y divide-slate-100">
+-              {invoice.lineItems.map((item, idx) => (
+-                <tr key={idx} className="text-slate-800">
++              {invoice.items.map((item) => (
++                <tr key={item.id} className="text-slate-800">
+                   <td className="py-4 font-bold">{item.description}</td>
+                   <td className="py-4 text-center font-medium">{item.quantity}</td>
+                   <td className="py-4 text-end font-medium">
+-                    {billingService.formatPrice(item.unitPriceMinorUnits, invoice.currency)}
++                    {billingService.formatPrice(item.amountMinorUnits, invoice.currency)}
+                   </td>
+                   <td className="py-4 text-end font-bold">
+-                    {billingService.formatPrice(item.totalMinorUnits, invoice.currency)}
++                    {billingService.formatPrice(item.amountMinorUnits * item.quantity, invoice.currency)}
+                   </td>
+                 </tr>
+               ))}
+@@ -143,10 +164,10 @@ export default async function ParentInvoiceDetailPage({
+               </span>
+             </div>
+ 
+-            {invoice.discountMinorUnits > 0 && (
++            {discountMinorUnits > 0 && (
+               <div className="flex items-center justify-between text-emerald-600 font-bold">
+                 <span>خصم الكوبون:</span>
+-                <span>-{billingService.formatPrice(invoice.discountMinorUnits, invoice.currency)}</span>
++                <span>-{billingService.formatPrice(discountMinorUnits, invoice.currency)}</span>
+               </div>
+             )}
+ 
+@@ -167,7 +188,7 @@ export default async function ParentInvoiceDetailPage({
+         {/* Footer Notes */}
+         <div className="pt-6 border-t border-slate-100 text-center text-slate-400 text-[11px] space-y-1">
+           <p>شكراً لثقتكم بأكاديمية براعم العربية. نتمنى لأبنائكم رحلة تعليمية مباركة وممتعة.</p>
+-          <p>لأي استفسارات بخصوص الفاتورة، يُرجى التواصل مع قسم المالية: billing@kidsarabicacademy.internal</p>
++          <p>لأي استفسارات بخصوص الفاتورة، يُرجى التواصل مع قسم المالية: billing@arabickidsacademy.com</p>
+         </div>
+       </div>
+     </div>
+diff --git a/src/app/api/webhooks/stripe/route.ts b/src/app/api/webhooks/stripe/route.ts
+new file mode 100644
+index 0000000..d0c795d
+--- /dev/null
++++ b/src/app/api/webhooks/stripe/route.ts
+@@ -0,0 +1,74 @@
++import { NextRequest, NextResponse } from "next/server";
++import type Stripe from "stripe";
++import { getStripeClient } from "@/lib/integrations/stripe";
++import {
++  fulfillCheckoutSession,
++  recordRenewalInvoice,
++  syncSubscriptionStatus,
++} from "@/server/services/StripeSubscriptionService";
++
++// Must run on the Node.js runtime (not edge) — the Stripe SDK's signature
++// verification relies on Node's crypto module.
++export const runtime = "nodejs";
++
++export async function POST(request: NextRequest) {
++  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
++  const signature = request.headers.get("stripe-signature");
++
++  if (!webhookSecret) {
++    console.error("[stripe webhook] STRIPE_WEBHOOK_SECRET is not configured");
++    return NextResponse.json({ error: "Webhook not configured" }, { status: 500 });
++  }
++  if (!signature) {
++    return NextResponse.json({ error: "Missing stripe-signature header" }, { status: 400 });
++  }
++
++  // The raw request body is required (unparsed) to verify Stripe's signature.
++  const rawBody = await request.text();
++
++  let event: Stripe.Event;
++  try {
++    const stripe = getStripeClient();
++    event = await stripe.webhooks.constructEventAsync(rawBody, signature, webhookSecret);
++  } catch (err) {
++    console.error("[stripe webhook] signature verification failed", err);
++    return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
++  }
++
++  try {
++    switch (event.type) {
++      case "checkout.session.completed": {
++        const session = event.data.object as Stripe.Checkout.Session;
++        if (session.mode === "subscription" && session.payment_status === "paid") {
++          await fulfillCheckoutSession(session);
++        }
++        break;
++      }
++
++      case "invoice.paid": {
++        const invoice = event.data.object as Stripe.Invoice;
++        await recordRenewalInvoice(invoice);
++        break;
++      }
++
++      case "customer.subscription.updated":
++      case "customer.subscription.deleted": {
++        const subscription = event.data.object as Stripe.Subscription;
++        await syncSubscriptionStatus(subscription);
++        break;
++      }
++
++      default:
++        // Unhandled event types are ignored — Stripe expects a 2xx response
++        // for any event it sends, whether or not we act on it.
++        break;
++    }
++
++    return NextResponse.json({ received: true });
++  } catch (err) {
++    // Returning a non-2xx status tells Stripe to retry this event later,
++    // which is what we want for a transient failure (e.g. a DB hiccup).
++    console.error(`[stripe webhook] failed to process ${event.type}`, err);
++    return NextResponse.json({ error: "Webhook handler failed" }, { status: 500 });
++  }
++}
+diff --git a/src/lib/integrations/stripe.ts b/src/lib/integrations/stripe.ts
+new file mode 100644
+index 0000000..985f665
+--- /dev/null
++++ b/src/lib/integrations/stripe.ts
+@@ -0,0 +1,36 @@
++import Stripe from "stripe";
++
++const globalForStripe = globalThis as unknown as {
++  stripeClient: Stripe | undefined;
++};
++
++/**
++ * Lazily creates the Stripe SDK client. This is intentionally NOT constructed
++ * at module load time: importing this file must never crash a page/build that
++ * doesn't actually need Stripe (e.g. if STRIPE_SECRET_KEY isn't configured yet).
++ * The error only surfaces when a checkout/webhook path actually calls this.
++ */
++export function getStripeClient(): Stripe {
++  if (globalForStripe.stripeClient) {
++    return globalForStripe.stripeClient;
++  }
++
++  const secretKey = process.env.STRIPE_SECRET_KEY;
++  if (!secretKey) {
++    throw new Error(
++      "STRIPE_SECRET_KEY is not configured. Add it in your environment variables to enable real payments."
++    );
++  }
++
++  const client = new Stripe(secretKey);
++
++  if (process.env.NODE_ENV !== "production") {
++    globalForStripe.stripeClient = client;
++  }
++
++  return client;
++}
++
++export function isStripeConfigured(): boolean {
++  return Boolean(process.env.STRIPE_SECRET_KEY);
++}
+diff --git a/src/server/services/StripeSubscriptionService.ts b/src/server/services/StripeSubscriptionService.ts
+new file mode 100644
+index 0000000..9bd5d24
+--- /dev/null
++++ b/src/server/services/StripeSubscriptionService.ts
+@@ -0,0 +1,395 @@
++import type Stripe from "stripe";
++import { PlanType, BillingInterval, SubscriptionStatus } from "@prisma/client";
++import { prisma } from "@/lib/database/prisma";
++import { getStripeClient } from "@/lib/integrations/stripe";
++import { billingService } from "./BillingService";
++import type { SubscriptionPlan } from "../repositories/FinancialRepository";
++
++/**
++ * This service bridges the existing in-memory plan catalog (BillingService /
++ * FinancialRepository — still used as-is by the admin dashboards and payroll
++ * screens) with real, persisted Stripe-backed billing records in Postgres via
++ * Prisma. It intentionally does NOT touch BillingService/FinancialRepository,
++ * so nothing else that reads from them (admin/finance, admin/reports,
++ * teacher/payroll, DataExportService, etc.) is affected.
++ */
++
++function mapPlanTypeFromCode(code: string): PlanType {
++  switch (code) {
++    case "STARTER":
++      return PlanType.INDIVIDUAL;
++    case "STANDARD_GROUP":
++      return PlanType.GROUP;
++    case "FAMILY_VIP":
++      return PlanType.FAMILY;
++    case "PRIVATE_1ON1":
++      return PlanType.PRIVATE_1_ON_1;
++    default:
++      return PlanType.GROUP;
++  }
++}
++
++function mapBillingInterval(interval: SubscriptionPlan["billingInterval"]): BillingInterval {
++  switch (interval) {
++    case "QUARTERLY":
++      return BillingInterval.QUARTERLY;
++    case "ANNUAL":
++      return BillingInterval.ANNUALLY;
++    case "MONTHLY":
++    default:
++      return BillingInterval.MONTHLY;
++  }
++}
++
++function stripeRecurringFromInterval(
++  interval: SubscriptionPlan["billingInterval"]
++): { interval: "month" | "year"; interval_count: number } {
++  switch (interval) {
++    case "QUARTERLY":
++      return { interval: "month", interval_count: 3 };
++    case "ANNUAL":
++      return { interval: "year", interval_count: 1 };
++    case "MONTHLY":
++    default:
++      return { interval: "month", interval_count: 1 };
++  }
++}
++
++function mapStripeSubscriptionStatus(status: Stripe.Subscription.Status): SubscriptionStatus {
++  switch (status) {
++    case "trialing":
++      return SubscriptionStatus.TRIALING;
++    case "active":
++      return SubscriptionStatus.ACTIVE;
++    case "past_due":
++      return SubscriptionStatus.PAST_DUE;
++    case "canceled":
++    case "incomplete_expired":
++      return SubscriptionStatus.CANCELLED;
++    case "unpaid":
++      return SubscriptionStatus.UNPAID;
++    default:
++      return SubscriptionStatus.ACTIVE;
++  }
++}
++
++/**
++ * Finds (or lazily creates) the Prisma Plan row that corresponds to a given
++ * in-memory catalog plan. The Plan model has no natural unique key besides
++ * its id, so we match on {type, interval, priceMinorUnits, currency} — good
++ * enough for this small, fixed catalog — and create it on first use.
++ */
++async function findOrCreatePrismaPlan(mockPlan: SubscriptionPlan) {
++  const type = mapPlanTypeFromCode(mockPlan.code);
++  const interval = mapBillingInterval(mockPlan.billingInterval);
++
++  const existing = await prisma.plan.findFirst({
++    where: {
++      type,
++      interval,
++      priceMinorUnits: mockPlan.priceMinorUnits,
++      currency: mockPlan.currency,
++    },
++  });
++  if (existing) return existing;
++
++  return prisma.plan.create({
++    data: {
++      type,
++      interval,
++      priceMinorUnits: mockPlan.priceMinorUnits,
++      currency: mockPlan.currency,
++      nameEn: mockPlan.nameEn,
++      nameAr: mockPlan.nameAr,
++      isActive: true,
++    },
++  });
++}
++
++export async function createStripeCheckoutSession(params: {
++  parentId: string;
++  parentEmail: string;
++  planId: string;
++  couponCode?: string;
++  locale: string;
++}): Promise<{ url: string }> {
++  const stripe = getStripeClient();
++  const calculation = await billingService.calculateCheckoutPrice(params.planId, params.couponCode);
++  const { plan } = calculation;
++
++  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
++  const recurring = stripeRecurringFromInterval(plan.billingInterval);
++
++  const description = calculation.couponApplied
++    ? `${plan.nameEn} (coupon ${calculation.couponApplied.code} applied)`
++    : plan.nameEn;
++
++  const session = await stripe.checkout.sessions.create({
++    mode: "subscription",
++    customer_email: params.parentEmail,
++    line_items: [
++      {
++        quantity: 1,
++        price_data: {
++          currency: plan.currency.toLowerCase(),
++          unit_amount: calculation.totalMinorUnits,
++          recurring,
++          product_data: {
++            name: plan.nameEn,
++            description,
++          },
++        },
++      },
++    ],
++    success_url: `${appUrl}/${params.locale}/parent/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
++    cancel_url: `${appUrl}/${params.locale}/parent/checkout?cancelled=1&planId=${plan.id}`,
++    metadata: {
++      parentId: params.parentId,
++      planId: plan.id,
++      couponCode: params.couponCode || "",
++      locale: params.locale,
++    },
++    subscription_data: {
++      metadata: {
++        parentId: params.parentId,
++        planId: plan.id,
++        couponCode: params.couponCode || "",
++        locale: params.locale,
++      },
++    },
++  });
++
++  if (!session.url) {
++    throw new Error("Stripe did not return a checkout URL");
++  }
++
++  return { url: session.url };
++}
++
++/**
++ * Fulfills a completed Checkout Session: creates (or extends) the real
++ * Subscription plus a paid Invoice/InvoiceItem/Payment, all tied to the
++ * logged-in parent's real ParentProfile.id. Idempotent via Payment's unique
++ * idempotencyKey (the Stripe Checkout Session id) — safe to call more than
++ * once for the same session (Stripe retries webhooks).
++ */
++export async function fulfillCheckoutSession(session: Stripe.Checkout.Session): Promise<void> {
++  const parentId = session.metadata?.parentId;
++  const planId = session.metadata?.planId;
++  const couponCode = session.metadata?.couponCode || undefined;
++
++  if (!parentId || !planId) {
++    console.error("[stripe webhook] checkout.session.completed missing parentId/planId metadata", session.id);
++    return;
++  }
++
++  const existingPayment = await prisma.payment.findUnique({ where: { idempotencyKey: session.id } });
++  if (existingPayment) {
++    return; // already fulfilled
++  }
++
++  const stripe = getStripeClient();
++  const calculation = await billingService.calculateCheckoutPrice(planId, couponCode);
++  const prismaPlan = await findOrCreatePrismaPlan(calculation.plan);
++
++  let currentPeriodEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
++  if (typeof session.subscription === "string") {
++    try {
++      const stripeSub = await stripe.subscriptions.retrieve(session.subscription);
++      // Stripe moved current_period_end from the Subscription object down to
++      // its line items (flexible billing mode) — read it from there.
++      const periodEnd = stripeSub.items.data[0]?.current_period_end;
++      if (periodEnd) currentPeriodEnd = new Date(periodEnd * 1000);
++    } catch (err) {
++      console.error("[stripe webhook] failed to retrieve subscription for period end", err);
++    }
++  }
++
++  const totalMinorUnits = session.amount_total ?? calculation.totalMinorUnits;
++  const now = new Date();
++
++  await prisma.$transaction(async (tx) => {
++    const activeSub = await tx.subscription.findFirst({
++      where: { parentId, planId: prismaPlan.id, status: SubscriptionStatus.ACTIVE },
++    });
++
++    if (activeSub) {
++      await tx.subscription.update({
++        where: { id: activeSub.id },
++        data: { currentPeriodEnd },
++      });
++    } else {
++      await tx.subscription.create({
++        data: {
++          parentId,
++          planId: prismaPlan.id,
++          status: SubscriptionStatus.ACTIVE,
++          currentPeriodStart: now,
++          currentPeriodEnd,
++        },
++      });
++    }
++
++    const invoiceNumber = `INV-${now.getFullYear()}-${Math.floor(100000 + Math.random() * 899999)}`;
++    const invoice = await tx.invoice.create({
++      data: {
++        invoiceNumber,
++        parentId,
++        subtotalMinorUnits: calculation.subtotalMinorUnits,
++        taxMinorUnits: calculation.taxMinorUnits,
++        totalMinorUnits,
++        currency: calculation.plan.currency,
++        status: "PAID",
++        dueDate: now,
++        items: {
++          create: [
++            {
++              description: `${calculation.plan.nameAr} (${calculation.plan.nameEn})`,
++              amountMinorUnits: calculation.subtotalMinorUnits,
++              quantity: 1,
++            },
++          ],
++        },
++      },
++    });
++
++    const paymentIntentId =
++      typeof session.payment_intent === "string" ? session.payment_intent : undefined;
++
++    await tx.payment.create({
++      data: {
++        invoiceId: invoice.id,
++        provider: "STRIPE",
++        providerTransactionId: paymentIntentId,
++        amountMinorUnits: totalMinorUnits,
++        currency: calculation.plan.currency,
++        status: "SUCCEEDED",
++        idempotencyKey: session.id,
++      },
++    });
++  });
++}
++
++/**
++ * Handles Stripe's recurring `invoice.paid` events (billing cycles after the
++ * first) by creating a fresh Invoice/InvoiceItem/Payment for the renewal and
++ * extending the local Subscription's currentPeriodEnd. Since the Prisma
++ * Subscription model doesn't store a Stripe subscription id, the parent/plan
++ * are recovered from the Stripe Subscription's own metadata (set at checkout
++ * time in subscription_data.metadata).
++ */
++export async function recordRenewalInvoice(invoice: Stripe.Invoice): Promise<void> {
++  // The very first invoice of a subscription is already handled by
++  // fulfillCheckoutSession via checkout.session.completed — skip it here to
++  // avoid double-billing.
++  if (invoice.billing_reason === "subscription_create") return;
++
++  // Newer Stripe API versions moved the subscription reference from
++  // invoice.subscription to invoice.parent.subscription_details.subscription.
++  const subscriptionRef = invoice.parent?.subscription_details?.subscription;
++  const subscriptionId = typeof subscriptionRef === "string" ? subscriptionRef : subscriptionRef?.id;
++  if (!subscriptionId) return;
++
++  const idempotencyKey = `stripe-invoice-${invoice.id}`;
++  const existingPayment = await prisma.payment.findUnique({ where: { idempotencyKey } });
++  if (existingPayment) return;
++
++  const stripe = getStripeClient();
++  const stripeSub = await stripe.subscriptions.retrieve(subscriptionId);
++  const parentId = stripeSub.metadata?.parentId;
++  const planId = stripeSub.metadata?.planId;
++  if (!parentId || !planId) {
++    console.error("[stripe webhook] renewal invoice missing parentId/planId metadata", invoice.id);
++    return;
++  }
++
++  const calculation = await billingService.calculateCheckoutPrice(planId, stripeSub.metadata?.couponCode || undefined);
++  const prismaPlan = await findOrCreatePrismaPlan(calculation.plan);
++  const totalMinorUnits = invoice.amount_paid;
++  const periodEnd = stripeSub.items.data[0]?.current_period_end;
++  const currentPeriodEnd = periodEnd ? new Date(periodEnd * 1000) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
++  const now = new Date();
++
++  await prisma.$transaction(async (tx) => {
++    const activeSub = await tx.subscription.findFirst({
++      where: { parentId, planId: prismaPlan.id },
++      orderBy: { createdAt: "desc" },
++    });
++
++    if (activeSub) {
++      await tx.subscription.update({
++        where: { id: activeSub.id },
++        data: { currentPeriodEnd, status: SubscriptionStatus.ACTIVE },
++      });
++    }
++
++    const invoiceNumber = `INV-${now.getFullYear()}-${Math.floor(100000 + Math.random() * 899999)}`;
++    const dbInvoice = await tx.invoice.create({
++      data: {
++        invoiceNumber,
++        parentId,
++        subtotalMinorUnits: calculation.subtotalMinorUnits,
++        taxMinorUnits: calculation.taxMinorUnits,
++        totalMinorUnits,
++        currency: calculation.plan.currency,
++        status: "PAID",
++        dueDate: now,
++        items: {
++          create: [
++            {
++              description: `${calculation.plan.nameAr} (${calculation.plan.nameEn}) — تجديد الاشتراك`,
++              amountMinorUnits: calculation.subtotalMinorUnits,
++              quantity: 1,
++            },
++          ],
++        },
++      },
++    });
++
++    await tx.payment.create({
++      data: {
++        invoiceId: dbInvoice.id,
++        provider: "STRIPE",
++        providerTransactionId: invoice.id,
++        amountMinorUnits: totalMinorUnits,
++        currency: calculation.plan.currency,
++        status: "SUCCEEDED",
++        idempotencyKey,
++      },
++    });
++  });
++}
++
++/**
++ * Keeps the local Subscription.status in sync with Stripe on
++ * customer.subscription.updated / .deleted events (cancellations, payment
++ * failures, etc). Best-effort: matched by parentId + planId from the Stripe
++ * Subscription's own metadata since we don't persist a Stripe subscription id.
++ */
++export async function syncSubscriptionStatus(stripeSub: Stripe.Subscription): Promise<void> {
++  const parentId = stripeSub.metadata?.parentId;
++  const planId = stripeSub.metadata?.planId;
++  if (!parentId || !planId) return;
++
++  const status = mapStripeSubscriptionStatus(stripeSub.status);
++  const periodEnd = stripeSub.items.data[0]?.current_period_end;
++  const currentPeriodEnd = periodEnd ? new Date(periodEnd * 1000) : undefined;
++
++  // planId in Stripe metadata is the in-memory catalog id (e.g. "plan-family"),
++  // not the Prisma Plan UUID — resolve it the same way the checkout/renewal
++  // paths do before querying Subscription.planId.
++  const mockPlan = await billingService.getPlanById(planId);
++  if (!mockPlan) return;
++  const prismaPlan = await findOrCreatePrismaPlan(mockPlan);
++
++  const localSub = await prisma.subscription.findFirst({
++    where: { parentId, planId: prismaPlan.id },
++    orderBy: { createdAt: "desc" },
++  });
++  if (!localSub) return;
++
++  await prisma.subscription.update({
++    where: { id: localSub.id },
++    data: currentPeriodEnd ? { status, currentPeriodEnd } : { status },
++  });
++}
+-- 
+2.43.0
+
