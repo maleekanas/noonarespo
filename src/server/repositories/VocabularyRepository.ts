@@ -1,3 +1,5 @@
+import { prisma } from "@/lib/database/prisma";
+
 export type VocabularyCategory =
   | "ROOT_FAMILY"
   | "PLURALS"
@@ -40,9 +42,30 @@ export interface StudentSrsOverview {
   reviewStreakDays: number;
 }
 
-class InMemoryVocabularyRepository {
+/**
+ * The flashcard catalog itself is static app content bundled with the code,
+ * not user data, so it stays as an in-memory seed here -- same as before.
+ *
+ * A real student's spaced-repetition (Leitner box) progress per card is
+ * different: it used to be an in-memory Map keyed by studentId, reset on
+ * every serverless cold start, so a real child's review history and due
+ * dates silently disappeared. It's now backed by a new
+ * VocabularyCardProgress Prisma model/table (see prisma/schema.prisma and
+ * src/app/api/admin/apply-vocabulary-schema-migration/route.ts), the same
+ * additive-schema-change pattern used for the other progress-tracking
+ * repositories this engagement.
+ *
+ * One behavior change worth flagging: the old in-memory version
+ * auto-seeded EVERY card with a fake pre-existing progress state (some
+ * cards already "mastered") the first time a student was looked up, purely
+ * to make the demo look populated. That fabricated history made no sense
+ * for a real, brand-new student. Here, a card with no progress row simply
+ * means the student hasn't reviewed it yet, which is the honest starting
+ * state -- and it's treated as due today, same as a fresh Leitner box 1
+ * card, so new cards still show up for review immediately.
+ */
+class VocabularyRepository {
   private cards: Map<string, VocabularyFlashcard> = new Map();
-  private studentProgress: Map<string, Map<string, StudentCardProgress>> = new Map();
 
   constructor() {
     this.seedFlashcards();
@@ -197,28 +220,6 @@ class InMemoryVocabularyRepository {
     });
   }
 
-  private initStudentCards(studentId: string) {
-    if (!this.studentProgress.has(studentId)) {
-      const map = new Map<string, StudentCardProgress>();
-      let i = 0;
-      this.cards.forEach((card) => {
-        // Seed first 4 cards in Box 1 (due today), others in Box 2 or 3
-        const box = i < 4 ? 1 : i < 7 ? 2 : 4;
-        map.set(card.id, {
-          cardId: card.id,
-          studentId,
-          box,
-          consecutiveCorrect: box > 1 ? box : 0,
-          totalReviews: box > 1 ? box + 1 : 0,
-          lastReviewedAt: new Date(Date.now() - 86400000),
-          nextReviewDate: box === 1 ? new Date() : new Date(Date.now() + 86400000 * box),
-        });
-        i++;
-      });
-      this.studentProgress.set(studentId, map);
-    }
-  }
-
   async getAllCards(): Promise<VocabularyFlashcard[]> {
     return Array.from(this.cards.values());
   }
@@ -228,17 +229,19 @@ class InMemoryVocabularyRepository {
   }
 
   async getDueCards(studentId: string): Promise<VocabularyFlashcard[]> {
-    this.initStudentCards(studentId);
-    const progressMap = this.studentProgress.get(studentId)!;
+    const progressRows = await prisma.vocabularyCardProgress.findMany({ where: { studentId } });
+    const progressByCardId = new Map<string, (typeof progressRows)[number]>();
+    for (const row of progressRows) progressByCardId.set(row.cardId, row);
     const now = new Date();
 
     const dueCards: VocabularyFlashcard[] = [];
-    progressMap.forEach((p, cardId) => {
-      if (p.nextReviewDate <= now || p.box === 1) {
-        const card = this.cards.get(cardId);
-        if (card) dueCards.push(card);
-      }
-    });
+    for (const card of this.cards.values()) {
+      const p = progressByCardId.get(card.id);
+      // A card with no progress row yet is a brand-new card for this
+      // student -- treated as due, same as a fresh Leitner box 1 card.
+      const isDue = !p || p.box === 1 || p.nextReviewDate <= now;
+      if (isDue) dueCards.push(card);
+    }
 
     return dueCards.length > 0 ? dueCards : Array.from(this.cards.values()).slice(0, 5);
   }
@@ -248,64 +251,77 @@ class InMemoryVocabularyRepository {
     cardId: string,
     grade: "EASY" | "GOOD" | "AGAIN"
   ): Promise<StudentCardProgress> {
-    this.initStudentCards(studentId);
-    const map = this.studentProgress.get(studentId)!;
-    const current = map.get(cardId) || {
-      cardId,
-      studentId,
-      box: 1,
-      consecutiveCorrect: 0,
-      totalReviews: 0,
-      lastReviewedAt: new Date(),
-      nextReviewDate: new Date(),
-    };
+    const existing = await prisma.vocabularyCardProgress.findUnique({
+      where: { studentId_cardId: { studentId, cardId } },
+    });
+    const currentBox = existing?.box ?? 1;
+    const currentConsecutiveCorrect = existing?.consecutiveCorrect ?? 0;
+    const currentTotalReviews = existing?.totalReviews ?? 0;
 
-    let nextBox = current.box;
+    let nextBox = currentBox;
     let daysToAdd = 1;
+    let nextConsecutiveCorrect = currentConsecutiveCorrect;
 
     if (grade === "EASY") {
-      nextBox = Math.min(5, current.box + 2);
+      nextBox = Math.min(5, currentBox + 2);
       daysToAdd = nextBox * 3;
-      current.consecutiveCorrect += 1;
+      nextConsecutiveCorrect += 1;
     } else if (grade === "GOOD") {
-      nextBox = Math.min(5, current.box + 1);
+      nextBox = Math.min(5, currentBox + 1);
       daysToAdd = nextBox * 2;
-      current.consecutiveCorrect += 1;
+      nextConsecutiveCorrect += 1;
     } else {
       // AGAIN: Demote to Box 1 for immediate review
       nextBox = 1;
       daysToAdd = 1;
-      current.consecutiveCorrect = 0;
+      nextConsecutiveCorrect = 0;
     }
 
-    current.box = nextBox;
-    current.totalReviews += 1;
-    current.lastReviewedAt = new Date();
-    current.nextReviewDate = new Date(Date.now() + daysToAdd * 86400000);
+    const now = new Date();
+    const nextReviewDate = new Date(now.getTime() + daysToAdd * 86400000);
 
-    map.set(cardId, current);
-    return current;
+    return prisma.vocabularyCardProgress.upsert({
+      where: { studentId_cardId: { studentId, cardId } },
+      update: {
+        box: nextBox,
+        consecutiveCorrect: nextConsecutiveCorrect,
+        totalReviews: currentTotalReviews + 1,
+        lastReviewedAt: now,
+        nextReviewDate,
+      },
+      create: {
+        studentId,
+        cardId,
+        box: nextBox,
+        consecutiveCorrect: nextConsecutiveCorrect,
+        totalReviews: currentTotalReviews + 1,
+        lastReviewedAt: now,
+        nextReviewDate,
+      },
+    });
   }
 
   async getStudentSrsOverview(studentId: string): Promise<StudentSrsOverview> {
-    this.initStudentCards(studentId);
-    const map = this.studentProgress.get(studentId)!;
+    const progressRows = await prisma.vocabularyCardProgress.findMany({ where: { studentId } });
+    const progressByCardId = new Map<string, (typeof progressRows)[number]>();
+    for (const row of progressRows) progressByCardId.set(row.cardId, row);
+    const now = new Date();
 
     let mastered = 0;
     let learning = 0;
     let dueToday = 0;
-    const now = new Date();
 
-    map.forEach((p) => {
-      if (p.box >= 4) {
+    for (const card of this.cards.values()) {
+      const p = progressByCardId.get(card.id);
+      if (p && p.box >= 4) {
         mastered++;
       } else {
         learning++;
       }
-      if (p.nextReviewDate <= now || p.box === 1) {
+      if (!p || p.box === 1 || p.nextReviewDate <= now) {
         dueToday++;
       }
-    });
+    }
 
     return {
       studentId,
@@ -318,4 +334,4 @@ class InMemoryVocabularyRepository {
   }
 }
 
-export const vocabularyRepository = new InMemoryVocabularyRepository();
+export const vocabularyRepository = new VocabularyRepository();

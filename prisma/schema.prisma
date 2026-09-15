@@ -150,6 +150,7 @@ model StudentProfile {
   storyProgress  StoryProgress[]
   recitationSubmissions RecitationSubmission[]
   pronunciationAttempts PronunciationAttempt[]
+  vocabularyCardProgress VocabularyCardProgress[]
 
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
@@ -706,6 +707,22 @@ model PronunciationAttempt {
   recordedAt      DateTime       @default(now())
 
   @@map("pronunciation_attempts")
+}
+
+model VocabularyCardProgress {
+  id                 String         @id @default(uuid())
+  studentId          String
+  cardId             String         // Flashcard catalog id, e.g. "card-ktb-kitab" -- the flashcard catalog itself is static app content, not a database table
+  box                Int            @default(1) // Leitner box 1 (daily) to 5 (mastered)
+  consecutiveCorrect Int            @default(0)
+  totalReviews       Int            @default(0)
+  lastReviewedAt     DateTime       @default(now())
+  nextReviewDate     DateTime       @default(now())
+
+  student            StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, cardId])
+  @@map("vocabulary_card_progress")
 }
 
 // -----------------------------------------------------------------------------
