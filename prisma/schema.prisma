@@ -148,6 +148,7 @@ model StudentProfile {
   certificates   Certificate[]
   liveSessionGrades LiveSessionGrade[]
   storyProgress  StoryProgress[]
+  recitationSubmissions RecitationSubmission[]
 
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
@@ -667,6 +668,26 @@ model StoryProgress {
 
   @@unique([studentId, storyId])
   @@map("story_progress")
+}
+
+model RecitationSubmission {
+  id                      String         @id @default(uuid())
+  studentId               String
+  surahId                 String         // Surah catalog id, e.g. "surah-112" -- the Quran/Tajweed catalog itself is static app content, not a database table
+  audioUrl                String
+  recordedDurationSeconds Int
+  scoreMakharij           Int            // 0-100
+  scoreTajweed            Int            // 0-100
+  scoreHifz               Int            // 0-100
+  overallScore            Int
+  teacherFeedbackAr       String?
+  xpAwarded               Int            @default(0)
+
+  student                 StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  submittedAt              DateTime      @default(now())
+
+  @@map("recitation_submissions")
 }
 
 // -----------------------------------------------------------------------------

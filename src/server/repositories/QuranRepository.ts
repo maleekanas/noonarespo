@@ -1,3 +1,5 @@
+import { prisma } from "@/lib/database/prisma";
+
 export type TajweedRuleType = "QALQALAH" | "IDGHAM" | "IKHFA" | "MADD";
 
 export interface TajweedAnnotation {
@@ -41,13 +43,25 @@ export interface RecitationSubmission {
   submittedAt: Date;
 }
 
-class InMemoryQuranRepository {
+/**
+ * The Surah/Tajweed catalog itself (verse text, translations, tajweed
+ * annotations) is static app content bundled with the code, not user data,
+ * so it stays as an in-memory seed here rather than a database table --
+ * same as before.
+ *
+ * RecitationSubmission (a real student's recorded recitation and its
+ * scores) is different: it used to be an in-memory Map that reset on every
+ * serverless cold start, so a real child's recitation history, scores, and
+ * teacher feedback silently disappeared. It's now backed by a new
+ * RecitationSubmission Prisma model/table (see prisma/schema.prisma and
+ * src/app/api/admin/apply-quran-schema-migration/route.ts), the same
+ * additive-schema-change pattern used for Gradebook and StoryProgress.
+ */
+class QuranRepository {
   private surahs: Map<string, QuranSurah> = new Map();
-  private submissions: Map<string, RecitationSubmission> = new Map();
 
   constructor() {
     this.seedSurahs();
-    this.seedSubmissions();
   }
 
   private seedSurahs() {
@@ -244,23 +258,6 @@ class InMemoryQuranRepository {
     });
   }
 
-  private seedSubmissions() {
-    this.submissions.set("rec-1", {
-      id: "rec-1",
-      studentId: "student-1", // Zayd
-      surahId: "surah-112",
-      audioUrl: "https://storage.kidsarabicacademy.internal/audio/submissions/zayd-ikhlas.mp3",
-      recordedDurationSeconds: 24,
-      scoreMakharij: 95,
-      scoreTajweed: 90,
-      scoreHifz: 100,
-      overallScore: 95,
-      teacherFeedbackAr: "ما شاء الله يا زيد، نطق ممتاز لقلقلة الدال في (أحد) و(الصمد)! بارك الله فيك.",
-      xpAwarded: 25,
-      submittedAt: new Date(Date.now() - 48 * 3600 * 1000),
-    });
-  }
-
   async getAllSurahs(): Promise<QuranSurah[]> {
     return Array.from(this.surahs.values()).sort((a, b) => a.number - b.number);
   }
@@ -270,21 +267,28 @@ class InMemoryQuranRepository {
   }
 
   async saveSubmission(submission: Omit<RecitationSubmission, "id" | "submittedAt">): Promise<RecitationSubmission> {
-    const id = "rec-" + (this.submissions.size + 1);
-    const full: RecitationSubmission = {
-      ...submission,
-      id,
-      submittedAt: new Date(),
-    };
-    this.submissions.set(id, full);
-    return full;
+    return prisma.recitationSubmission.create({
+      data: {
+        studentId: submission.studentId,
+        surahId: submission.surahId,
+        audioUrl: submission.audioUrl,
+        recordedDurationSeconds: submission.recordedDurationSeconds,
+        scoreMakharij: submission.scoreMakharij,
+        scoreTajweed: submission.scoreTajweed,
+        scoreHifz: submission.scoreHifz,
+        overallScore: submission.overallScore,
+        teacherFeedbackAr: submission.teacherFeedbackAr,
+        xpAwarded: submission.xpAwarded,
+      },
+    });
   }
 
   async getSubmissionsByStudentId(studentId: string): Promise<RecitationSubmission[]> {
-    return Array.from(this.submissions.values())
-      .filter((s) => s.studentId === studentId)
-      .sort((a, b) => b.submittedAt.getTime() - a.submittedAt.getTime());
+    return prisma.recitationSubmission.findMany({
+      where: { studentId },
+      orderBy: { submittedAt: "desc" },
+    });
   }
 }
 
-export const quranRepository = new InMemoryQuranRepository();
+export const quranRepository = new QuranRepository();
