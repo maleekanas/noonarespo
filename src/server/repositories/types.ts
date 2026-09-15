@@ -129,7 +129,7 @@ export interface DomainTeacherAssignment {
   teacherId: string;
   classGroupId: string;
   role: TeacherRoleInClass;
-  assignedAt: Date;
+  createdAt: Date; // the TeacherAssignment Prisma model's actual column name is "createdAt", not "assignedAt"
 }
 
 export interface DomainClassSession {
