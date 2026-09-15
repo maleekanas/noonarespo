@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { RoleType, UserStatus, AgeGroup } from "@prisma/client";
+import { prisma } from "@/lib/database/prisma";
 import { userRepository } from "./UserRepository";
 
 export type AuditActionCategory =
@@ -52,7 +53,7 @@ export interface StudentAdminRecord {
   status: UserStatus;
   guardianName: string;
   guardianPhone: string;
-  guardianConsentGivenAt: Date;
+  guardianConsentGivenAt: Date | null;
   coppaGdprCompliant: boolean;
   enrolledClassesCount: number;
 }
@@ -72,18 +73,34 @@ export interface TeacherAdminRecord {
   totalHoursTaught: number;
 }
 
-class InMemoryAdministrationRepository {
-  private auditLogs: Map<string, AuditLogEntry> = new Map();
+// AuditLog.diffJson carries category/actorEmail/actorRole/diffSummary/hash as
+// a JSON blob -- the real Prisma AuditLog model (used elsewhere already for
+// coarser system logging) only has action/resource/resourceId/userId/
+// ipAddress natively, so the extra fields this admin UI needs are packed in
+// here rather than requiring another schema migration on an already-live
+// table.
+interface AuditLogMeta {
+  category: AuditActionCategory;
+  actorEmail: string;
+  actorRole: RoleType;
+  diffSummary?: string;
+  hash: string;
+}
+
+class AdministrationRepository {
+  // Curriculum modules are admin-authored reference content (which weekly
+  // objectives belong to which program/level) -- the same category as the
+  // assessment question bank: losing an admin's freshly-typed module on a
+  // cold start is an annoyance to redo, not real user data being lost, so
+  // this stays in-memory for now (documented, not fixed, same reasoning as
+  // AssessmentBankRepository).
   private curriculumModules: Map<string, CurriculumModule> = new Map();
-  private studentStatusOverrides: Map<string, UserStatus> = new Map();
 
   constructor() {
-    this.seedAuditLogs();
     this.seedCurriculumModules();
   }
 
   private computeHash(
-    id: string,
     category: AuditActionCategory,
     action: string,
     actorId: string,
@@ -91,78 +108,8 @@ class InMemoryAdministrationRepository {
     timestamp: Date,
     diffSummary?: string
   ): string {
-    const raw = `${id}:${category}:${action}:${actorId}:${targetEntityId}:${timestamp.toISOString()}:${diffSummary || ""}`;
+    const raw = `${category}:${action}:${actorId}:${targetEntityId}:${timestamp.toISOString()}:${diffSummary || ""}`;
     return createHash("sha256").update(raw).digest("hex");
-  }
-
-  private seedAuditLogs() {
-    const defaultLogs = [
-      {
-        id: "audit-1",
-        category: "AUTH" as AuditActionCategory,
-        action: "USER_LOGIN_SUCCESS",
-        actorId: "user-superadmin",
-        actorEmail: "superadmin@kidsarabicacademy.internal",
-        actorRole: RoleType.SUPER_ADMIN,
-        targetEntityId: "user-superadmin",
-        targetEntityType: "User",
-        ipAddress: "192.168.1.100",
-        timestamp: new Date(Date.now() - 3 * 3600 * 1000),
-        diffSummary: "تسجيل دخول المشرف العام من جهاز موثوق عبر MFA",
-      },
-      {
-        id: "audit-2",
-        category: "USER_MANAGEMENT" as AuditActionCategory,
-        action: "STUDENT_REGISTERED_WITH_CONSENT",
-        actorId: "user-parent-1",
-        actorEmail: "parent.tariq@example.com",
-        actorRole: RoleType.PARENT,
-        targetEntityId: "student-1",
-        targetEntityType: "StudentProfile",
-        ipAddress: "197.35.12.8",
-        timestamp: new Date(Date.now() - 2 * 3600 * 1000),
-        diffSummary: "تسجيل الطالب زيد طارق وتوثيق موافقة ولي الأمر الرسمية (COPPA/GDPR)",
-      },
-      {
-        id: "audit-3",
-        category: "ACADEMIC" as AuditActionCategory,
-        action: "ATTENDANCE_RECORDED",
-        actorId: "user-teacher-1",
-        actorEmail: "ustadh.ahmed@kidsarabicacademy.internal",
-        actorRole: RoleType.TEACHER,
-        targetEntityId: "session-reading-1",
-        targetEntityType: "ClassSession",
-        ipAddress: "10.0.4.15",
-        timestamp: new Date(Date.now() - 60 * 60 * 1000),
-        diffSummary: "رصد الحضور لحصة القراءة (المستوى A1) - 6 طلاب حاضرون",
-      },
-      {
-        id: "audit-4",
-        category: "FINANCE" as AuditActionCategory,
-        action: "SUBSCRIPTION_INVOICE_PAID",
-        actorId: "user-parent-1",
-        actorEmail: "parent.tariq@example.com",
-        actorRole: RoleType.PARENT,
-        targetEntityId: "inv-1",
-        targetEntityType: "Invoice",
-        ipAddress: "197.35.12.8",
-        timestamp: new Date(Date.now() - 30 * 60 * 1000),
-        diffSummary: "سداد فاتورة باقة العائلة VIP بمبلغ $134.10 بعد خصم الكوبون WELCOME10",
-      },
-    ];
-
-    for (const log of defaultLogs) {
-      const hash = this.computeHash(
-        log.id,
-        log.category,
-        log.action,
-        log.actorId,
-        log.targetEntityId,
-        log.timestamp,
-        log.diffSummary
-      );
-      this.auditLogs.set(log.id, { ...log, hash });
-    }
   }
 
   private seedCurriculumModules() {
@@ -619,10 +566,8 @@ class InMemoryAdministrationRepository {
     ipAddress: string;
     diffSummary?: string;
   }): Promise<AuditLogEntry> {
-    const id = "audit-" + (this.auditLogs.size + 1);
     const timestamp = new Date();
     const hash = this.computeHash(
-      id,
       data.category,
       data.action,
       data.actorId,
@@ -631,15 +576,33 @@ class InMemoryAdministrationRepository {
       data.diffSummary
     );
 
-    const entry: AuditLogEntry = {
-      id,
-      ...data,
-      timestamp,
+    const meta: AuditLogMeta = {
+      category: data.category,
+      actorEmail: data.actorEmail,
+      actorRole: data.actorRole,
+      diffSummary: data.diffSummary,
       hash,
     };
 
-    this.auditLogs.set(id, entry);
-    return entry;
+    // actorId is expected to be a real User.id (the logged-in session user),
+    // but this must never be allowed to throw and lose the action being
+    // logged -- fall back to an unattributed log row if the FK doesn't
+    // resolve for any reason.
+    const actorExists = await prisma.user.findUnique({ where: { id: data.actorId }, select: { id: true } });
+
+    const row = await prisma.auditLog.create({
+      data: {
+        userId: actorExists ? data.actorId : null,
+        action: data.action,
+        resource: data.targetEntityType,
+        resourceId: data.targetEntityId,
+        ipAddress: data.ipAddress,
+        diffJson: JSON.stringify(meta),
+        createdAt: timestamp,
+      },
+    });
+
+    return this.toEntry(row);
   }
 
   async getAuditLogs(filters?: {
@@ -647,29 +610,28 @@ class InMemoryAdministrationRepository {
     actorRole?: RoleType;
     limit?: number;
   }): Promise<AuditLogEntry[]> {
-    let list = Array.from(this.auditLogs.values()).sort(
-      (a, b) => b.timestamp.getTime() - a.timestamp.getTime()
-    );
+    const rows = await prisma.auditLog.findMany({ orderBy: { createdAt: "desc" } });
+    let entries = rows.map((row) => this.toEntry(row));
 
     if (filters?.category) {
-      list = list.filter((l) => l.category === filters.category);
+      entries = entries.filter((e) => e.category === filters.category);
     }
     if (filters?.actorRole) {
-      list = list.filter((l) => l.actorRole === filters.actorRole);
+      entries = entries.filter((e) => e.actorRole === filters.actorRole);
     }
     if (filters?.limit) {
-      list = list.slice(0, filters.limit);
+      entries = entries.slice(0, filters.limit);
     }
 
-    return list;
+    return entries;
   }
 
   async verifyLogIntegrity(logId: string): Promise<boolean> {
-    const entry = this.auditLogs.get(logId);
-    if (!entry) return false;
+    const row = await prisma.auditLog.findUnique({ where: { id: logId } });
+    if (!row) return false;
 
+    const entry = this.toEntry(row);
     const expectedHash = this.computeHash(
-      entry.id,
       entry.category,
       entry.action,
       entry.actorId,
@@ -678,6 +640,39 @@ class InMemoryAdministrationRepository {
       entry.diffSummary
     );
     return expectedHash === entry.hash;
+  }
+
+  private toEntry(row: {
+    id: string;
+    userId: string | null;
+    action: string;
+    resource: string;
+    resourceId: string | null;
+    ipAddress: string | null;
+    diffJson: string | null;
+    createdAt: Date;
+  }): AuditLogEntry {
+    let meta: Partial<AuditLogMeta> = {};
+    try {
+      meta = row.diffJson ? JSON.parse(row.diffJson) : {};
+    } catch {
+      meta = {};
+    }
+
+    return {
+      id: row.id,
+      category: meta.category || "SECURITY",
+      action: row.action,
+      actorId: row.userId || "",
+      actorEmail: meta.actorEmail || "",
+      actorRole: meta.actorRole || RoleType.SUPER_ADMIN,
+      targetEntityId: row.resourceId || "",
+      targetEntityType: row.resource,
+      ipAddress: row.ipAddress || "",
+      timestamp: row.createdAt,
+      diffSummary: meta.diffSummary,
+      hash: meta.hash || "",
+    };
   }
 
   // --- Curriculum Methods ---
@@ -697,74 +692,66 @@ class InMemoryAdministrationRepository {
   }
 
   // --- Student & User Governance ---
+  // Previously returned 4 hardcoded demo students ("student-1".."student-4")
+  // regardless of who was actually registered -- the admin Students page,
+  // the school analytics totals, and the GDPR data-export flow were all
+  // reading fabricated data disconnected from the real student_profiles
+  // table. This now reads real students, their real account status, and
+  // their real primary guardian.
   async getAllStudentsAdmin(): Promise<StudentAdminRecord[]> {
-    const baseStudents = [
-      {
-        id: "student-1",
-        userId: "user-student-1",
-        firstName: "زيد",
-        lastName: "طارق",
-        dateOfBirth: new Date("2018-05-15"),
-        ageGroup: AgeGroup.AGE_7_10,
-        nativeLanguage: "ar",
-        guardianName: "طارق المنصور",
-        guardianPhone: "+966501234567",
-        guardianConsentGivenAt: new Date("2026-08-15"),
-        coppaGdprCompliant: true,
-        enrolledClassesCount: 1,
+    const students = await prisma.studentProfile.findMany({
+      include: {
+        user: { select: { status: true } },
+        enrollments: { select: { id: true } },
+        relationships: {
+          where: { isPrimaryContact: true },
+          include: { parent: { select: { firstName: true, lastName: true, phoneNumber: true } } },
+          take: 1,
+        },
       },
-      {
-        id: "student-2",
-        userId: "user-student-2",
-        firstName: "مريم",
-        lastName: "طارق",
-        dateOfBirth: new Date("2020-02-10"),
-        ageGroup: AgeGroup.AGE_4_6,
-        nativeLanguage: "ar",
-        guardianName: "طارق المنصور",
-        guardianPhone: "+966501234567",
-        guardianConsentGivenAt: new Date("2026-08-15"),
-        coppaGdprCompliant: true,
-        enrolledClassesCount: 1,
-      },
-      {
-        id: "student-3",
-        userId: "user-student-3",
-        firstName: "يوسف",
-        lastName: "العمري",
-        dateOfBirth: new Date("2014-11-20"),
-        ageGroup: AgeGroup.AGE_11_13,
-        nativeLanguage: "ar",
-        guardianName: "عمر العمري",
-        guardianPhone: "+966509876543",
-        guardianConsentGivenAt: new Date("2026-08-20"),
-        coppaGdprCompliant: true,
-        enrolledClassesCount: 2,
-      },
-      {
-        id: "student-4",
-        userId: "user-student-4",
-        firstName: "سارة",
-        lastName: "الغامدي",
-        dateOfBirth: new Date("2011-09-05"),
-        ageGroup: AgeGroup.AGE_14_16,
-        nativeLanguage: "ar",
-        guardianName: "سعد الغامدي",
-        guardianPhone: "+966555123456",
-        guardianConsentGivenAt: new Date("2026-08-22"),
-        coppaGdprCompliant: true,
-        enrolledClassesCount: 1,
-      },
-    ];
+      orderBy: { createdAt: "desc" },
+    });
 
-    return baseStudents.map((s) => ({
-      ...s,
-      status: this.studentStatusOverrides.get(s.id) || UserStatus.ACTIVE,
-    }));
+    return students.map((s) => {
+      const primaryRelationship = s.relationships[0];
+      return {
+        id: s.id,
+        userId: s.userId,
+        firstName: s.firstName,
+        lastName: s.lastName,
+        dateOfBirth: s.dateOfBirth,
+        ageGroup: s.ageGroup,
+        nativeLanguage: s.nativeLanguage,
+        status: s.user.status,
+        guardianName: primaryRelationship
+          ? `${primaryRelationship.parent.firstName} ${primaryRelationship.parent.lastName}`
+          : "-",
+        guardianPhone: primaryRelationship?.parent.phoneNumber || "-",
+        guardianConsentGivenAt: primaryRelationship?.consentGivenAt ?? null,
+        coppaGdprCompliant: Boolean(primaryRelationship),
+        enrolledClassesCount: s.enrollments.length,
+      };
+    });
   }
 
+  // Now writes to the real User.status column -- the same column the login
+  // page checks (`user.status !== "ACTIVE"` blocks sign-in). A suspension
+  // previously only touched an in-memory Map that the real login flow never
+  // consulted, so it neither survived a deploy nor actually stopped anyone
+  // from signing in.
   async setStudentStatus(studentId: string, status: UserStatus): Promise<void> {
-    this.studentStatusOverrides.set(studentId, status);
+    const student = await prisma.studentProfile.findUnique({
+      where: { id: studentId },
+      select: { userId: true },
+    });
+    if (!student) {
+      throw new Error(`STUDENT_NOT_FOUND: ${studentId}`);
+    }
+
+    await prisma.user.update({
+      where: { id: student.userId },
+      data: { status },
+    });
   }
 
   // --- Teacher Admin ---
@@ -795,4 +782,4 @@ class InMemoryAdministrationRepository {
   }
 }
 
-export const administrationRepository = new InMemoryAdministrationRepository();
+export const administrationRepository = new AdministrationRepository();

@@ -3,7 +3,8 @@ import Link from "next/link";
 import { revalidatePath } from "next/cache";
 import { administrationService } from "@/server/services/AdministrationService";
 import { academicRepository } from "@/server/repositories/AcademicRepository";
-import { AgeGroup, RoleType } from "@prisma/client";
+import { AgeGroup } from "@prisma/client";
+import { requireAdminSession } from "@/lib/auth/currentUser";
 import {
   BookOpen,
   Layers,
@@ -21,6 +22,7 @@ export default async function AdminCurriculumPage({
 }) {
   const { locale } = await params;
   const { program: activeProgramId } = await searchParams;
+  const adminSession = await requireAdminSession(locale);
 
   const programs = await academicRepository.getAllPrograms();
   const selectedProgramId = activeProgramId || programs[0]?.id || "prog-foundations";
@@ -57,13 +59,7 @@ export default async function AdminCurriculumPage({
         targetVocabularyCount,
         durationWeeks,
       },
-      {
-        id: "user-superadmin",
-        email: "superadmin@kidsarabicacademy.internal",
-        name: "المشرف العام",
-        role: RoleType.SUPER_ADMIN,
-        locale: "ar",
-      }
+      adminSession
     );
 
     revalidatePath(`/${locale}/admin/curriculum`);

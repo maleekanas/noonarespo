@@ -2,7 +2,8 @@ import React from "react";
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
 import { administrationService } from "@/server/services/AdministrationService";
-import { UserStatus, AgeGroup, RoleType } from "@prisma/client";
+import { UserStatus, AgeGroup } from "@prisma/client";
+import { requireAdminSession } from "@/lib/auth/currentUser";
 import {
   ShieldCheck,
   GraduationCap,
@@ -17,6 +18,7 @@ export default async function AdminStudentsPage({
 }) {
   const { locale } = await params;
   const { status: filterStatus, age: filterAge } = await searchParams;
+  const adminSession = await requireAdminSession(locale);
 
   let students = await administrationService.getAllStudents();
 
@@ -42,13 +44,7 @@ export default async function AdminStudentsPage({
       studentId,
       newStatus,
       reason,
-      {
-        id: "user-superadmin",
-        email: "superadmin@kidsarabicacademy.internal",
-        name: "المشرف العام",
-        role: RoleType.SUPER_ADMIN,
-        locale: "ar",
-      }
+      adminSession
     );
 
     revalidatePath(`/${locale}/admin/students`);
@@ -206,9 +202,15 @@ export default async function AdminStudentsPage({
                     <ShieldCheck className="w-3.5 h-3.5 text-brand-600" />
                     <span>موافقة ولي الأمر (COPPA/GDPR):</span>
                   </span>
-                  <span className="font-bold text-emerald-700">
-                    موثقة ({student.guardianConsentGivenAt.toISOString().split("T")[0]})
-                  </span>
+                  {student.guardianConsentGivenAt ? (
+                    <span className="font-bold text-emerald-700">
+                      موثقة ({student.guardianConsentGivenAt.toISOString().split("T")[0]})
+                    </span>
+                  ) : (
+                    <span className="font-bold text-rose-700">
+                      لا يوجد سجل موافقة موثق
+                    </span>
+                  )}
                 </div>
               </div>
 

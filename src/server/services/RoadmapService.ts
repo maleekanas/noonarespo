@@ -4,6 +4,7 @@ import {
   QuestNode,
 } from "../repositories/RoadmapRepository";
 import { gamificationService } from "./GamificationService";
+import { certificateService } from "./CertificateService";
 
 export interface NodeCompletionResult {
   updatedProgress: StudentQuestProgress;
@@ -41,6 +42,10 @@ export class RoadmapService {
       xpAwarded,
       `إتمام محطة مسار التعلم: ${node.titleAr}`
     );
+
+    // Issues a real certificate the moment this completes the last node --
+    // a no-op for every other node, and a no-op if one was already issued.
+    await certificateService.issueRoadmapCompletionCertificateIfEligible(params.studentId);
 
     return {
       updatedProgress,

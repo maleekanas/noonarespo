@@ -47,7 +47,7 @@ export class DataExportService {
       nativeLanguage: s.nativeLanguage,
       status: s.status,
       guardianName: s.guardianName,
-      guardianConsentGivenAt: s.guardianConsentGivenAt.toISOString(),
+      guardianConsentGivenAt: s.guardianConsentGivenAt ? s.guardianConsentGivenAt.toISOString() : null,
       coppaGdprCompliant: s.coppaGdprCompliant,
       enrolledClassesCount: s.enrolledClassesCount,
     }));

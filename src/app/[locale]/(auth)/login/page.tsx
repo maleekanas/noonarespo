@@ -6,7 +6,7 @@ import { getDictionary } from "@/lib/localization";
 import { createSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/database/prisma";
 import { RoleType } from "@prisma/client";
-import { Sparkles, GraduationCap, AlertCircle } from "lucide-react";
+import { Sparkles, GraduationCap, AlertCircle, CheckCircle2 } from "lucide-react";
 
 const SHOW_DEMO_HELPERS = process.env.NEXT_PUBLIC_HIDE_DEMO_SWITCHER !== "true";
 
@@ -15,10 +15,10 @@ export default async function LoginPage({
   searchParams,
 }: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; reset?: string }>;
 }) {
   const { locale } = await params;
-  const { error } = await searchParams;
+  const { error, reset } = await searchParams;
   const dict = getDictionary(locale);
 
   async function handleLogin(formData: FormData) {
@@ -103,6 +103,13 @@ export default async function LoginPage({
           </div>
         )}
 
+        {reset === "success" && (
+          <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-xs font-semibold text-emerald-700">
+            <CheckCircle2 className="w-4 h-4 shrink-0" />
+            <span>{dict.auth.resetSuccessMessage}</span>
+          </div>
+        )}
+
         {/* Credentials Form */}
         <form action={handleLogin} className="space-y-4">
           <div>
@@ -119,9 +126,14 @@ export default async function LoginPage({
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1.5">
-              {dict.auth.passwordLabel}
-            </label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-xs font-bold text-slate-700">
+                {dict.auth.passwordLabel}
+              </label>
+              <Link href={`/${locale}/forgot-password`} className="text-xs font-semibold text-brand-600 hover:underline">
+                {dict.auth.forgotPassword}
+              </Link>
+            </div>
             <input
               name="password"
               type="password"

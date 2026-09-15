@@ -4,6 +4,7 @@ import { certificateService } from "@/server/services/CertificateService";
 import {
   GraduationCap,
   ShieldCheck,
+  Sparkles,
 } from "lucide-react";
 import { PrintButton } from "@/components/shared/PrintButton";
 import { requireStudentProfile } from "@/lib/auth/currentUser";
@@ -18,6 +19,28 @@ export default async function StudentCertificatesPage({
   const studentId = studentProfile.id;
 
   const cert = await certificateService.getCertificateForStudent(studentId);
+
+  if (!cert) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center space-y-4">
+        <div className="w-16 h-16 rounded-2xl gradient-brand text-white flex items-center justify-center mx-auto shadow-md">
+          <Sparkles className="w-9 h-9" />
+        </div>
+        <h1 className="text-2xl font-extrabold text-slate-900">
+          لم تحصل على شهادة بعد
+        </h1>
+        <p className="text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
+          أكمل جميع محطات خريطة رحلة التعلم لتحصل على شهادة إتمام رسمية وموثقة برقم تحقق فريد.
+        </p>
+        <Link
+          href={`/${locale}/student/roadmap`}
+          className="inline-flex items-center gap-1.5 py-2.5 px-5 rounded-xl text-sm font-bold text-white gradient-brand shadow-md shadow-brand-500/25 hover:opacity-95 transition-all"
+        >
+          الذهاب إلى خريطة رحلة التعلم
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">

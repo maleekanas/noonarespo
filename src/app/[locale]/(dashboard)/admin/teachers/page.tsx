@@ -3,7 +3,7 @@ import Link from "next/link";
 import { revalidatePath } from "next/cache";
 import { administrationService } from "@/server/services/AdministrationService";
 import { billingService } from "@/server/services/BillingService";
-import { RoleType } from "@prisma/client";
+import { requireAdminSession } from "@/lib/auth/currentUser";
 import {
   DollarSign,
   Award,
@@ -15,6 +15,7 @@ export default async function AdminTeachersPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
+  const adminSession = await requireAdminSession(locale);
   const teachers = await administrationService.getAllTeachers();
 
   async function handleUpdateRate(formData: FormData) {
@@ -30,13 +31,7 @@ export default async function AdminTeachersPage({
     await administrationService.updateTeacherHourlyRate(
       teacherId,
       newRateMinorUnits,
-      {
-        id: "user-superadmin",
-        email: "superadmin@kidsarabicacademy.internal",
-        name: "المشرف العام",
-        role: RoleType.SUPER_ADMIN,
-        locale: "ar",
-      }
+      adminSession
     );
 
     revalidatePath(`/${locale}/admin/teachers`);
@@ -53,13 +48,7 @@ export default async function AdminTeachersPage({
     await administrationService.toggleTeacherStatus(
       teacherId,
       !currentActive,
-      {
-        id: "user-superadmin",
-        email: "superadmin@kidsarabicacademy.internal",
-        name: "المشرف العام",
-        role: RoleType.SUPER_ADMIN,
-        locale: "ar",
-      }
+      adminSession
     );
 
     revalidatePath(`/${locale}/admin/teachers`);

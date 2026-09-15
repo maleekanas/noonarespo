@@ -3,7 +3,7 @@ import Link from "next/link";
 import { revalidatePath } from "next/cache";
 import { assessmentBankService } from "@/server/services/AssessmentBankService";
 import { AssessmentFormatType } from "@/server/repositories/AssessmentBankRepository";
-import { RoleType } from "@prisma/client";
+import { requireAdminSession } from "@/lib/auth/currentUser";
 import {
   FileCheck,
   CheckCircle2,
@@ -25,6 +25,7 @@ export default async function AdminAssessmentsPage({
 }) {
   const { locale } = await params;
   const { type: filterType } = await searchParams;
+  const adminSession = await requireAdminSession(locale);
 
   const assessments = await assessmentBankService.getAllAssessments();
   const questions = await assessmentBankService.getQuestionBank(
@@ -38,13 +39,7 @@ export default async function AdminAssessmentsPage({
 
     await assessmentBankService.togglePublishAssessment(
       assessmentId,
-      {
-        id: "user-superadmin",
-        email: "superadmin@kidsarabicacademy.internal",
-        name: "المشرف العام",
-        role: RoleType.SUPER_ADMIN,
-        locale: "ar",
-      }
+      adminSession
     );
 
     revalidatePath(`/${locale}/admin/assessments`);
@@ -72,13 +67,7 @@ export default async function AdminAssessmentsPage({
         questionIds: ["bq-1", "bq-2", "bq-4", "bq-6"], // Select core question types
         isPublished: true,
       },
-      {
-        id: "user-superadmin",
-        email: "superadmin@kidsarabicacademy.internal",
-        name: "المشرف العام",
-        role: RoleType.SUPER_ADMIN,
-        locale: "ar",
-      }
+      adminSession
     );
 
     revalidatePath(`/${locale}/admin/assessments`);
