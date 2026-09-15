@@ -92,7 +92,7 @@ export default async function PrivacyPolicyPage({
           <p>
             {isAr
               ? "تلتزم أكاديمية براعم العربية للأطفال بأعلى المعايير الدولية لحماية خصوصية الأطفال على الإنترنت، بما في ذلك قانون حماية خصوصية الأطفال عبر الإنترنت الأمريكي (COPPA) واللائحة العامة لحماية البيانات للأطفال الأوروبية (GDPR-K). يتطلب تسجيل أي طفل يقل عمره عن 16 عاماً موافقة صريحة وموثقة من ولي الأمر أو الوصي القانوني."
-              : "Kids Arabic Academy strictly complies with the Children's Online Privacy Protection Act (COPPA) in the United States and the General Data Protection Regulation for Kids (GDPR-K) in the European Union. Registration of any child under 16 requires verifiable parental or legal guardian consent."}
+              : "Arabic Kids Academy strictly complies with the Children's Online Privacy Protection Act (COPPA) in the United States and the General Data Protection Regulation for Kids (GDPR-K) in the European Union. Registration of any child under 16 requires verifiable parental or legal guardian consent."}
           </p>
         </section>
 
@@ -113,8 +113,8 @@ export default async function PrivacyPolicyPage({
           </h2>
           <p>
             {isAr
-              ? "يحق لولي الأمر في أي وقت طلب تصدير نسخة كاملة من سجلات طفله التعليمية (بصيغتي JSON و CSV)، أو طلب حذف الحساب وجميع التسجيلات الصوتية فورياً من خوادمنا بشكل نهائي عبر لوحة تحكم ولي الأمر أو بمراسلة مسؤول حماية البيانات: privacy@kidsarabicacademy.com."
-              : "Parents may at any time review, download an automated export of their child's educational data (in JSON and CSV formats), or permanently delete the child's account and all associated voice recordings by contacting our Data Protection Officer at privacy@kidsarabicacademy.com."}
+              ? "يحق لولي الأمر في أي وقت طلب تصدير نسخة كاملة من سجلات طفله التعليمية (بصيغتي JSON و CSV)، أو طلب حذف الحساب وجميع التسجيلات الصوتية فورياً من خوادمنا بشكل نهائي عبر لوحة تحكم ولي الأمر أو بمراسلة مسؤول حماية البيانات: privacy@arabickidsacademy.com."
+              : "Parents may at any time review, download an automated export of their child's educational data (in JSON and CSV formats), or permanently delete the child's account and all associated voice recordings by contacting our Data Protection Officer at privacy@arabickidsacademy.com."}
           </p>
         </section>
 
@@ -124,8 +124,8 @@ export default async function PrivacyPolicyPage({
           </h2>
           <p>
             {isAr
-              ? "إذا كانت لديكم أي استفسارات أو ملاحظات بخصوص سياسة الخصوصية وحماية الطفل، يرجى التواصل معنا عبر البريد الإلكتروني: compliance@kidsarabicacademy.com"
-              : "If you have any questions or feedback regarding our child safety practices or privacy policy, please contact our compliance team at compliance@kidsarabicacademy.com"}
+              ? "إذا كانت لديكم أي استفسارات أو ملاحظات بخصوص سياسة الخصوصية وحماية الطفل، يرجى التواصل معنا عبر البريد الإلكتروني: compliance@arabickidsacademy.com"
+              : "If you have any questions or feedback regarding our child safety practices or privacy policy, please contact our compliance team at compliance@arabickidsacademy.com"}
           </p>
         </section>
       </div>

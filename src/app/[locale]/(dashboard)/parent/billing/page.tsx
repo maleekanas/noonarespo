@@ -1,6 +1,9 @@
 import React from "react";
 import Link from "next/link";
 import { billingService } from "@/server/services/BillingService";
+import { requireParentProfile } from "@/lib/auth/currentUser";
+import { prisma } from "@/lib/database/prisma";
+import { SubscriptionStatus } from "@prisma/client";
 import {
   CheckCircle2,
   Clock,
@@ -11,17 +14,36 @@ import {
 } from "lucide-react";
 import { DirectionalIcon } from "@/components/shared/DirectionalIcon";
 
+const SUBSCRIPTION_STATUS_LABELS_AR: Record<SubscriptionStatus, string> = {
+  TRIALING: "فترة تجريبية",
+  ACTIVE: "الاشتراك نشط ومفعل ✓",
+  PAST_DUE: "متأخر السداد",
+  CANCELLED: "ملغى",
+  UNPAID: "غير مدفوع",
+};
+
 export default async function ParentBillingPage({
   params,
 }: {
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const parentId = "parent-1";
+  const { profile } = await requireParentProfile(locale);
+  const parentId = profile.id;
 
-  const subscription = await billingService.getParentSubscription(parentId);
-  const plan = subscription ? await billingService.getPlanById(subscription.planId) : null;
-  const invoices = await billingService.getParentInvoices(parentId);
+  // Real, Stripe-backed billing data (Prisma) — separate from the demo
+  // catalog in BillingService, which is only used here for price formatting.
+  const subscription = await prisma.subscription.findFirst({
+    where: { parentId, status: { in: [SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIALING, SubscriptionStatus.PAST_DUE] } },
+    include: { plan: true },
+    orderBy: { createdAt: "desc" },
+  });
+
+  const invoices = await prisma.invoice.findMany({
+    where: { parentId },
+    include: { items: true, payments: true },
+    orderBy: { createdAt: "desc" },
+  });
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
@@ -56,22 +78,21 @@ export default async function ParentBillingPage({
         {/* Left 2 Cols: Active Subscription Card & Invoices */}
         <div className="lg:col-span-2 space-y-8">
           {/* Active Subscription Box */}
-          {plan && subscription && (
+          {subscription && (
             <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-brand-950 rounded-3xl p-6 sm:p-8 text-white shadow-xl space-y-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="space-y-1">
                   <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold border border-emerald-500/30">
-                    الاشتراك نشط ومفعل ✓
+                    {SUBSCRIPTION_STATUS_LABELS_AR[subscription.status]}
                   </span>
                   <h2 className="text-2xl sm:text-3xl font-extrabold mt-2">
-                    {plan.nameAr}
+                    {subscription.plan.nameAr}
                   </h2>
-                  <p className="text-xs text-slate-300">{plan.descriptionAr}</p>
                 </div>
 
                 <div className="text-start sm:text-end">
                   <span className="text-3xl font-extrabold text-white block">
-                    {billingService.formatPrice(plan.priceMinorUnits)}
+                    {billingService.formatPrice(subscription.plan.priceMinorUnits, subscription.plan.currency)}
                   </span>
                   <span className="text-xs text-slate-400">شهرياً • شامل الرسوم</span>
                 </div>
@@ -89,9 +110,25 @@ export default async function ParentBillingPage({
                 </div>
 
                 <span className="text-[11px] text-slate-400">
-                  وسيلة الدفع: بطاقة ائتمانية (Visa •••• 4242)
+                  الدفع معالج بأمان عبر Stripe
                 </span>
               </div>
+            </div>
+          )}
+
+          {!subscription && (
+            <div className="bg-white rounded-3xl p-8 border border-dashed border-slate-300 text-center space-y-3">
+              <p className="text-sm font-bold text-slate-700">لا يوجد اشتراك نشط حالياً</p>
+              <p className="text-xs text-slate-500">
+                اشترك الآن في إحدى الباقات التعليمية لتفعيل حساب طفلك والبدء بالتعلم
+              </p>
+              <Link
+                href={`/${locale}/parent/checkout`}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl gradient-brand text-white font-bold text-xs shadow-md hover:opacity-95 transition-all"
+              >
+                <PlusCircle className="w-4 h-4" />
+                <span>اختيار باقة والاشتراك</span>
+              </Link>
             </div>
           )}
 
@@ -114,11 +151,11 @@ export default async function ParentBillingPage({
                         {inv.invoiceNumber}
                       </span>
                       <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-bold text-[10px] border border-emerald-200">
-                        مدفوعة بنجاح
+                        {inv.status === "PAID" ? "مدفوعة بنجاح" : inv.status}
                       </span>
                     </div>
                     <p className="text-xs text-slate-500">
-                      {inv.lineItems[0]?.description || "اشتراك شهري"}
+                      {inv.items[0]?.description || "اشتراك شهري"}
                     </p>
                     <span className="text-[11px] text-slate-400 block">
                       التاريخ: {inv.createdAt.toISOString().split("T")[0]}

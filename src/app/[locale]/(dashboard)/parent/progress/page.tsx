@@ -2,6 +2,7 @@ import React from "react";
 import Link from "next/link";
 import { userRepository } from "@/server/repositories/UserRepository";
 import { progressService } from "@/server/services/ProgressService";
+import { requireParentProfile } from "@/lib/auth/currentUser";
 import {
   Sparkles,
   Award,
@@ -24,7 +25,8 @@ export default async function ParentProgressPage({
 }) {
   const { locale } = await params;
   const { studentId: selectedParam } = await searchParams;
-  const parentId = "parent-1";
+  const { profile } = await requireParentProfile(locale);
+  const parentId = profile.id;
 
   const children = await userRepository.getLinkedChildren(parentId);
   const selectedStudentId = selectedParam || (children.length > 0 ? children[0].id : "");

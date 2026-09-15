@@ -18,6 +18,7 @@ import {
 import { DirectionalIcon } from "@/components/shared/DirectionalIcon";
 import { userRepository } from "@/server/repositories/UserRepository";
 import { notificationService } from "@/server/services/NotificationService";
+import { requireParentProfile } from "@/lib/auth/currentUser";
 
 export default async function ParentDashboardPage({
   params,
@@ -29,7 +30,8 @@ export default async function ParentDashboardPage({
   const { locale } = await params;
   const isAr = locale === "ar";
   const { studentId: selectedParam } = await searchParams;
-  const parentId = "parent-1";
+  const { profile } = await requireParentProfile(locale);
+  const parentId = profile.id;
 
   const children = await userRepository.getLinkedChildren(parentId);
   const selectedStudentId = selectedParam || (children.length > 0 ? children[0].id : "");
