@@ -151,6 +151,7 @@ model StudentProfile {
   recitationSubmissions RecitationSubmission[]
   pronunciationAttempts PronunciationAttempt[]
   vocabularyCardProgress VocabularyCardProgress[]
+  roadmapNodeProgress RoadmapNodeProgress[]
 
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
@@ -723,6 +724,21 @@ model VocabularyCardProgress {
 
   @@unique([studentId, cardId])
   @@map("vocabulary_card_progress")
+}
+
+model RoadmapNodeProgress {
+  id          String         @id @default(uuid())
+  studentId   String
+  nodeId      String         // Quest node catalog id, e.g. "node-1-alphabet" -- the roadmap/quest catalog itself is static app content, not a database table
+  status      String         @default("LOCKED") // "LOCKED" | "ACTIVE" | "COMPLETED"
+  starsEarned Int            @default(0) // 0 to 3
+
+  student     StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  updatedAt   DateTime       @updatedAt
+
+  @@unique([studentId, nodeId])
+  @@map("roadmap_node_progress")
 }
 
 // -----------------------------------------------------------------------------
