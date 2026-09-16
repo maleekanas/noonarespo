@@ -165,9 +165,16 @@ class SchoolRepository {
             dateOfBirth: placeholderDateOfBirth,
             ageGroup,
             nativeLanguage: "ar",
-            schoolId,
             notesInternal:
               "Onboarded via institutional batch roster import -- birthdate is a placeholder derived from the selected age band; confirm the real birthdate with the school.",
+            // Prisma's generated input type is a strict union: mixing a
+            // nested relation create (user.create, below) with a raw scalar
+            // FK (schoolId) on the same call is rejected at the type level
+            // -- both relations have to use the "checked" nested-object
+            // form, so this links the school via `connect` instead.
+            partnerSchool: {
+              connect: { id: schoolId },
+            },
             user: {
               create: {
                 email,
