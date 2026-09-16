@@ -304,6 +304,8 @@
     "microCohortsBadge": "Micro-Cohorts (Max 6 Students)",
     "meta": {
       "prog-foundations": {
+        "title": "Arabic Foundations",
+        "description": "Alphabet recognition, letter sounds, vocabulary building, and initial reading practice.",
         "targetAges": "Ages 4 - 8",
         "studio1Title": "Phonics Arcade",
         "studio1Desc": "28 Arabic letters with Harakat and arcade puzzles",
@@ -311,6 +313,8 @@
         "studio2Desc": "Smart Leitner cards for alphabet and first words"
       },
       "prog-reading": {
+        "title": "Reading & Fluency Program",
+        "description": "Phonics, reading fluency, reading comprehension, and story-based learning.",
         "targetAges": "Ages 7 - 12",
         "studio1Title": "Visual Quest Map",
         "studio1Desc": "10 reading nodes across 5 interactive biomes",
@@ -318,6 +322,8 @@
         "studio2Desc": "Vocalized storybooks with native audio and quizzes"
       },
       "prog-writing": {
+        "title": "Writing & Penmanship Program",
+        "description": "Handwriting, sentence formation, creative writing, and grammar practice.",
         "targetAges": "Ages 7 - 14",
         "studio1Title": "Ruled Naskh Whiteboard",
         "studio1Desc": "Ruled calligraphy canvas for stroke mechanics",
@@ -325,6 +331,8 @@
         "studio2Desc": "Printable A4 worksheets with QR verification"
       },
       "prog-speaking": {
+        "title": "Speaking & Conversation Program",
+        "description": "Pronunciation refinement, interactive daily conversation, and public speaking.",
         "targetAges": "Ages 6 - 15",
         "studio1Title": "Faseeh AI Tutor",
         "studio1Desc": "Interactive spoken dialogues with CEFR AI tutor",
@@ -332,6 +340,8 @@
         "studio2Desc": "Waveform pitch-matching and acoustic feedback"
       },
       "prog-listening": {
+        "title": "Listening & Comprehension Program",
+        "description": "Story listening, audio exercises, and interactive listening comprehension.",
         "targetAges": "Ages 4 - 11",
         "studio1Title": "Auditory Minimal Pairs",
         "studio1Desc": "Acoustic discrimination of emphatic vs light phonemes",
@@ -339,6 +349,8 @@
         "studio2Desc": "Crystal clear audio stories with plot comprehension"
       },
       "prog-quran": {
+        "title": "Quran & Tajweed Program",
+        "description": "Quran reading, memorization, practical Tajweed rules, and systematic revision.",
         "targetAges": "Ages 5 - 16",
         "studio1Title": "Color-Coded Tajweed Studio",
         "studio1Desc": "Uthmani Mushaf with colored Tajweed rules & audio recorder",
@@ -346,6 +358,8 @@
         "studio2Desc": "Juz Amma retention tracking with certified Qira'at"
       },
       "prog-islamic": {
+        "title": "Islamic Studies for Children",
+        "description": "Basic Islamic knowledge, illustrated prophetic stories, and core moral values.",
         "targetAges": "Ages 5 - 15",
         "studio1Title": "Illustrated Seerah",
         "studio1Desc": "Inspiring milestones of the Prophet ﷺ and Prophets",

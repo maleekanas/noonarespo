@@ -2,7 +2,7 @@ import React from "react";
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
 import { administrationService } from "@/server/services/AdministrationService";
-import { academicRepository } from "@/server/repositories/AcademicRepository";
+import { academicRepository, getProgramSlug } from "@/server/repositories/AcademicRepository";
 import { AgeGroup } from "@prisma/client";
 import { requireAdminSession } from "@/lib/auth/currentUser";
 import {
@@ -25,9 +25,17 @@ export default async function AdminCurriculumPage({
   const adminSession = await requireAdminSession(locale);
 
   const programs = await academicRepository.getAllPrograms();
-  const selectedProgramId = activeProgramId || programs[0]?.id || "prog-foundations";
+  // Program.id in the database is a random UUID, but CurriculumModule records
+  // (a hardcoded, DB-free catalog) are keyed by a stable "prog-xxx" slug --
+  // see getProgramSlug's docstring in AcademicRepository.ts. Resolve by slug
+  // so the module list and the "add module" form actually match a real program.
+  const programsWithSlug = programs.map((p) => ({ ...p, slug: getProgramSlug(p.type) }));
+  const selectedSlug =
+    activeProgramId && programsWithSlug.some((p) => p.slug === activeProgramId)
+      ? activeProgramId
+      : programsWithSlug[0]?.slug || "prog-foundations";
 
-  const modules = await administrationService.getCurriculumModules(selectedProgramId);
+  const modules = await administrationService.getCurriculumModules(selectedSlug);
 
   async function handleAddModule(formData: FormData) {
     "use server";
@@ -54,10 +62,22 @@ export default async function AdminCurriculumPage({
         cefrAlignment: `CEFR ${courseLevelCode}`,
         titleAr,
         titleEn: titleAr,
+        titleNl: titleAr,
+        titleTr: titleAr,
+        titleIt: titleAr,
+        titleEs: titleAr,
         descriptionAr,
         descriptionEn: descriptionAr,
+        descriptionNl: descriptionAr,
+        descriptionTr: descriptionAr,
+        descriptionIt: descriptionAr,
+        descriptionEs: descriptionAr,
         weeklyObjectivesAr: [objective1, objective2],
         weeklyObjectivesEn: [objective1, objective2],
+        weeklyObjectivesNl: [objective1, objective2],
+        weeklyObjectivesTr: [objective1, objective2],
+        weeklyObjectivesIt: [objective1, objective2],
+        weeklyObjectivesEs: [objective1, objective2],
         targetVocabularyCount,
         durationWeeks,
       },
@@ -96,12 +116,12 @@ export default async function AdminCurriculumPage({
 
       {/* Program Selector Tabs */}
       <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
-        {programs.map((prog) => {
-          const isSelected = prog.id === selectedProgramId;
+        {programsWithSlug.map((prog) => {
+          const isSelected = prog.slug === selectedSlug;
           return (
             <Link
               key={prog.id}
-              href={`/${locale}/admin/curriculum?program=${prog.id}`}
+              href={`/${locale}/admin/curriculum?program=${prog.slug}`}
               className={`px-4 py-2.5 rounded-2xl font-bold text-xs whitespace-nowrap transition-all flex items-center gap-2 ${
                 isSelected
                   ? "gradient-brand text-white shadow-md shadow-brand-500/20 scale-[1.02]"
@@ -203,7 +223,7 @@ export default async function AdminCurriculumPage({
           </div>
 
           <form action={handleAddModule} className="space-y-4 text-xs">
-            <input type="hidden" name="programId" value={selectedProgramId} />
+            <input type="hidden" name="programId" value={selectedSlug} />
 
             <div>
               <label className="block font-bold text-slate-700 mb-1">

@@ -6,8 +6,33 @@ import {
   DomainClassEnrollment,
   DomainTeacherAssignment,
 } from "./types";
-import { ClassType, EnrollmentStatus, TeacherRoleInClass } from "@prisma/client";
+import { ClassType, EnrollmentStatus, ProgramType, TeacherRoleInClass } from "@prisma/client";
 import { prisma } from "@/lib/database/prisma";
+
+/**
+ * Program.id in the database is a random UUID (`@default(uuid())`), but a
+ * stable, human-readable "prog-xxx" slug is used everywhere else a program
+ * needs to be referenced outside the database itself: the hardcoded
+ * CurriculumModule catalog (AdministrationRepository), the localization
+ * dictionaries (programsCatalog.meta), and public links (e.g. the homepage
+ * linking into /programs?program=prog-foundations). This map is the single
+ * source of truth translating the real, stable `ProgramType` enum into that
+ * slug, so pages can look up curriculum/dictionary content for a program
+ * without depending on its unstable database id.
+ */
+export const PROGRAM_TYPE_TO_SLUG: Record<ProgramType, string> = {
+  ARABIC_FOUNDATIONS: "prog-foundations",
+  READING_PROGRAM: "prog-reading",
+  WRITING_PROGRAM: "prog-writing",
+  SPEAKING_PROGRAM: "prog-speaking",
+  LISTENING_PROGRAM: "prog-listening",
+  QURAN_TAJWEED: "prog-quran",
+  ISLAMIC_STUDIES: "prog-islamic",
+};
+
+export function getProgramSlug(type: ProgramType): string {
+  return PROGRAM_TYPE_TO_SLUG[type] || "prog-foundations";
+}
 
 /**
  * Prisma-backed repository for the academic catalog (programs, courses,

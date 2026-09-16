@@ -1,8 +1,71 @@
 import React from "react";
 import Link from "next/link";
-import { academicRepository } from "@/server/repositories/AcademicRepository";
+import { academicRepository, getProgramSlug } from "@/server/repositories/AcademicRepository";
 import { administrationService } from "@/server/services/AdministrationService";
 import { getDirection, getDictionary } from "@/lib/localization";
+import type { CurriculumModule } from "@/server/repositories/AdministrationRepository";
+
+// CurriculumModule content carries one field per locale (titleAr/titleEn/...);
+// this picks the right one for the page's current locale, falling back to
+// English for any locale that isn't Arabic and doesn't have its own field.
+function pickLocaleField(
+  locale: string,
+  fieldsByLocale: { ar: string; en: string; nl: string; tr: string; it: string; es: string }
+): string {
+  switch (locale) {
+    case "ar":
+      return fieldsByLocale.ar;
+    case "nl":
+      return fieldsByLocale.nl;
+    case "tr":
+      return fieldsByLocale.tr;
+    case "it":
+      return fieldsByLocale.it;
+    case "es":
+      return fieldsByLocale.es;
+    default:
+      return fieldsByLocale.en;
+  }
+}
+
+function moduleTitle(locale: string, m: CurriculumModule): string {
+  return pickLocaleField(locale, {
+    ar: m.titleAr,
+    en: m.titleEn,
+    nl: m.titleNl,
+    tr: m.titleTr,
+    it: m.titleIt,
+    es: m.titleEs,
+  });
+}
+
+function moduleDescription(locale: string, m: CurriculumModule): string {
+  return pickLocaleField(locale, {
+    ar: m.descriptionAr,
+    en: m.descriptionEn,
+    nl: m.descriptionNl,
+    tr: m.descriptionTr,
+    it: m.descriptionIt,
+    es: m.descriptionEs,
+  });
+}
+
+function moduleWeeklyObjectives(locale: string, m: CurriculumModule): string[] {
+  switch (locale) {
+    case "ar":
+      return m.weeklyObjectivesAr;
+    case "nl":
+      return m.weeklyObjectivesNl;
+    case "tr":
+      return m.weeklyObjectivesTr;
+    case "it":
+      return m.weeklyObjectivesIt;
+    case "es":
+      return m.weeklyObjectivesEs;
+    default:
+      return m.weeklyObjectivesEn;
+  }
+}
 import {
   BookOpen,
   Volume2,
@@ -38,21 +101,45 @@ export default async function ProgramsCatalogPage({
   const isRtl = getDirection(locale) === "rtl";
   const dict = getDictionary(locale);
   const pc = dict.programsCatalog;
+  // pc.meta's keys are the fixed set of "prog-xxx" slugs, typed from the
+  // JSON dictionary as literal keys -- cast once so it can be looked up by
+  // a dynamically-resolved slug (selectedSlug / prog.slug) below.
+  const programMetaDict = pc.meta as unknown as Record<
+    string,
+    {
+      title: string;
+      description: string;
+      targetAges: string;
+      studio1Title: string;
+      studio1Desc: string;
+      studio2Title: string;
+      studio2Desc: string;
+    }
+  >;
   const BackArrow = isRtl ? ArrowRight : ArrowLeft;
   const ForwardArrow = isRtl ? ArrowLeft : ArrowRight;
 
+  // Program.id in the database is a random UUID; the stable "prog-xxx" slug
+  // (derived from the program's real, stable `type`) is what the curriculum
+  // catalog, the dictionaries, and incoming links (e.g. from the homepage)
+  // actually use to identify a program. Resolve the selected program by
+  // slug first, and use its real database id only for genuine DB lookups
+  // (courses/levels) -- mixing the two previously meant every program page
+  // silently fell back to Foundations' metadata and always showed "0"
+  // curriculum modules, regardless of which program tab was open.
   const allPrograms = await academicRepository.getAllPrograms();
-  const selectedProgramId =
-    programParam && allPrograms.some((p) => p.id === programParam)
+  const allProgramsWithSlug = allPrograms.map((p) => ({ ...p, slug: getProgramSlug(p.type) }));
+  const selectedSlug =
+    programParam && allProgramsWithSlug.some((p) => p.slug === programParam)
       ? programParam
-      : allPrograms[0]?.id || "prog-foundations";
+      : allProgramsWithSlug[0]?.slug || "prog-foundations";
 
   const currentProgram =
-    allPrograms.find((p) => p.id === selectedProgramId) || allPrograms[0];
+    allProgramsWithSlug.find((p) => p.slug === selectedSlug) || allProgramsWithSlug[0];
 
   // Fetch courses, levels, and curriculum modules for the selected program
-  const courses = await academicRepository.getCoursesByProgramId(selectedProgramId);
-  const modules = await administrationService.getCurriculumModules(selectedProgramId);
+  const courses = await academicRepository.getCoursesByProgramId(currentProgram.id);
+  const modules = await administrationService.getCurriculumModules(selectedSlug);
 
   // Collect levels across courses
   const levels = [];
@@ -235,7 +322,7 @@ export default async function ProgramsCatalogPage({
     },
   };
 
-  const currentMeta = programMeta[selectedProgramId] || programMeta["prog-foundations"];
+  const currentMeta = programMeta[selectedSlug] || programMeta["prog-foundations"];
   const MainIcon = currentMeta.icon;
 
   return (
@@ -267,14 +354,15 @@ export default async function ProgramsCatalogPage({
         {/* 7 Program Selector Tabs */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-2 overflow-x-auto pb-3 pt-1 scrollbar-none">
-            {allPrograms.map((prog) => {
-              const meta = programMeta[prog.id] || programMeta["prog-foundations"];
+            {allProgramsWithSlug.map((prog) => {
+              const meta = programMeta[prog.slug] || programMeta["prog-foundations"];
               const ProgIcon = meta.icon;
-              const isSelected = prog.id === selectedProgramId;
+              const isSelected = prog.slug === selectedSlug;
+              const progTitle = programMetaDict[prog.slug]?.title || prog.titleEn;
               return (
                 <Link
                   key={prog.id}
-                  href={`/${locale}/programs?program=${prog.id}`}
+                  href={`/${locale}/programs?program=${prog.slug}`}
                   className={`px-4 py-2.5 rounded-2xl font-bold text-xs whitespace-nowrap transition-all flex items-center gap-2 border ${
                     isSelected
                       ? "bg-slate-900 text-white border-slate-900 shadow-sm scale-[1.02]"
@@ -282,7 +370,7 @@ export default async function ProgramsCatalogPage({
                   }`}
                 >
                   <ProgIcon className="w-4 h-4" />
-                  <span>{isAr ? prog.titleAr : prog.titleEn}</span>
+                  <span>{progTitle}</span>
                 </Link>
               );
             })}
@@ -313,10 +401,10 @@ export default async function ProgramsCatalogPage({
               </div>
               <div>
                 <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
-                  {isAr ? currentProgram.titleAr : currentProgram.titleEn}
+                  {programMetaDict[selectedSlug]?.title || currentProgram.titleEn}
                 </h1>
                 <p className="text-white/90 text-sm sm:text-base mt-1 leading-relaxed">
-                  {isAr ? currentProgram.descriptionAr : currentProgram.descriptionEn}
+                  {programMetaDict[selectedSlug]?.description || currentProgram.descriptionEn}
                 </p>
               </div>
             </div>
@@ -380,10 +468,10 @@ export default async function ProgramsCatalogPage({
                       {isAr ? `${pc.moduleLabel} ${idx + 1}: ${m.levelTitleAr}` : `${pc.moduleLabel} ${idx + 1}: ${m.courseLevelCode}`}
                     </span>
                     <h3 className="text-lg font-bold text-slate-900 leading-snug">
-                      {isAr ? m.titleAr : m.titleEn}
+                      {moduleTitle(locale, m)}
                     </h3>
                     <p className="text-xs text-slate-600 mt-2 leading-relaxed">
-                      {isAr ? m.descriptionAr : m.descriptionEn}
+                      {moduleDescription(locale, m)}
                     </p>
                   </div>
 
@@ -393,7 +481,7 @@ export default async function ProgramsCatalogPage({
                       {pc.objectivesLabel}
                     </span>
                     <ul className="space-y-1.5 text-xs text-slate-600">
-                      {(isAr ? m.weeklyObjectivesAr : m.weeklyObjectivesEn).map((obj, oIdx) => (
+                      {moduleWeeklyObjectives(locale, m).map((obj, oIdx) => (
                         <li key={oIdx} className="flex items-start gap-2">
                           <CheckCircle2 className="w-3.5 h-3.5 text-brand-600 shrink-0 mt-0.5" />
                           <span className="leading-tight">{obj}</span>

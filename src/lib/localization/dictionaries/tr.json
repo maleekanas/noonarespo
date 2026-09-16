@@ -304,6 +304,8 @@
     "microCohortsBadge": "Küçük Gruplar (En Fazla 6 Öğrenci)",
     "meta": {
       "prog-foundations": {
+        "title": "Arapça Temelleri",
+        "description": "Harf tanıma, harf sesleri, kelime dağarcığı geliştirme ve küçük çocuklar için ilk okuma alıştırmaları.",
         "targetAges": "4 - 8 Yaş",
         "studio1Title": "Fonetik Oyun Alanı",
         "studio1Desc": "Harekeli 28 Arap harfi ve atari bulmacaları",
@@ -311,6 +313,8 @@
         "studio2Desc": "Alfabe ve ilk kelimeler için akıllı Leitner kartları"
       },
       "prog-reading": {
+        "title": "Okuma ve Akıcılık Programı",
+        "description": "Fonetik, okuma akıcılığı, okuduğunu anlama ve eğlenceli hikâyelere dayalı öğrenme.",
         "targetAges": "7 - 12 Yaş",
         "studio1Title": "Görsel Macera Haritası",
         "studio1Desc": "5 etkileşimli bölgede 10 okuma noktası",
@@ -318,6 +322,8 @@
         "studio2Desc": "Anadil sesi ve testlerle harekeli hikaye kitapları"
       },
       "prog-writing": {
+        "title": "Yazma ve Hat Programı",
+        "description": "Arapça el yazısının geliştirilmesi, cümle kurma, yaratıcı yazma ve basitleştirilmiş dilbilgisi alıştırmaları.",
         "targetAges": "7 - 14 Yaş",
         "studio1Title": "Çizgili Nesih Yazı Tahtası",
         "studio1Desc": "Kalem hareketleri için çizgili hat sanatı tuvali",
@@ -325,6 +331,8 @@
         "studio2Desc": "QR doğrulamalı yazdırılabilir A4 çalışma sayfaları"
       },
       "prog-speaking": {
+        "title": "Konuşma ve Sohbet Programı",
+        "description": "Telaffuz geliştirme, etkileşimli günlük sohbet ve topluluk önünde kendinden emin konuşma.",
         "targetAges": "6 - 15 Yaş",
         "studio1Title": "Faseeh Yapay Zeka Öğretmeni",
         "studio1Desc": "CEFR yapay zeka öğretmeniyle etkileşimli sözlü diyaloglar",
@@ -332,6 +340,8 @@
         "studio2Desc": "Dalga formu perde eşleştirme ve akustik geri bildirim"
       },
       "prog-listening": {
+        "title": "Dinleme ve Anlama Programı",
+        "description": "Hikâye dinleme, sesli alıştırmalar ve etkileşimli dinlediğini anlama.",
         "targetAges": "4 - 11 Yaş",
         "studio1Title": "İşitsel Minimal Çiftler",
         "studio1Desc": "Kalın ve ince ünsüzlerin akustik ayrımı",
@@ -339,6 +349,8 @@
         "studio2Desc": "Konu anlama ile kristal netliğinde sesli hikayeler"
       },
       "prog-quran": {
+        "title": "Kur'an ve Tecvid Programı",
+        "description": "Usulüne uygun okuma, ezberleme ve pekiştirme, pratik tecvid kuralları ve düzenli tekrar.",
         "targetAges": "5 - 16 Yaş",
         "studio1Title": "Renk Kodlu Tecvid Stüdyosu",
         "studio1Desc": "Renkli tecvid kurallarıyla Osmanlı Mushafı ve ses kaydedici",
@@ -346,6 +358,8 @@
         "studio2Desc": "Sertifikalı Kıraat ile Cüz Amme hıfzının hassas takibi"
       },
       "prog-islamic": {
+        "title": "Çocuklar için İslami Bilgiler",
+        "description": "Temel İslami bilgiler, resimli peygamber kıssaları ve temel değer ve ahlakın aşılanması.",
         "targetAges": "5 - 15 Yaş",
         "studio1Title": "Resimli Siyer",
         "studio1Desc": "Peygamberimizin ﷺ ve diğer peygamberlerin ilham verici hayat kesitleri",

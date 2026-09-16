@@ -304,6 +304,8 @@
     "microCohortsBadge": "Micro-Gruppi (Massimo 6 Studenti)",
     "meta": {
       "prog-foundations": {
+        "title": "Fondamenti di Arabo",
+        "description": "Riconoscimento delle lettere, suoni delle lettere, arricchimento del vocabolario e prime pratiche di lettura per i bambini piccoli.",
         "targetAges": "Età 4 - 8",
         "studio1Title": "Sala Giochi Fonetica",
         "studio1Desc": "28 lettere arabe con vocali brevi e puzzle arcade",
@@ -311,6 +313,8 @@
         "studio2Desc": "Carte Leitner intelligenti per alfabeto e prime parole"
       },
       "prog-reading": {
+        "title": "Programma di Lettura e Scorrevolezza",
+        "description": "Fonetica, scorrevolezza di lettura, comprensione del testo e apprendimento basato su storie coinvolgenti.",
         "targetAges": "Età 7 - 12",
         "studio1Title": "Mappa dell'Avventura Visiva",
         "studio1Desc": "10 tappe di lettura in 5 biomi interattivi",
@@ -318,6 +322,8 @@
         "studio2Desc": "Libri vocalizzati con audio madrelingua e quiz"
       },
       "prog-writing": {
+        "title": "Programma di Scrittura e Calligrafia",
+        "description": "Miglioramento della calligrafia araba, costruzione delle frasi, scrittura creativa ed esercizi di grammatica semplificati.",
         "targetAges": "Età 7 - 14",
         "studio1Title": "Lavagna Naskh Rigata",
         "studio1Desc": "Tela di calligrafia rigata per la meccanica del tratto",
@@ -325,6 +331,8 @@
         "studio2Desc": "Schede A4 stampabili con verifica QR"
       },
       "prog-speaking": {
+        "title": "Programma di Conversazione e Espressione Orale",
+        "description": "Perfezionamento della pronuncia, conversazione quotidiana interattiva e capacità di parlare in pubblico con sicurezza.",
         "targetAges": "Età 6 - 15",
         "studio1Title": "Tutor IA Faseeh",
         "studio1Desc": "Dialoghi orali interattivi con tutor IA basato su CEFR",
@@ -332,6 +340,8 @@
         "studio2Desc": "Corrispondenza dell'intonazione e feedback acustico"
       },
       "prog-listening": {
+        "title": "Programma di Ascolto e Comprensione",
+        "description": "Ascolto di storie, esercizi audio e comprensione all'ascolto interattiva.",
         "targetAges": "Età 4 - 11",
         "studio1Title": "Coppie Minime Uditive",
         "studio1Desc": "Discriminazione acustica dei fonemi enfatici e leggeri",
@@ -339,6 +349,8 @@
         "studio2Desc": "Storie audio cristalline con comprensione della trama"
       },
       "prog-quran": {
+        "title": "Programma di Corano e Tajweed",
+        "description": "Lettura accurata, memorizzazione e consolidamento, regole pratiche di Tajweed e revisione sistematica.",
         "targetAges": "Età 5 - 16",
         "studio1Title": "Studio Tajweed a Codifica Cromatica",
         "studio1Desc": "Mushaf Uthmani con regole Tajweed colorate e registratore audio",
@@ -346,6 +358,8 @@
         "studio2Desc": "Monitoraggio preciso della memorizzazione del Juz Amma con Qira'at certificata"
       },
       "prog-islamic": {
+        "title": "Studi Islamici per Bambini",
+        "description": "Conoscenze islamiche fondamentali, storie illustrate dei profeti e coltivazione dei valori morali fondamentali.",
         "targetAges": "Età 5 - 15",
         "studio1Title": "Seerah Illustrata",
         "studio1Desc": "Tappe ispiratrici della vita del Profeta ﷺ e dei Profeti",

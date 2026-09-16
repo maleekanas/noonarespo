@@ -304,6 +304,8 @@
     "microCohortsBadge": "Kleine Groepen (Max. 6 Leerlingen)",
     "meta": {
       "prog-foundations": {
+        "title": "Arabische Basisvaardigheden",
+        "description": "Letterherkenning, letterklanken, woordenschatopbouw en de eerste leesoefeningen voor jonge kinderen.",
         "targetAges": "4 - 8 jaar",
         "studio1Title": "Fonetiek Arcade",
         "studio1Desc": "28 Arabische letters met harakat en arcade-puzzels",
@@ -311,6 +313,8 @@
         "studio2Desc": "Slimme Leitner-kaarten voor alfabet en eerste woorden"
       },
       "prog-reading": {
+        "title": "Programma Lezen en Vloeiendheid",
+        "description": "Fonetiek, leesvloeiendheid, leesbegrip en leren aan de hand van boeiende verhalen.",
         "targetAges": "7 - 12 jaar",
         "studio1Title": "Visuele Questkaart",
         "studio1Desc": "10 leesknooppunten verspreid over 5 interactieve biomen",
@@ -318,6 +322,8 @@
         "studio2Desc": "Van klinkertekens voorziene verhaalboeken met native audio en quizzen"
       },
       "prog-writing": {
+        "title": "Programma Schrijven en Kalligrafie",
+        "description": "Verbetering van het Arabische schrift, zinsbouw, creatief schrijven en vereenvoudigde grammaticaoefeningen.",
         "targetAges": "7 - 14 jaar",
         "studio1Title": "Gelinieerd Naskh-Schrijfbord",
         "studio1Desc": "Gelinieerd kalligrafiecanvas voor penseelbeweging",
@@ -325,6 +331,8 @@
         "studio2Desc": "Afdrukbare A4-werkbladen met QR-verificatie"
       },
       "prog-speaking": {
+        "title": "Programma Spreken en Conversatie",
+        "description": "Verbetering van de uitspraak, interactieve dagelijkse gesprekken en zelfverzekerd spreken in het openbaar.",
         "targetAges": "6 - 15 jaar",
         "studio1Title": "Faseeh AI-Tutor",
         "studio1Desc": "Interactieve gesproken dialogen met CEFR AI-tutor",
@@ -332,6 +340,8 @@
         "studio2Desc": "Golfvorm-toonhoogte matching en akoestische feedback"
       },
       "prog-listening": {
+        "title": "Programma Luisteren en Begrijpen",
+        "description": "Luisteren naar verhalen, audio-oefeningen en interactief luisterbegrip.",
         "targetAges": "4 - 11 jaar",
         "studio1Title": "Auditieve Minimale Paren",
         "studio1Desc": "Akoestisch onderscheid tussen emfatische en lichte fonemen",
@@ -339,6 +349,8 @@
         "studio2Desc": "Kristalheldere audioverhalen met verhaalbegrip"
       },
       "prog-quran": {
+        "title": "Koran- en Tajweedprogramma",
+        "description": "Vloeiend lezen, memoriseren en verankeren, praktische Tajweedregels en regelmatige herhaling.",
         "targetAges": "5 - 16 jaar",
         "studio1Title": "Kleurgecodeerde Tajweed-Studio",
         "studio1Desc": "Uthmani Mushaf met gekleurde Tajweed-regels en audiorecorder",
@@ -346,6 +358,8 @@
         "studio2Desc": "Nauwkeurige voortgang van Juz Amma-memorisatie met gecertificeerde Qira'at"
       },
       "prog-islamic": {
+        "title": "Islamitische Studies voor Kinderen",
+        "description": "Fundamentele islamitische kennis, geïllustreerde verhalen van de profeten, en het aankweken van kernwaarden en moraal.",
         "targetAges": "5 - 15 jaar",
         "studio1Title": "Geïllustreerde Seerah",
         "studio1Desc": "Inspirerende mijlpalen van de Profeet ﷺ en de Profeten",
