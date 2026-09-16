@@ -1,6 +1,6 @@
 import { schedulingRepository } from "../repositories/SchedulingRepository";
 import { academicRepository } from "../repositories/AcademicRepository";
-import { defaultMeetingProvider } from "@/lib/integrations/meetingProvider";
+import { meetingManager } from "@/lib/integrations/meetings/MeetingManager";
 import { DomainClassSession } from "../repositories/types";
 
 export interface ScheduleConflictReport {
@@ -71,8 +71,10 @@ export class SchedulingService {
       throw new Error(`CLASS_NOT_FOUND: Class group ${params.classGroupId} does not exist`);
     }
 
-    // 3. Virtual Classroom Generation
-    const meeting = await defaultMeetingProvider.createClassroomSession({
+    // 3. Virtual Classroom Generation -- uses whichever real platform (Zoom/
+    // Teams/Google Meet/Webex) the school has actually connected, honestly
+    // falling back to a sandbox link when none are configured yet.
+    const meeting = await meetingManager.createBestAvailableSession({
       sessionId: "temp",
       classGroupName: classGroup.name,
       teacherName: `Teacher ${params.teacherId}`,

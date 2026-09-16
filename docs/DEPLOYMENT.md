@@ -10,7 +10,7 @@ This document describes how Kids Arabic Academy is actually built, configured, a
 - **Self-hosting files (untested)**: A `Dockerfile` and `docker-compose.yml` (with an `nginx` reverse proxy and `certbot` for SSL) exist in the repo root as a possible future self-hosted alternative. They have never been deployed or verified against production data, so treat them as a starting point for a future migration, not a supported second deployment target, until someone actually runs and validates them end to end.
 - **Database**: PostgreSQL, accessed through Prisma. Schema changes are applied with `prisma db push` — **there is no `prisma/migrations` folder**, so `prisma migrate deploy` does not apply here (see the checklist below).
 - **Object Storage**: Amazon S3 (`me-central-1` by default) for audio recordings and homework/certificate attachments, via a signed-URL provider that automatically falls back to a safe sandbox mode when AWS credentials are absent (see Section 2).
-- **Virtual Classrooms**: Zoom, Microsoft Teams, and Google Meet each have their own adapter that activates automatically when that platform's credentials are present, and otherwise falls back to a working sandbox/mock session so the app never breaks in development.
+- **Virtual Classrooms**: Zoom, Microsoft Teams, Google Meet, and Cisco Webex each have their own adapter that makes a real API call to that platform when its credentials are present (Zoom Server-to-Server OAuth, Microsoft Graph application permissions, Google Calendar API via a delegated service account, and a Webex OAuth Integration refresh token, respectively). If a platform isn't configured yet, or its live API call fails for any reason, the adapter falls back to a clearly-labeled sandbox session instead of breaking class scheduling. When a school hasn't chosen a specific platform, `MeetingManager.createBestAvailableSession()` picks the first configured one (Zoom, then Teams, then Meet, then Webex) automatically.
 - **Notifications**: WhatsApp (Meta Cloud API), SMS (a generic API key or Twilio), and Email (Resend or SMTP) — same pattern: real when configured, sandboxed when not.
 - **Payments**: Stripe only. There is no "payment provider switch" — Stripe Checkout and the Stripe webhook are the one real, live payment path.
 - **Error Monitoring**: Sentry, via `@sentry/nextjs`. Same activation pattern as everything else above — falls back to plain `console.error` (Vercel function logs only) when `SENTRY_DSN` / `NEXT_PUBLIC_SENTRY_DSN` are unset, and reports to Sentry once they're set. Free tier is enough to start.
@@ -41,18 +41,36 @@ AWS_ACCESS_KEY_ID=""
 AWS_SECRET_ACCESS_KEY=""
 AWS_REGION="me-central-1"
 
-# Virtual Classrooms — each platform activates independently when its own keys are set;
-# any left blank fall back to a working sandbox session instead of failing.
+# Virtual Classrooms — each platform activates independently when its own keys are set,
+# and makes a real call to that platform's API; any left blank (or whose live call fails)
+# fall back to a working sandbox session instead of failing.
 ZOOM_ACCOUNT_ID=""
 ZOOM_CLIENT_ID=""
 ZOOM_CLIENT_SECRET=""
 
+# Requires a Teams-admin-granted application access policy for OnlineMeetings
+# on MICROSOFT_ORGANIZER_USER_ID, in addition to the Azure app registration below
+# (Microsoft Graph has no "/me" without a signed-in user, so app-only meeting
+# creation needs an explicit organizer account).
 MICROSOFT_TENANT_ID=""
 MICROSOFT_CLIENT_ID=""
 MICROSOFT_CLIENT_SECRET=""
+MICROSOFT_ORGANIZER_USER_ID=""
 
+# Google Meet links are generated via the Calendar API, which requires the service
+# account to impersonate a real Workspace user (domain-wide delegation, granted by
+# a Workspace admin) — that user is GOOGLE_IMPERSONATE_SUBJECT.
 GOOGLE_SERVICE_ACCOUNT_EMAIL=""
 GOOGLE_PRIVATE_KEY=""
+GOOGLE_IMPERSONATE_SUBJECT=""
+
+# Cisco Webex has no server-only auth mode for self-serve developers — the school's
+# Webex account owner authorizes a Webex OAuth Integration once, which produces a
+# long-lived refresh token that this adapter exchanges for a fresh access token on
+# every call.
+WEBEX_CLIENT_ID=""
+WEBEX_CLIENT_SECRET=""
+WEBEX_REFRESH_TOKEN=""
 
 # Notifications — each channel activates independently when configured
 WHATSAPP_PHONE_NUMBER_ID=""

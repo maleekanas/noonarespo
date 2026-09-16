@@ -1,4 +1,4 @@
-export type MeetingPlatform = "MOCK" | "ZOOM" | "TEAMS" | "MEET";
+export type MeetingPlatform = "MOCK" | "ZOOM" | "TEAMS" | "MEET" | "WEBEX";
 
 export interface MeetingSessionDetails {
   sessionId: string;

@@ -36,12 +36,27 @@ describe("Video Meeting Adapters & Classroom Integration", () => {
     assert.equal(session.topic, testParams.classGroupName);
   });
 
-  test("Meeting Manager: Should return configuration diagnostic status for all 3 platforms", () => {
+  test("Webex Adapter: Should generate Webex meeting links", async () => {
+    const session = await meetingManager.createSession("WEBEX", testParams);
+    assert.equal(session.provider, "WEBEX");
+    assert.ok(session.joinUrlStudent.includes("webex"));
+    assert.ok(session.hostUrlTeacher.includes("webex"));
+    assert.equal(session.topic, testParams.classGroupName);
+  });
+
+  test("Meeting Manager: Should return configuration diagnostic status for all 4 platforms", () => {
     const statuses = meetingManager.getPlatformStatuses();
-    assert.equal(statuses.length, 3);
+    assert.equal(statuses.length, 4);
     const platforms = statuses.map((s) => s.platform);
     assert.ok(platforms.includes("ZOOM"));
     assert.ok(platforms.includes("TEAMS"));
     assert.ok(platforms.includes("MEET"));
+    assert.ok(platforms.includes("WEBEX"));
+  });
+
+  test("Meeting Manager: createBestAvailableSession falls back to an honest sandbox session when nothing is configured", async () => {
+    const session = await meetingManager.createBestAvailableSession(testParams);
+    assert.equal(session.isMock, true);
+    assert.equal(session.topic, testParams.classGroupName);
   });
 });

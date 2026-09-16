@@ -1,7 +1,7 @@
 import { communicationRepository, DomainMessage, DomainMeetingRequest } from "../repositories/CommunicationRepository";
 import { academicRepository } from "../repositories/AcademicRepository";
 import { userRepository } from "../repositories/UserRepository";
-import { defaultMeetingProvider } from "@/lib/integrations/meetingProvider";
+import { meetingManager } from "@/lib/integrations/meetings/MeetingManager";
 
 export class CommunicationService {
   /**
@@ -104,7 +104,7 @@ export class CommunicationService {
    * Teacher confirms a meeting request and generates a virtual conference room.
    */
   async confirmMeeting(meetingId: string): Promise<DomainMeetingRequest> {
-    const session = await defaultMeetingProvider.createClassroomSession({
+    const session = await meetingManager.createBestAvailableSession({
       sessionId: meetingId,
       classGroupName: "Parent-Teacher Conference (15 min)",
       teacherName: "Teacher",
