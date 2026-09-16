@@ -69,6 +69,22 @@ export class AssignmentService {
 
     return await assignmentRepository.gradeSubmission(params);
   }
+
+  /**
+   * Real average of a student's graded homework scores, for parent-facing
+   * dashboards. Returns null (not 0) when nothing has been graded yet.
+   */
+  async getStudentHomeworkSummary(studentId: string) {
+    return await assignmentRepository.getStudentHomeworkSummary(studentId);
+  }
+
+  /**
+   * The most recent teacher evaluation left for a student, for parent-facing
+   * dashboards. Returns null when the student has no graded submissions yet.
+   */
+  async getLatestFeedbackForStudent(studentId: string) {
+    return await assignmentRepository.getLatestFeedbackForStudent(studentId);
+  }
 }
 
 export const assignmentService = new AssignmentService();

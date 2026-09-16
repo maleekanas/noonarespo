@@ -18,6 +18,13 @@ import {
 import { DirectionalIcon } from "@/components/shared/DirectionalIcon";
 import { userRepository } from "@/server/repositories/UserRepository";
 import { notificationService } from "@/server/services/NotificationService";
+import { attendanceService } from "@/server/services/AttendanceService";
+import { assignmentService } from "@/server/services/AssignmentService";
+import { gamificationService } from "@/server/services/GamificationService";
+import { schedulingService, UpcomingSessionSummary } from "@/server/services/SchedulingService";
+import { billingService } from "@/server/services/BillingService";
+import { prisma } from "@/lib/database/prisma";
+import { SubscriptionStatus } from "@prisma/client";
 import { requireParentProfile } from "@/lib/auth/currentUser";
 
 export default async function ParentDashboardPage({
@@ -39,6 +46,64 @@ export default async function ParentDashboardPage({
 
   const notifications = await notificationService.getNotifications(parentId);
   const unreadCount = notifications.filter((n) => !n.isRead).length;
+
+  // Real, Prisma/service-backed stats for the selected child -- replaces
+  // what used to be fixed demo numbers (12/12 attendance, 98% homework,
+  // 450 XP, a hardcoded teacher quote) with each child's actual record.
+  // A parent with no children yet simply sees the honest empty states below.
+  let attendanceSummary: Awaited<ReturnType<typeof attendanceService.getStudentAttendanceSummary>> | null = null;
+  let homeworkSummary: Awaited<ReturnType<typeof assignmentService.getStudentHomeworkSummary>> | null = null;
+  let gamification: Awaited<ReturnType<typeof gamificationService.getStudentGamification>> | null = null;
+  let latestFeedback: Awaited<ReturnType<typeof assignmentService.getLatestFeedbackForStudent>> | null = null;
+  let nextSession: UpcomingSessionSummary | null = null;
+
+  if (selectedChild) {
+    [attendanceSummary, homeworkSummary, gamification, latestFeedback, nextSession] = await Promise.all([
+      attendanceService.getStudentAttendanceSummary(selectedChild.id),
+      assignmentService.getStudentHomeworkSummary(selectedChild.id),
+      gamificationService.getStudentGamification(selectedChild.id),
+      assignmentService.getLatestFeedbackForStudent(selectedChild.id),
+      schedulingService.getNextSessionForStudent(selectedChild.id),
+    ]);
+  }
+
+  // Real, Stripe/Prisma-backed billing data for the parent (same source as
+  // the Billing & Invoices page) -- replaces the fixed "$74.50 / Family
+  // Plan / Renews Oct 1" and fake "#INV-2026-0901" invoice.
+  const [subscription, recentInvoices] = await Promise.all([
+    prisma.subscription.findFirst({
+      where: {
+        parentId,
+        status: { in: [SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIALING, SubscriptionStatus.PAST_DUE] },
+      },
+      include: { plan: true },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.invoice.findMany({
+      where: { parentId },
+      include: { items: true },
+      orderBy: { createdAt: "desc" },
+      take: 1,
+    }),
+  ]);
+  const latestInvoice = recentInvoices[0] || null;
+
+  const attendanceLabel = (rate: number) => {
+    if (rate >= 95) return isAr ? "ممتاز" : "Excellent";
+    if (rate >= 80) return isAr ? "جيد" : "Good";
+    return isAr ? "يحتاج متابعة" : "Needs attention";
+  };
+
+  const nextSessionTimeLabel = nextSession
+    ? new Intl.DateTimeFormat(isAr ? "ar" : "en-US", {
+        weekday: "long",
+        hour: "numeric",
+        minute: "2-digit",
+      }).format(nextSession.startTimeUtc)
+    : null;
+  const nextSessionDurationMinutes = nextSession
+    ? Math.round((nextSession.endTimeUtc.getTime() - nextSession.startTimeUtc.getTime()) / 60000)
+    : null;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
@@ -191,37 +256,114 @@ export default async function ParentDashboardPage({
         <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-2">
           <div className="flex items-center justify-between text-xs text-slate-500 font-semibold">
             <span>{isAr ? "نسبة الحضور" : "Attendance Rate"}</span>
-            <span className="text-emerald-600 font-bold">{isAr ? "100% ممتاز" : "100% Excellent"}</span>
+            {attendanceSummary && attendanceSummary.totalSessions > 0 && (
+              <span className="text-emerald-600 font-bold">
+                {attendanceSummary.ratePercentage}% {attendanceLabel(attendanceSummary.ratePercentage)}
+              </span>
+            )}
           </div>
-          <div className="text-3xl font-extrabold text-slate-900">12 / 12</div>
-          <p className="text-xs text-slate-500">{isAr ? "حصة مكتملة هذا الشهر دون أي غياب" : "Completed classes this month with 0 absences"}</p>
+          {attendanceSummary && attendanceSummary.totalSessions > 0 ? (
+            <>
+              <div className="text-3xl font-extrabold text-slate-900">
+                {attendanceSummary.presentSessions} / {attendanceSummary.totalSessions}
+              </div>
+              <p className="text-xs text-slate-500">
+                {isAr ? "حصة مسجلة حتى الآن هذا الفصل" : "Sessions recorded so far this term"}
+              </p>
+            </>
+          ) : (
+            <>
+              <div className="text-3xl font-extrabold text-slate-300">—</div>
+              <p className="text-xs text-slate-500">{isAr ? "لا توجد حصص مسجلة بعد" : "No classes recorded yet"}</p>
+            </>
+          )}
         </div>
 
         <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-2">
           <div className="flex items-center justify-between text-xs text-slate-500 font-semibold">
             <span>{isAr ? "متوسط درجات الواجبات" : "Homework Average"}</span>
-            <span className="text-brand-600 font-bold">98%</span>
+            {homeworkSummary && homeworkSummary.averageScorePercentage !== null && (
+              <span className="text-brand-600 font-bold">{homeworkSummary.averageScorePercentage}%</span>
+            )}
           </div>
-          <div className="text-3xl font-extrabold text-slate-900">9.8 / 10</div>
-          <p className="text-xs text-slate-500">{isAr ? "مصحوبة بنماذج صوتية وتوجيهات تشجيعية" : "Includes audio voice recordings and teacher notes"}</p>
+          {homeworkSummary && homeworkSummary.averageScorePercentage !== null ? (
+            <>
+              <div className="text-3xl font-extrabold text-slate-900">
+                {(homeworkSummary.averageScorePercentage / 10).toFixed(1)} / 10
+              </div>
+              <p className="text-xs text-slate-500">
+                {isAr
+                  ? `بناءً على ${homeworkSummary.gradedCount} واجب مصحح`
+                  : `Based on ${homeworkSummary.gradedCount} graded submission${homeworkSummary.gradedCount === 1 ? "" : "s"}`}
+              </p>
+            </>
+          ) : (
+            <>
+              <div className="text-3xl font-extrabold text-slate-300">—</div>
+              <p className="text-xs text-slate-500">
+                {homeworkSummary && homeworkSummary.totalSubmissions > 0
+                  ? isAr
+                    ? "بانتظار تصحيح المعلم"
+                    : "Awaiting teacher grading"
+                  : isAr
+                    ? "لم يتم تسليم أي واجب بعد"
+                    : "No homework submitted yet"}
+              </p>
+            </>
+          )}
         </div>
 
         <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-2">
           <div className="flex items-center justify-between text-xs text-slate-500 font-semibold">
             <span>{isAr ? "النقاط والأوسمة" : "XP & Badges"}</span>
-            <span className="text-amber-500 font-bold">{isAr ? "المستوى 3" : "Level 3"}</span>
+            {gamification && (
+              <span className="text-amber-500 font-bold">{isAr ? `المستوى ${gamification.level}` : `Level ${gamification.level}`}</span>
+            )}
           </div>
-          <div className="text-3xl font-extrabold text-slate-900">450 XP</div>
-          <p className="text-xs text-slate-500">{isAr ? "وسام بطل القراءة ووسام المواظبة الذهبي" : "Reading Champion & Golden Streak badges"}</p>
+          <div className="text-3xl font-extrabold text-slate-900">{gamification ? `${gamification.totalXp} XP` : "0 XP"}</div>
+          <p className="text-xs text-slate-500">
+            {gamification && gamification.unlockedBadges.length > 0
+              ? gamification.unlockedBadges.map((b) => (isAr ? b.titleAr : b.titleEn)).join(isAr ? " و" : " & ")
+              : gamification && gamification.streakDays > 0
+                ? isAr
+                  ? `سلسلة مواظبة ${gamification.streakDays} يوم`
+                  : `${gamification.streakDays}-day learning streak`
+                : isAr
+                  ? "استمر لتحصل على أول وسام!"
+                  : "Keep learning to earn your first badge!"}
+          </p>
         </div>
 
         <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-2">
           <div className="flex items-center justify-between text-xs text-slate-500 font-semibold">
             <span>{isAr ? "حالة الاشتراك المالي" : "Subscription Status"}</span>
-            <span className="text-emerald-600 font-bold">{isAr ? "نشط" : "Active"}</span>
+            {subscription && (
+              <span className="text-emerald-600 font-bold">
+                {isAr ? "نشط" : subscription.status === SubscriptionStatus.TRIALING ? "Trialing" : "Active"}
+              </span>
+            )}
           </div>
-          <div className="text-2xl font-extrabold text-slate-900">{isAr ? "$74.50 / شهر" : "$74.50 / mo"}</div>
-          <p className="text-xs text-slate-500">{isAr ? "الباقة العائلية (التجديد في 1 أكتوبر)" : "Family Plan (Renews Oct 1)"}</p>
+          {subscription ? (
+            <>
+              <div className="text-2xl font-extrabold text-slate-900">
+                {billingService.formatPrice(subscription.plan.priceMinorUnits, subscription.plan.currency)}
+                <span className="text-sm font-semibold text-slate-500">{isAr ? " / شهر" : " / mo"}</span>
+              </div>
+              <p className="text-xs text-slate-500">
+                {isAr ? subscription.plan.nameAr : subscription.plan.nameEn}
+                {" · "}
+                {isAr ? "التجديد في " : "Renews "}
+                {subscription.currentPeriodEnd.toISOString().split("T")[0]}
+              </p>
+            </>
+          ) : (
+            <>
+              <div className="text-2xl font-extrabold text-slate-300">{isAr ? "لا يوجد اشتراك" : "No subscription"}</div>
+              <Link href={`/${locale}/parent/checkout`} className="text-xs text-brand-600 font-bold hover:underline">
+                {isAr ? "اشترك الآن" : "Subscribe now"}
+              </Link>
+            </>
+          )}
         </div>
       </div>
 
@@ -244,28 +386,38 @@ export default async function ParentDashboardPage({
               </Link>
             </div>
 
-            <div className="p-5 rounded-2xl bg-blue-50/60 border border-blue-100 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full gradient-brand text-white font-bold flex items-center justify-center text-xs">
-                    {isAr ? "م" : "T"}
+            {latestFeedback ? (
+              <div className="p-5 rounded-2xl bg-blue-50/60 border border-blue-100 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full gradient-brand text-white font-bold flex items-center justify-center text-xs">
+                      {latestFeedback.teacher.firstName.charAt(0)}
+                    </div>
+                    <div>
+                      <span className="text-xs font-bold text-slate-900 block">
+                        {latestFeedback.teacher.firstName} {latestFeedback.teacher.lastName}
+                      </span>
+                      <span className="text-[11px] text-slate-500 block">
+                        {isAr
+                          ? latestFeedback.submission.assignment.classGroup.courseLevel.course.titleAr
+                          : latestFeedback.submission.assignment.classGroup.courseLevel.course.titleEn}
+                      </span>
+                    </div>
                   </div>
-                  <div>
-                    <span className="text-xs font-bold text-slate-900 block">{isAr ? "الأستاذ أحمد المنصوري" : "Ustadh Ahmed"}</span>
-                    <span className="text-[11px] text-slate-500 block">{isAr ? "مادة القراءة والتجويد" : "Reading & Tajweed"}</span>
-                  </div>
+                  <span className="text-xs font-bold px-3 py-1 rounded-full bg-emerald-100 text-emerald-800">
+                    {isAr ? `العلامة: ${latestFeedback.score}/100` : `Grade: ${latestFeedback.score}/100`}
+                  </span>
                 </div>
-                <span className="text-xs font-bold px-3 py-1 rounded-full bg-emerald-100 text-emerald-800">
-                  {isAr ? "العلامة: 100/100" : "Grade: 100/100"}
-                </span>
-              </div>
 
-              <p className="text-xs text-slate-700 leading-relaxed">
-                {isAr
-                  ? "«ما شاء الله تبارك الله، قراءة ممتازة ومخارج حروف متقنة ونطق سليم لحروف القلقلة. استمر يا بطل!»"
-                  : "\"Masha'Allah, excellent reading, precise letter articulation (makharij), and accurate pronunciation of Qalqalah rules. Keep up the great work!\""}
-              </p>
-            </div>
+                <p className="text-xs text-slate-700 leading-relaxed">{latestFeedback.parentVisibleFeedback}</p>
+              </div>
+            ) : (
+              <div className="p-5 rounded-2xl bg-slate-50 border border-dashed border-slate-200 text-center">
+                <p className="text-xs text-slate-500">
+                  {isAr ? "لا يوجد تقييم من المعلم بعد" : "No teacher evaluation yet"}
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Upcoming Schedule for Child */}
@@ -276,18 +428,30 @@ export default async function ParentDashboardPage({
             </h3>
 
             <div className="space-y-3 text-xs">
-              <div className="flex items-center justify-between p-3.5 rounded-xl border border-slate-200">
-                <div className="flex items-center gap-3">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                  <div>
-                    <span className="font-bold text-slate-900 block">
-                      {isAr ? "فصل النجوم (A1 - القراءة والطلاقة)" : "Stars Cohort (A1 - Reading & Fluency)"}
-                    </span>
-                    <span className="text-slate-500">{isAr ? "اليوم - 04:00 مساءً (45 دقيقة)" : "Today - 04:00 PM (45 mins)"}</span>
+              {nextSession ? (
+                <div className="flex items-center justify-between p-3.5 rounded-xl border border-slate-200">
+                  <div className="flex items-center gap-3">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                    <div>
+                      <span className="font-bold text-slate-900 block">{nextSession.classGroupName}</span>
+                      <span className="text-slate-500">
+                        {nextSessionTimeLabel}
+                        {" · "}
+                        {isAr ? `${nextSessionDurationMinutes} دقيقة` : `${nextSessionDurationMinutes} mins`}
+                      </span>
+                    </div>
                   </div>
+                  <span className="text-slate-600 font-semibold">
+                    {isAr
+                      ? `مع الأستاذ ${nextSession.teacherFirstName} ${nextSession.teacherLastName}`
+                      : `with ${nextSession.teacherFirstName} ${nextSession.teacherLastName}`}
+                  </span>
                 </div>
-                <span className="text-slate-600 font-semibold">{isAr ? "فصل جماعي (6 طلاب كحد أقصى)" : "Small Group (Max 6 students)"}</span>
-              </div>
+              ) : (
+                <div className="p-3.5 rounded-xl border border-dashed border-slate-200 text-center text-slate-500">
+                  {isAr ? "لا توجد حصص قادمة مجدولة حالياً" : "No upcoming sessions scheduled"}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -327,15 +491,33 @@ export default async function ParentDashboardPage({
             </h3>
 
             <div className="space-y-2 text-xs">
-              <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50">
-                <div>
-                  <span className="font-bold text-slate-800 block">{isAr ? "فاتورة سبتمبر 2026" : "Invoice September 2026"}</span>
-                  <span className="text-[11px] text-slate-500">#INV-2026-0901</span>
+              {latestInvoice ? (
+                <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50">
+                  <div>
+                    <span className="font-bold text-slate-800 block">
+                      {latestInvoice.items[0]?.description || (isAr ? "اشتراك شهري" : "Monthly subscription")}
+                    </span>
+                    <span className="text-[11px] text-slate-500">#{latestInvoice.invoiceNumber}</span>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-bold text-[10px]">
+                    {isAr
+                      ? `${latestInvoice.status === "PAID" ? "مدفوعة" : latestInvoice.status} (${billingService.formatPrice(latestInvoice.totalMinorUnits, latestInvoice.currency)})`
+                      : `${latestInvoice.status === "PAID" ? "Paid" : latestInvoice.status} (${billingService.formatPrice(latestInvoice.totalMinorUnits, latestInvoice.currency)})`}
+                  </span>
                 </div>
-                <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-bold text-[10px]">
-                  {isAr ? "مدفوعة ($74.50)" : "Paid ($74.50)"}
-                </span>
-              </div>
+              ) : (
+                <div className="p-3 rounded-xl bg-slate-50 text-center text-slate-500">
+                  {isAr ? "لا توجد فواتير بعد" : "No invoices yet"}
+                </div>
+              )}
+              {latestInvoice && (
+                <Link
+                  href={`/${locale}/parent/billing`}
+                  className="block text-center text-brand-600 font-bold hover:underline pt-1"
+                >
+                  {isAr ? "عرض كل الفواتير" : "View all invoices"}
+                </Link>
+              )}
             </div>
           </div>
         </div>

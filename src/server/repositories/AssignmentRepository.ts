@@ -44,6 +44,61 @@ class AssignmentRepository {
     return prisma.teacherFeedback.findUnique({ where: { submissionId } });
   }
 
+  /**
+   * Averages real teacher-assigned scores (0-100) across a student's graded
+   * submissions. Submissions still awaiting grading have no TeacherFeedback
+   * row and are excluded from the average rather than counted as 0.
+   */
+  async getStudentHomeworkSummary(studentId: string): Promise<{
+    averageScorePercentage: number | null;
+    gradedCount: number;
+    totalSubmissions: number;
+  }> {
+    const submissions = await prisma.assignmentSubmission.findMany({
+      where: { studentId },
+      include: { feedback: true },
+    });
+    const graded = submissions.filter((s) => s.feedback !== null);
+    const averageScorePercentage =
+      graded.length > 0
+        ? Math.round(
+            graded.reduce((sum, s) => sum + (s.feedback?.score ?? 0), 0) / graded.length
+          )
+        : null;
+
+    return {
+      averageScorePercentage,
+      gradedCount: graded.length,
+      totalSubmissions: submissions.length,
+    };
+  }
+
+  /**
+   * The most recent piece of teacher feedback left for a student, with
+   * enough joined context (teacher name, course title) to render a
+   * "latest evaluation" card without a second round-trip.
+   */
+  async getLatestFeedbackForStudent(studentId: string) {
+    return prisma.teacherFeedback.findFirst({
+      where: { submission: { studentId } },
+      include: {
+        teacher: true,
+        submission: {
+          include: {
+            assignment: {
+              include: {
+                classGroup: {
+                  include: { courseLevel: { include: { course: true } } },
+                },
+              },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+  }
+
   // Mutations
   async createAssignment(data: {
     classGroupId: string;

@@ -368,3 +368,11 @@ All notable changes to the Kids Arabic Academy platform will be documented in th
 ### Changed
 - `nav.schools` and a new `schools.*` translation namespace (~60 keys) added to all 6 locale dictionaries (`ar`, `en`, `nl`, `tr`, `it`, `es`), maintaining 100% key parity.
 - `NotificationPayload.eventName` gained a `B2B_INQUIRY` variant (additive, non-breaking) and `RATE_LIMITS` gained `B2B_INQUIRY_PER_IP`.
+
+---
+
+## [Parent Dashboard: Real Data Instead of Fixed Demo Numbers] - 2026-09-16
+### Fixed
+- The parent dashboard (`/[locale]/parent`) showed the same fixed numbers to every parent regardless of their child's actual record: "12/12" attendance, "9.8/10 (98%)" homework average, "450 XP / Level 3" with a badge ("Golden Streak") that didn't exist in the badge catalog, a hardcoded teacher name/quote ("Ustadh Ahmed... Grade: 100/100"), a single hardcoded "Stars Cohort" class regardless of what was actually scheduled, and a fake invoice ("#INV-2026-0901") that didn't correspond to any real payment.
+- All six are now sourced live: attendance from `AttendanceService` (real `AttendanceRecord` rows), homework average from a new `AssignmentService.getStudentHomeworkSummary()` (averages real `TeacherFeedback.score`, excluding ungraded submissions rather than counting them as 0), XP/level/badges from `GamificationService` (with the non-existent "Golden Streak" badge replaced by the student's real learning-streak day count), the latest evaluation from a new `AssignmentService.getLatestFeedbackForStudent()` (real teacher name, course, score, and parent-visible feedback text), the upcoming class from the same real-session lookup the student dashboard already uses (`SchedulingService.getNextSessionForStudent()`), and the subscription/invoice cards from the same real `Subscription`/`Plan`/`Invoice` Prisma rows the Billing page reads.
+- Every card now has an honest empty state (e.g. "No classes recorded yet", "No teacher evaluation yet") instead of always showing a number, for a child with no data yet.
