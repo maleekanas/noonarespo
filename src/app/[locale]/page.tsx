@@ -25,15 +25,12 @@ export default async function HomePage({
 }) {
   const { locale } = await params;
   const dict = getDictionary(locale);
-  const isAr = locale === "ar";
-  const isNl = locale === "nl";
 
   const programsList = [
     {
       id: "prog-foundations",
       title: dict.programs.foundations,
-      desc: "التعرف على الحروف وأشكالها وأصواتها، وبناء الثروة اللغوية الأولى بأسلوب مشوق ومحفز.",
-      descEn: "Alphabet recognition, letter forms, phonetic sounds, and foundational vocabulary.",
+      desc: dict.programs.foundationsDesc,
       icon: BookOpen,
       color: "from-blue-500 to-indigo-600",
       bgLight: "bg-blue-50 text-blue-600",
@@ -41,8 +38,7 @@ export default async function HomePage({
     {
       id: "prog-reading",
       title: dict.programs.reading,
-      desc: "تطوير الطلاقة القرائية، مخارج الحروف، والفهم القرائي من خلال حكايات وقصص مصورة.",
-      descEn: "Reading fluency, phonics, and comprehension through engaging illustrated stories.",
+      desc: dict.programs.readingDesc,
       icon: Volume2,
       color: "from-emerald-500 to-teal-600",
       bgLight: "bg-emerald-50 text-emerald-600",
@@ -50,8 +46,7 @@ export default async function HomePage({
     {
       id: "prog-writing",
       title: dict.programs.writing,
-      desc: "تحسين الخط العربي، تركيب الجمل الصحيحة، والتعبير الإبداعي مع قواعد مبسطة.",
-      descEn: "Handwriting, penmanship, sentence construction, creative writing, and grammar.",
+      desc: dict.programs.writingDesc,
       icon: PenTool,
       color: "from-purple-500 to-violet-600",
       bgLight: "bg-purple-50 text-purple-600",
@@ -59,8 +54,7 @@ export default async function HomePage({
     {
       id: "prog-speaking",
       title: dict.programs.speaking,
-      desc: "فصول حوارية تفاعلية لتنمية مهارات التحدث والتعبير عن النفس بطلاقة وثقة تامة.",
-      descEn: "Interactive conversation classes to build confidence and natural spoken fluency.",
+      desc: dict.programs.speakingDesc,
       icon: MessageCircle,
       color: "from-amber-500 to-orange-600",
       bgLight: "bg-amber-50 text-amber-600",
@@ -68,8 +62,7 @@ export default async function HomePage({
     {
       id: "prog-listening",
       title: dict.programs.listening,
-      desc: "تمارين استماع تفاعلية وفهم للمقاطع الصوتية المسجلة وقصص الأدب العربي للأطفال.",
-      descEn: "Audio exercises, story listening, and interactive auditory comprehension.",
+      desc: dict.programs.listeningDesc,
       icon: Headphones,
       color: "from-pink-500 to-rose-600",
       bgLight: "bg-pink-50 text-pink-600",
@@ -77,8 +70,7 @@ export default async function HomePage({
     {
       id: "prog-quran",
       title: dict.programs.quran,
-      desc: "تلاوة متقنة، حفظ وتثبيت مع أحكام التجويد العملية بإشراف قراء ومعلمين مجازين.",
-      descEn: "Mastery of Quran reading, memorization, and applied Tajweed with certified teachers.",
+      desc: dict.programs.quranDesc,
       icon: Moon,
       color: "from-cyan-500 to-blue-600",
       bgLight: "bg-cyan-50 text-cyan-600",
@@ -86,8 +78,7 @@ export default async function HomePage({
     {
       id: "prog-islamic",
       title: dict.programs.islamicStudies,
-      desc: "قصص الأنبياء، القيم والأخلاق الحميدة، والمعارف الإسلامية الأساسية للناشئة.",
-      descEn: "Prophetic stories, moral ethics, and foundational Islamic knowledge for youth.",
+      desc: dict.programs.islamicStudiesDesc,
       icon: HeartHandshake,
       color: "from-teal-500 to-emerald-600",
       bgLight: "bg-teal-50 text-teal-600",
@@ -97,62 +88,26 @@ export default async function HomePage({
   const ageGroupsList = [
     {
       title: dict.ageGroups.sprouts,
-      age: isAr ? "4 - 6 سنوات" : isNl ? "4 - 6 jaar" : "Ages 4 - 6",
-      tagline: isAr
-        ? "التعلم باللعب والألوان والأناشيد"
-        : isNl
-        ? "Spelenderwijs leren met kleuren en liedjes"
-        : "Playful learning through colors, games & songs",
-      description: isAr
-        ? "فصول مبهجة تركز على تمييز الحروف، النطق السليم، والتفاعل الحركي المحفز."
-        : isNl
-        ? "Vrolijke lessen gericht op letterherkenning, correcte uitspraak en motorische interactie."
-        : "Joyful classes focusing on letter recognition, phonics, and interactive movement.",
+      tagline: dict.ageGroups.sproutsTagline,
+      description: dict.ageGroups.sproutsDesc,
       badge: "Little Sprouts",
     },
     {
       title: dict.ageGroups.explorers,
-      age: isAr ? "7 - 10 سنوات" : isNl ? "7 - 10 jaar" : "Ages 7 - 10",
-      tagline: isAr
-        ? "الانطلاق في عالم القراءة والقصص"
-        : isNl
-        ? "De wereld van verhalen en lezen ontdekken"
-        : "Embarking on stories, vocabulary & reading",
-      description: isAr
-        ? "بناء الثقة في قراءة النصوص البسيطة، التهجئة السليمة، والبدايات الأولى في التجويد."
-        : isNl
-        ? "Zelfvertrouwen opbouwen in eenvoudig lezen, juiste spelling en eerste stappen in Tajweed."
-        : "Building confidence in reading basic texts, correct spelling, and early Tajweed.",
+      tagline: dict.ageGroups.explorersTagline,
+      description: dict.ageGroups.explorersDesc,
       badge: "Junior Explorers",
     },
     {
       title: dict.ageGroups.navigators,
-      age: isAr ? "11 - 13 سنة" : isNl ? "11 - 13 jaar" : "Ages 11 - 13",
-      tagline: isAr
-        ? "التمكن اللغوي والمحادثة الواثقة"
-        : isNl
-        ? "Taalvaardigheid en zelfverzekerde conversatie"
-        : "Linguistic proficiency & confident speaking",
-      description: isAr
-        ? "صياغة الجمل المركبة، النقاش الجماعي، وإتقان تلاوة آيات القرآن بأحكامها."
-        : isNl
-        ? "Samengestelde zinnen, groepsdiscussies en vloeiende Koranrecitatie."
-        : "Compound sentences, group discussions, and mastering applied Quran recitation.",
+      tagline: dict.ageGroups.navigatorsTagline,
+      description: dict.ageGroups.navigatorsDesc,
       badge: "Intermediate Navigators",
     },
     {
       title: dict.ageGroups.scholars,
-      age: isAr ? "14 - 16 سنة" : isNl ? "14 - 16 jaar" : "Ages 14 - 16",
-      tagline: isAr
-        ? "الفصاحة والبيان والخطابة"
-        : isNl
-        ? "Welsprekendheid, retorica en gevorderde spreekvaardigheid"
-        : "Eloquence, rhetoric & public speaking",
-      description: isAr
-        ? "قراءة النصوص الأدبية، البلاغة المبسطة، والمحادثة المتقدمة مع إتقان الحفظ."
-        : isNl
-        ? "Literaire teksten, vereenvoudigde balagha en geavanceerde gesprekken met memorisatie."
-        : "Reading literary texts, classical eloquence, and advanced conversation with Hifz.",
+      tagline: dict.ageGroups.scholarsTagline,
+      description: dict.ageGroups.scholarsDesc,
       badge: "Young Scholars",
     },
   ];
@@ -254,7 +209,7 @@ export default async function HomePage({
                     {prog.title}
                   </h3>
                   <p className="text-sm text-slate-600 leading-relaxed">
-                    {locale === "ar" ? prog.desc : prog.descEn}
+                    {prog.desc}
                   </p>
                 </div>
 

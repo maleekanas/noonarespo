@@ -2,7 +2,7 @@ import React from "react";
 import Link from "next/link";
 import { academicRepository } from "@/server/repositories/AcademicRepository";
 import { administrationService } from "@/server/services/AdministrationService";
-import { getDirection } from "@/lib/localization";
+import { getDirection, getDictionary } from "@/lib/localization";
 import {
   BookOpen,
   Volume2,
@@ -36,6 +36,8 @@ export default async function ProgramsCatalogPage({
   const { program: programParam } = await searchParams;
   const isAr = locale === "ar";
   const isRtl = getDirection(locale) === "rtl";
+  const dict = getDictionary(locale);
+  const pc = dict.programsCatalog;
   const BackArrow = isRtl ? ArrowRight : ArrowLeft;
   const ForwardArrow = isRtl ? ArrowLeft : ArrowRight;
 
@@ -83,17 +85,17 @@ export default async function ProgramsCatalogPage({
       bgLight: "bg-blue-50 text-blue-600",
       gradient: "from-blue-600 to-indigo-700",
       cefrSpan: "CEFR Pre-A1 → A1",
-      targetAges: isAr ? "4 - 8 سنوات" : "Ages 4 - 8",
+      targetAges: pc.meta["prog-foundations"].targetAges,
       studios: [
         {
-          title: isAr ? "صالة الحروف التفاعلية" : "Phonics Arcade",
-          desc: isAr ? "28 حرفاً مع الحركات وألعاب التركيب السريعة" : "28 Arabic letters with Harakat and arcade puzzles",
+          title: pc.meta["prog-foundations"].studio1Title,
+          desc: pc.meta["prog-foundations"].studio1Desc,
           icon: Gamepad2,
           href: `/${locale}/student/activities`,
         },
         {
-          title: isAr ? "استوديو التكرار المتباعد" : "Vocabulary SRS",
-          desc: isAr ? "بطاقات ذكية لحفظ الحروف والمفردات الأولى" : "Smart Leitner cards for alphabet and first words",
+          title: pc.meta["prog-foundations"].studio2Title,
+          desc: pc.meta["prog-foundations"].studio2Desc,
           icon: Layers,
           href: `/${locale}/student/flashcards`,
         },
@@ -105,17 +107,17 @@ export default async function ProgramsCatalogPage({
       bgLight: "bg-emerald-50 text-emerald-600",
       gradient: "from-emerald-600 to-teal-700",
       cefrSpan: "CEFR A1 → B1",
-      targetAges: isAr ? "7 - 12 سنة" : "Ages 7 - 12",
+      targetAges: pc.meta["prog-reading"].targetAges,
       studios: [
         {
-          title: isAr ? "خريطة المغامرة القرائية" : "Visual Quest Map",
-          desc: isAr ? "10 محطات قرائية عبر 5 بيئات جغرافية مشوقة" : "10 reading nodes across 5 interactive biomes",
+          title: pc.meta["prog-reading"].studio1Title,
+          desc: pc.meta["prog-reading"].studio1Desc,
           icon: Award,
           href: `/${locale}/student/roadmap`,
         },
         {
-          title: isAr ? "المكتبة الرقمية المصورة" : "Illustrated Stories",
-          desc: isAr ? "قصص مشكولة مع قراءة صوتية نموذجية واختبارات فهم" : "Vocalized storybooks with native audio and quizzes",
+          title: pc.meta["prog-reading"].studio2Title,
+          desc: pc.meta["prog-reading"].studio2Desc,
           icon: BookOpen,
           href: `/${locale}/student/stories`,
         },
@@ -127,17 +129,17 @@ export default async function ProgramsCatalogPage({
       bgLight: "bg-purple-50 text-purple-600",
       gradient: "from-purple-600 to-violet-700",
       cefrSpan: "CEFR A1 → B1",
-      targetAges: isAr ? "7 - 14 سنة" : "Ages 7 - 14",
+      targetAges: pc.meta["prog-writing"].targetAges,
       studios: [
         {
-          title: isAr ? "سبورة خط النسخ المسطرة" : "Ruled Naskh Whiteboard",
-          desc: isAr ? "كانفاس مسطر لضبط حركة القلم والاتصال السليم" : "Ruled calligraphy canvas for stroke mechanics",
+          title: pc.meta["prog-writing"].studio1Title,
+          desc: pc.meta["prog-writing"].studio1Desc,
           icon: PenTool,
           href: `/${locale}/student/activities`,
         },
         {
-          title: isAr ? "كراسات الخط والطباعة A4" : "Printables Hub",
-          desc: isAr ? "أوراق عمل قابلة للطباعة مع باركود التحقق الذكي" : "Printable A4 worksheets with QR verification",
+          title: pc.meta["prog-writing"].studio2Title,
+          desc: pc.meta["prog-writing"].studio2Desc,
           icon: Layers,
           href: `/${locale}/student/activities`,
         },
@@ -149,17 +151,17 @@ export default async function ProgramsCatalogPage({
       bgLight: "bg-amber-50 text-amber-600",
       gradient: "from-amber-600 to-orange-700",
       cefrSpan: "CEFR A1 → B2",
-      targetAges: isAr ? "6 - 15 سنة" : "Ages 6 - 15",
+      targetAges: pc.meta["prog-speaking"].targetAges,
       studios: [
         {
-          title: isAr ? "المرشد الحواري فصيح" : "Faseeh AI Tutor",
-          desc: isAr ? "محادثة شفوية تفاعلية تحاكي الواقع باللغة الفصحى" : "Interactive spoken dialogues with CEFR AI tutor",
+          title: pc.meta["prog-speaking"].studio1Title,
+          desc: pc.meta["prog-speaking"].studio1Desc,
           icon: Bot,
           href: `/${locale}/student/ai-tutor`,
         },
         {
-          title: isAr ? "استوديو مخارج الحروف والنطق" : "Voice Waveform Studio",
-          desc: isAr ? "مطابقة نبرة الصوت والموجات الصوتية ومخارج الحروف" : "Waveform pitch-matching and acoustic feedback",
+          title: pc.meta["prog-speaking"].studio2Title,
+          desc: pc.meta["prog-speaking"].studio2Desc,
           icon: Mic,
           href: `/${locale}/student/pronunciation`,
         },
@@ -171,17 +173,17 @@ export default async function ProgramsCatalogPage({
       bgLight: "bg-pink-50 text-pink-600",
       gradient: "from-pink-600 to-rose-700",
       cefrSpan: "CEFR Pre-A1 → A2",
-      targetAges: isAr ? "4 - 11 سنة" : "Ages 4 - 11",
+      targetAges: pc.meta["prog-listening"].targetAges,
       studios: [
         {
-          title: isAr ? "مختبر التمييز السمعي" : "Auditory Minimal Pairs",
-          desc: isAr ? "التفريق الدقيق بين الحروف المتقاربة صوتاً (س/ص، ت/ط)" : "Acoustic discrimination of emphatic vs light phonemes",
+          title: pc.meta["prog-listening"].studio1Title,
+          desc: pc.meta["prog-listening"].studio1Desc,
           icon: Headphones,
           href: `/${locale}/student/pronunciation`,
         },
         {
-          title: isAr ? "الحكايات الصوتية التفاعلية" : "Audio Narratives",
-          desc: isAr ? "استماع لقصص مسجلة بصوت نقي وتتبع الحبكة" : "Crystal clear audio stories with plot comprehension",
+          title: pc.meta["prog-listening"].studio2Title,
+          desc: pc.meta["prog-listening"].studio2Desc,
           icon: Volume2,
           href: `/${locale}/student/stories`,
         },
@@ -193,17 +195,17 @@ export default async function ProgramsCatalogPage({
       bgLight: "bg-cyan-50 text-cyan-600",
       gradient: "from-cyan-600 to-blue-700",
       cefrSpan: "Tajweed Levels 1 → 3",
-      targetAges: isAr ? "5 - 16 سنة" : "Ages 5 - 16",
+      targetAges: pc.meta["prog-quran"].targetAges,
       studios: [
         {
-          title: isAr ? "استوديو المصحف الملون" : "Color-Coded Tajweed Studio",
-          desc: isAr ? "خط عثماني مع تلوين أحكام التجويد ومسجل التلاوة" : "Uthmani Mushaf with colored Tajweed rules & audio recorder",
+          title: pc.meta["prog-quran"].studio1Title,
+          desc: pc.meta["prog-quran"].studio1Desc,
           icon: Moon,
           href: `/${locale}/student/quran-studio`,
         },
         {
-          title: isAr ? "حلقات التثبيت والمراجعة" : "Hifz Retention System",
-          desc: isAr ? "متابعة دقيقة لحفظ جزء عم مع إتقان المخارج والوقف" : "Juz Amma retention tracking with certified Qira'at",
+          title: pc.meta["prog-quran"].studio2Title,
+          desc: pc.meta["prog-quran"].studio2Desc,
           icon: Award,
           href: `/${locale}/student/quran-studio`,
         },
@@ -215,17 +217,17 @@ export default async function ProgramsCatalogPage({
       bgLight: "bg-teal-50 text-teal-600",
       gradient: "from-teal-600 to-emerald-700",
       cefrSpan: "Values Foundation → Level 3",
-      targetAges: isAr ? "5 - 15 سنة" : "Ages 5 - 15",
+      targetAges: pc.meta["prog-islamic"].targetAges,
       studios: [
         {
-          title: isAr ? "سير الأنبياء المصورة" : "Illustrated Seerah",
-          desc: isAr ? "محطات ملهمة من سيرة الرسول ﷺ وأولي العزم من الرسل" : "Inspiring milestones of the Prophet ﷺ and Prophets",
+          title: pc.meta["prog-islamic"].studio1Title,
+          desc: pc.meta["prog-islamic"].studio1Desc,
           icon: BookOpen,
           href: `/${locale}/student/stories`,
         },
         {
-          title: isAr ? "بطاقات القيم والآداب اليومية" : "Islamic Adab & Ethics",
-          desc: isAr ? "مواقف تفاعلية لترسيخ الصدق وبر الوالدين والأمانة" : "Interactive moral dilemmas on honesty, kindness & integrity",
+          title: pc.meta["prog-islamic"].studio2Title,
+          desc: pc.meta["prog-islamic"].studio2Desc,
           icon: HeartHandshake,
           href: `/${locale}/student/activities`,
         },
@@ -246,18 +248,18 @@ export default async function ProgramsCatalogPage({
             className="inline-flex items-center gap-2 text-xs font-bold text-slate-600 hover:text-brand-600 transition-colors"
           >
             <BackArrow className="w-4 h-4" />
-            <span>{isAr ? "العودة للرئيسية" : "Back to Home"}</span>
+            <span>{pc.backToHome}</span>
           </Link>
 
           <div className="flex items-center gap-2">
             <span className="hidden sm:inline-block text-xs text-slate-500 font-medium">
-              {isAr ? "المسارات الأكاديمية الـ 7 المعتمدة" : "7 Accredited Academic Tracks"}
+              {pc.tracksLabel}
             </span>
             <Link
               href={`/${locale}/parent/enroll`}
               className="px-4 py-2 rounded-xl gradient-brand text-white font-bold text-xs shadow-sm hover:opacity-95 transition-all"
             >
-              {isAr ? "التسجيل في الفصول 🎓" : "Enroll in Classes 🎓"}
+              {pc.enrollCta}
             </Link>
           </div>
         </div>
@@ -301,7 +303,7 @@ export default async function ProgramsCatalogPage({
               </span>
               <span className="px-3 py-1 rounded-full bg-amber-400 text-slate-900 text-xs font-extrabold flex items-center gap-1">
                 <Users className="w-3.5 h-3.5" />
-                <span>{isAr ? "فصول مصغرة (حد أقصى 6 أطفال)" : "Micro-Cohorts (Max 6 Students)"}</span>
+                <span>{pc.microCohortsBadge}</span>
               </span>
             </div>
 
@@ -322,15 +324,15 @@ export default async function ProgramsCatalogPage({
             <div className="pt-4 flex flex-wrap items-center gap-6 text-xs text-white/80 border-t border-white/20">
               <div className="flex items-center gap-1.5">
                 <CheckCircle2 className="w-4 h-4 text-emerald-300" />
-                <span>{isAr ? "معاير وفق الإطار الأوروبي CEFR" : "Calibrated to CEFR Standards"}</span>
+                <span>{pc.cefrStandardsBadge}</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <CheckCircle2 className="w-4 h-4 text-emerald-300" />
-                <span>{isAr ? "حصص تفاعلية مرئية مباشرة أسبوعياً" : "Weekly Live Interactive Video Sessions"}</span>
+                <span>{pc.liveSessionsBadge}</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <CheckCircle2 className="w-4 h-4 text-emerald-300" />
-                <span>{isAr ? "تقارير إنجاز أسبوعية مفصلة لأولياء الأمور" : "Weekly Detailed Parent Progress Reports"}</span>
+                <span>{pc.progressReportsBadge}</span>
               </div>
             </div>
           </div>
@@ -345,14 +347,14 @@ export default async function ProgramsCatalogPage({
             <div>
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-50 text-brand-700 text-xs font-bold mb-1">
                 <Target className="w-3.5 h-3.5" />
-                <span>{isAr ? "المنهج والوحدات التعليمية المعتمدة" : "Accredited Syllabi & Modules"}</span>
+                <span>{pc.syllabiTag}</span>
               </div>
               <h2 className="text-2xl font-extrabold text-slate-900">
-                {isAr ? "التدرج الأكاديمي ومخرجات التعلم الأسبوعية" : "Academic Progression & Weekly Learning Outcomes"}
+                {pc.progressionTitle}
               </h2>
             </div>
             <span className="text-xs text-slate-500 font-semibold">
-              {isAr ? `${modules.length} وحدات تدريسية مفصلة` : `${modules.length} Detailed Teaching Modules`}
+              {modules.length} {pc.modulesLabel}
             </span>
           </div>
 
@@ -369,29 +371,29 @@ export default async function ProgramsCatalogPage({
                     </span>
                     <div className="flex items-center gap-1 text-slate-400 text-xs font-semibold">
                       <Clock className="w-3.5 h-3.5" />
-                      <span>{isAr ? `${m.durationWeeks} أسابيع` : `${m.durationWeeks} Weeks`}</span>
+                      <span>{m.durationWeeks} {pc.weeksLabel}</span>
                     </div>
                   </div>
 
                   <div>
                     <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
-                      {isAr ? `الوحدة ${idx + 1}: ${m.levelTitleAr}` : `Module ${idx + 1}: ${m.courseLevelCode}`}
+                      {isAr ? `${pc.moduleLabel} ${idx + 1}: ${m.levelTitleAr}` : `${pc.moduleLabel} ${idx + 1}: ${m.courseLevelCode}`}
                     </span>
                     <h3 className="text-lg font-bold text-slate-900 leading-snug">
                       {isAr ? m.titleAr : m.titleEn}
                     </h3>
                     <p className="text-xs text-slate-600 mt-2 leading-relaxed">
-                      {m.descriptionAr}
+                      {isAr ? m.descriptionAr : m.descriptionEn}
                     </p>
                   </div>
 
                   {/* Weekly Objectives */}
                   <div className="bg-slate-50 rounded-2xl p-4 space-y-2 border border-slate-100">
                     <span className="text-[11px] font-bold text-slate-700 block">
-                      {isAr ? "المخرجات التعليمية المستهدفة:" : "Core Learning Objectives:"}
+                      {pc.objectivesLabel}
                     </span>
                     <ul className="space-y-1.5 text-xs text-slate-600">
-                      {m.weeklyObjectivesAr.map((obj, oIdx) => (
+                      {(isAr ? m.weeklyObjectivesAr : m.weeklyObjectivesEn).map((obj, oIdx) => (
                         <li key={oIdx} className="flex items-start gap-2">
                           <CheckCircle2 className="w-3.5 h-3.5 text-brand-600 shrink-0 mt-0.5" />
                           <span className="leading-tight">{obj}</span>
@@ -402,19 +404,13 @@ export default async function ProgramsCatalogPage({
                 </div>
 
                 <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 font-semibold">
-                  <span>{isAr ? `الحصيلة: +${m.targetVocabularyCount} مفردة` : `Target: +${m.targetVocabularyCount} Words`}</span>
+                  <span>{pc.targetLabel} +{m.targetVocabularyCount} {pc.wordsLabel}</span>
                   <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 font-bold">
                     {m.targetAgeGroup === "AGE_4_6"
-                      ? isAr
-                        ? "براعم (4-6)"
-                        : "Sprouts (4-6)"
+                      ? pc.ageSproutsLabel
                       : m.targetAgeGroup === "AGE_7_10"
-                      ? isAr
-                        ? "مستكشفون (7-10)"
-                        : "Explorers (7-10)"
-                      : isAr
-                      ? "رواد (11-13)"
-                      : "Navigators (11-13)"}
+                      ? pc.ageExplorersLabel
+                      : pc.ageNavigatorsLabel}
                   </span>
                 </div>
               </div>
@@ -427,15 +423,13 @@ export default async function ProgramsCatalogPage({
           <div className="max-w-2xl space-y-1">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-50 text-purple-700 text-xs font-bold">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>{isAr ? "أدوات واستوديوهات التعلم التفاعلي" : "Integrated Interactive Learning Studios"}</span>
+              <span>{pc.studiosTag}</span>
             </div>
             <h2 className="text-2xl font-extrabold text-slate-900">
-              {isAr ? "تطبيقات حية مدمجة تعزز مهارات هذا البرنامج" : "Live Interactive Studios Enhancing This Track"}
+              {pc.studiosTitle}
             </h2>
             <p className="text-xs text-slate-500">
-              {isAr
-                ? "يتاح للطلاب المسجلين وصول فوري وغير محدود لهذه الأدوات لترسيخ الممارسة اليومية"
-                : "Enrolled students receive instant and unlimited access to these studio tools"}
+              {pc.studiosSubtitle}
             </p>
           </div>
 
@@ -465,7 +459,7 @@ export default async function ProgramsCatalogPage({
                     href={studio.href}
                     className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-700 hover:text-brand-600 hover:border-brand-300 transition-all shrink-0 self-start sm:self-center"
                   >
-                    <span>{isAr ? "تجربة الاستوديو" : "Explore Studio"}</span>
+                    <span>{pc.exploreStudioCta}</span>
                     <ForwardArrow className="w-3.5 h-3.5" />
                   </Link>
                 </div>
@@ -480,10 +474,10 @@ export default async function ProgramsCatalogPage({
             <div>
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold mb-1">
                 <Users className="w-3.5 h-3.5" />
-                <span>{isAr ? "الفصول القائمة والمتاحة للتسجيل الفوري" : "Active Cohorts Available for Enrollment"}</span>
+                <span>{pc.cohortsTag}</span>
               </div>
               <h2 className="text-2xl font-extrabold text-slate-900">
-                {isAr ? "اختر الفوج المناسب لطفلك (بحد أقصى 6 مقاعد)" : "Select Cohort for Your Child (Capped at 6 Seats)"}
+                {pc.cohortsTitle}
               </h2>
             </div>
 
@@ -491,7 +485,7 @@ export default async function ProgramsCatalogPage({
               href={`/${locale}/parent/enroll`}
               className="text-xs font-bold text-brand-600 hover:underline flex items-center gap-1"
             >
-              <span>{isAr ? "عرض جميع الفصول السبعة" : "View All 7 Tracks Cohorts"}</span>
+              <span>{pc.viewAllCta}</span>
               <ForwardArrow className="w-3.5 h-3.5" />
             </Link>
           </div>
@@ -506,16 +500,10 @@ export default async function ProgramsCatalogPage({
                   <div className="space-y-3">
                     <div className="flex items-center justify-between gap-2">
                       <span className="px-3 py-1 rounded-full bg-brand-50 text-brand-700 font-extrabold text-xs">
-                        {cg.classType === "GROUP"
-                          ? isAr
-                            ? "فصل جماعي مصغر (6 طلاب)"
-                            : "Micro-Group (6 max)"
-                          : isAr
-                          ? "درس خاص (1 على 1)"
-                          : "Private (1-on-1)"}
+                        {cg.classType === "GROUP" ? pc.microGroupLabel : pc.privateLabel}
                       </span>
                       <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full">
-                        {isAr ? "متاح للتسجيل" : "Enrollment Open"}
+                        {pc.enrollmentOpenLabel}
                       </span>
                     </div>
 
@@ -523,9 +511,7 @@ export default async function ProgramsCatalogPage({
                       {cg.name}
                     </h3>
                     <p className="text-xs text-slate-500">
-                      {isAr
-                        ? "منهج معتمد يركز على التطبيق التفاعلي مع معلم معتمد ومجموعات صغيرة محفزة."
-                        : "Accredited curriculum focusing on active interaction with certified teachers."}
+                      {pc.cohortDescriptionGeneric}
                     </p>
                   </div>
 
@@ -536,10 +522,10 @@ export default async function ProgramsCatalogPage({
                       </div>
                       <div>
                         <span className="text-[11px] text-slate-400 block leading-none">
-                          {isAr ? "المعلم المشرف" : "Lead Instructor"}
+                          {pc.leadInstructorLabel}
                         </span>
                         <span className="text-xs font-bold text-slate-800">
-                          {isAr ? "أستاذ معتمد ومجاز" : "Certified Faculty"}
+                          {pc.certifiedFacultyLabel}
                         </span>
                       </div>
                     </div>
@@ -548,7 +534,7 @@ export default async function ProgramsCatalogPage({
                       href={`/${locale}/parent/enroll`}
                       className="px-5 py-2.5 rounded-xl gradient-brand text-white font-bold text-xs shadow-sm hover:opacity-95 transition-all flex items-center gap-1.5 shrink-0"
                     >
-                      <span>{isAr ? "حجز مقعد الآن" : "Reserve Seat"}</span>
+                      <span>{pc.reserveSeatCta}</span>
                       <ForwardArrow className="w-3.5 h-3.5" />
                     </Link>
                   </div>

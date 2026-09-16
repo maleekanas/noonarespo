@@ -55,7 +55,14 @@
     "speaking": "Conversatie & Uitspraak",
     "listening": "Luisteren & Begrijpend Luisteren",
     "quran": "Koran Recitatie & Tajweed",
-    "islamicStudies": "Islamitische Studies & Waarden"
+    "islamicStudies": "Islamitische Studies & Waarden",
+    "foundationsDesc": "Herkenning van het alfabet, lettervormen, klanken en fundamentele woordenschat.",
+    "readingDesc": "Leesvaardigheid, fonetiek en begrip via boeiende geïllustreerde verhalen.",
+    "writingDesc": "Handschrift, pengebruik, zinsbouw, creatief schrijven en grammatica.",
+    "speakingDesc": "Interactieve gesprekslessen om vertrouwen en natuurlijke spreekvaardigheid op te bouwen.",
+    "listeningDesc": "Audio-oefeningen, luisteren naar verhalen en interactief auditief begrip.",
+    "quranDesc": "Beheersing van Koranlezing, memorisatie en toegepaste Tajweed met gecertificeerde docenten.",
+    "islamicStudiesDesc": "Verhalen van de profeten, morele ethiek en fundamentele islamitische kennis voor jongeren."
   },
   "ageGroups": {
     "title": "Cohortgroepen op Leeftijd",
@@ -65,7 +72,15 @@
     "sprouts": "Kleine Knoppen (4 - 6 jaar)",
     "explorers": "Jonge Ontdekkers (7 - 10 jaar)",
     "navigators": "Middelbare Navigators (11 - 13 jaar)",
-    "scholars": "Jonge Geleerden (14 - 16 jaar)"
+    "scholars": "Jonge Geleerden (14 - 16 jaar)",
+    "sproutsTagline": "Spelenderwijs leren met kleuren en liedjes",
+    "sproutsDesc": "Vrolijke lessen gericht op letterherkenning, correcte uitspraak en motorische interactie.",
+    "explorersTagline": "De wereld van verhalen en lezen ontdekken",
+    "explorersDesc": "Zelfvertrouwen opbouwen in eenvoudig lezen, juiste spelling en eerste stappen in Tajweed.",
+    "navigatorsTagline": "Taalvaardigheid en zelfverzekerde conversatie",
+    "navigatorsDesc": "Samengestelde zinnen, groepsdiscussies en vloeiende Koranrecitatie.",
+    "scholarsTagline": "Welsprekendheid, retorica en gevorderde spreekvaardigheid",
+    "scholarsDesc": "Literaire teksten, vereenvoudigde balagha en geavanceerde gesprekken met memorisatie."
   },
   "pricing": {
     "tag": "Flexibele Abonnementen",
@@ -253,5 +268,208 @@
     "applyErrorRateLimited": "Te veel inzendingen. Wacht even en probeer het opnieuw.",
     "applyErrorServer": "We konden uw aanvraag niet verzenden. Probeer het opnieuw of e-mail ons rechtstreeks.",
     "trustBadge": "Vertrouwd door gecertificeerde islamitische scholen, gemeenschapscentra en thuisonderwijscoöperaties"
+  },
+  "programsCatalog": {
+    "backToHome": "Terug naar Home",
+    "tracksLabel": "7 Geaccrediteerde Academische Trajecten",
+    "enrollCta": "Schrijf in voor Lessen 🎓",
+    "syllabiTag": "Geaccrediteerde Curricula & Modules",
+    "progressionTitle": "Academische Voortgang & Wekelijkse Leerresultaten",
+    "modulesLabel": "Gedetailleerde Lesmodules",
+    "weeksLabel": "Weken",
+    "moduleLabel": "Module",
+    "objectivesLabel": "Kernleerdoelen:",
+    "targetLabel": "Doel:",
+    "wordsLabel": "Woorden",
+    "ageSproutsLabel": "Kleine Knoppen (4-6)",
+    "ageExplorersLabel": "Ontdekkers (7-10)",
+    "ageNavigatorsLabel": "Navigators (11-13)",
+    "studiosTag": "Geïntegreerde Interactieve Leerstudio's",
+    "studiosTitle": "Live Interactieve Studio's ter Versterking van dit Traject",
+    "studiosSubtitle": "Ingeschreven leerlingen krijgen directe en onbeperkte toegang tot deze studiotools",
+    "exploreStudioCta": "Ontdek Studio",
+    "cohortsTag": "Actieve Groepen Beschikbaar voor Inschrijving",
+    "cohortsTitle": "Kies een Groep voor uw Kind (Max. 6 Plaatsen)",
+    "viewAllCta": "Bekijk Alle 7 Trajectgroepen",
+    "microGroupLabel": "Kleine Groep (max. 6)",
+    "privateLabel": "Privé (1-op-1)",
+    "enrollmentOpenLabel": "Inschrijving Open",
+    "cohortDescriptionGeneric": "Geaccrediteerd curriculum gericht op actieve interactie met gecertificeerde docenten.",
+    "leadInstructorLabel": "Hoofddocent",
+    "certifiedFacultyLabel": "Gecertificeerde Docent",
+    "reserveSeatCta": "Reserveer Plaats",
+    "cefrStandardsBadge": "Gekalibreerd op CEFR-normen",
+    "liveSessionsBadge": "Wekelijkse Live Interactieve Videolessen",
+    "progressReportsBadge": "Wekelijkse Gedetailleerde Voortgangsrapporten voor Ouders",
+    "microCohortsBadge": "Kleine Groepen (Max. 6 Leerlingen)",
+    "meta": {
+      "prog-foundations": {
+        "targetAges": "4 - 8 jaar",
+        "studio1Title": "Fonetiek Arcade",
+        "studio1Desc": "28 Arabische letters met harakat en arcade-puzzels",
+        "studio2Title": "Woordenschat SRS",
+        "studio2Desc": "Slimme Leitner-kaarten voor alfabet en eerste woorden"
+      },
+      "prog-reading": {
+        "targetAges": "7 - 12 jaar",
+        "studio1Title": "Visuele Questkaart",
+        "studio1Desc": "10 leesknooppunten verspreid over 5 interactieve biomen",
+        "studio2Title": "Geïllustreerde Verhalen",
+        "studio2Desc": "Van klinkertekens voorziene verhaalboeken met native audio en quizzen"
+      },
+      "prog-writing": {
+        "targetAges": "7 - 14 jaar",
+        "studio1Title": "Gelinieerd Naskh-Schrijfbord",
+        "studio1Desc": "Gelinieerd kalligrafiecanvas voor penseelbeweging",
+        "studio2Title": "Afdrukcentrum",
+        "studio2Desc": "Afdrukbare A4-werkbladen met QR-verificatie"
+      },
+      "prog-speaking": {
+        "targetAges": "6 - 15 jaar",
+        "studio1Title": "Faseeh AI-Tutor",
+        "studio1Desc": "Interactieve gesproken dialogen met CEFR AI-tutor",
+        "studio2Title": "Stemgolfstudio",
+        "studio2Desc": "Golfvorm-toonhoogte matching en akoestische feedback"
+      },
+      "prog-listening": {
+        "targetAges": "4 - 11 jaar",
+        "studio1Title": "Auditieve Minimale Paren",
+        "studio1Desc": "Akoestisch onderscheid tussen emfatische en lichte fonemen",
+        "studio2Title": "Audioverhalen",
+        "studio2Desc": "Kristalheldere audioverhalen met verhaalbegrip"
+      },
+      "prog-quran": {
+        "targetAges": "5 - 16 jaar",
+        "studio1Title": "Kleurgecodeerde Tajweed-Studio",
+        "studio1Desc": "Uthmani Mushaf met gekleurde Tajweed-regels en audiorecorder",
+        "studio2Title": "Hifz-Retentiesysteem",
+        "studio2Desc": "Nauwkeurige voortgang van Juz Amma-memorisatie met gecertificeerde Qira'at"
+      },
+      "prog-islamic": {
+        "targetAges": "5 - 15 jaar",
+        "studio1Title": "Geïllustreerde Seerah",
+        "studio1Desc": "Inspirerende mijlpalen van de Profeet ﷺ en de Profeten",
+        "studio2Title": "Islamitische Adab & Ethiek",
+        "studio2Desc": "Interactieve morele dilemma's over eerlijkheid, vriendelijkheid en integriteit"
+      }
+    }
+  },
+  "termsPage": {
+    "badge": "Servicevoorwaarden",
+    "title": "Servicevoorwaarden",
+    "lastUpdated": "Laatst bijgewerkt: september 2026",
+    "highlights": {
+      "billingTitle": "Abonnement & facturering",
+      "billingDesc": "Abonnementen worden automatisch verlengd bij elke factureringscyclus via onze betalingsverwerker Stripe, en kunnen op elk moment worden opgezegd.",
+      "refundTitle": "14 dagen geld-terug-garantie",
+      "refundDesc": "Wij bieden een onvoorwaardelijke volledige terugbetaling binnen de eerste 14 dagen van elk nieuw abonnement.",
+      "conductTitle": "Gedragscode voor de klas",
+      "conductDesc": "Een omgeving gebaseerd op wederzijds respect en positieve aanmoediging tussen docenten, leerlingen en ouders."
+    },
+    "sections": {
+      "s1": {
+        "title": "1. Wie wij zijn & aanvaarding van deze voorwaarden",
+        "body": "Deze Servicevoorwaarden vormen een overeenkomst tussen u — de ouder of voogd die het account aanmaakt en beheert — en 3-Tech (\"wij\", \"ons\"), gevestigd in Groningen, Nederland, dat Arabic Kids Academy exploiteert op arabickidsacademy.com. Door een account aan te maken of u te abonneren op een pakket, gaat u akkoord met deze voorwaarden."
+      },
+      "s2": {
+        "title": "2. Geschiktheid & ouderaccounts",
+        "body": "Alle accounts moeten worden aangemaakt en beheerd door een ouder of wettelijke voogd (18 jaar of ouder). De ouder is verantwoordelijk voor de juistheid van de verstrekte informatie en voor het toezicht op het gebruik van het platform door zijn of haar kind."
+      },
+      "s3": {
+        "title": "3. De dienst",
+        "body": "Wij bieden online lessen in kleine groepen (maximaal 6 leerlingen) of individueel, binnen zeven leertrajecten (Arabische basis, lezen, schrijven, spreken, luisteren, Koran & Tajweed, en islamitische studies), gegeven door gecertificeerde docenten die passen bij de leeftijdsgroep van het kind."
+      },
+      "s4": {
+        "title": "4. Abonnementen, facturering & verlenging",
+        "body": "Pakketten en hun prijzen worden getoond bij het afrekenen en worden gefactureerd in USD via onze betalingsverwerker Stripe. Abonnementen worden automatisch verlengd bij elke factureringsperiode, tenzij opgezegd. Als de prijzen wijzigen, informeren wij u voorafgaand aan uw volgende verlenging."
+      },
+      "s5": {
+        "title": "5. Opzegging",
+        "body": "U kunt uw abonnement op elk moment opzeggen door een e-mail te sturen naar privacy@arabickidsacademy.com, en wij verwerken uw verzoek binnen twee werkdagen. Uw toegang blijft actief tot het einde van de reeds betaalde factureringsperiode, zonder extra kosten en zonder gedeeltelijke terugbetaling voor ongebruikte dagen (buiten de hieronder beschreven 14-dagen-garantie)."
+      },
+      "s6": {
+        "title": "6. Terugbetalingsbeleid",
+        "body": "Wij bieden een onvoorwaardelijke volledige terugbetaling als u binnen de eerste 14 dagen van een nieuw abonnement om opzegging verzoekt."
+      },
+      "s7": {
+        "title": "7. Gedragscode",
+        "body": "Wij verwachten van alle docenten, leerlingen en ouders dat zij zich met wederzijds respect en gepast gedrag gedragen. Wij kunnen elk account opschorten of beëindigen dat deze code overtreedt of op misbruikende of frauduleuze wijze wordt gebruikt."
+      },
+      "s8": {
+        "title": "8. Intellectueel eigendom",
+        "body": "Alle leerplannen, lesmateriaal, opnamen en handelsmerken die op Arabic Kids Academy worden gebruikt, zijn het exclusieve intellectuele eigendom van 3-Tech en mogen niet worden gekopieerd of commercieel verspreid zonder voorafgaande schriftelijke toestemming."
+      },
+      "s9": {
+        "title": "9. Beperking van aansprakelijkheid",
+        "body": "Voor zover maximaal toegestaan door het toepasselijke recht, is 3-Tech niet aansprakelijk voor enige indirecte, incidentele of gevolgschade voortvloeiend uit het gebruik van het platform, onverminderd eventuele dwingende consumentenrechten die niet kunnen worden uitgesloten onder het recht van uw land van verblijf."
+      },
+      "s10": {
+        "title": "10. Toepasselijk recht & geschillenbeslechting",
+        "body": "Deze voorwaarden worden beheerst door en uitgelegd in overeenstemming met het Nederlandse recht, en elk geschil dat hieruit voortvloeit valt onder de bevoegdheid van de bevoegde Nederlandse rechter, onverminderd eventuele dwingende consumentenbeschermingsrechten die u heeft onder het recht van uw land van verblijf."
+      },
+      "s11": {
+        "title": "11. Wijzigingen in deze voorwaarden",
+        "body": "Wij kunnen deze voorwaarden van tijd tot tijd bijwerken. Materiële wijzigingen worden hier gepubliceerd met een nieuwe ingangsdatum, en wij informeren u per e-mail over wijzigingen die van materiële invloed zijn op uw abonnement."
+      },
+      "s12": {
+        "title": "12. Contact opnemen",
+        "body": "Voor vragen over deze voorwaarden kunt u contact met ons opnemen via compliance@arabickidsacademy.com. 3-Tech — Groningen, Nederland."
+      }
+    }
+  },
+  "privacyPage": {
+    "badge": "Gebaseerd op COPPA- en GDPR-K-principes",
+    "title": "Kinderveiligheid & Privacybeleid",
+    "lastUpdated": "Laatst bijgewerkt: september 2026",
+    "safety": {
+      "adFreeTitle": "100% Advertentievrij",
+      "adFreeDesc": "Wij tonen geen enkele advertentie en verkopen of gebruiken de gegevens van uw kind nooit voor reclame- of marketingdoeleinden door derden.",
+      "recordingsTitle": "Beperkte toegang tot opnamen",
+      "recordingsDesc": "Audio-opnamen van reciteren en huiswerk worden uitsluitend gebruikt voor leerbeoordeling en zijn alleen toegankelijk voor de toegewezen docent van uw kind en bevoegd schoolpersoneel.",
+      "parentControlTitle": "Door ouders beheerde accounts",
+      "parentControlDesc": "Een kinderprofiel kan alleen worden aangemaakt, bekeken of beheerd via een geverifieerd, ingelogd ouder- of voogdaccount."
+    },
+    "sections": {
+      "s1": {
+        "title": "1. Wie deze dienst exploiteert",
+        "body": "Arabic Kids Academy (arabickidsacademy.com) wordt geëxploiteerd door 3-Tech, gevestigd in Groningen, Nederland. 3-Tech is de \"verwerkingsverantwoordelijke\" voor de persoonsgegevens die in dit beleid worden beschreven, en is bereikbaar via privacy@arabickidsacademy.com."
+      },
+      "s2": {
+        "title": "2. Onze toewijding aan de privacy van kinderen (COPPA en AVG)",
+        "body": "Ieder kind jonger dan 13 jaar valt onder de Amerikaanse Children's Online Privacy Protection Act (COPPA), die verifieerbare ouderlijke toestemming vereist voordat wij persoonsgegevens verzamelen. Volgens artikel 8 van de Algemene Verordening Gegevensbescherming (AVG) van de EU is de standaardleeftijd waarop een kind zelf toestemming mag geven 16 jaar, hoewel individuele EU-lidstaten deze leeftijd kunnen verlagen tot 13 jaar. Om voor alle kinderen, ongeacht waar het gezin woont, één consistente beschermingsnorm te handhaven, hanteren wij platformbreed zelf 16 jaar als drempel: geen enkel kind kan zich zelfstandig registreren. Elk kinderprofiel kan alleen worden aangemaakt door een ouder of voogd die eerst inlogt op zijn of haar eigen geverifieerde volwassenenaccount en vervolgens het kind toevoegt. Die handeling — een ingelogde ouder die een kinderprofiel toevoegt — is het mechanisme waarmee wij ouderlijke toestemming verkrijgen en vastleggen."
+      },
+      "s3": {
+        "title": "3. Gegevens die wij verzamelen",
+        "body": "Van de ouder: naam, e-mailadres, telefoonnummer en factuuradres (voor het uitgeven van belastingfacturen). Wij ontvangen uw betaalkaartgegevens nooit rechtstreeks — betalingen worden volledig verwerkt door onze betalingsverwerker Stripe. Over het kind (ingevoerd door de ouder): voor- en achternaam, geboortedatum, leeftijdsgroep, moedertaal, en optionele velden zoals geslacht of nationaliteit. Leergegevens: lesbijwoning, ingeleverd huiswerk, beoordelingsresultaten, en audio-opnamen van reciteer- of uitspraakoefeningen. Technische gegevens: IP-adres en browserinformatie, uitsluitend geregistreerd voor accountbeveiliging en fraudepreventie. Interne docentnotities over de voortgang van een leerling zijn uitsluitend zichtbaar voor de bevoegde docenten en schoolbeheerders van die leerling — nooit voor andere ouders of andere leerlingen."
+      },
+      "s4": {
+        "title": "4. Hoe wij deze gegevens gebruiken",
+        "body": "Wij gebruiken deze gegevens uitsluitend om lessen te verzorgen en leervoortgang bij te houden, uw abonnement en facturen te verwerken, met u te communiceren over uw account, het platform veilig te houden en misbruik te voorkomen, en te voldoen aan toepasselijke wettelijke of boekhoudkundige verplichtingen."
+      },
+      "s5": {
+        "title": "5. Met wie wij gegevens delen",
+        "body": "Stripe — uitsluitend voor betalingsverwerking (PCI-DSS-gecertificeerd); Stripe ontvangt nooit de leergegevens van uw kind. De hosting- en databaseproviders die het platform draaien (momenteel Vercel en Neon). Wij verkopen uw persoonsgegevens niet en delen deze niet met advertentienetwerken of databrokers. Elke overdracht van gegevens buiten Nederland of de EU (bijvoorbeeld naar de hierboven genoemde in de VS gevestigde providers) berust op passende waarborgen, zoals de standaardcontractbepalingen van die providers."
+      },
+      "s6": {
+        "title": "6. Bewaartermijn van gegevens",
+        "body": "Wij bewaren account- en leergegevens zolang het account actief blijft. Als u uw account sluit of om verwijdering verzoekt, verwijderen of anonimiseren wij uw persoonsgegevens binnen 90 dagen, met uitzondering van factuurgegevens die de belasting- en boekhoudwetgeving ons mogelijk verplicht langer te bewaren."
+      },
+      "s7": {
+        "title": "7. Uw rechten als ouder",
+        "body": "U kunt te allen tijde verzoeken om toegang tot de gegevens van uw kind, om correctie ervan, om een kopie ervan, of om definitieve verwijdering (\"het recht op vergetelheid\") door een e-mail te sturen naar privacy@arabickidsacademy.com. Wij reageren uiterlijk binnen één maand, zoals vereist onder artikel 12 van de AVG. U kunt ook op elk moment uw toestemming voor de verwerking van de gegevens van uw kind intrekken door te verzoeken uw account te sluiten."
+      },
+      "s8": {
+        "title": "8. Kinderveiligheid door ontwerp",
+        "body": "Er kan geen kinderprofiel bestaan zonder een actief ouderaccount. Kinderen kunnen account-, factuur- of profielinstellingen niet zelfstandig wijzigen. Alle communicatie met betrekking tot de les vindt plaats onder toezicht van de toegewezen docent."
+      },
+      "s9": {
+        "title": "9. Wijzigingen in dit beleid",
+        "body": "Wij kunnen dit beleid van tijd tot tijd bijwerken. Materiële wijzigingen worden hier gepubliceerd met een nieuwe ingangsdatum, en wij informeren de ouder van het account per e-mail als een wijziging invloed heeft op hoe wij de gegevens van zijn of haar kind gebruiken."
+      },
+      "s10": {
+        "title": "10. Contact opnemen",
+        "body": "Voor vragen of verzoeken met betrekking tot privacy of kinderveiligheid kunt u contact met ons opnemen via privacy@arabickidsacademy.com of compliance@arabickidsacademy.com. 3-Tech — Groningen, Nederland."
+      }
+    }
   }
 }

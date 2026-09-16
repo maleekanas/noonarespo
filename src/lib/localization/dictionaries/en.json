@@ -55,7 +55,14 @@
     "speaking": "Conversation & Pronunciation",
     "listening": "Listening & Audio Comprehension",
     "quran": "Quran Reading & Tajweed",
-    "islamicStudies": "Islamic Studies & Values"
+    "islamicStudies": "Islamic Studies & Values",
+    "foundationsDesc": "Alphabet recognition, letter forms, phonetic sounds, and foundational vocabulary.",
+    "readingDesc": "Reading fluency, phonics, and comprehension through engaging illustrated stories.",
+    "writingDesc": "Handwriting, penmanship, sentence construction, creative writing, and grammar.",
+    "speakingDesc": "Interactive conversation classes to build confidence and natural spoken fluency.",
+    "listeningDesc": "Audio exercises, story listening, and interactive auditory comprehension.",
+    "quranDesc": "Mastery of Quran reading, memorization, and applied Tajweed with certified teachers.",
+    "islamicStudiesDesc": "Prophetic stories, moral ethics, and foundational Islamic knowledge for youth."
   },
   "ageGroups": {
     "title": "Age-Tailored Cohorts",
@@ -65,7 +72,15 @@
     "sprouts": "Little Sprouts (Ages 4 - 6)",
     "explorers": "Junior Explorers (Ages 7 - 10)",
     "navigators": "Intermediate Navigators (Ages 11 - 13)",
-    "scholars": "Young Scholars (Ages 14 - 16)"
+    "scholars": "Young Scholars (Ages 14 - 16)",
+    "sproutsTagline": "Playful learning through colors, games & songs",
+    "sproutsDesc": "Joyful classes focusing on letter recognition, phonics, and interactive movement.",
+    "explorersTagline": "Embarking on stories, vocabulary & reading",
+    "explorersDesc": "Building confidence in reading basic texts, correct spelling, and early Tajweed.",
+    "navigatorsTagline": "Linguistic proficiency & confident speaking",
+    "navigatorsDesc": "Compound sentences, group discussions, and mastering applied Quran recitation.",
+    "scholarsTagline": "Eloquence, rhetoric & public speaking",
+    "scholarsDesc": "Reading literary texts, classical eloquence, and advanced conversation with Hifz."
   },
   "pricing": {
     "tag": "Flexible Plans",
@@ -253,5 +268,208 @@
     "applyErrorRateLimited": "Too many submissions. Please wait a bit and try again.",
     "applyErrorServer": "We couldn't submit your application. Please try again or email us directly.",
     "trustBadge": "Trusted by certified Islamic schools, community centers and homeschool co-ops"
+  },
+  "programsCatalog": {
+    "backToHome": "Back to Home",
+    "tracksLabel": "7 Accredited Academic Tracks",
+    "enrollCta": "Enroll in Classes 🎓",
+    "syllabiTag": "Accredited Syllabi & Modules",
+    "progressionTitle": "Academic Progression & Weekly Learning Outcomes",
+    "modulesLabel": "Detailed Teaching Modules",
+    "weeksLabel": "Weeks",
+    "moduleLabel": "Module",
+    "objectivesLabel": "Core Learning Objectives:",
+    "targetLabel": "Target:",
+    "wordsLabel": "Words",
+    "ageSproutsLabel": "Sprouts (4-6)",
+    "ageExplorersLabel": "Explorers (7-10)",
+    "ageNavigatorsLabel": "Navigators (11-13)",
+    "studiosTag": "Integrated Interactive Learning Studios",
+    "studiosTitle": "Live Interactive Studios Enhancing This Track",
+    "studiosSubtitle": "Enrolled students receive instant and unlimited access to these studio tools",
+    "exploreStudioCta": "Explore Studio",
+    "cohortsTag": "Active Cohorts Available for Enrollment",
+    "cohortsTitle": "Select Cohort for Your Child (Capped at 6 Seats)",
+    "viewAllCta": "View All 7 Tracks Cohorts",
+    "microGroupLabel": "Micro-Group (6 max)",
+    "privateLabel": "Private (1-on-1)",
+    "enrollmentOpenLabel": "Enrollment Open",
+    "cohortDescriptionGeneric": "Accredited curriculum focusing on active interaction with certified teachers.",
+    "leadInstructorLabel": "Lead Instructor",
+    "certifiedFacultyLabel": "Certified Faculty",
+    "reserveSeatCta": "Reserve Seat",
+    "cefrStandardsBadge": "Calibrated to CEFR Standards",
+    "liveSessionsBadge": "Weekly Live Interactive Video Sessions",
+    "progressReportsBadge": "Weekly Detailed Parent Progress Reports",
+    "microCohortsBadge": "Micro-Cohorts (Max 6 Students)",
+    "meta": {
+      "prog-foundations": {
+        "targetAges": "Ages 4 - 8",
+        "studio1Title": "Phonics Arcade",
+        "studio1Desc": "28 Arabic letters with Harakat and arcade puzzles",
+        "studio2Title": "Vocabulary SRS",
+        "studio2Desc": "Smart Leitner cards for alphabet and first words"
+      },
+      "prog-reading": {
+        "targetAges": "Ages 7 - 12",
+        "studio1Title": "Visual Quest Map",
+        "studio1Desc": "10 reading nodes across 5 interactive biomes",
+        "studio2Title": "Illustrated Stories",
+        "studio2Desc": "Vocalized storybooks with native audio and quizzes"
+      },
+      "prog-writing": {
+        "targetAges": "Ages 7 - 14",
+        "studio1Title": "Ruled Naskh Whiteboard",
+        "studio1Desc": "Ruled calligraphy canvas for stroke mechanics",
+        "studio2Title": "Printables Hub",
+        "studio2Desc": "Printable A4 worksheets with QR verification"
+      },
+      "prog-speaking": {
+        "targetAges": "Ages 6 - 15",
+        "studio1Title": "Faseeh AI Tutor",
+        "studio1Desc": "Interactive spoken dialogues with CEFR AI tutor",
+        "studio2Title": "Voice Waveform Studio",
+        "studio2Desc": "Waveform pitch-matching and acoustic feedback"
+      },
+      "prog-listening": {
+        "targetAges": "Ages 4 - 11",
+        "studio1Title": "Auditory Minimal Pairs",
+        "studio1Desc": "Acoustic discrimination of emphatic vs light phonemes",
+        "studio2Title": "Audio Narratives",
+        "studio2Desc": "Crystal clear audio stories with plot comprehension"
+      },
+      "prog-quran": {
+        "targetAges": "Ages 5 - 16",
+        "studio1Title": "Color-Coded Tajweed Studio",
+        "studio1Desc": "Uthmani Mushaf with colored Tajweed rules & audio recorder",
+        "studio2Title": "Hifz Retention System",
+        "studio2Desc": "Juz Amma retention tracking with certified Qira'at"
+      },
+      "prog-islamic": {
+        "targetAges": "Ages 5 - 15",
+        "studio1Title": "Illustrated Seerah",
+        "studio1Desc": "Inspiring milestones of the Prophet ﷺ and Prophets",
+        "studio2Title": "Islamic Adab & Ethics",
+        "studio2Desc": "Interactive moral dilemmas on honesty, kindness & integrity"
+      }
+    }
+  },
+  "termsPage": {
+    "badge": "Terms of Service",
+    "title": "Terms of Service",
+    "lastUpdated": "Last updated: September 2026",
+    "highlights": {
+      "billingTitle": "Subscription & Billing",
+      "billingDesc": "Subscriptions renew automatically each billing cycle through our payment processor, Stripe, and can be cancelled at any time.",
+      "refundTitle": "14-Day Refund Guarantee",
+      "refundDesc": "We offer an unconditional full refund within the first 14 days of any new subscription.",
+      "conductTitle": "Classroom Code of Conduct",
+      "conductDesc": "An environment grounded in mutual respect and positive encouragement between teachers, students, and parents."
+    },
+    "sections": {
+      "s1": {
+        "title": "1. Who We Are & Acceptance of These Terms",
+        "body": "These Terms of Service form an agreement between you — the parent or guardian creating and managing the account — and 3-Tech (\"we\", \"us\"), based in Groningen, the Netherlands, which operates Arabic Kids Academy at arabickidsacademy.com. By creating an account or subscribing to a plan, you agree to these terms."
+      },
+      "s2": {
+        "title": "2. Eligibility & Parental Accounts",
+        "body": "All accounts must be created and maintained by a parent or legal guardian (18 years of age or older). The parent is responsible for the accuracy of the information provided and for supervising their child's use of the platform."
+      },
+      "s3": {
+        "title": "3. The Service",
+        "body": "We provide small-group (up to 6 students) or one-on-one online classes across seven learning tracks (Arabic Foundations, Reading, Writing, Speaking, Listening, Quran & Tajweed, and Islamic Studies), delivered by certified teachers matched to the child's age group."
+      },
+      "s4": {
+        "title": "4. Subscription Plans, Billing & Renewal",
+        "body": "Plans and their prices are shown at checkout and billed in USD through our payment processor, Stripe. Subscriptions renew automatically each billing period unless cancelled. If prices change, we will notify you before your next renewal."
+      },
+      "s5": {
+        "title": "5. Cancellation",
+        "body": "You may cancel your subscription at any time by emailing privacy@arabickidsacademy.com, and we will process your request within two business days. Your access remains active through the end of the billing period you've already paid for, with no additional charges and no partial refund for unused days (outside of the 14-day guarantee described below)."
+      },
+      "s6": {
+        "title": "6. Refund Policy",
+        "body": "We offer an unconditional full refund if you request cancellation within the first 14 days of any new subscription."
+      },
+      "s7": {
+        "title": "7. Code of Conduct",
+        "body": "We expect all teachers, students, and parents to act with mutual respect and appropriate conduct. We may suspend or terminate any account that violates this code or is used abusively or fraudulently."
+      },
+      "s8": {
+        "title": "8. Intellectual Property",
+        "body": "All curricula, learning materials, recordings, and trademarks used on Arabic Kids Academy are the exclusive intellectual property of 3-Tech and may not be copied or redistributed commercially without prior written permission."
+      },
+      "s9": {
+        "title": "9. Limitation of Liability",
+        "body": "To the maximum extent permitted by applicable law, 3-Tech is not liable for any indirect, incidental, or consequential damages arising from use of the platform, without prejudice to any mandatory consumer rights that cannot be waived under the law of your country of residence."
+      },
+      "s10": {
+        "title": "10. Governing Law & Dispute Resolution",
+        "body": "These Terms are governed by and construed in accordance with the laws of the Netherlands, and any dispute arising from them is subject to the jurisdiction of the competent Dutch courts, without prejudice to any mandatory consumer-protection rights you have under the law of your country of residence."
+      },
+      "s11": {
+        "title": "11. Changes to These Terms",
+        "body": "We may update these Terms from time to time. Material changes will be posted here with a new effective date, and we will notify you by email of changes that materially affect your subscription."
+      },
+      "s12": {
+        "title": "12. Contact Us",
+        "body": "For any question about these Terms, please contact us at compliance@arabickidsacademy.com. 3-Tech — Groningen, the Netherlands."
+      }
+    }
+  },
+  "privacyPage": {
+    "badge": "Built on COPPA & GDPR-K Principles",
+    "title": "Child Safety & Privacy Policy",
+    "lastUpdated": "Last updated: September 2026",
+    "safety": {
+      "adFreeTitle": "100% Ad-Free",
+      "adFreeDesc": "We display zero ads, and we never sell your child's data or use it for advertising or marketing by any third party.",
+      "recordingsTitle": "Restricted Access to Recordings",
+      "recordingsDesc": "Recitation and homework audio is used only for learning assessment, and is accessible only to your child's assigned teacher and authorized school staff.",
+      "parentControlTitle": "Parent-Controlled Accounts",
+      "parentControlDesc": "A child's profile can only ever be created, viewed, or managed through a verified, logged-in parent or guardian account."
+    },
+    "sections": {
+      "s1": {
+        "title": "1. Who Operates This Service",
+        "body": "Arabic Kids Academy (arabickidsacademy.com) is operated by 3-Tech, based in Groningen, the Netherlands. 3-Tech is the \"data controller\" responsible for the personal information described in this policy, and can be reached at privacy@arabickidsacademy.com."
+      },
+      "s2": {
+        "title": "2. Our Commitment to Children's Privacy (COPPA & GDPR)",
+        "body": "Any child under 13 is covered by the U.S. Children's Online Privacy Protection Act (COPPA), which requires verifiable parental consent before we collect any personal information. Under Article 8 of the EU General Data Protection Regulation (GDPR), the default age at which a child may consent for themselves is 16, though individual EU member states may lower this to as young as 13. To keep one consistent standard of protection regardless of where a family lives, we apply 16 as our own platform-wide threshold: no child can register on their own. Every child profile can only be created by a parent or guardian who first logs into their own verified adult account and then adds their child. That action — a logged-in parent account adding a child profile — is the mechanism by which we obtain and record parental consent."
+      },
+      "s3": {
+        "title": "3. Information We Collect",
+        "body": "From the parent: name, email address, phone number, and billing address (for issuing tax invoices). We never receive your card details directly — payment is handled entirely by our payment processor, Stripe. About the child (entered by the parent): first and last name, date of birth, age group, native language, and optional fields such as gender or nationality. Learning data: class attendance, submitted assignments, assessment results, and audio recordings of recitation or pronunciation practice. Technical data: IP address and browser information, logged only for account security and fraud prevention. Internal teacher notes on a student's progress are visible only to that student's authorized teachers and school administrators — never to other parents or other students."
+      },
+      "s4": {
+        "title": "4. How We Use This Information",
+        "body": "We use this information only to deliver classes and track learning progress, process your subscription and invoices, communicate with you about your account, keep the platform secure and prevent misuse, and comply with applicable legal or accounting obligations."
+      },
+      "s5": {
+        "title": "5. Who We Share Information With",
+        "body": "Stripe — for payment processing only (PCI-DSS certified); Stripe never receives your child's learning records. The hosting and database providers that run the platform (currently Vercel and Neon). We do not sell your personal information, and we do not share it with ad networks or data brokers. Any transfer of data outside the Netherlands or the EU (for example, to the US-based providers above) relies on appropriate safeguards, such as those providers' standard contractual clauses."
+      },
+      "s6": {
+        "title": "6. Data Retention",
+        "body": "We retain account and learning data for as long as the account remains active. If you close your account or request deletion, we will delete or anonymize your personal data within 90 days, except for billing records that tax and accounting law may require us to retain for longer."
+      },
+      "s7": {
+        "title": "7. Your Rights as a Parent",
+        "body": "You may at any time request access to your child's data, ask us to correct it, request a copy of it, or request permanent deletion (\"the right to be forgotten\") by emailing privacy@arabickidsacademy.com. We will respond within one month at the latest, as required under Article 12 of the GDPR. You may also withdraw your consent to the processing of your child's data at any time by requesting that your account be closed."
+      },
+      "s8": {
+        "title": "8. Child Safety by Design",
+        "body": "No child profile can exist without an active parent account. Children cannot independently change account, billing, or profile settings. Any class-related communication takes place under the supervision of the assigned teacher."
+      },
+      "s9": {
+        "title": "9. Changes to This Policy",
+        "body": "We may update this policy from time to time. Material changes will be posted here with a new effective date, and we will notify the account's parent by email if a change affects how we use their child's data."
+      },
+      "s10": {
+        "title": "10. Contact Us",
+        "body": "For any privacy or child-safety question or request, please contact us at privacy@arabickidsacademy.com or compliance@arabickidsacademy.com. 3-Tech — Groningen, the Netherlands."
+      }
+    }
   }
 }

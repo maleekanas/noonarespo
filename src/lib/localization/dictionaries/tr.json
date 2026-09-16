@@ -55,7 +55,14 @@
     "speaking": "Konuşma ve Doğru Telaffuz",
     "listening": "Dinleme ve İşitsel Anlama",
     "quran": "Kur'an Okuma ve Tecvid",
-    "islamicStudies": "İslami İlimler ve Değerler"
+    "islamicStudies": "İslami İlimler ve Değerler",
+    "foundationsDesc": "Alfabe tanıma, harf şekilleri, ses bilgisi ve temel kelime dağarcığı.",
+    "readingDesc": "İlgi çekici resimli hikayelerle okuma akıcılığı, fonetik ve anlama becerisi.",
+    "writingDesc": "El yazısı, kalem tutuşu, cümle kurma, yaratıcı yazma ve dilbilgisi.",
+    "speakingDesc": "Özgüven ve doğal konuşma akıcılığı kazandıran etkileşimli konuşma dersleri.",
+    "listeningDesc": "Sesli alıştırmalar, hikaye dinleme ve etkileşimli işitsel anlama.",
+    "quranDesc": "Sertifikalı öğretmenler eşliğinde Kuran okuma, ezber ve uygulamalı tecvid becerisi.",
+    "islamicStudiesDesc": "Peygamber kıssaları, ahlaki değerler ve gençler için temel İslami bilgiler."
   },
   "ageGroups": {
     "title": "Yaşa Göre Sınıf Grupları",
@@ -65,7 +72,15 @@
     "sprouts": "Minik Tomurcuklar (4 - 6 Yaş)",
     "explorers": "Küçük Kaşifler (7 - 10 Yaş)",
     "navigators": "Orta Düzey Rehberler (11 - 13 Yaş)",
-    "scholars": "Genç Alimler (14 - 16 Yaş)"
+    "scholars": "Genç Alimler (14 - 16 Yaş)",
+    "sproutsTagline": "Renkler, oyunlar ve şarkılarla eğlenceli öğrenme",
+    "sproutsDesc": "Harf tanıma, doğru telaffuz ve hareketli etkileşime odaklanan neşeli dersler.",
+    "explorersTagline": "Hikayeler, kelime dağarcığı ve okuma dünyasına adım atma",
+    "explorersDesc": "Basit metinleri okuma, doğru yazım ve ilk tecvid adımlarında özgüven kazanma.",
+    "navigatorsTagline": "Dil yeterliliği ve özgüvenli konuşma",
+    "navigatorsDesc": "Bileşik cümleler, grup tartışmaları ve uygulamalı Kuran tilavetinde ustalaşma.",
+    "scholarsTagline": "Belagat, retorik ve topluluk önünde konuşma",
+    "scholarsDesc": "Edebi metinler okuma, sadeleştirilmiş belagat ve hıfz ile ileri düzey konuşma."
   },
   "pricing": {
     "tag": "Esnek Planlar",
@@ -253,5 +268,208 @@
     "applyErrorRateLimited": "Çok fazla gönderim yapıldı. Lütfen biraz bekleyip tekrar deneyin.",
     "applyErrorServer": "Başvurunuzu gönderemedik. Lütfen tekrar deneyin veya doğrudan bize e-posta gönderin.",
     "trustBadge": "Sertifikalı İslami okullar, toplum merkezleri ve ev okulu kooperatifleri tarafından güveniliyor"
+  },
+  "programsCatalog": {
+    "backToHome": "Ana Sayfaya Dön",
+    "tracksLabel": "7 Akredite Akademik Program",
+    "enrollCta": "Derslere Kaydol 🎓",
+    "syllabiTag": "Akredite Müfredat ve Modüller",
+    "progressionTitle": "Akademik İlerleme ve Haftalık Öğrenme Kazanımları",
+    "modulesLabel": "Detaylı Öğretim Modülü",
+    "weeksLabel": "Hafta",
+    "moduleLabel": "Modül",
+    "objectivesLabel": "Temel Öğrenme Hedefleri:",
+    "targetLabel": "Hedef:",
+    "wordsLabel": "Kelime",
+    "ageSproutsLabel": "Filizler (4-6)",
+    "ageExplorersLabel": "Kaşifler (7-10)",
+    "ageNavigatorsLabel": "Yol Bulucular (11-13)",
+    "studiosTag": "Entegre Etkileşimli Öğrenme Stüdyoları",
+    "studiosTitle": "Bu Programı Güçlendiren Canlı Etkileşimli Stüdyolar",
+    "studiosSubtitle": "Kayıtlı öğrenciler bu stüdyo araçlarına anında ve sınırsız erişim kazanır",
+    "exploreStudioCta": "Stüdyoyu Keşfet",
+    "cohortsTag": "Kayıt İçin Uygun Aktif Gruplar",
+    "cohortsTitle": "Çocuğunuz İçin Grup Seçin (En Fazla 6 Kişi)",
+    "viewAllCta": "7 Programın Tüm Gruplarını Görüntüle",
+    "microGroupLabel": "Küçük Grup (en fazla 6)",
+    "privateLabel": "Özel Ders (1'e 1)",
+    "enrollmentOpenLabel": "Kayıt Açık",
+    "cohortDescriptionGeneric": "Sertifikalı öğretmenlerle aktif etkileşime odaklanan akredite müfredat.",
+    "leadInstructorLabel": "Baş Öğretmen",
+    "certifiedFacultyLabel": "Sertifikalı Öğretim Kadrosu",
+    "reserveSeatCta": "Yer Ayırt",
+    "cefrStandardsBadge": "CEFR Standartlarına Göre Kalibre Edildi",
+    "liveSessionsBadge": "Haftalık Canlı Etkileşimli Video Dersleri",
+    "progressReportsBadge": "Veliler İçin Haftalık Detaylı İlerleme Raporları",
+    "microCohortsBadge": "Küçük Gruplar (En Fazla 6 Öğrenci)",
+    "meta": {
+      "prog-foundations": {
+        "targetAges": "4 - 8 Yaş",
+        "studio1Title": "Fonetik Oyun Alanı",
+        "studio1Desc": "Harekeli 28 Arap harfi ve atari bulmacaları",
+        "studio2Title": "Kelime Hazinesi SRS",
+        "studio2Desc": "Alfabe ve ilk kelimeler için akıllı Leitner kartları"
+      },
+      "prog-reading": {
+        "targetAges": "7 - 12 Yaş",
+        "studio1Title": "Görsel Macera Haritası",
+        "studio1Desc": "5 etkileşimli bölgede 10 okuma noktası",
+        "studio2Title": "Resimli Hikayeler",
+        "studio2Desc": "Anadil sesi ve testlerle harekeli hikaye kitapları"
+      },
+      "prog-writing": {
+        "targetAges": "7 - 14 Yaş",
+        "studio1Title": "Çizgili Nesih Yazı Tahtası",
+        "studio1Desc": "Kalem hareketleri için çizgili hat sanatı tuvali",
+        "studio2Title": "Yazdırılabilir Materyaller Merkezi",
+        "studio2Desc": "QR doğrulamalı yazdırılabilir A4 çalışma sayfaları"
+      },
+      "prog-speaking": {
+        "targetAges": "6 - 15 Yaş",
+        "studio1Title": "Faseeh Yapay Zeka Öğretmeni",
+        "studio1Desc": "CEFR yapay zeka öğretmeniyle etkileşimli sözlü diyaloglar",
+        "studio2Title": "Ses Dalga Formu Stüdyosu",
+        "studio2Desc": "Dalga formu perde eşleştirme ve akustik geri bildirim"
+      },
+      "prog-listening": {
+        "targetAges": "4 - 11 Yaş",
+        "studio1Title": "İşitsel Minimal Çiftler",
+        "studio1Desc": "Kalın ve ince ünsüzlerin akustik ayrımı",
+        "studio2Title": "Sesli Anlatılar",
+        "studio2Desc": "Konu anlama ile kristal netliğinde sesli hikayeler"
+      },
+      "prog-quran": {
+        "targetAges": "5 - 16 Yaş",
+        "studio1Title": "Renk Kodlu Tecvid Stüdyosu",
+        "studio1Desc": "Renkli tecvid kurallarıyla Osmanlı Mushafı ve ses kaydedici",
+        "studio2Title": "Hıfz Tekrar Sistemi",
+        "studio2Desc": "Sertifikalı Kıraat ile Cüz Amme hıfzının hassas takibi"
+      },
+      "prog-islamic": {
+        "targetAges": "5 - 15 Yaş",
+        "studio1Title": "Resimli Siyer",
+        "studio1Desc": "Peygamberimizin ﷺ ve diğer peygamberlerin ilham verici hayat kesitleri",
+        "studio2Title": "İslami Edep ve Ahlak",
+        "studio2Desc": "Dürüstlük, nezaket ve dürüstlük üzerine etkileşimli ahlaki ikilemler"
+      }
+    }
+  },
+  "termsPage": {
+    "badge": "Hizmet Şartları",
+    "title": "Hizmet Şartları",
+    "lastUpdated": "Son güncelleme: Eylül 2026",
+    "highlights": {
+      "billingTitle": "Abonelik ve Faturalandırma",
+      "billingDesc": "Abonelikler, ödeme sağlayıcımız Stripe üzerinden her faturalandırma döneminde otomatik olarak yenilenir ve istediğiniz zaman iptal edilebilir.",
+      "refundTitle": "14 Günlük Para İade Garantisi",
+      "refundDesc": "Herhangi bir yeni aboneliğin ilk 14 günü içinde koşulsuz tam para iadesi sunuyoruz.",
+      "conductTitle": "Sınıf Davranış Kuralları",
+      "conductDesc": "Öğretmenler, öğrenciler ve veliler arasında karşılıklı saygı ve olumlu teşvike dayalı bir ortam."
+    },
+    "sections": {
+      "s1": {
+        "title": "1. Biz Kimiz ve Bu Şartların Kabulü",
+        "body": "Bu Hizmet Şartları, hesabı oluşturan ve yöneten veli veya vasi olan siz ile Hollanda'nın Groningen şehrinde bulunan ve arabickidsacademy.com adresinde Arabic Kids Academy'yi işleten 3-Tech (\"biz\") arasında bir anlaşma oluşturur. Bir hesap oluşturarak veya bir plana abone olarak bu şartları kabul etmiş olursunuz."
+      },
+      "s2": {
+        "title": "2. Uygunluk ve Veli Hesapları",
+        "body": "Tüm hesaplar, bir veli veya yasal vasi (18 yaş veya üzeri) tarafından oluşturulmalı ve yönetilmelidir. Veli, sağlanan bilgilerin doğruluğundan ve çocuğunun platformu kullanımını denetlemekten sorumludur."
+      },
+      "s3": {
+        "title": "3. Hizmet",
+        "body": "Yedi öğrenme alanında (Arapça Temelleri, Okuma, Yazma, Konuşma, Dinleme, Kuran ve Tecvit, ve İslami İlimler) çocuğun yaş grubuna uygun sertifikalı öğretmenler tarafından verilen küçük grup (en fazla 6 öğrenci) veya birebir çevrimiçi dersler sunuyoruz."
+      },
+      "s4": {
+        "title": "4. Abonelik Planları, Faturalandırma ve Yenileme",
+        "body": "Planlar ve fiyatları ödeme sırasında gösterilir ve ödeme sağlayıcımız Stripe aracılığıyla ABD doları cinsinden faturalandırılır. Abonelikler, iptal edilmediği sürece her faturalandırma döneminde otomatik olarak yenilenir. Fiyatlar değişirse, bir sonraki yenilemenizden önce size bildirimde bulunacağız."
+      },
+      "s5": {
+        "title": "5. İptal",
+        "body": "Aboneliğinizi istediğiniz zaman privacy@arabickidsacademy.com adresine e-posta göndererek iptal edebilirsiniz ve talebinizi iki iş günü içinde işleme alacağız. Erişiminiz, zaten ödemesini yaptığınız faturalandırma döneminin sonuna kadar, ek ücret olmaksızın ve kullanılmayan günler için kısmi iade yapılmaksızın (aşağıda açıklanan 14 günlük garanti hariç) aktif kalır."
+      },
+      "s6": {
+        "title": "6. İade Politikası",
+        "body": "Herhangi bir yeni aboneliğin ilk 14 günü içinde iptal talebinde bulunursanız koşulsuz tam para iadesi sunuyoruz."
+      },
+      "s7": {
+        "title": "7. Davranış Kuralları",
+        "body": "Tüm öğretmenlerin, öğrencilerin ve velilerin karşılıklı saygı ve uygun davranışla hareket etmesini bekliyoruz. Bu kuralları ihlal eden veya kötüye kullanılan ya da hileli şekilde kullanılan herhangi bir hesabı askıya alabilir veya sonlandırabiliriz."
+      },
+      "s8": {
+        "title": "8. Fikri Mülkiyet",
+        "body": "Arabic Kids Academy'de kullanılan tüm müfredatlar, öğrenme materyalleri, kayıtlar ve ticari markalar 3-Tech'in münhasır fikri mülkiyetidir ve önceden yazılı izin olmaksızın kopyalanamaz veya ticari olarak yeniden dağıtılamaz."
+      },
+      "s9": {
+        "title": "9. Sorumluluğun Sınırlandırılması",
+        "body": "Yürürlükteki kanunun izin verdiği azami ölçüde, 3-Tech, ikamet ettiğiniz ülkenin kanunları uyarınca feragat edilemeyen zorunlu tüketici haklarına halel getirmeksizin, platformun kullanımından kaynaklanan herhangi bir dolaylı, arızi veya sonuç niteliğindeki zarardan sorumlu değildir."
+      },
+      "s10": {
+        "title": "10. Uygulanacak Hukuk ve Uyuşmazlıkların Çözümü",
+        "body": "Bu Şartlar, Hollanda kanunlarına tabidir ve bu kanunlara göre yorumlanır; bunlardan kaynaklanan herhangi bir uyuşmazlık, ikamet ettiğiniz ülkenin kanunları uyarınca sahip olduğunuz zorunlu tüketici koruma haklarına halel getirmeksizin, yetkili Hollanda mahkemelerinin yargı yetkisine tabidir."
+      },
+      "s11": {
+        "title": "11. Bu Şartlardaki Değişiklikler",
+        "body": "Bu Şartları zaman zaman güncelleyebiliriz. Önemli değişiklikler yeni bir yürürlük tarihiyle burada yayınlanacak ve aboneliğinizi önemli ölçüde etkileyen değişiklikler hakkında sizi e-posta yoluyla bilgilendireceğiz."
+      },
+      "s12": {
+        "title": "12. Bize Ulaşın",
+        "body": "Bu Şartlarla ilgili herhangi bir sorunuz için lütfen compliance@arabickidsacademy.com adresinden bizimle iletişime geçin. 3-Tech — Groningen, Hollanda."
+      }
+    }
+  },
+  "privacyPage": {
+    "badge": "COPPA ve GDPR-K İlkelerine Dayalı",
+    "title": "Çocuk Güvenliği ve Gizlilik Politikası",
+    "lastUpdated": "Son güncelleme: Eylül 2026",
+    "safety": {
+      "adFreeTitle": "%100 Reklamsız",
+      "adFreeDesc": "Hiçbir ticari reklam göstermiyoruz ve çocuğunuzun verilerini asla satmıyor veya herhangi bir üçüncü taraf için reklam ya da pazarlama amacıyla kullanmıyoruz.",
+      "recordingsTitle": "Ses Kayıtlarına Kısıtlı Erişim",
+      "recordingsDesc": "Kıraat ve ödev ses kayıtları yalnızca öğrenme değerlendirmesi için kullanılır ve yalnızca çocuğunuzun atanmış öğretmeni ile yetkili okul personeli tarafından erişilebilir.",
+      "parentControlTitle": "Veli Kontrolündeki Hesaplar",
+      "parentControlDesc": "Bir çocuk profili yalnızca doğrulanmış, oturum açmış bir veli veya vasi hesabı aracılığıyla oluşturulabilir, görüntülenebilir veya yönetilebilir."
+    },
+    "sections": {
+      "s1": {
+        "title": "1. Bu Hizmeti Kim İşletiyor",
+        "body": "Arabic Kids Academy (arabickidsacademy.com), Hollanda'nın Groningen şehrinde bulunan 3-Tech tarafından işletilmektedir. 3-Tech, bu politikada açıklanan kişisel bilgilerden sorumlu \"veri sorumlusu\"dur ve privacy@arabickidsacademy.com adresinden kendisine ulaşılabilir."
+      },
+      "s2": {
+        "title": "2. Çocukların Gizliliğine Bağlılığımız (COPPA ve GDPR)",
+        "body": "13 yaşın altındaki her çocuk, herhangi bir kişisel veri toplamadan önce doğrulanabilir veli izni gerektiren ABD Çocukların Çevrimiçi Gizliliğini Koruma Yasası (COPPA) kapsamındadır. AB Genel Veri Koruma Yönetmeliği'nin (GDPR) 8. Maddesi uyarınca, bir çocuğun kendi başına onay verebileceği varsayılan yaş 16'dır; ancak bireysel AB üye devletleri bu yaşı 13'e kadar düşürebilir. Ailenin nerede yaşadığından bağımsız olarak tutarlı bir koruma standardı sağlamak için, platform genelinde kendi eşiğimiz olarak 16 yaşını uyguluyoruz: hiçbir çocuk kendi başına kayıt olamaz. Her çocuk profili, yalnızca önce kendi doğrulanmış yetişkin hesabında oturum açan ve ardından çocuğunu ekleyen bir veli veya vasi tarafından oluşturulabilir. Bu eylem — oturum açmış bir veli hesabının bir çocuk profili eklemesi — veli iznini elde etme ve kayıt altına alma mekanizmamızdır."
+      },
+      "s3": {
+        "title": "3. Topladığımız Bilgiler",
+        "body": "Veliden: ad, e-posta adresi, telefon numarası ve fatura adresi (vergi faturaları düzenlemek için). Kart bilgilerinizi doğrudan asla almayız — ödemeler tamamen ödeme sağlayıcımız Stripe tarafından işlenir. Çocuk hakkında (veli tarafından girilir): ad ve soyad, doğum tarihi, yaş grubu, ana dil ve cinsiyet veya uyruk gibi isteğe bağlı alanlar. Öğrenme verileri: derse katılım, teslim edilen ödevler, değerlendirme sonuçları ve kıraat veya telaffuz alıştırmalarının ses kayıtları. Teknik veriler: yalnızca hesap güvenliği ve dolandırıcılık önleme amacıyla kaydedilen IP adresi ve tarayıcı bilgileri. Bir öğrencinin ilerlemesine ilişkin dahili öğretmen notları yalnızca o öğrencinin yetkili öğretmenleri ve okul yöneticileri tarafından görülebilir — asla diğer veliler veya diğer öğrenciler tarafından görülemez."
+      },
+      "s4": {
+        "title": "4. Bu Bilgileri Nasıl Kullanıyoruz",
+        "body": "Bu bilgileri yalnızca dersleri sunmak ve öğrenme ilerlemesini takip etmek, aboneliğinizi ve faturalarınızı işlemek, hesabınızla ilgili sizinle iletişim kurmak, platformu güvenli tutmak ve kötüye kullanımı önlemek ve geçerli yasal veya muhasebe yükümlülüklerine uymak için kullanıyoruz."
+      },
+      "s5": {
+        "title": "5. Bilgileri Kimlerle Paylaşıyoruz",
+        "body": "Stripe — yalnızca ödeme işleme için (PCI-DSS sertifikalı); Stripe, çocuğunuzun öğrenme kayıtlarını asla almaz. Platformu çalıştıran barındırma ve veritabanı sağlayıcıları (şu anda Vercel ve Neon). Kişisel bilgilerinizi satmıyoruz ve reklam ağları veya veri komisyoncularıyla paylaşmıyoruz. Verilerin Hollanda veya AB dışına aktarılması (örneğin yukarıdaki ABD merkezli sağlayıcılara), bu sağlayıcıların standart sözleşme hükümleri gibi uygun güvencelere dayanır."
+      },
+      "s6": {
+        "title": "6. Veri Saklama",
+        "body": "Hesap ve öğrenme verilerini, hesap aktif kaldığı sürece saklarız. Hesabınızı kapatırsanız veya silme talebinde bulunursanız, vergi ve muhasebe mevzuatının daha uzun süre saklamamızı gerektirebileceği fatura kayıtları hariç, kişisel verilerinizi 90 gün içinde sileriz veya anonim hale getiririz."
+      },
+      "s7": {
+        "title": "7. Veli Olarak Haklarınız",
+        "body": "İstediğiniz zaman privacy@arabickidsacademy.com adresine e-posta göndererek çocuğunuzun verilerine erişim talep edebilir, düzeltilmesini isteyebilir, bir kopyasını talep edebilir veya kalıcı olarak silinmesini (\"unutulma hakkı\") talep edebilirsiniz. GDPR'nin 12. Maddesi uyarınca, talebinize en geç bir ay içinde yanıt vereceğiz. Ayrıca, hesabınızın kapatılmasını talep ederek çocuğunuzun verilerinin işlenmesine ilişkin onayınızı istediğiniz zaman geri çekebilirsiniz."
+      },
+      "s8": {
+        "title": "8. Tasarım Gereği Çocuk Güvenliği",
+        "body": "Aktif bir veli hesabı olmadan hiçbir çocuk profili var olamaz. Çocuklar hesap, fatura veya profil ayarlarını bağımsız olarak değiştiremez. Derslerle ilgili her türlü iletişim, atanmış öğretmenin gözetiminde gerçekleşir."
+      },
+      "s9": {
+        "title": "9. Bu Politikadaki Değişiklikler",
+        "body": "Bu politikayı zaman zaman güncelleyebiliriz. Önemli değişiklikler yeni bir yürürlük tarihiyle burada yayınlanacak ve bir değişiklik çocuğunun verilerini nasıl kullandığımızı etkiliyorsa hesabın velisini e-posta yoluyla bilgilendireceğiz."
+      },
+      "s10": {
+        "title": "10. Bize Ulaşın",
+        "body": "Gizlilik veya çocuk güvenliğiyle ilgili herhangi bir soru veya talep için lütfen privacy@arabickidsacademy.com veya compliance@arabickidsacademy.com adresinden bizimle iletişime geçin. 3-Tech — Groningen, Hollanda."
+      }
+    }
   }
 }

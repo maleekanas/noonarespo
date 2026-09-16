@@ -55,7 +55,14 @@
     "speaking": "Conversazione e Pronuncia",
     "listening": "Ascolto e Comprensione Uditiva",
     "quran": "Lettura del Corano e Tajweed",
-    "islamicStudies": "Studi Islamici e Valori"
+    "islamicStudies": "Studi Islamici e Valori",
+    "foundationsDesc": "Riconoscimento dell'alfabeto, forme delle lettere, suoni fonetici e vocabolario di base.",
+    "readingDesc": "Fluidità di lettura, fonetica e comprensione attraverso storie illustrate coinvolgenti.",
+    "writingDesc": "Calligrafia, tecnica della scrittura, costruzione delle frasi, scrittura creativa e grammatica.",
+    "speakingDesc": "Lezioni di conversazione interattive per sviluppare sicurezza e fluidità orale naturale.",
+    "listeningDesc": "Esercizi audio, ascolto di storie e comprensione uditiva interattiva.",
+    "quranDesc": "Padronanza della lettura del Corano, memorizzazione e Tajweed applicato con insegnanti certificati.",
+    "islamicStudiesDesc": "Storie dei profeti, etica morale e conoscenze islamiche fondamentali per i giovani."
   },
   "ageGroups": {
     "title": "Classi Suddivise per Fasce d'Età",
@@ -65,7 +72,15 @@
     "sprouts": "Piccoli Germogli (4 - 6 anni)",
     "explorers": "Giovani Esploratori (7 - 10 anni)",
     "navigators": "Navigatori Medi (11 - 13 anni)",
-    "scholars": "Giovani Studiosi (14 - 16 anni)"
+    "scholars": "Giovani Studiosi (14 - 16 anni)",
+    "sproutsTagline": "Apprendimento giocoso attraverso colori, giochi e canzoni",
+    "sproutsDesc": "Lezioni gioiose incentrate sul riconoscimento delle lettere, la pronuncia e il movimento interattivo.",
+    "explorersTagline": "Alla scoperta di storie, vocabolario e lettura",
+    "explorersDesc": "Costruire sicurezza nella lettura di testi semplici, ortografia corretta e primi passi nel Tajweed.",
+    "navigatorsTagline": "Competenza linguistica e conversazione sicura",
+    "navigatorsDesc": "Frasi complesse, discussioni di gruppo e padronanza della recitazione coranica applicata.",
+    "scholarsTagline": "Eloquenza, retorica e public speaking",
+    "scholarsDesc": "Lettura di testi letterari, eloquenza classica semplificata e conversazione avanzata con memorizzazione (Hifz)."
   },
   "pricing": {
     "tag": "Piani Flessibili",
@@ -253,5 +268,208 @@
     "applyErrorRateLimited": "Troppi invii. Attendi un momento e riprova.",
     "applyErrorServer": "Non siamo riusciti a inviare la tua candidatura. Riprova o scrivici direttamente via email.",
     "trustBadge": "Scelto da scuole islamiche, centri comunitari e cooperative di homeschooling certificati"
+  },
+  "programsCatalog": {
+    "backToHome": "Torna alla Home",
+    "tracksLabel": "7 Percorsi Accademici Accreditati",
+    "enrollCta": "Iscriviti alle Lezioni 🎓",
+    "syllabiTag": "Programmi e Moduli Accreditati",
+    "progressionTitle": "Progressione Accademica e Obiettivi di Apprendimento Settimanali",
+    "modulesLabel": "Moduli Didattici Dettagliati",
+    "weeksLabel": "Settimane",
+    "moduleLabel": "Modulo",
+    "objectivesLabel": "Obiettivi Formativi Principali:",
+    "targetLabel": "Obiettivo:",
+    "wordsLabel": "Parole",
+    "ageSproutsLabel": "Germogli (4-6)",
+    "ageExplorersLabel": "Esploratori (7-10)",
+    "ageNavigatorsLabel": "Navigatori (11-13)",
+    "studiosTag": "Studi di Apprendimento Interattivo Integrati",
+    "studiosTitle": "Studi Interattivi dal Vivo a Supporto di Questo Percorso",
+    "studiosSubtitle": "Gli studenti iscritti ricevono accesso immediato e illimitato a questi strumenti",
+    "exploreStudioCta": "Esplora lo Studio",
+    "cohortsTag": "Gruppi Attivi Disponibili per l'Iscrizione",
+    "cohortsTitle": "Scegli il Gruppo per tuo Figlio (Massimo 6 Posti)",
+    "viewAllCta": "Visualizza Tutti i 7 Gruppi dei Percorsi",
+    "microGroupLabel": "Micro-Gruppo (max 6)",
+    "privateLabel": "Privato (1 a 1)",
+    "enrollmentOpenLabel": "Iscrizioni Aperte",
+    "cohortDescriptionGeneric": "Curriculum accreditato incentrato sull'interazione attiva con insegnanti certificati.",
+    "leadInstructorLabel": "Insegnante Responsabile",
+    "certifiedFacultyLabel": "Docente Certificato",
+    "reserveSeatCta": "Prenota il Posto",
+    "cefrStandardsBadge": "Calibrato sugli Standard CEFR",
+    "liveSessionsBadge": "Sessioni Video Interattive Live Settimanali",
+    "progressReportsBadge": "Report Settimanali Dettagliati per i Genitori",
+    "microCohortsBadge": "Micro-Gruppi (Massimo 6 Studenti)",
+    "meta": {
+      "prog-foundations": {
+        "targetAges": "Età 4 - 8",
+        "studio1Title": "Sala Giochi Fonetica",
+        "studio1Desc": "28 lettere arabe con vocali brevi e puzzle arcade",
+        "studio2Title": "Vocabolario SRS",
+        "studio2Desc": "Carte Leitner intelligenti per alfabeto e prime parole"
+      },
+      "prog-reading": {
+        "targetAges": "Età 7 - 12",
+        "studio1Title": "Mappa dell'Avventura Visiva",
+        "studio1Desc": "10 tappe di lettura in 5 biomi interattivi",
+        "studio2Title": "Storie Illustrate",
+        "studio2Desc": "Libri vocalizzati con audio madrelingua e quiz"
+      },
+      "prog-writing": {
+        "targetAges": "Età 7 - 14",
+        "studio1Title": "Lavagna Naskh Rigata",
+        "studio1Desc": "Tela di calligrafia rigata per la meccanica del tratto",
+        "studio2Title": "Centro Stampabili",
+        "studio2Desc": "Schede A4 stampabili con verifica QR"
+      },
+      "prog-speaking": {
+        "targetAges": "Età 6 - 15",
+        "studio1Title": "Tutor IA Faseeh",
+        "studio1Desc": "Dialoghi orali interattivi con tutor IA basato su CEFR",
+        "studio2Title": "Studio delle Forme d'Onda Vocali",
+        "studio2Desc": "Corrispondenza dell'intonazione e feedback acustico"
+      },
+      "prog-listening": {
+        "targetAges": "Età 4 - 11",
+        "studio1Title": "Coppie Minime Uditive",
+        "studio1Desc": "Discriminazione acustica dei fonemi enfatici e leggeri",
+        "studio2Title": "Narrazioni Audio",
+        "studio2Desc": "Storie audio cristalline con comprensione della trama"
+      },
+      "prog-quran": {
+        "targetAges": "Età 5 - 16",
+        "studio1Title": "Studio Tajweed a Codifica Cromatica",
+        "studio1Desc": "Mushaf Uthmani con regole Tajweed colorate e registratore audio",
+        "studio2Title": "Sistema di Ritenzione Hifz",
+        "studio2Desc": "Monitoraggio preciso della memorizzazione del Juz Amma con Qira'at certificata"
+      },
+      "prog-islamic": {
+        "targetAges": "Età 5 - 15",
+        "studio1Title": "Seerah Illustrata",
+        "studio1Desc": "Tappe ispiratrici della vita del Profeta ﷺ e dei Profeti",
+        "studio2Title": "Adab ed Etica Islamica",
+        "studio2Desc": "Dilemmi morali interattivi su onestà, gentilezza e integrità"
+      }
+    }
+  },
+  "termsPage": {
+    "badge": "Termini di Servizio",
+    "title": "Termini di Servizio",
+    "lastUpdated": "Ultimo aggiornamento: settembre 2026",
+    "highlights": {
+      "billingTitle": "Abbonamento e Fatturazione",
+      "billingDesc": "Gli abbonamenti si rinnovano automaticamente a ogni ciclo di fatturazione tramite il nostro fornitore di pagamenti, Stripe, e possono essere annullati in qualsiasi momento.",
+      "refundTitle": "Garanzia di Rimborso di 14 Giorni",
+      "refundDesc": "Offriamo un rimborso completo e incondizionato entro i primi 14 giorni di qualsiasi nuovo abbonamento.",
+      "conductTitle": "Codice di Condotta in Classe",
+      "conductDesc": "Un ambiente fondato sul rispetto reciproco e sull'incoraggiamento positivo tra insegnanti, studenti e genitori."
+    },
+    "sections": {
+      "s1": {
+        "title": "1. Chi Siamo e Accettazione dei Presenti Termini",
+        "body": "I presenti Termini di Servizio costituiscono un accordo tra te — il genitore o tutore che crea e gestisce l'account — e 3-Tech (\"noi\"), con sede a Groningen, Paesi Bassi, che gestisce Arabic Kids Academy all'indirizzo arabickidsacademy.com. Creando un account o sottoscrivendo un piano, accetti i presenti termini."
+      },
+      "s2": {
+        "title": "2. Idoneità e Account dei Genitori",
+        "body": "Tutti gli account devono essere creati e gestiti da un genitore o tutore legale (di età pari o superiore a 18 anni). Il genitore è responsabile dell'accuratezza delle informazioni fornite e della supervisione dell'uso della piattaforma da parte del proprio figlio."
+      },
+      "s3": {
+        "title": "3. Il Servizio",
+        "body": "Offriamo lezioni online in piccoli gruppi (fino a 6 studenti) o individuali in sette percorsi di apprendimento (Basi dell'Arabo, Lettura, Scrittura, Conversazione, Ascolto, Corano e Tajweed, e Studi Islamici), tenute da insegnanti certificati abbinati alla fascia d'età del bambino."
+      },
+      "s4": {
+        "title": "4. Piani di Abbonamento, Fatturazione e Rinnovo",
+        "body": "I piani e i relativi prezzi sono mostrati al momento del pagamento e fatturati in USD tramite il nostro fornitore di pagamenti, Stripe. Gli abbonamenti si rinnovano automaticamente a ogni periodo di fatturazione salvo disdetta. In caso di variazione dei prezzi, ti avviseremo prima del rinnovo successivo."
+      },
+      "s5": {
+        "title": "5. Disdetta",
+        "body": "Puoi disdire il tuo abbonamento in qualsiasi momento inviando un'email a privacy@arabickidsacademy.com, ed elaboreremo la tua richiesta entro due giorni lavorativi. Il tuo accesso rimane attivo fino alla fine del periodo di fatturazione già pagato, senza costi aggiuntivi e senza rimborso parziale per i giorni non utilizzati (fatta eccezione per la garanzia di 14 giorni descritta di seguito)."
+      },
+      "s6": {
+        "title": "6. Politica di Rimborso",
+        "body": "Offriamo un rimborso completo e incondizionato se richiedi la disdetta entro i primi 14 giorni di qualsiasi nuovo abbonamento."
+      },
+      "s7": {
+        "title": "7. Codice di Condotta",
+        "body": "Ci aspettiamo che tutti gli insegnanti, gli studenti e i genitori agiscano con rispetto reciproco e condotta appropriata. Possiamo sospendere o chiudere qualsiasi account che violi questo codice o venga utilizzato in modo abusivo o fraudolento."
+      },
+      "s8": {
+        "title": "8. Proprietà Intellettuale",
+        "body": "Tutti i programmi didattici, i materiali di apprendimento, le registrazioni e i marchi utilizzati su Arabic Kids Academy sono di proprietà intellettuale esclusiva di 3-Tech e non possono essere copiati o ridistribuiti a fini commerciali senza previa autorizzazione scritta."
+      },
+      "s9": {
+        "title": "9. Limitazione di Responsabilità",
+        "body": "Nella misura massima consentita dalla legge applicabile, 3-Tech non è responsabile per eventuali danni indiretti, incidentali o consequenziali derivanti dall'uso della piattaforma, fatti salvi eventuali diritti inderogabili del consumatore previsti dalla legge del tuo paese di residenza."
+      },
+      "s10": {
+        "title": "10. Legge Applicabile e Risoluzione delle Controversie",
+        "body": "I presenti Termini sono disciplinati e interpretati in conformità con le leggi dei Paesi Bassi, ed eventuali controversie da essi derivanti sono soggette alla giurisdizione dei tribunali olandesi competenti, fatti salvi eventuali diritti inderogabili di tutela del consumatore di cui godi ai sensi della legge del tuo paese di residenza."
+      },
+      "s11": {
+        "title": "11. Modifiche ai Presenti Termini",
+        "body": "Potremmo aggiornare periodicamente i presenti Termini. Le modifiche sostanziali saranno pubblicate qui con una nuova data di decorrenza e ti informeremo via email delle modifiche che incidono in modo sostanziale sul tuo abbonamento."
+      },
+      "s12": {
+        "title": "12. Contattaci",
+        "body": "Per qualsiasi domanda su questi Termini, contattaci all'indirizzo compliance@arabickidsacademy.com. 3-Tech — Groningen, Paesi Bassi."
+      }
+    }
+  },
+  "privacyPage": {
+    "badge": "Basato sui Principi COPPA e GDPR-K",
+    "title": "Politica sulla Sicurezza dei Minori e sulla Privacy",
+    "lastUpdated": "Ultimo aggiornamento: settembre 2026",
+    "safety": {
+      "adFreeTitle": "100% Senza Pubblicità",
+      "adFreeDesc": "Non mostriamo alcuna pubblicità e non vendiamo mai i dati di tuo figlio né li utilizziamo per finalità pubblicitarie o di marketing da parte di terzi.",
+      "recordingsTitle": "Accesso Limitato alle Registrazioni",
+      "recordingsDesc": "Gli audio di recitazione e dei compiti vengono utilizzati esclusivamente per la valutazione dell'apprendimento e sono accessibili solo all'insegnante assegnato a tuo figlio e al personale scolastico autorizzato.",
+      "parentControlTitle": "Account Controllati dai Genitori",
+      "parentControlDesc": "Il profilo di un bambino può essere creato, visualizzato o gestito solo tramite un account genitore o tutore verificato e autenticato."
+    },
+    "sections": {
+      "s1": {
+        "title": "1. Chi Gestisce Questo Servizio",
+        "body": "Arabic Kids Academy (arabickidsacademy.com) è gestita da 3-Tech, con sede a Groningen, Paesi Bassi. 3-Tech è il \"titolare del trattamento\" responsabile delle informazioni personali descritte nella presente politica ed è raggiungibile all'indirizzo privacy@arabickidsacademy.com."
+      },
+      "s2": {
+        "title": "2. Il Nostro Impegno per la Privacy dei Minori (COPPA e GDPR)",
+        "body": "Ogni bambino di età inferiore a 13 anni è coperto dalla legge statunitense Children's Online Privacy Protection Act (COPPA), che richiede il consenso genitoriale verificabile prima di raccogliere qualsiasi dato personale. Ai sensi dell'articolo 8 del Regolamento Generale sulla Protezione dei Dati (GDPR) dell'UE, l'età predefinita alla quale un minore può prestare autonomamente il proprio consenso è 16 anni, sebbene i singoli Stati membri dell'UE possano abbassarla fino a 13 anni. Per mantenere uno standard di protezione coerente indipendentemente dal paese di residenza della famiglia, applichiamo 16 anni come soglia unica su tutta la piattaforma: nessun minore può registrarsi autonomamente. Ogni profilo di un bambino può essere creato solo da un genitore o tutore che prima accede al proprio account adulto verificato e poi aggiunge il proprio figlio. Tale azione — un account genitore autenticato che aggiunge un profilo minore — è il meccanismo con cui otteniamo e registriamo il consenso genitoriale."
+      },
+      "s3": {
+        "title": "3. Informazioni che Raccogliamo",
+        "body": "Dal genitore: nome, indirizzo email, numero di telefono e indirizzo di fatturazione (per l'emissione di fatture fiscali). Non riceviamo mai direttamente i dati della tua carta — i pagamenti sono gestiti interamente dal nostro fornitore di pagamenti, Stripe. Sul bambino (inseriti dal genitore): nome e cognome, data di nascita, fascia d'età, lingua madre e campi facoltativi come genere o nazionalità. Dati di apprendimento: presenza alle lezioni, compiti consegnati, risultati delle valutazioni e registrazioni audio degli esercizi di recitazione o pronuncia. Dati tecnici: indirizzo IP e informazioni sul browser, registrati esclusivamente per la sicurezza dell'account e la prevenzione delle frodi. Le note interne degli insegnanti sui progressi di uno studente sono visibili esclusivamente agli insegnanti autorizzati e agli amministratori scolastici di quello studente — mai ad altri genitori o altri studenti."
+      },
+      "s4": {
+        "title": "4. Come Utilizziamo Queste Informazioni",
+        "body": "Utilizziamo queste informazioni esclusivamente per erogare le lezioni e monitorare i progressi di apprendimento, elaborare il tuo abbonamento e le fatture, comunicare con te riguardo al tuo account, mantenere sicura la piattaforma e prevenire abusi, e rispettare gli obblighi legali o contabili applicabili."
+      },
+      "s5": {
+        "title": "5. Con Chi Condividiamo le Informazioni",
+        "body": "Stripe — esclusivamente per l'elaborazione dei pagamenti (certificato PCI-DSS); Stripe non riceve mai i dati di apprendimento di tuo figlio. I fornitori di hosting e database che gestiscono la piattaforma (attualmente Vercel e Neon). Non vendiamo i tuoi dati personali e non li condividiamo con reti pubblicitarie o data broker. Qualsiasi trasferimento di dati al di fuori dei Paesi Bassi o dell'UE (ad esempio ai fornitori con sede negli Stati Uniti sopra indicati) si basa su garanzie adeguate, come le clausole contrattuali standard di tali fornitori."
+      },
+      "s6": {
+        "title": "6. Conservazione dei Dati",
+        "body": "Conserviamo i dati dell'account e di apprendimento per tutto il tempo in cui l'account rimane attivo. Se chiudi il tuo account o richiedi la cancellazione, elimineremo o renderemo anonimi i tuoi dati personali entro 90 giorni, ad eccezione dei registri di fatturazione che la normativa fiscale e contabile potrebbe richiederci di conservare più a lungo."
+      },
+      "s7": {
+        "title": "7. I Tuoi Diritti come Genitore",
+        "body": "Puoi in qualsiasi momento richiedere l'accesso ai dati di tuo figlio, chiederne la correzione, richiederne una copia o richiederne la cancellazione permanente (\"il diritto all'oblio\") inviando un'email a privacy@arabickidsacademy.com. Risponderemo entro un mese al massimo, come richiesto dall'articolo 12 del GDPR. Puoi inoltre revocare in qualsiasi momento il tuo consenso al trattamento dei dati di tuo figlio richiedendo la chiusura del tuo account."
+      },
+      "s8": {
+        "title": "8. Sicurezza dei Minori fin dalla Progettazione",
+        "body": "Nessun profilo di un bambino può esistere senza un account genitore attivo. I bambini non possono modificare autonomamente le impostazioni dell'account, di fatturazione o del profilo. Qualsiasi comunicazione relativa alle lezioni avviene sotto la supervisione dell'insegnante assegnato."
+      },
+      "s9": {
+        "title": "9. Modifiche alla Presente Politica",
+        "body": "Potremmo aggiornare periodicamente questa politica. Le modifiche sostanziali saranno pubblicate qui con una nuova data di decorrenza, e informeremo il genitore titolare dell'account via email se una modifica influisce sul modo in cui utilizziamo i dati di suo figlio."
+      },
+      "s10": {
+        "title": "10. Contattaci",
+        "body": "Per qualsiasi domanda o richiesta relativa alla privacy o alla sicurezza dei minori, contattaci all'indirizzo privacy@arabickidsacademy.com o compliance@arabickidsacademy.com. 3-Tech — Groningen, Paesi Bassi."
+      }
+    }
   }
 }

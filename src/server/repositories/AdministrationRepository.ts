@@ -37,7 +37,9 @@ export interface CurriculumModule {
   titleAr: string;
   titleEn: string;
   descriptionAr: string;
+  descriptionEn: string;
   weeklyObjectivesAr: string[];
+  weeklyObjectivesEn: string[];
   targetVocabularyCount: number;
   durationWeeks: number;
 }
@@ -127,10 +129,16 @@ class AdministrationRepository {
         titleAr: "وحدة الحروف الهجائية بالحركات الثلاث",
         titleEn: "Alphabet with Primary Harakat",
         descriptionAr: "التعرف على أشكال الحروف (أ - ي) مع حركات الفتحة والضمة والكسرة ونطقها السليم.",
+        descriptionEn: "Recognizing letter shapes (alif to yaa) with fatha, damma, and kasra vowel marks and their correct pronunciation.",
         weeklyObjectivesAr: [
           "تمييز رسم الحروف المنفصلة والمتصلة",
           "نطق الحرف بالحركات القصيرة نطقاً صحيحاً",
           "ربط الحرف بصور لمفردات مألوفة من بيئة الطفل",
+        ],
+        weeklyObjectivesEn: [
+          "Distinguishing between separated and connected letter forms",
+          "Pronouncing letters with short vowel marks correctly",
+          "Linking each letter to pictures of familiar vocabulary from the child's environment",
         ],
         targetVocabularyCount: 50,
         durationWeeks: 4,
@@ -147,10 +155,16 @@ class AdministrationRepository {
         titleAr: "أشكال الحروف في أول ووسط وآخر الكلمة",
         titleEn: "Letter Forms in Initial, Medial & Final Positions",
         descriptionAr: "تدريب بصري وحركي على تغير رسم الحرف حسب موضعه في الكلمة وقراءة مقاطع ثنائية مشكولة.",
+        descriptionEn: "Visual and motor training on how a letter's shape changes based on its position in a word, and reading two-letter vocalized syllables.",
         weeklyObjectivesAr: [
           "التعرف على تغير شكل الحرف حسب موقعه في الكلمة",
           "وصل الحروف ثنائية وثلاثية المقاطع بطلاقة",
           "رسم الحرف بالاتجاه السليم على الشاشة والورق",
+        ],
+        weeklyObjectivesEn: [
+          "Recognizing how a letter's shape changes based on its position in a word",
+          "Joining two- and three-letter syllables fluently",
+          "Writing the letter in the correct stroke direction on screen and paper",
         ],
         targetVocabularyCount: 75,
         durationWeeks: 4,
@@ -167,10 +181,16 @@ class AdministrationRepository {
         titleAr: "الحركات الطويلة والمدود والسكون",
         titleEn: "Long Vowels, Madd Letters & Sukoon",
         descriptionAr: "التفريق السمعي والبصري بين الحركات القصيرة والمدود الثلاثة وإتقان نطق السكون.",
+        descriptionEn: "Auditory and visual differentiation between short vowels and the three long vowels, and mastering the pronunciation of sukoon.",
         weeklyObjectivesAr: [
           "التفريق بين الحركات القصيرة والمدود الثلاثة (ا، و، ي)",
           "نطق مقطع المد والممدود بوضوح وسلاسة",
           "قراءة وتهجئة كلمات ثلاثية ورباعية تحوي سكوناً",
+        ],
+        weeklyObjectivesEn: [
+          "Distinguishing between short vowels and the three long vowels (alif, waw, yaa)",
+          "Pronouncing the elongated (madd) syllable clearly and smoothly",
+          "Reading and spelling three- and four-letter words containing a sukoon",
         ],
         targetVocabularyCount: 90,
         durationWeeks: 4,
@@ -189,10 +209,16 @@ class AdministrationRepository {
         titleAr: "المدود والتنوين وقراءة الجمل القصيرة",
         titleEn: "Madd, Tanween & Short Sentences",
         descriptionAr: "إتقان المدود الثلاثة (الألف والواو والياء) والتنوين والبدء بقراءة قصص مصورة مبسطة.",
+        descriptionEn: "Mastering the three long vowels (alif, waw, yaa) and tanween, and beginning to read simplified illustrated stories.",
         weeklyObjectivesAr: [
           "التفريق بين الحركة القصيرة والمد الطويل",
           "قراءة كلمات مشكولة تحوي تنويناً بالفتح والضم والكسر",
           "قراءة جملة مفيدة مكونة من 3-4 كلمات بطلاقة",
+        ],
+        weeklyObjectivesEn: [
+          "Distinguishing between a short vowel and a long elongation (madd)",
+          "Reading vocalized words containing fathatain, dammatain, and kasratain",
+          "Reading a meaningful 3-4 word sentence fluently",
         ],
         targetVocabularyCount: 120,
         durationWeeks: 6,
@@ -209,10 +235,16 @@ class AdministrationRepository {
         titleAr: "اللام الشمسية والقمرية والحرف المشدد والوصل",
         titleEn: "Solar/Lunar Lam, Shaddah & Reading Flow",
         descriptionAr: "الارتقاء بالطلاقة القرائية عبر تمييز اللام الشمسية والقمرية ونطق الشدة وهمزة الوصل.",
+        descriptionEn: "Advancing reading fluency by distinguishing the solar and lunar lam, and pronouncing shaddah and hamzat al-wasl.",
         weeklyObjectivesAr: [
           "تمييز اللام الشمسية واللام القمرية نطقاً وكتابة",
           "قراءة الكلمات المشددة بسلاسة ودون تقطع",
           "قراءة فقرة مشكولة من 30 كلمة بسرعة 40 كلمة في الدقيقة",
+        ],
+        weeklyObjectivesEn: [
+          "Distinguishing the solar lam from the lunar lam in pronunciation and writing",
+          "Reading shaddah (doubled) letters smoothly and without hesitation",
+          "Reading a vocalized 30-word passage at a speed of 40 words per minute",
         ],
         targetVocabularyCount: 150,
         durationWeeks: 6,
@@ -229,10 +261,16 @@ class AdministrationRepository {
         titleAr: "فهم المقروء واستنتاج المعاني في القصص المصورة",
         titleEn: "Reading Comprehension & Literary Deduction",
         descriptionAr: "القراءة التحليلية للنصوص الأدبية وقصص الأطفال واستخلاص الدروس والقيم المستفادة.",
+        descriptionEn: "Analytical reading of literary texts and children's stories, drawing out lessons and values.",
         weeklyObjectivesAr: [
           "القراءة المعبرة الممثلة للمعنى مع مراعاة علامات الوقف والترقيم",
           "استنتاج الفكرة الرئيسة والمغزى الأخلاقي للنص الأدبي",
           "الإجابة الشفوية والكتابية عن أسئلة الفهم القرائي الاستنتاجية",
+        ],
+        weeklyObjectivesEn: [
+          "Expressive reading that conveys meaning while observing punctuation and pause marks",
+          "Deducing the main idea and moral of a literary text",
+          "Answering inferential reading-comprehension questions orally and in writing",
         ],
         targetVocabularyCount: 200,
         durationWeeks: 8,
@@ -251,10 +289,16 @@ class AdministrationRepository {
         titleAr: "ضبط رسم الحروف على السطر ومسكة القلم",
         titleEn: "Baseline Stroke Mechanics & Pen Grip",
         descriptionAr: "تدريب الطالب على القواعد الهندسية لخط النسخ والحفاظ على استقرار الحروف على السطر.",
+        descriptionEn: "Training the student in the geometric rules of Naskh script and maintaining stable letter placement on the baseline.",
         weeklyObjectivesAr: [
           "التمييز بين الحروف المستقرة على السطر والنازلة عنه",
           "مراعاة المسافات المتساوية بين الكلمات والحروف",
           "التدريب على زاوية مسك القلم السليمة وضبط حجم الحرف",
+        ],
+        weeklyObjectivesEn: [
+          "Distinguishing between letters that sit on the baseline and those that descend below it",
+          "Maintaining even spacing between words and letters",
+          "Practicing correct pen-grip angle and consistent letter sizing",
         ],
         targetVocabularyCount: 90,
         durationWeeks: 4,
@@ -271,10 +315,16 @@ class AdministrationRepository {
         titleAr: "قواعد خط النسخ والتركيب الإنشائي",
         titleEn: "Naskh Penmanship & Sentence Composition",
         descriptionAr: "تحسين جودة رسم الحروف على السطر وكتابة فقرات قصيرة تعبر عن اهتمامات الطفل.",
+        descriptionEn: "Improving the quality of letter formation on the baseline and writing short paragraphs expressing the child's own interests.",
         weeklyObjectivesAr: [
           "مراعاة الحروف المستقرة على السطر والنازلة عنه في الجمل المركبة",
           "كتابة جمل تشتمل على أدوات الربط (و، ثم، فـ) وعلامات الترقيم",
           "تأليف قصة قصيرة من 3 أسطر بالاستعانة بمشاهد مصورة",
+        ],
+        weeklyObjectivesEn: [
+          "Maintaining baseline and descender letters correctly within compound sentences",
+          "Writing sentences using connecting words (and, then, so) and punctuation marks",
+          "Composing a 3-line short story with the help of picture prompts",
         ],
         targetVocabularyCount: 140,
         durationWeeks: 6,
@@ -291,10 +341,16 @@ class AdministrationRepository {
         titleAr: "التعبير الكتابي وتأليف القصص والمقالات المصغرة",
         titleEn: "Creative Writing & Narrative Essay Composition",
         descriptionAr: "صياغة نصوص نثرية متكاملة تتضمن مقدمة وعقدة وخاتمة مع إثراء المعجم التعبيري.",
+        descriptionEn: "Composing complete prose texts with an introduction, development, and conclusion, while enriching expressive vocabulary.",
         weeklyObjectivesAr: [
           "صياغة قصة خيالية أو واقعية مكتملة العناصر الفنية",
           "توظيف النعوت والأوصاف البلاغية لإثراء المشهد السردي",
           "مراجعة النص ذاتياً وتصحيح الأخطاء الإملائية والنحوية الشائعة",
+        ],
+        weeklyObjectivesEn: [
+          "Composing a complete fictional or true story with well-formed narrative elements",
+          "Using descriptive adjectives and rhetorical devices to enrich the narrative",
+          "Self-reviewing a text and correcting common spelling and grammatical errors",
         ],
         targetVocabularyCount: 180,
         durationWeeks: 6,
@@ -313,10 +369,16 @@ class AdministrationRepository {
         titleAr: "التعارف والأسرة والأنشطة اليومية",
         titleEn: "Greetings, Family & Daily Routines",
         descriptionAr: "تدريب الطالب على الحوار التفاعلي باللغة العربية الفصحى البسيطة حول محيطه اليومي.",
+        descriptionEn: "Training the student in interactive dialogue using simple Modern Standard Arabic about their daily surroundings.",
         weeklyObjectivesAr: [
           "تقديم النفس والحديث عن العمر والهوايات والأسرة",
           "إجراء حوار قصير مع المعلم والزملاء بالسؤال والجواب",
           "التعبير عن المشاعر والمواقف الحياتية بطلاقة وثقة",
+        ],
+        weeklyObjectivesEn: [
+          "Introducing themselves and talking about age, hobbies, and family",
+          "Holding a short question-and-answer dialogue with the teacher and classmates",
+          "Expressing feelings and everyday situations fluently and confidently",
         ],
         targetVocabularyCount: 150,
         durationWeeks: 4,
@@ -333,10 +395,16 @@ class AdministrationRepository {
         titleAr: "الحوارات الحياتية: في المدرسة والسوق والرحلات",
         titleEn: "Situational Dialogues: School, Market & Travel",
         descriptionAr: "محاكاة مواقف واقعية باللغة الفصحى لتمكين الطالب من التحدث التلقائي دون تردد.",
+        descriptionEn: "Simulating real-life situations in Modern Standard Arabic to enable the student to speak spontaneously and without hesitation.",
         weeklyObjectivesAr: [
           "إدارة حوار مكتمل في المتجر وطلب السلع والاستفسار عن الأسعار",
           "وصف معالم رحلة أو نزهة والتعبير عما شاهده الطالب",
           "استخدام أساليب الاستفهام والتعجب والنهي بطلاقة في الحديث",
+        ],
+        weeklyObjectivesEn: [
+          "Conducting a complete dialogue in a shop, ordering items, and asking about prices",
+          "Describing the sights of a trip or outing and expressing what was observed",
+          "Using question, exclamation, and prohibition forms fluently in conversation",
         ],
         targetVocabularyCount: 190,
         durationWeeks: 6,
@@ -353,10 +421,16 @@ class AdministrationRepository {
         titleAr: "العرض والتقديم والتعبير عن الرأي والمناظرات",
         titleEn: "Public Speaking, Debates & Reasoned Discourse",
         descriptionAr: "تنمية مهارات الإلقاء الخطابي والمناظرة الودية والتعبير عن الآراء بأسلوب مقنع.",
+        descriptionEn: "Developing public-speaking and friendly-debate skills, and expressing opinions persuasively.",
         weeklyObjectivesAr: [
           "إلقاء كلمة قصيرة لمدة دقيقتين أمام الفصل بثقة تامة",
           "المشاركة في مناظرة طلابية مع إيراد الحجج والبراهين بأدب",
           "استخدام نبرات الصوت المناسبة للمواقف والتعبير الجسدي الملائم",
+        ],
+        weeklyObjectivesEn: [
+          "Delivering a confident two-minute talk in front of the class",
+          "Participating in a student debate, presenting arguments and evidence courteously",
+          "Using appropriate tone of voice and body language for different situations",
         ],
         targetVocabularyCount: 220,
         durationWeeks: 6,
@@ -375,10 +449,16 @@ class AdministrationRepository {
         titleAr: "الاستماع للقصص الصوتية وتمييز الأصوات",
         titleEn: "Story Listening & Phonemic Discrimination",
         descriptionAr: "تنمية حاسة الاستماع وتمييز مخارج الحروف المتشابهة من خلال حكايات مصورة ومسموعة.",
+        descriptionEn: "Developing listening skills and distinguishing similar letter sounds through illustrated audio stories.",
         weeklyObjectivesAr: [
           "التمييز السمعي بين الأصوات المتقاربة (س/ص، ت/ط، د/ض)",
           "استخلاص الفكرة الرئيسة من قصة مسموعة لا تتجاوز دقيقتين",
           "الإجابة الشفوية عن أسئلة الفهم الاستماعي المباشرة",
+        ],
+        weeklyObjectivesEn: [
+          "Auditory discrimination between similar sounds (s/ṣ, t/ṭ, d/ḍ)",
+          "Extracting the main idea from an audio story no longer than two minutes",
+          "Answering direct listening-comprehension questions orally",
         ],
         targetVocabularyCount: 80,
         durationWeeks: 4,
@@ -395,10 +475,16 @@ class AdministrationRepository {
         titleAr: "الاستماع للقصص وتتبع التعليمات المركبة",
         titleEn: "Narrative Listening & Following Multi-Step Instructions",
         descriptionAr: "تدريب الطالب على التركيز السمعي واستيعاب الأوامر التعليمية المتتابعة بدقة.",
+        descriptionEn: "Training the student in auditory focus and accurately following sequential instructions.",
         weeklyObjectivesAr: [
           "تنفيذ سلسلة تعليمات مسموعة مكونة من 3 خطوات متتابعة",
           "تحديد تسلسل أحداث الحكاية المسموعة من البداية إلى النهاية",
           "التعرف على انفعالات المتحدثين من خلال نبرة الصوت المسموعة",
+        ],
+        weeklyObjectivesEn: [
+          "Carrying out a sequence of 3 consecutive spoken instructions",
+          "Identifying the order of events in a story from beginning to end",
+          "Recognizing speakers' emotions through their tone of voice",
         ],
         targetVocabularyCount: 130,
         durationWeeks: 6,
@@ -415,10 +501,16 @@ class AdministrationRepository {
         titleAr: "التحليل السمعي وتلخيص الأفكار والحوارات",
         titleEn: "Auditory Analysis & Spoken Dialogue Summaries",
         descriptionAr: "الاستماع لنصوص وثائقية وحوارات مسجلة وإعادة تلخيصها بأسلوب الطالب الخاص.",
+        descriptionEn: "Listening to documentary texts and recorded dialogues and summarizing them in the student's own words.",
         weeklyObjectivesAr: [
           "استخلاص الحقائق والأرقام والمعلومات الواردة في مقطع صوتي",
           "إعادة سرد قصة مسموعة في 3 جمل محكمة بأسلوب الطالب الخاص",
           "إبداء الرأي ونقد سلوك شخصيات الحوار المسموع بموضوعية",
+        ],
+        weeklyObjectivesEn: [
+          "Extracting facts, figures, and information from an audio clip",
+          "Retelling a heard story in 3 well-formed sentences in the student's own style",
+          "Objectively expressing an opinion and critiquing the behavior of dialogue characters",
         ],
         targetVocabularyCount: 170,
         durationWeeks: 6,
@@ -437,10 +529,16 @@ class AdministrationRepository {
         titleAr: "حفظ قصار السور وأحكام النون الساكنة والقلقلة",
         titleEn: "Short Surahs, Noon Sakinah & Qalqalah",
         descriptionAr: "حفظ وتثبيت جزء عم مع التطبيق العملي لمخارج الحروف وأحكام الإظهار والإدغام والقلقلة.",
+        descriptionEn: "Memorizing and consolidating Juz Amma with practical application of correct articulation points and the rules of idhar, idgham, and qalqalah.",
         weeklyObjectivesAr: [
           "حفظ السور من سورة الناس إلى سورة العاديات متقنة",
           "تطبيق حكم القلقلة في حروف (قطب جد) عند الوقف والوصل",
           "تطبيق أحكام النون الساكنة والتنوين (الإظهار الحلقي)",
+        ],
+        weeklyObjectivesEn: [
+          "Mastering memorization of the surahs from An-Nas to Al-Adiyat",
+          "Applying the rule of qalqalah on its designated letters when pausing and continuing",
+          "Applying the rules of noon sakinah and tanween (idhar halqi)",
         ],
         targetVocabularyCount: 100,
         durationWeeks: 8,
@@ -457,10 +555,16 @@ class AdministrationRepository {
         titleAr: "أحكام النون الساكنة والتنوين (الإدغام والإقلاب والإخفاء)",
         titleEn: "Noon Sakinah Rules: Idgham, Iqlab & Ikhfa",
         descriptionAr: "إتقان الأحكام الأربعة للنون الساكنة والتنوين وتطبيق الغنة بمقدار حركتين في التلاوة.",
+        descriptionEn: "Mastering the four rules of noon sakinah and tanween, and applying ghunnah for a duration of two counts during recitation.",
         weeklyObjectivesAr: [
           "تطبيق الإدغام بقسميه (بغنة في حروف ينمو، وبغير غنة في ل، ر)",
           "تطبيق حكم الإقلاب مع الميم الصغيرة والإخفاء الحقيقي في 15 حرفاً",
           "حفظ وتثبيت السور من سورة القارعة إلى سورة النبأ بأحكامها",
+        ],
+        weeklyObjectivesEn: [
+          "Applying both types of idgham (with ghunnah for the designated letters, and without for l and r)",
+          "Applying the rule of iqlab with the small meem, and true ikhfa across its 15 letters",
+          "Memorizing and consolidating the surahs from Al-Qari'ah to An-Naba with their rules",
         ],
         targetVocabularyCount: 130,
         durationWeeks: 8,
@@ -477,10 +581,16 @@ class AdministrationRepository {
         titleAr: "أحكام الميم الساكنة وأنواع المدود وتثبيت جزء عم",
         titleEn: "Meem Sakinah, Madd Varieties & Full Juz Amma Mastery",
         descriptionAr: "دراسة أحكام الميم الساكنة وضبط مقادير المدود المتصلة والمنفصلة واللازمة وحفظ جزء عم كاملاً.",
+        descriptionEn: "Studying the rules of meem sakinah, mastering the durations of connected, separate, and obligatory madd, and fully memorizing Juz Amma.",
         weeklyObjectivesAr: [
           "تطبيق أحكام الميم الساكنة الثلاثة (الإخفاء والإدغام والإظهار الشفوي)",
           "تمييز مقادير المدود وضبط المد الطبيعي حركتين والفرعي 4-5 حركات",
           "سرد سورة كاملة غيباً أمام المعلم مع مراعاة علامات الوقف والابتداء",
+        ],
+        weeklyObjectivesEn: [
+          "Applying the three rules of meem sakinah (ikhfa shafawi, idgham, and idhar shafawi)",
+          "Distinguishing madd durations and applying natural madd (2 counts) and secondary madd (4-5 counts)",
+          "Reciting a complete surah from memory in front of the teacher, observing pause and start points",
         ],
         targetVocabularyCount: 160,
         durationWeeks: 8,
@@ -499,10 +609,16 @@ class AdministrationRepository {
         titleAr: "أركان الإسلام وسيرة نبينا محمد ﷺ",
         titleEn: "Pillars of Islam & Seerah of Prophet Muhammad (PBUH)",
         descriptionAr: "غرس محبة النبي ﷺ وتطبيق الآداب الإسلامية اليومية (بر الوالدين، الأمانة، الصدق).",
+        descriptionEn: "Instilling love for the Prophet ﷺ and applying daily Islamic manners (honoring parents, honesty, truthfulness).",
         weeklyObjectivesAr: [
           "شرح أركان الإسلام الخمسة بأسلوب مبسط وتطبيق صفة الوضوء والصلاة",
           "معرفة المحطات البارزة في طفولة وشباب النبي ﷺ وأخلاقه الكريمة",
           "تطبيق أذكار الصباح والمساء وآداب الطعام والنوم في الحياة اليومية",
+        ],
+        weeklyObjectivesEn: [
+          "Explaining the five pillars of Islam simply and practicing the description of wudu and prayer",
+          "Learning the notable milestones of the Prophet's ﷺ childhood and youth and his noble character",
+          "Applying the morning and evening remembrances and etiquette of eating and sleeping in daily life",
         ],
         targetVocabularyCount: 90,
         durationWeeks: 6,
@@ -519,10 +635,16 @@ class AdministrationRepository {
         titleAr: "آداب التعامل اليومي: الصدق، بر الوالدين، وإكرام الجار",
         titleEn: "Daily Islamic Adab: Honesty, Filial Piety & Neighborliness",
         descriptionAr: "تطبيق القيم الإسلامية في المجتمع المدرسي والأسري ومواجهة المواقف المعاصرة بالأخلاق النبوية.",
+        descriptionEn: "Applying Islamic values within school and family life and facing contemporary situations with prophetic character.",
         weeklyObjectivesAr: [
           "تطبيق خلق الصدق والأمانة في المعاملات المدرسية واليومية",
           "فهم أهمية صلة الرحم وإكرام الجار والرفق بالحيوان",
           "حفظ وفهم 5 أحاديث نبوية شريفة في الأخلاق والسلوك القويم",
+        ],
+        weeklyObjectivesEn: [
+          "Applying honesty and trustworthiness in school and daily dealings",
+          "Understanding the importance of maintaining family ties, honoring neighbors, and kindness to animals",
+          "Memorizing and understanding 5 noble hadiths on character and righteous conduct",
         ],
         targetVocabularyCount: 120,
         durationWeeks: 6,
@@ -539,10 +661,16 @@ class AdministrationRepository {
         titleAr: "أركان الإيمان الستة ومواقف من قصص أولي العزم",
         titleEn: "Six Pillars of Faith & Lessons from Resolute Prophets",
         descriptionAr: "ترسيخ العقيدة الصافية واستلهام العبر والتضحية والصبر من قصص الأنبياء الكرام وتاريخ الحضارة.",
+        descriptionEn: "Establishing sound creed and drawing lessons in sacrifice and patience from the stories of the resolute prophets and the history of civilization.",
         weeklyObjectivesAr: [
           "شرح أركان الإيمان الستة واستشعار مراقبة الله وحكمته",
           "استخلاص العبر والدروس التربوية من سير أولي العزم من الرسل",
           "إدراك دور المسلم في عمارة الأرض ونشر السلام والخير في مجتمعه",
+        ],
+        weeklyObjectivesEn: [
+          "Explaining the six pillars of faith and cultivating awareness of God's watchfulness and wisdom",
+          "Drawing educational lessons from the stories of the resolute prophets",
+          "Recognizing the Muslim's role in building the earth and spreading peace and goodness in society",
         ],
         targetVocabularyCount: 150,
         durationWeeks: 8,
