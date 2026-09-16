@@ -2,6 +2,7 @@
 
 import React, { useEffect } from "react";
 import Link from "next/link";
+import * as Sentry from "@sentry/nextjs";
 import { AlertTriangle, RotateCcw, Home } from "lucide-react";
 
 export default function ErrorBoundary({
@@ -13,6 +14,9 @@ export default function ErrorBoundary({
 }) {
   useEffect(() => {
     console.error("Application error:", error);
+    // No-op until NEXT_PUBLIC_SENTRY_DSN is configured -- see
+    // src/components/monitoring/SentryInit.tsx.
+    Sentry.captureException(error);
   }, [error]);
 
   return (

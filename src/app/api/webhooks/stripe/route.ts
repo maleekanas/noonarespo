@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import type Stripe from "stripe";
+import * as Sentry from "@sentry/nextjs";
 import { getStripeClient } from "@/lib/integrations/stripe";
 import {
   fulfillCheckoutSession,
@@ -68,7 +69,13 @@ export async function POST(request: NextRequest) {
   } catch (err) {
     // Returning a non-2xx status tells Stripe to retry this event later,
     // which is what we want for a transient failure (e.g. a DB hiccup).
+    // This is real money/subscription state failing to record, so it's
+    // worth surfacing beyond an ephemeral console line -- captureException
+    // is a no-op until SENTRY_DSN is configured (see src/instrumentation.ts).
     console.error(`[stripe webhook] failed to process ${event.type}`, err);
+    Sentry.captureException(err, {
+      tags: { stripeEventType: event.type, stripeEventId: event.id },
+    });
     return NextResponse.json({ error: "Webhook handler failed" }, { status: 500 });
   }
 }

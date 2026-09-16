@@ -13,6 +13,7 @@ This document describes how Kids Arabic Academy is actually built, configured, a
 - **Virtual Classrooms**: Zoom, Microsoft Teams, and Google Meet each have their own adapter that activates automatically when that platform's credentials are present, and otherwise falls back to a working sandbox/mock session so the app never breaks in development.
 - **Notifications**: WhatsApp (Meta Cloud API), SMS (a generic API key or Twilio), and Email (Resend or SMTP) — same pattern: real when configured, sandboxed when not.
 - **Payments**: Stripe only. There is no "payment provider switch" — Stripe Checkout and the Stripe webhook are the one real, live payment path.
+- **Error Monitoring**: Sentry, via `@sentry/nextjs`. Same activation pattern as everything else above — falls back to plain `console.error` (Vercel function logs only) when `SENTRY_DSN` / `NEXT_PUBLIC_SENTRY_DSN` are unset, and reports to Sentry once they're set. Free tier is enough to start.
 
 ---
 
@@ -66,6 +67,13 @@ FROM_EMAIL="Arabic Kids Academy <onboarding@resend.dev>"
 # Payments — Stripe is the only real payment integration
 STRIPE_SECRET_KEY=""
 STRIPE_WEBHOOK_SECRET=""
+
+# Error Monitoring — Sentry (falls back to Vercel function logs only if unset)
+SENTRY_DSN=""                   # server + edge errors
+NEXT_PUBLIC_SENTRY_DSN=""       # browser errors (safe to expose — write-only)
+
+# AI Tutor — Anthropic Claude (falls back to a scripted practice conversation if unset)
+ANTHROPIC_API_KEY=""
 ```
 
 ---

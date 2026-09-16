@@ -4,6 +4,7 @@ import { getDirection, locales, getDictionary } from "@/lib/localization";
 import { Header } from "@/components/navigation/Header";
 import { Footer } from "@/components/navigation/Footer";
 import { RoleSwitcher } from "@/components/shared/RoleSwitcher";
+import { SentryInit } from "@/components/monitoring/SentryInit";
 
 export async function generateMetadata({
   params,
@@ -41,6 +42,7 @@ export default async function LocaleLayout({
   return (
     <html lang={locale} dir={direction}>
       <body className="min-h-screen flex flex-col bg-slate-50 text-slate-900">
+        <SentryInit />
         <Header locale={locale} />
         <main className="flex-1">{children}</main>
         <Footer locale={locale} />
