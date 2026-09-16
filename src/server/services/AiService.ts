@@ -52,8 +52,13 @@ export class AiService {
       content: params.message,
     });
 
-    // Generate response from AI tutor
-    const reply = await this.tutor.generateStudentDialogue(params.message);
+    // Generate response from AI tutor, passing recent conversation history
+    // so multi-turn context carries through to the live model.
+    const reply = await this.tutor.generateStudentDialogue(
+      params.message,
+      undefined,
+      session.history
+    );
     session.history.push(reply);
 
     // Award XP if applicable

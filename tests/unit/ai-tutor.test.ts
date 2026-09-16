@@ -5,6 +5,11 @@ import { aiService } from "../../src/server/services/AiService";
 describe("AI-Powered Arabic Tutoring & Teacher Copilot", () => {
   const studentId = "student-1";
 
+  // These tests run without ANTHROPIC_API_KEY set, so they exercise the
+  // scripted practice-mode fallback (same content it always returned), not
+  // a live Claude call -- that path is only reachable with a real key and
+  // isn't something this offline test suite can safely exercise.
+
   test("Student AI Conversation: Should reply to greeting with Harakat and pronunciation tip", async () => {
     const result = await aiService.sendStudentMessage({
       studentId,
@@ -44,6 +49,9 @@ describe("AI-Powered Arabic Tutoring & Teacher Copilot", () => {
     assert.ok(plan.coreConcepts.length >= 3);
     assert.ok(plan.interactiveGame);
     assert.ok(plan.assessmentQuestion);
-    assert.equal(plan.isAiGenerated, true);
+    // isAiGenerated now honestly reflects whether a live Claude call
+    // produced this plan -- false here since no API key is set in this
+    // test environment, true only when ANTHROPIC_API_KEY is configured.
+    assert.equal(plan.isAiGenerated, false);
   });
 });

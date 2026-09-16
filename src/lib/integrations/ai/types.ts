@@ -28,7 +28,8 @@ export interface AiTutorProvider {
   isConfigured(): boolean;
   generateStudentDialogue(
     studentMessage: string,
-    context?: { studentAgeGroup?: string; currentLevel?: string }
+    context?: { studentAgeGroup?: string; currentLevel?: string },
+    conversationHistory?: AiChatMessage[]
   ): Promise<AiChatMessage>;
   generateTeacherLessonPlan(
     request: LessonPlanRequest
