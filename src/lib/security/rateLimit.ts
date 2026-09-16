@@ -102,4 +102,5 @@ export const RATE_LIMITS = {
   FORGOT_PASSWORD_PER_IP: { max: 10, windowSeconds: 60 * 60 },
   FORGOT_PASSWORD_PER_EMAIL: { max: 3, windowSeconds: 60 * 60 },
   RESET_PASSWORD_SUBMIT_PER_IP: { max: 20, windowSeconds: 60 * 60 },
+  B2B_INQUIRY_PER_IP: { max: 5, windowSeconds: 60 * 60 },
 } as const;

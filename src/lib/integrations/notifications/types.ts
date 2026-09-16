@@ -9,7 +9,8 @@ export interface NotificationPayload {
     | "HOMEWORK_GRADED"
     | "CONFERENCE_CONFIRMED"
     | "INVOICE_ISSUED"
-    | "PASSWORD_RESET";
+    | "PASSWORD_RESET"
+    | "B2B_INQUIRY";
   titleAr: string;
   bodyAr: string;
   actionUrl?: string;

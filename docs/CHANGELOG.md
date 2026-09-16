@@ -355,3 +355,16 @@ All notable changes to the Kids Arabic Academy platform will be documented in th
 
 ### Fixed
 - `student/page.tsx` no longer greets every visitor as a fixed fake name ("Zayd Tariq") or claims a fake "today at 04:00 PM" session regardless of who's actually logged in or what's actually scheduled.
+
+---
+
+## [Public B2B Page & Site-Wide Navigation Overhaul] - 2026-09-16
+### Added
+- **New public `/[locale]/schools` page**: the entire B2B roster-onboarding feature (bulk student upload, per-seat licensing, institutional admin dashboard) previously only existed behind a login inside the admin dashboard, with zero public page, pricing, or application path telling a school/mosque/homeschool co-op it existed. This page presents real, already-shipped institutional features (bulk roster onboarding, live admin dashboard, the real-time collaborative classroom, structured curriculum, certified teachers, attendance & progress reporting), seat-based pricing tiers (honestly framed as custom quotes, no invented dollar figures), and who it's built for (Islamic schools, community centers/mosques, homeschool co-ops).
+- **Real institutional application form**: submits via a server action to a new rate-limited (`B2B_INQUIRY_PER_IP`) flow that emails the inquiry to `B2B_SALES_EMAIL` through the existing `EmailAdapter` (the same adapter used for account notifications elsewhere), with the same honest mock fallback when `RESEND_API_KEY` isn't configured -- inquiries are never silently dropped.
+- **Working mobile navigation**: `Header.tsx` had no mobile menu at all -- below the `md` breakpoint, Programs/Age Groups/Pricing were simply absent from the page with nothing replacing them. Added a real toggled hamburger menu with all nav links (now including "For Schools").
+- **Real footer links**: the footer's "Programs" column was 5 plain, unlinked `<li>` text items (and silently missing 2 of the 7 programs) styled to look like a nav list. All 7 programs now link to `/programs?program=<id>`, and a new "For Institutions" column links to the new `/schools` page and its application form.
+
+### Changed
+- `nav.schools` and a new `schools.*` translation namespace (~60 keys) added to all 6 locale dictionaries (`ar`, `en`, `nl`, `tr`, `it`, `es`), maintaining 100% key parity.
+- `NotificationPayload.eventName` gained a `B2B_INQUIRY` variant (additive, non-breaking) and `RATE_LIMITS` gained `B2B_INQUIRY_PER_IP`.
