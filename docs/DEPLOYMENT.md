@@ -11,6 +11,7 @@ This document describes how Kids Arabic Academy is actually built, configured, a
 - **Database**: PostgreSQL, accessed through Prisma. Schema changes are applied with `prisma db push` — **there is no `prisma/migrations` folder**, so `prisma migrate deploy` does not apply here (see the checklist below).
 - **Object Storage**: Amazon S3 (`me-central-1` by default) for audio recordings and homework/certificate attachments, via a signed-URL provider that automatically falls back to a safe sandbox mode when AWS credentials are absent (see Section 2).
 - **Virtual Classrooms**: Zoom, Microsoft Teams, Google Meet, and Cisco Webex each have their own adapter that makes a real API call to that platform when its credentials are present (Zoom Server-to-Server OAuth, Microsoft Graph application permissions, Google Calendar API via a delegated service account, and a Webex OAuth Integration refresh token, respectively). If a platform isn't configured yet, or its live API call fails for any reason, the adapter falls back to a clearly-labeled sandbox session instead of breaking class scheduling. When a school hasn't chosen a specific platform, `MeetingManager.createBestAvailableSession()` picks the first configured one (Zoom, then Teams, then Meet, then Webex) automatically.
+- **Live Classroom Real-Time Sync**: the in-app `/classroom/[id]` page (shared whiteboard, live "who's online" roster, hand-raise, reactions) runs on Pusher Channels, since a Vercel serverless function can't hold an open WebSocket server. Every classroom page is backed by a real `ClassSession` row (real enrolled roster, real assigned teacher, real scheduled start/end time) — there is no more hardcoded demo classroom. When Pusher isn't configured, the whiteboard still works locally for whoever's looking at it, clearly labeled "Solo mode" rather than silently pretending to be shared, and the hand-raise/reaction buttons are disabled rather than firing into the void.
 - **Notifications**: WhatsApp (Meta Cloud API), SMS (a generic API key or Twilio), and Email (Resend or SMTP) — same pattern: real when configured, sandboxed when not.
 - **Payments**: Stripe only. There is no "payment provider switch" — Stripe Checkout and the Stripe webhook are the one real, live payment path.
 - **Error Monitoring**: Sentry, via `@sentry/nextjs`. Same activation pattern as everything else above — falls back to plain `console.error` (Vercel function logs only) when `SENTRY_DSN` / `NEXT_PUBLIC_SENTRY_DSN` are unset, and reports to Sentry once they're set. Free tier is enough to start.
@@ -71,6 +72,16 @@ GOOGLE_IMPERSONATE_SUBJECT=""
 WEBEX_CLIENT_ID=""
 WEBEX_CLIENT_SECRET=""
 WEBEX_REFRESH_TOKEN=""
+
+# Live Classroom Real-Time Sync — Pusher Channels. Powers the shared whiteboard,
+# live roster, hand-raise, and reactions in /classroom/[id]. Falls back to an
+# honestly-labeled solo/local-only whiteboard when unset. PUSHER_KEY/CLUSTER are
+# not secrets (the browser SDK uses them directly), so they're read from the
+# NEXT_PUBLIC_ vars on both the server and the client — set each one once.
+PUSHER_APP_ID=""
+PUSHER_SECRET=""
+NEXT_PUBLIC_PUSHER_KEY=""
+NEXT_PUBLIC_PUSHER_CLUSTER=""    # e.g. "mt1", "eu", "ap2" — shown on the Pusher app dashboard
 
 # Notifications — each channel activates independently when configured
 WHATSAPP_PHONE_NUMBER_ID=""

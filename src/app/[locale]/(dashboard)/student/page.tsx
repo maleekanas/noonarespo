@@ -17,6 +17,7 @@ import {
   Layers,
 } from "lucide-react";
 import { gamificationService } from "@/server/services/GamificationService";
+import { schedulingService } from "@/server/services/SchedulingService";
 import { requireStudentProfile } from "@/lib/auth/currentUser";
 
 export default async function StudentDashboardPage({
@@ -30,6 +31,7 @@ export default async function StudentDashboardPage({
   const studentId = studentProfile.id;
 
   const profile = await gamificationService.getStudentGamification(studentId);
+  const nextSession = await schedulingService.getNextSessionForStudent(studentId);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
@@ -49,12 +51,18 @@ export default async function StudentDashboardPage({
               </Link>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold">
-              {isAr ? "مرحباً بك يا بطل، زيد طارق! 🌟" : "Welcome back Champion, Zayd Tariq! 🌟"}
+              {isAr
+                ? `مرحباً بك يا بطل، ${studentProfile.firstName}! 🌟`
+                : `Welcome back Champion, ${studentProfile.firstName}! 🌟`}
             </h1>
             <p className="text-sm text-purple-100 max-w-lg">
-              {isAr
-                ? "لديك اليوم حصة تفاعلية مباشرة مع الأستاذ أحمد المنصوري في تمام 04:00 مساءً."
-                : "You have an interactive live session today with Ustadh Ahmed at 04:00 PM."}
+              {nextSession
+                ? isAr
+                  ? `لديك حصة تفاعلية مباشرة قادمة مع الأستاذ ${nextSession.teacherFirstName} ${nextSession.teacherLastName}.`
+                  : `You have an upcoming interactive live session with ${nextSession.teacherFirstName} ${nextSession.teacherLastName}.`
+                : isAr
+                  ? "لا توجد حصة مباشرة مجدولة حالياً."
+                  : "No live session is scheduled right now."}
             </p>
           </div>
 
@@ -250,28 +258,44 @@ export default async function StudentDashboardPage({
               </span>
             </div>
 
-            <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <h3 className="font-bold text-slate-900 text-lg">
-                  {isAr ? "فصل النجوم (A1 - القراءة والطلاقة)" : "Stars Cohort (A1 - Reading & Fluency)"}
-                </h3>
-                <div className="flex items-center gap-4 text-xs text-slate-500 mt-2">
-                  <span className="flex items-center gap-1">
-                    <Clock className="w-3.5 h-3.5 text-slate-400" />
-                    <span>{isAr ? "04:00 م - 04:45 م" : "04:00 PM - 04:45 PM"}</span>
-                  </span>
-                  <span>{isAr ? "مع الأستاذ: أحمد المنصوري" : "Teacher: Ustadh Ahmed"}</span>
+            {nextSession ? (
+              <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h3 className="font-bold text-slate-900 text-lg">{nextSession.classGroupName}</h3>
+                  <div className="flex items-center gap-4 text-xs text-slate-500 mt-2">
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-3.5 h-3.5 text-slate-400" />
+                      <span>
+                        {nextSession.startTimeUtc.toLocaleString(isAr ? "ar" : "en-US", {
+                          weekday: "short",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
+                    </span>
+                    <span>
+                      {isAr
+                        ? `مع الأستاذ: ${nextSession.teacherFirstName} ${nextSession.teacherLastName}`
+                        : `Teacher: ${nextSession.teacherFirstName} ${nextSession.teacherLastName}`}
+                    </span>
+                  </div>
                 </div>
-              </div>
 
-              <Link
-                href={`/${locale}/classroom/session-1`}
-                className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl gradient-brand text-white font-bold text-sm shadow-md hover:opacity-95 transition-all text-center"
-              >
-                <Video className="w-4 h-4" />
-                <span>{isAr ? "دخول الفصل الافتراضي والسبورة" : "Join Virtual Classroom & Board"}</span>
-              </Link>
-            </div>
+                <Link
+                  href={`/${locale}/classroom/${nextSession.sessionId}`}
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl gradient-brand text-white font-bold text-sm shadow-md hover:opacity-95 transition-all text-center"
+                >
+                  <Video className="w-4 h-4" />
+                  <span>{isAr ? "دخول الفصل الافتراضي والسبورة" : "Join Virtual Classroom & Board"}</span>
+                </Link>
+              </div>
+            ) : (
+              <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200/80 text-center text-sm text-slate-500">
+                {isAr
+                  ? "لا توجد حصة مباشرة مجدولة قريباً. سيظهر زر الانضمام هنا فور جدولة حصتك القادمة."
+                  : "No upcoming live class is scheduled yet. The join button will appear here once your next session is set."}
+              </div>
+            )}
           </div>
 
           {/* Pending Homework Tasks */}

@@ -1,7 +1,18 @@
 import { schedulingRepository } from "../repositories/SchedulingRepository";
 import { academicRepository } from "../repositories/AcademicRepository";
+import { userRepository } from "../repositories/UserRepository";
 import { meetingManager } from "@/lib/integrations/meetings/MeetingManager";
 import { DomainClassSession } from "../repositories/types";
+import { EnrollmentStatus, SessionStatus } from "@prisma/client";
+
+export interface UpcomingSessionSummary {
+  sessionId: string;
+  classGroupName: string;
+  teacherFirstName: string;
+  teacherLastName: string;
+  startTimeUtc: Date;
+  endTimeUtc: Date;
+}
 
 export interface ScheduleConflictReport {
   hasConflict: boolean;
@@ -120,6 +131,47 @@ export class SchedulingService {
     }
 
     return createdSessions;
+  }
+
+  /**
+   * The student's next not-yet-finished session across every class they're
+   * actively enrolled in -- used to link "Join Virtual Classroom" at a real
+   * session id instead of a fixed placeholder that never matched any actual
+   * scheduled class.
+   */
+  async getNextSessionForStudent(studentId: string): Promise<UpcomingSessionSummary | null> {
+    const enrollments = (await academicRepository.getEnrollmentsByStudentId(studentId)).filter(
+      (e) => e.status === EnrollmentStatus.ACTIVE
+    );
+    if (enrollments.length === 0) return null;
+
+    const now = new Date();
+    const candidates: DomainClassSession[] = [];
+    for (const enrollment of enrollments) {
+      const sessions = await schedulingRepository.getSessionsByClassGroupId(enrollment.classGroupId);
+      candidates.push(
+        ...sessions.filter((s) => s.status !== SessionStatus.CANCELLED && s.endTimeUtc >= now)
+      );
+    }
+    if (candidates.length === 0) return null;
+
+    candidates.sort((a, b) => a.startTimeUtc.getTime() - b.startTimeUtc.getTime());
+    const next = candidates[0];
+
+    const [classGroup, teacher] = await Promise.all([
+      academicRepository.getClassGroupById(next.classGroupId),
+      userRepository.findTeacherProfileById(next.teacherId),
+    ]);
+    if (!classGroup || !teacher) return null;
+
+    return {
+      sessionId: next.id,
+      classGroupName: classGroup.name,
+      teacherFirstName: teacher.firstName,
+      teacherLastName: teacher.lastName,
+      startTimeUtc: next.startTimeUtc,
+      endTimeUtc: next.endTimeUtc,
+    };
   }
 }
 

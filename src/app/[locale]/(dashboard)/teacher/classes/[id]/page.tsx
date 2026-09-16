@@ -10,6 +10,7 @@ import {
   Users,
   Video,
   FileCheck,
+  Layout,
 } from "lucide-react";
 
 export default async function TeacherClassDetailPage({
@@ -82,6 +83,13 @@ export default async function TeacherClassDetailPage({
                 <Video className="w-5 h-5 text-emerald-600" />
                 <span>بدء الحصة الافتراضية (Zoom / Meet)</span>
               </a>
+              <Link
+                href={`/${locale}/classroom/${activeSession.id}`}
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-emerald-950/40 border border-white/30 text-white font-extrabold text-sm shadow-md hover:bg-emerald-950/60 transition-all"
+              >
+                <Layout className="w-5 h-5" />
+                <span>السبورة التفاعلية المباشرة</span>
+              </Link>
             </div>
           )}
         </div>

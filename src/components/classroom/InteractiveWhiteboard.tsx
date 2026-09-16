@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect, useCallback } from "react";
 import {
   Pen,
   Eraser,
@@ -10,13 +10,47 @@ import {
   Eye,
   EyeOff,
   Check,
+  Wifi,
+  WifiOff,
 } from "lucide-react";
+import type { Channel } from "pusher-js";
+
+interface Point {
+  x: number; // normalized 0..1 (fraction of canvas width) -- NOT raw pixels,
+  y: number; // so a stroke lines up correctly on every participant's canvas
+             // even when their window/container is a different size.
+}
+
+type WhiteboardRemoteEvent =
+  | { type: "stroke-segment"; strokeId: string; points: Point[]; color: string; lineWidth: number; tool: "pen" | "eraser" }
+  | { type: "stroke-end"; strokeId: string }
+  | { type: "clear" };
 
 interface InteractiveWhiteboardProps {
   locale?: string;
+  /** The live class session this board belongs to. Omit for a standalone,
+   *  never-synced board (kept for backward compatibility / other callers). */
+  sessionId?: string;
+  /** The subscribed presence-classroom channel from the parent, or null when
+   *  real-time sync isn't configured / hasn't connected yet. */
+  channel?: Channel | null;
+  /** Whether the school has Pusher configured at all -- distinct from
+   *  `channel` being briefly null while the socket connects. */
+  realtimeConfigured?: boolean;
 }
 
-export function InteractiveWhiteboard({ locale = "ar" }: InteractiveWhiteboardProps) {
+const FLUSH_INTERVAL_MS = 70;
+
+function makeStrokeId(): string {
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+export function InteractiveWhiteboard({
+  locale = "ar",
+  sessionId,
+  channel = null,
+  realtimeConfigured = false,
+}: InteractiveWhiteboardProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [tool, setTool] = useState<"pen" | "eraser">("pen");
@@ -24,7 +58,14 @@ export function InteractiveWhiteboard({ locale = "ar" }: InteractiveWhiteboardPr
   const [lineWidth, setLineWidth] = useState(4);
   const [showCalligraphyGuide, setShowCalligraphyGuide] = useState(true);
 
+  // Live-sync bookkeeping (refs so they don't trigger re-renders on every point)
+  const currentStrokeIdRef = useRef<string | null>(null);
+  const pendingPointsRef = useRef<Point[]>([]);
+  const flushTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const remoteStrokeLastPointRef = useRef<Map<string, Point>>(new Map());
+
   const isAr = locale === "ar";
+  const isLive = Boolean(sessionId && realtimeConfigured);
 
   const colorPalette = [
     { name: "Indigo", value: "#4F46E5" },
@@ -42,15 +83,111 @@ export function InteractiveWhiteboard({ locale = "ar" }: InteractiveWhiteboardPr
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Set high-DPI canvas size
     const rect = canvas.getBoundingClientRect();
     canvas.width = rect.width;
     canvas.height = rect.height;
 
-    // Clear background
     ctx.fillStyle = "#FFFFFF";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
   }, []);
+
+  const publishEvent = useCallback(
+    (evt: WhiteboardRemoteEvent) => {
+      if (!sessionId || !realtimeConfigured) return;
+      const socketId = channel?.pusher?.connection?.socket_id;
+      fetch(`/api/classroom/${sessionId}/whiteboard`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(socketId ? { "x-pusher-socket-id": socketId } : {}),
+        },
+        body: JSON.stringify(evt),
+      }).catch(() => {
+        // Best-effort -- a dropped broadcast just means other participants
+        // miss this one batch of points; it must never interrupt drawing.
+      });
+    },
+    [sessionId, realtimeConfigured, channel]
+  );
+
+  const toNormalized = useCallback((x: number, y: number): Point => {
+    const canvas = canvasRef.current;
+    if (!canvas || canvas.width === 0 || canvas.height === 0) return { x: 0, y: 0 };
+    return { x: x / canvas.width, y: y / canvas.height };
+  }, []);
+
+  const fromNormalized = useCallback((p: Point): { x: number; y: number } => {
+    const canvas = canvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+    return { x: p.x * canvas.width, y: p.y * canvas.height };
+  }, []);
+
+  // Draws an incoming batch of already-normalized remote points onto the
+  // local canvas, continuing the path from wherever that strokeId left off.
+  const applyRemoteStrokeSegment = useCallback(
+    (evt: Extract<WhiteboardRemoteEvent, { type: "stroke-segment" }>) => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const ctx = canvas.getContext("2d");
+      if (!ctx || evt.points.length === 0) return;
+
+      ctx.strokeStyle = evt.tool === "eraser" ? "#FFFFFF" : evt.color;
+      ctx.lineWidth = evt.tool === "eraser" ? evt.lineWidth * 4 : evt.lineWidth;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+
+      const last = remoteStrokeLastPointRef.current.get(evt.strokeId);
+      const startPoint = fromNormalized(last ?? evt.points[0]);
+
+      ctx.beginPath();
+      ctx.moveTo(startPoint.x, startPoint.y);
+      const startIndex = last ? 0 : 1;
+      for (let i = startIndex; i < evt.points.length; i++) {
+        const { x, y } = fromNormalized(evt.points[i]);
+        ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+
+      remoteStrokeLastPointRef.current.set(evt.strokeId, evt.points[evt.points.length - 1]);
+    },
+    [fromNormalized]
+  );
+
+  const clearCanvas = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.fillStyle = "#FFFFFF";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }, []);
+
+  // Subscribe to remote whiteboard events from the rest of the class.
+  useEffect(() => {
+    if (!channel) return;
+    const handler = (evt: WhiteboardRemoteEvent) => {
+      if (evt.type === "stroke-segment") {
+        applyRemoteStrokeSegment(evt);
+      } else if (evt.type === "stroke-end") {
+        remoteStrokeLastPointRef.current.delete(evt.strokeId);
+      } else if (evt.type === "clear") {
+        remoteStrokeLastPointRef.current.clear();
+        clearCanvas();
+      }
+    };
+    channel.bind("whiteboard-event", handler);
+    return () => {
+      channel.unbind("whiteboard-event", handler);
+    };
+  }, [channel, applyRemoteStrokeSegment, clearCanvas]);
+
+  function getEventPoint(e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) {
+    const canvas = canvasRef.current!;
+    const rect = canvas.getBoundingClientRect();
+    const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
+    const clientY = "touches" in e ? e.touches[0].clientY : e.clientY;
+    return { x: clientX - rect.left, y: clientY - rect.top };
+  }
 
   function startDrawing(e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) {
     const canvas = canvasRef.current;
@@ -58,9 +195,7 @@ export function InteractiveWhiteboard({ locale = "ar" }: InteractiveWhiteboardPr
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const rect = canvas.getBoundingClientRect();
-    const x = "touches" in e ? e.touches[0].clientX - rect.left : e.clientX - rect.left;
-    const y = "touches" in e ? e.touches[0].clientY - rect.top : e.clientY - rect.top;
+    const { x, y } = getEventPoint(e);
 
     ctx.beginPath();
     ctx.moveTo(x, y);
@@ -70,6 +205,24 @@ export function InteractiveWhiteboard({ locale = "ar" }: InteractiveWhiteboardPr
     ctx.lineJoin = "round";
 
     setIsDrawing(true);
+
+    if (isLive) {
+      currentStrokeIdRef.current = makeStrokeId();
+      pendingPointsRef.current = [toNormalized(x, y)];
+      if (flushTimerRef.current) clearInterval(flushTimerRef.current);
+      flushTimerRef.current = setInterval(() => {
+        if (pendingPointsRef.current.length === 0 || !currentStrokeIdRef.current) return;
+        publishEvent({
+          type: "stroke-segment",
+          strokeId: currentStrokeIdRef.current,
+          points: pendingPointsRef.current,
+          color,
+          lineWidth,
+          tool,
+        });
+        pendingPointsRef.current = [];
+      }, FLUSH_INTERVAL_MS);
+    }
   }
 
   function draw(e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) {
@@ -79,30 +232,56 @@ export function InteractiveWhiteboard({ locale = "ar" }: InteractiveWhiteboardPr
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const rect = canvas.getBoundingClientRect();
-    const x = "touches" in e ? e.touches[0].clientX - rect.left : e.clientX - rect.left;
-    const y = "touches" in e ? e.touches[0].clientY - rect.top : e.clientY - rect.top;
-
+    const { x, y } = getEventPoint(e);
     ctx.lineTo(x, y);
     ctx.stroke();
+
+    if (isLive) {
+      pendingPointsRef.current.push(toNormalized(x, y));
+    }
   }
 
   function stopDrawing() {
     if (!isDrawing) return;
     const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (ctx) ctx.closePath();
+    if (canvas) {
+      const ctx = canvas.getContext("2d");
+      if (ctx) ctx.closePath();
+    }
     setIsDrawing(false);
+
+    if (isLive && currentStrokeIdRef.current) {
+      if (flushTimerRef.current) {
+        clearInterval(flushTimerRef.current);
+        flushTimerRef.current = null;
+      }
+      if (pendingPointsRef.current.length > 0) {
+        publishEvent({
+          type: "stroke-segment",
+          strokeId: currentStrokeIdRef.current,
+          points: pendingPointsRef.current,
+          color,
+          lineWidth,
+          tool,
+        });
+        pendingPointsRef.current = [];
+      }
+      publishEvent({ type: "stroke-end", strokeId: currentStrokeIdRef.current });
+      currentStrokeIdRef.current = null;
+    }
   }
 
-  function clearCanvas() {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    ctx.fillStyle = "#FFFFFF";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  useEffect(() => {
+    return () => {
+      if (flushTimerRef.current) clearInterval(flushTimerRef.current);
+    };
+  }, []);
+
+  function handleClear() {
+    clearCanvas();
+    if (isLive) {
+      publishEvent({ type: "clear" });
+    }
   }
 
   function downloadCanvas() {
@@ -192,6 +371,36 @@ export function InteractiveWhiteboard({ locale = "ar" }: InteractiveWhiteboardPr
 
         {/* Actions */}
         <div className="flex items-center gap-2">
+          {/* Live sync status -- honest indicator, never claims to be shared
+              when it isn't actually wired up to anything. */}
+          {sessionId && (
+            <span
+              className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold ${
+                isLive ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-slate-100 text-slate-500 border border-slate-200"
+              }`}
+              title={
+                isLive
+                  ? isAr
+                    ? "السبورة متزامنة مباشرة مع جميع المشاركين"
+                    : "Whiteboard is live-synced with everyone in class"
+                  : isAr
+                    ? "المزامنة الفورية غير مفعّلة بعد -- الرسم يظهر لك فقط"
+                    : "Live sync isn't connected yet -- drawing is only visible to you"
+              }
+            >
+              {isLive ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
+              <span>
+                {isLive
+                  ? isAr
+                    ? "مباشر مع الفصل"
+                    : "Live with class"
+                  : isAr
+                    ? "وضع فردي"
+                    : "Solo mode"}
+              </span>
+            </span>
+          )}
+
           {/* Calligraphy Guide Toggle */}
           <button
             type="button"
@@ -209,7 +418,7 @@ export function InteractiveWhiteboard({ locale = "ar" }: InteractiveWhiteboardPr
 
           <button
             type="button"
-            onClick={clearCanvas}
+            onClick={handleClear}
             className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-white hover:bg-rose-50 text-rose-600 border border-slate-200 rounded-xl font-medium transition-colors"
             title={isAr ? "مسح السبورة" : "Clear"}
           >

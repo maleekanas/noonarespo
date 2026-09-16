@@ -60,6 +60,14 @@ class UserRepository {
     return prisma.teacherProfile.findUnique({ where: { id } });
   }
 
+  async findStudentProfileByUserId(userId: string): Promise<DomainStudentProfile | null> {
+    return prisma.studentProfile.findUnique({ where: { userId } });
+  }
+
+  async findTeacherProfileByUserId(userId: string): Promise<DomainTeacherProfile | null> {
+    return prisma.teacherProfile.findUnique({ where: { userId } });
+  }
+
   async getAllTeachers(): Promise<DomainTeacherProfile[]> {
     // Intentionally unfiltered (including inactive teachers) -- this is
     // used by the admin teacher-management page, which needs to see and

@@ -339,3 +339,19 @@ All notable changes to the Kids Arabic Academy platform will be documented in th
 - **Login Demo Buttons & Hint**: Updated `src/app/[locale]/(auth)/login/page.tsx` with localized persona roles and default password guidance.
 - **Dashboard Portals Bilingual Handling**: Ensured Student, Parent, Admin, and Teacher dashboards cleanly render English/Dutch headers, KPIs, cards, and schedules when browsing non-Arabic locales.
 - **Dictionary Key Parity**: Maintained 100% top-level and section key parity across all 6 supported locales (`ar`, `en`, `nl`, `tr`, `it`, `es`), verified by automated test suites.
+
+---
+
+## [Real-Time Collaborative Classroom & Live Session Integrity] - 2026-09-16
+### Added
+- **Real-time shared whiteboard**: `/[locale]/classroom/[id]`'s calligraphy whiteboard now actually syncs strokes live between the teacher and every enrolled student via Pusher Channels, instead of each participant only ever seeing their own local `<canvas>`. Falls back to a clearly-labeled "Solo mode" indicator (not a silent lie) when Pusher isn't configured for a school yet.
+- **Real class session data**: the classroom page is now backed by a real `ClassSession` (real enrolled roster via `ClassEnrollment`, the real assigned `TeacherProfile`, the real scheduled start/end time, and the real generated meeting link) instead of 100% hardcoded fake names, a fake "4 classmates" list, and a fixed `session-1` placeholder id that never matched any real class.
+- **Live presence roster**: the participant list shows who is genuinely connected right now (Pusher presence channel), not a static fake list.
+- **Real hand-raise & reactions**: broadcast live to the rest of the class, with server-side identity attached (a participant cannot spoof another participant's name).
+- **Real participation-star awarding**: the teacher's "+15 XP" star button now calls `GamificationService.awardXp()` for real and broadcasts a live toast to the class, instead of being a decorative button with no handler.
+- **Real class clock**: the header timer now ticks from the session's actual scheduled start/end time instead of a fixed, never-moving `32:15 / 45:00` string.
+- **New authorization boundary**: `ClassroomLiveService` + `/api/realtime/classroom-auth` + `/api/classroom/[sessionId]/*` independently re-verify, on every request, that the caller is genuinely the assigned teacher or an actively enrolled student of that specific session -- a guessed or shared session id never grants access.
+- Fixed dead/fake entry points into the classroom: the student dashboard's "Join Virtual Classroom" button now links to the student's real next scheduled session (or an honest "no upcoming class" state) instead of a hardcoded `session-1`; teachers previously had no in-app link into the classroom/whiteboard page at all -- added one to `/teacher/classes/[id]`.
+
+### Fixed
+- `student/page.tsx` no longer greets every visitor as a fixed fake name ("Zayd Tariq") or claims a fake "today at 04:00 PM" session regardless of who's actually logged in or what's actually scheduled.
