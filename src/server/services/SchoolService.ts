@@ -1,6 +1,9 @@
+import { AgeGroup } from "@prisma/client";
 import {
   schoolRepository,
   PartnerSchool,
+  RosterStudentInput,
+  OnboardedStudentAccount,
 } from "../repositories/SchoolRepository";
 
 export interface InstitutionalOverviewKPIs {
@@ -44,23 +47,32 @@ export class SchoolService {
     };
   }
 
+  /**
+   * Creates a real student account for every name in the roster and links
+   * it to the school -- see SchoolRepository.onboardRoster for why this
+   * used to just be a counter increment.
+   */
   async onboardBatchRoster(params: {
     schoolId: string;
-    studentCount: number;
+    students: RosterStudentInput[];
+    ageGroup: AgeGroup;
   }): Promise<{
     school: PartnerSchool;
+    createdAccounts: OnboardedStudentAccount[];
     messageAr: string;
     messageEn: string;
   }> {
-    const updated = await schoolRepository.onboardStudents(
+    const { school, createdAccounts } = await schoolRepository.onboardRoster(
       params.schoolId,
-      params.studentCount
+      params.students,
+      params.ageGroup
     );
 
     return {
-      school: updated,
-      messageAr: `تم تسجيل دفعة من ${params.studentCount} طالباً بنجاح في ${updated.nameAr}. المقاعد المتبقية: ${updated.licenseSeatsTotal - updated.licenseSeatsUsed}`,
-      messageEn: `Batch of ${params.studentCount} students successfully onboarded to ${updated.nameEn}. Remaining seats: ${updated.licenseSeatsTotal - updated.licenseSeatsUsed}`,
+      school,
+      createdAccounts,
+      messageAr: `تم إنشاء ${createdAccounts.length} حساب طالب حقيقي بنجاح في ${school.nameAr}. المقاعد المتبقية: ${school.licenseSeatsTotal - school.licenseSeatsUsed}`,
+      messageEn: `${createdAccounts.length} real student accounts were created in ${school.nameEn}. Remaining seats: ${school.licenseSeatsTotal - school.licenseSeatsUsed}`,
     };
   }
 

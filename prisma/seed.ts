@@ -209,6 +209,88 @@ async function main() {
   }
   console.log("✅ Subscription Plans seeded.");
 
+  // 7. Seed Partner Schools (B2B institutional licenses)
+  // These start with 0 seats used -- no demo student accounts are pre-linked
+  // to them, so the admin's B2B dashboard reflects reality (a school with a
+  // license and no roster imported yet) rather than a fabricated headcount.
+  // Run the "Onboard Roster" flow in /admin/schools to create real, linked
+  // student accounts against these licenses.
+  const partnerSchoolsData = [
+    {
+      id: "school-riyadh-coop",
+      nameAr: "تعاونية الرياض لتعليم العربية",
+      nameEn: "Riyadh Arabic Learning Co-op",
+      type: "HOMESCHOOL_COOP",
+      country: "Saudi Arabia",
+      city: "Riyadh",
+      licenseSeatsTotal: 40,
+      licenseSeatsUsed: 0,
+      classesCount: 0,
+      studentsCount: 0,
+      contactPerson: "Fatimah Al-Otaibi",
+      contactEmail: "fatimah@riyadh-coop.example.org",
+      contractStatus: "ACTIVE",
+      curriculumTrackAr: "المسار التأسيسي والقرآن الكريم",
+    },
+    {
+      id: "school-al-noor-istanbul",
+      nameAr: "مدرسة النور الإسلامية - إسطنبول",
+      nameEn: "Al-Noor Islamic School - Istanbul",
+      type: "ISLAMIC_SCHOOL",
+      country: "Turkey",
+      city: "Istanbul",
+      licenseSeatsTotal: 120,
+      licenseSeatsUsed: 0,
+      classesCount: 0,
+      studentsCount: 0,
+      contactPerson: "Ahmed Yilmaz",
+      contactEmail: "ahmed@alnoor-istanbul.example.org",
+      contractStatus: "ACTIVE",
+      curriculumTrackAr: "المسار الأكاديمي الكامل",
+    },
+    {
+      id: "school-toronto-community-center",
+      nameAr: "مركز تورونتو المجتمعي الإسلامي",
+      nameEn: "Toronto Islamic Community Center",
+      type: "COMMUNITY_CENTER",
+      country: "Canada",
+      city: "Toronto",
+      licenseSeatsTotal: 75,
+      licenseSeatsUsed: 0,
+      classesCount: 0,
+      studentsCount: 0,
+      contactPerson: "Yusuf Ibrahim",
+      contactEmail: "yusuf@toronto-icc.example.org",
+      contractStatus: "TRIAL",
+      curriculumTrackAr: "مسار نهاية الأسبوع",
+    },
+    {
+      id: "school-london-weekend",
+      nameAr: "مدرسة لندن لعطلة نهاية الأسبوع",
+      nameEn: "London Weekend Arabic School",
+      type: "COMMUNITY_CENTER",
+      country: "United Kingdom",
+      city: "London",
+      licenseSeatsTotal: 60,
+      licenseSeatsUsed: 0,
+      classesCount: 0,
+      studentsCount: 0,
+      contactPerson: "Amina Khan",
+      contactEmail: "amina@london-weekend.example.org",
+      contractStatus: "PENDING_RENEWAL",
+      curriculumTrackAr: "المسار التأسيسي",
+    },
+  ];
+
+  for (const school of partnerSchoolsData) {
+    await prisma.partnerSchool.upsert({
+      where: { id: school.id },
+      update: {},
+      create: school,
+    });
+  }
+  console.log("✅ Partner schools (B2B) seeded.");
+
   console.log("🚀 Seeding finished successfully!");
 }
 

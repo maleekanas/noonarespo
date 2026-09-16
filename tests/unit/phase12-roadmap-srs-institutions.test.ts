@@ -157,33 +157,42 @@ describe("Phase 12: Institutional B2B & Islamic School Management Architecture",
 
     const kpis = await schoolService.getInstitutionalKPIs();
     assert.strictEqual(kpis.totalPartners, schools.length);
-    assert.ok(kpis.totalSeatsLicensed >= 350);
-    assert.ok(kpis.totalSeatsUsed >= 300);
-    assert.ok(kpis.overallUtilizationPercentage >= 80);
-    assert.ok(kpis.totalInstitutionalClasses >= 20);
+    assert.ok(kpis.totalSeatsLicensed >= 250);
+    // Freshly-seeded partner schools start with 0 seats used and 0 enrolled
+    // students -- no roster has been imported yet, and the KPI must reflect
+    // that honestly rather than a pre-filled placeholder headcount.
+    assert.strictEqual(kpis.totalEnrolledStudents, 0);
   });
 
-  test("Should onboard student batch and enforce license seat limits", async () => {
+  test("Should onboard a real, linked student roster and enforce license seat limits", async () => {
     const schoolId = "school-riyadh-coop";
     const school = await schoolRepository.getSchoolById(schoolId);
     assert.ok(school !== null);
+    assert.strictEqual(school.licenseSeatsTotal, 40);
+    assert.strictEqual(school.licenseSeatsUsed, 0);
+    assert.strictEqual(school.studentsCount, 0);
 
-    const availableSeats = school.licenseSeatsTotal - school.licenseSeatsUsed;
-    assert.strictEqual(availableSeats, 2); // 40 - 38 = 2 seats
-
-    // Onboard 2 students -> should succeed
+    // Onboard 2 real students -> should succeed and create real, linked accounts
     const onboardResult = await schoolService.onboardBatchRoster({
       schoolId,
-      studentCount: 2,
+      students: [{ fullName: "Zayd Al-Otaibi" }, { fullName: "Maryam Al-Otaibi", email: "maryam@example.org" }],
+      ageGroup: "AGE_7_10",
     });
-    assert.strictEqual(onboardResult.school.licenseSeatsUsed, 40);
+    assert.strictEqual(onboardResult.createdAccounts.length, 2);
+    assert.strictEqual(onboardResult.school.licenseSeatsUsed, 2);
+    assert.strictEqual(onboardResult.school.studentsCount, 2); // derived from real linked accounts, not a counter
+    for (const account of onboardResult.createdAccounts) {
+      assert.ok(account.email.length > 0);
+      assert.ok(account.tempPassword.length >= 6);
+    }
 
-    // Attempting 1 more student should throw an insufficient seats error
+    // Attempting to onboard more than the remaining 38 seats should throw
     await assert.rejects(
       async () => {
         await schoolService.onboardBatchRoster({
           schoolId,
-          studentCount: 1,
+          students: Array.from({ length: 39 }, (_, i) => ({ fullName: `Overflow Student ${i}` })),
+          ageGroup: "AGE_7_10",
         });
       },
       /Insufficient license seats/

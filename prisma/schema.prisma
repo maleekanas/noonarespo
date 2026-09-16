@@ -164,8 +164,10 @@ model StudentProfile {
   nativeLanguage String    @default("ar")
   ageGroup       AgeGroup
   notesInternal  String?   // Strictly internal teacher/admin notes; NEVER exposed to parent/child
+  schoolId       String?   // Set only for students onboarded through the B2B institutional roster flow; null for individually-enrolled students
 
-  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  partnerSchool  PartnerSchool? @relation(fields: [schoolId], references: [id], onDelete: SetNull)
   relationships  ParentStudentRelationship[]
   enrollments    ClassEnrollment[]
   attendance     AttendanceRecord[]
@@ -188,6 +190,7 @@ model StudentProfile {
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
+  @@index([schoolId])
   @@map("student_profiles")
 }
 
@@ -810,6 +813,8 @@ model PartnerSchool {
   contactEmail      String
   contractStatus    String   // "ACTIVE" | "PENDING_RENEWAL" | "TRIAL"
   curriculumTrackAr String
+
+  students          StudentProfile[]
 
   createdAt         DateTime @default(now())
 

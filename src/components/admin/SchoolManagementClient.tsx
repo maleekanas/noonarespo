@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import {
   Building2,
   Users,
@@ -10,9 +10,13 @@ import {
   X,
   FileSpreadsheet,
   Layers,
+  Download,
+  KeyRound,
 } from "lucide-react";
-import { PartnerSchool } from "@/server/repositories/SchoolRepository";
+import { PartnerSchool, OnboardedStudentAccount } from "@/server/repositories/SchoolRepository";
 import { InstitutionalOverviewKPIs } from "@/server/services/SchoolService";
+
+type AgeGroup = "AGE_4_6" | "AGE_7_10" | "AGE_11_13" | "AGE_14_16";
 
 interface SchoolManagementClientProps {
   initialSchools: PartnerSchool[];
@@ -20,11 +24,42 @@ interface SchoolManagementClientProps {
   locale: string;
   onOnboardBatch: (params: {
     schoolId: string;
-    studentCount: number;
+    students: { fullName: string; email?: string }[];
+    ageGroup: AgeGroup;
   }) => Promise<{
+    createdAccounts: OnboardedStudentAccount[];
     messageAr: string;
     messageEn: string;
   }>;
+}
+
+// Parses the free-text roster box: one student per line, optionally
+// "Full Name, email@domain.com". Also what a pasted-in CSV's text lands as
+// once read client-side, so no separate parser is needed for the upload path.
+function parseRosterText(raw: string): { fullName: string; email?: string }[] {
+  return raw
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0)
+    .map((line) => {
+      const [namePart, emailPart] = line.split(",").map((p) => p.trim());
+      return emailPart ? { fullName: namePart, email: emailPart } : { fullName: namePart };
+    })
+    .filter((entry) => entry.fullName.length > 0);
+}
+
+function downloadCredentialsCsv(schoolNameEn: string, accounts: OnboardedStudentAccount[]) {
+  const header = "Full Name,Email,Temporary Password\n";
+  const rows = accounts
+    .map((a) => `"${a.fullName.replace(/"/g, '""')}",${a.email},${a.tempPassword}`)
+    .join("\n");
+  const blob = new Blob([header + rows], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `${schoolNameEn.toLowerCase().replace(/\s+/g, "-")}-student-logins.csv`;
+  link.click();
+  URL.revokeObjectURL(url);
 }
 
 export function SchoolManagementClient({
@@ -36,44 +71,72 @@ export function SchoolManagementClient({
   const isAr = locale === "ar";
   const [schools, setSchools] = useState<PartnerSchool[]>(initialSchools);
   const [selectedSchool, setSelectedSchool] = useState<PartnerSchool | null>(null);
-  const [batchCount, setBatchCount] = useState<number>(10);
+  const [rosterText, setRosterText] = useState<string>("");
+  const [ageGroup, setAgeGroup] = useState<AgeGroup>("AGE_7_10");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [createdAccounts, setCreatedAccounts] = useState<OnboardedStudentAccount[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const parsedRoster = parseRosterText(rosterText);
+
+  function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const text = String(reader.result || "");
+      // Naively strip a "Name,Email" header row if the CSV includes one.
+      const withoutHeader = text.replace(/^\s*(full\s*name|name)\s*,.*$/im, "");
+      setRosterText((prev) => (prev ? `${prev}\n${withoutHeader.trim()}` : withoutHeader.trim()));
+    };
+    reader.readAsText(file);
+    e.target.value = "";
+  }
 
   async function handleBatchSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!selectedSchool) return;
+    if (!selectedSchool || parsedRoster.length === 0) return;
 
     setIsSubmitting(true);
+    setErrorMessage(null);
     try {
       const res = await onOnboardBatch({
         schoolId: selectedSchool.id,
-        studentCount: batchCount,
+        students: parsedRoster,
+        ageGroup,
       });
 
-      // Update local state
+      const addedCount = res.createdAccounts.length;
       setSchools((prev) =>
         prev.map((s) =>
           s.id === selectedSchool.id
             ? {
                 ...s,
-                licenseSeatsUsed: s.licenseSeatsUsed + batchCount,
-                studentsCount: s.studentsCount + batchCount,
+                licenseSeatsUsed: s.licenseSeatsUsed + addedCount,
+                studentsCount: s.studentsCount + addedCount,
               }
             : s
         )
       );
 
+      setCreatedAccounts(res.createdAccounts);
       setFeedbackMessage(isAr ? res.messageAr : res.messageEn);
-      setTimeout(() => {
-        setSelectedSchool(null);
-        setFeedbackMessage(null);
-      }, 2500);
+      setRosterText("");
     } catch (err: unknown) {
-      setFeedbackMessage(err instanceof Error ? err.message : "Error onboarding roster");
+      setErrorMessage(err instanceof Error ? err.message : "Error onboarding roster");
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  function closeModal() {
+    setSelectedSchool(null);
+    setFeedbackMessage(null);
+    setErrorMessage(null);
+    setCreatedAccounts([]);
+    setRosterText("");
   }
 
   return (
@@ -114,7 +177,7 @@ export function SchoolManagementClient({
           </div>
           <div>
             <div className="text-xs text-slate-500 font-bold">
-              {isAr ? "الطلاب المسجلون" : "Enrolled Students"}
+              {isAr ? "الطلاب المسجلون (حسابات حقيقية)" : "Enrolled Students (real accounts)"}
             </div>
             <div className="text-2xl font-black text-slate-900">
               {kpis.totalEnrolledStudents} {isAr ? "طالب" : "students"}
@@ -229,6 +292,8 @@ export function SchoolManagementClient({
                         onClick={() => {
                           setSelectedSchool(school);
                           setFeedbackMessage(null);
+                          setErrorMessage(null);
+                          setCreatedAccounts([]);
                         }}
                         className="py-2 px-3 bg-brand-50 hover:bg-brand-100 text-brand-700 rounded-xl font-bold text-xs inline-flex items-center gap-1.5 transition-colors"
                       >
@@ -246,18 +311,18 @@ export function SchoolManagementClient({
 
       {/* Batch Roster Modal */}
       {selectedSchool && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-5">
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-5 my-8">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
                 <FileSpreadsheet className="w-5 h-5 text-brand-600" />
                 <h3 className="text-base font-black text-slate-900">
-                  {isAr ? "استيراد دفعة طلاب (CSV)" : "Batch Roster Onboarding"}
+                  {isAr ? "استيراد دفعة طلاب (CSV أو لصق أسماء)" : "Batch Roster Onboarding (CSV or paste)"}
                 </h3>
               </div>
               <button
                 type="button"
-                onClick={() => setSelectedSchool(null)}
+                onClick={closeModal}
                 className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg"
               >
                 <X className="w-5 h-5" />
@@ -274,47 +339,138 @@ export function SchoolManagementClient({
               </div>
             </div>
 
-            <form onSubmit={handleBatchSubmit} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  {isAr ? "عدد الطلاب المراد استيرادهم في هذه الدفعة:" : "Number of students to onboard in batch:"}
-                </label>
-                <input
-                  type="number"
-                  min={1}
-                  max={selectedSchool.licenseSeatsTotal - selectedSchool.licenseSeatsUsed}
-                  value={batchCount}
-                  onChange={(e) => setBatchCount(Number(e.target.value))}
-                  className="w-full p-3 rounded-xl border border-slate-200 text-sm font-bold focus:ring-2 focus:ring-brand-500"
-                  required
-                />
-              </div>
+            {createdAccounts.length > 0 ? (
+              <div className="space-y-3">
+                {feedbackMessage && (
+                  <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-xl text-xs font-bold flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>{feedbackMessage}</span>
+                  </div>
+                )}
 
-              {feedbackMessage && (
-                <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-xl text-xs font-bold flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>{feedbackMessage}</span>
+                <div className="flex items-center gap-2 text-xs font-bold text-slate-700">
+                  <KeyRound className="w-4 h-4 text-amber-600" />
+                  <span>
+                    {isAr
+                      ? "بيانات الدخول المولّدة -- انسخها الآن، لن تظهر مجدداً"
+                      : "Generated logins -- copy these now, they won't be shown again"}
+                  </span>
                 </div>
-              )}
 
-              <div className="flex items-center gap-3 pt-2">
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="flex-1 py-3 bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs rounded-xl shadow-md transition-colors flex items-center justify-center gap-1.5"
-                >
-                  <Upload className="w-4 h-4" />
-                  <span>{isSubmitting ? (isAr ? "جارِ الاستيراد..." : "Processing...") : (isAr ? "تأكيد تسجيل الدفعة 🚀" : "Confirm Batch Onboard 🚀")}</span>
-                </button>
+                <div className="max-h-52 overflow-y-auto rounded-xl border border-slate-200 divide-y divide-slate-100 text-[11px] font-mono">
+                  {createdAccounts.map((a, i) => (
+                    <div key={i} className="p-2.5 flex flex-col bg-white">
+                      <span className="font-bold text-slate-800 font-sans">{a.fullName}</span>
+                      <span className="text-slate-600">{a.email}</span>
+                      <span className="text-brand-700">{a.tempPassword}</span>
+                    </div>
+                  ))}
+                </div>
+
                 <button
                   type="button"
-                  onClick={() => setSelectedSchool(null)}
-                  className="py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl"
+                  onClick={() => downloadCredentialsCsv(selectedSchool.nameEn, createdAccounts)}
+                  className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2"
                 >
-                  {isAr ? "إلغاء" : "Cancel"}
+                  <Download className="w-4 h-4" />
+                  <span>{isAr ? "تنزيل كملف CSV" : "Download as CSV"}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl"
+                >
+                  {isAr ? "إغلاق" : "Done"}
                 </button>
               </div>
-            </form>
+            ) : (
+              <form onSubmit={handleBatchSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    {isAr ? "الفئة العمرية لهذه الدفعة:" : "Age band for this batch:"}
+                  </label>
+                  <select
+                    value={ageGroup}
+                    onChange={(e) => setAgeGroup(e.target.value as AgeGroup)}
+                    className="w-full p-2.5 rounded-xl border border-slate-200 text-sm font-bold focus:ring-2 focus:ring-brand-500 bg-white"
+                  >
+                    <option value="AGE_4_6">4-6</option>
+                    <option value="AGE_7_10">7-10</option>
+                    <option value="AGE_11_13">11-13</option>
+                    <option value="AGE_14_16">14-16</option>
+                  </select>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-bold text-slate-700">
+                      {isAr ? "قائمة الطلاب (اسم لكل سطر، أو اسم,بريد إلكتروني):" : "Student roster (one per line: Name, or Name,email):"}
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="text-[11px] font-bold text-brand-700 hover:underline inline-flex items-center gap-1"
+                    >
+                      <Upload className="w-3 h-3" />
+                      {isAr ? "رفع CSV" : "Upload CSV"}
+                    </button>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".csv,text/csv,text/plain"
+                      onChange={handleFileSelected}
+                      className="hidden"
+                    />
+                  </div>
+                  <textarea
+                    value={rosterText}
+                    onChange={(e) => setRosterText(e.target.value)}
+                    rows={6}
+                    placeholder={"Ahmad Al-Amin\nSara Youssef, sara@example.com"}
+                    className="w-full p-3 rounded-xl border border-slate-200 text-xs font-mono focus:ring-2 focus:ring-brand-500"
+                    required
+                  />
+                  <div className="text-[11px] text-slate-500 mt-1">
+                    {parsedRoster.length} {isAr ? "طالب سيتم تسجيلهم" : "student(s) will be onboarded"}
+                    {parsedRoster.length > selectedSchool.licenseSeatsTotal - selectedSchool.licenseSeatsUsed && (
+                      <span className="text-rose-600 font-bold">
+                        {" "}
+                        -- {isAr ? "يتجاوز المقاعد المتاحة" : "exceeds available seats"}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {errorMessage && (
+                  <div className="p-3 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-xs font-bold">
+                    {errorMessage}
+                  </div>
+                )}
+
+                <div className="flex items-center gap-3 pt-2">
+                  <button
+                    type="submit"
+                    disabled={
+                      isSubmitting ||
+                      parsedRoster.length === 0 ||
+                      parsedRoster.length > selectedSchool.licenseSeatsTotal - selectedSchool.licenseSeatsUsed
+                    }
+                    className="flex-1 py-3 bg-brand-600 hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-xs rounded-xl shadow-md transition-colors flex items-center justify-center gap-1.5"
+                  >
+                    <Upload className="w-4 h-4" />
+                    <span>{isSubmitting ? (isAr ? "جارِ إنشاء الحسابات..." : "Creating accounts...") : (isAr ? "تأكيد تسجيل الدفعة 🚀" : "Confirm Batch Onboard 🚀")}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={closeModal}
+                    className="py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl"
+                  >
+                    {isAr ? "إلغاء" : "Cancel"}
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       )}

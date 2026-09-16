@@ -17,7 +17,8 @@ export default async function AdminSchoolsPage({
 
   async function handleOnboardBatchAction(params: {
     schoolId: string;
-    studentCount: number;
+    students: { fullName: string; email?: string }[];
+    ageGroup: "AGE_4_6" | "AGE_7_10" | "AGE_11_13" | "AGE_14_16";
   }) {
     "use server";
     return schoolService.onboardBatchRoster(params);
