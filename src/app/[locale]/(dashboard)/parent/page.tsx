@@ -220,7 +220,7 @@ export default async function ParentDashboardPage({
             <span>{isAr ? "حالة الاشتراك المالي" : "Subscription Status"}</span>
             <span className="text-emerald-600 font-bold">{isAr ? "نشط" : "Active"}</span>
           </div>
-          <div className="text-2xl font-extrabold text-slate-900">{isAr ? "$129 / شهر" : "$129 / mo"}</div>
+          <div className="text-2xl font-extrabold text-slate-900">{isAr ? "$74.50 / شهر" : "$74.50 / mo"}</div>
           <p className="text-xs text-slate-500">{isAr ? "الباقة العائلية (التجديد في 1 أكتوبر)" : "Family Plan (Renews Oct 1)"}</p>
         </div>
       </div>
@@ -333,7 +333,7 @@ export default async function ParentDashboardPage({
                   <span className="text-[11px] text-slate-500">#INV-2026-0901</span>
                 </div>
                 <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-bold text-[10px]">
-                  {isAr ? "مدفوعة ($129)" : "Paid ($129)"}
+                  {isAr ? "مدفوعة ($74.50)" : "Paid ($74.50)"}
                 </span>
               </div>
             </div>

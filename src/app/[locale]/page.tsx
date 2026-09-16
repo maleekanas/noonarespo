@@ -340,7 +340,7 @@ export default async function HomePage({
                 {dict.pricing.groupDesc}
               </p>
               <div className="flex items-baseline gap-1 mb-6">
-                <span className="text-4xl font-extrabold text-slate-900">$79</span>
+                <span className="text-4xl font-extrabold text-slate-900">$44.50</span>
                 <span className="text-xs text-slate-500">{dict.pricing.perMonth}</span>
               </div>
               <ul className="space-y-3 text-xs text-slate-600">
@@ -377,7 +377,7 @@ export default async function HomePage({
                 {dict.pricing.privateDesc}
               </p>
               <div className="flex items-baseline gap-1 mb-6">
-                <span className="text-4xl font-extrabold text-white">$149</span>
+                <span className="text-4xl font-extrabold text-white">$110.00</span>
                 <span className="text-xs text-slate-300">{dict.pricing.perMonth}</span>
               </div>
               <ul className="space-y-3 text-xs text-slate-200">
@@ -410,7 +410,7 @@ export default async function HomePage({
                 {dict.pricing.familyDesc}
               </p>
               <div className="flex items-baseline gap-1 mb-6">
-                <span className="text-4xl font-extrabold text-slate-900">$129</span>
+                <span className="text-4xl font-extrabold text-slate-900">$74.50</span>
                 <span className="text-xs text-slate-500">{dict.pricing.perMonth}</span>
               </div>
               <ul className="space-y-3 text-xs text-slate-600">
