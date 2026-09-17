@@ -79,9 +79,14 @@ export async function requireTeacherProfile(locale: string) {
   return { session, profile };
 }
 
+// SCHOOL_ADMIN is intentionally NOT in this list. It used to be treated
+// identically to the platform-wide admin roles, which meant a school
+// admin (once real accounts exist) would see and manage every school's
+// students, classes and reports through /admin -- not just their own.
+// SCHOOL_ADMIN now has its own scoped area (requireSchoolAdminSession,
+// below) gating a separate /school-admin route instead.
 const ADMIN_ROLES: RoleType[] = [
   RoleType.SUPER_ADMIN,
-  RoleType.SCHOOL_ADMIN,
   RoleType.ACADEMIC_ADMIN,
   RoleType.FINANCE_ADMIN,
 ];
@@ -92,4 +97,34 @@ export async function requireAdminSession(locale: string): Promise<SessionUser> 
     redirect(`/${locale}/login`);
   }
   return session;
+}
+
+/**
+ * Gates the school-scoped /school-admin area. Resolves the *real*
+ * AdministratorProfile row for the logged-in user (never trusting a
+ * schoolId embedded in the session cookie itself, the same reasoning as
+ * requireParentProfile/requireTeacherProfile above) so a school admin's
+ * scope always reflects their current database assignment -- including
+ * if a super-admin ever reassigns them to a different school.
+ */
+export async function requireSchoolAdminSession(
+  locale: string
+): Promise<{ session: SessionUser; schoolId: string }> {
+  const session = await requireSession(locale);
+  if (session.role !== RoleType.SCHOOL_ADMIN) {
+    redirect(`/${locale}/login`);
+  }
+
+  const profile = await prisma.administratorProfile.findUnique({
+    where: { userId: session.id },
+  });
+
+  if (!profile || !profile.schoolId) {
+    // A SCHOOL_ADMIN account with no school assigned is a data problem
+    // (every school admin must be created scoped to a school -- see
+    // SchoolRepository.createSchoolAdmin), not a normal access-denied case.
+    redirect(`/${locale}`);
+  }
+
+  return { session, schoolId: profile.schoolId };
 }

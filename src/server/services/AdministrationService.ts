@@ -7,7 +7,8 @@ import {
   TeacherAdminRecord,
 } from "../repositories/AdministrationRepository";
 import { academicRepository } from "../repositories/AcademicRepository";
-import { UserStatus, RoleType } from "@prisma/client";
+import { attendanceRepository } from "../repositories/AttendanceRepository";
+import { UserStatus, RoleType, EmploymentType } from "@prisma/client";
 import { SessionUser } from "@/lib/auth/session";
 
 export interface SchoolAnalyticsOverview {
@@ -123,6 +124,24 @@ export class AdministrationService {
     });
   }
 
+  async updateTeacherCertification(
+    teacherId: string,
+    isCertified: boolean,
+    employmentType: EmploymentType,
+    actor: SessionUser
+  ): Promise<void> {
+    await administrationRepository.updateTeacherCertification(teacherId, isCertified, employmentType);
+
+    await this.recordAuditLog({
+      category: "ACADEMIC",
+      action: "TEACHER_CERTIFICATION_UPDATED",
+      actor,
+      targetEntityId: teacherId,
+      targetEntityType: "TeacherProfile",
+      diffSummary: `تحديث حالة الاعتماد إلى [${isCertified ? "معتمد" : "غير معتمد"}] ونوع التوظيف إلى [${employmentType}]`,
+    });
+  }
+
   // --- Curriculum Standards ---
   async getCurriculumModules(programId?: string): Promise<CurriculumModule[]> {
     if (programId) {
@@ -155,10 +174,20 @@ export class AdministrationService {
     const teachers = await administrationRepository.getAllTeachersAdmin();
     const classes = await academicRepository.getAllClassGroups();
     const modules = await administrationRepository.getAllCurriculumModules();
+    const attendance = await attendanceRepository.calculateOverallAttendanceRate();
 
     const activeStudents = students.filter((s) => s.status === UserStatus.ACTIVE).length;
     const suspendedStudents = students.length - activeStudents;
     const totalHoursDelivered = teachers.reduce((sum, t) => sum + t.totalHoursTaught, 0);
+
+    // Retention = the share of every enrolled student account that is
+    // still ACTIVE (not suspended/archived), rather than the hardcoded
+    // 98.2% literal this used to return unconditionally. This replaces a
+    // fabricated number with a real, if simple, definition computed from
+    // the same student records the "totalStudents"/"activeStudents"
+    // figures above already use.
+    const retentionRatePercentage =
+      students.length > 0 ? Math.round((activeStudents / students.length) * 1000) / 10 : 100;
 
     return {
       totalStudents: students.length,
@@ -166,10 +195,38 @@ export class AdministrationService {
       suspendedStudents,
       totalTeachers: teachers.length,
       activeClassGroups: classes.length,
-      overallAttendanceRate: 96.5,
-      retentionRatePercentage: 98.2,
+      overallAttendanceRate: attendance.ratePercentage,
+      retentionRatePercentage,
       totalHoursDelivered,
       curriculumModulesCount: modules.length,
+    };
+  }
+
+  /**
+   * The same overview, scoped to one partner school's own roster and
+   * classes -- what the Institutional Admin Dashboard's Attendance &
+   * Progress Reporting section is built from, instead of a platform-wide
+   * (or fabricated) number every school would otherwise see.
+   */
+  async getSchoolAnalyticsOverviewForSchool(schoolId: string): Promise<{
+    totalStudents: number;
+    activeStudents: number;
+    totalClasses: number;
+    attendanceRatePercentage: number;
+    attendanceRecordsCount: number;
+  }> {
+    const [classes, attendance, schoolStudentCount] = await Promise.all([
+      academicRepository.getClassGroupsBySchoolId(schoolId),
+      attendanceRepository.calculateOverallAttendanceRate(schoolId),
+      administrationRepository.countStudentsBySchool(schoolId),
+    ]);
+
+    return {
+      totalStudents: schoolStudentCount.total,
+      activeStudents: schoolStudentCount.active,
+      totalClasses: classes.length,
+      attendanceRatePercentage: attendance.ratePercentage,
+      attendanceRecordsCount: attendance.totalRecords,
     };
   }
 }

@@ -1154,7 +1154,15 @@
     "creatingAccountsLabel": "Creating accounts...",
     "confirmBatchOnboardButton": "Confirm Batch Onboard 🚀",
     "cancelButton": "Cancel",
-    "onboardFeedbackTemplate": "{count} real student accounts were created in {schoolName}. Remaining seats: {seats}"
+    "onboardFeedbackTemplate": "{count} real student accounts were created in {schoolName}. Remaining seats: {seats}",
+    "createSchoolAdminButton": "Create School Admin",
+    "createSchoolAdminModalHeading": "Create Institutional Admin Account",
+    "createSchoolAdminScopeNote": "This account will only be able to see and manage this school's own roster, classes and reports -- never another institution's.",
+    "createSchoolAdminSuccessMessage": "A real school admin account was created for this institution.",
+    "createSchoolAdminFullNameLabel": "Admin's full name",
+    "createSchoolAdminEmailLabel": "Email (optional)",
+    "createSchoolAdminEmailHint": "Leave blank to auto-generate an internal login email.",
+    "createSchoolAdminConfirmButton": "Create Admin Account"
   },
   "parentBilling": {
     "breadcrumbParentDashboard": "Parent Dashboard",

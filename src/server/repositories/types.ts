@@ -10,6 +10,7 @@ import {
   SessionStatus,
   AttendanceStatus,
   SubmissionStatus,
+  EmploymentType,
 } from "@prisma/client";
 
 export interface DomainUser {
@@ -35,6 +36,11 @@ export interface DomainStudentProfile {
   nativeLanguage: string;
   ageGroup: AgeGroup;
   notesInternal?: string | null;
+  // Set only for a student onboarded through the B2B institutional roster
+  // flow -- which PartnerSchool this student belongs to. Null for
+  // individually-enrolled students. This is the tenant boundary a
+  // school-scoped ClassGroup's enrollment is checked against.
+  schoolId?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -65,6 +71,25 @@ export interface DomainTeacherProfile {
   hourlyRateMinorUnits: number;
   languagesSpoken?: string | null;
   isActive: boolean;
+  // Verified by an admin against the teacher's real qualifications/
+  // certifications fields -- backs the "Certified, Full-Time Educators"
+  // claim on the public For Schools page with real per-teacher data
+  // instead of a hardcoded "100%" badge.
+  isCertified: boolean;
+  employmentType: EmploymentType;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface DomainAdministratorProfile {
+  id: string;
+  userId: string;
+  firstName: string;
+  lastName: string;
+  scope: RoleType;
+  // Set only when scope is SCHOOL_ADMIN: which PartnerSchool this admin is
+  // confined to. Null for the platform-wide admin roles.
+  schoolId?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -113,6 +138,10 @@ export interface DomainClassGroup {
   classType: ClassType;
   capacityMax: number; // default 6 for group, 1 for private
   isActive: boolean;
+  // Set only for a class created under the B2B institutional flow, scoping
+  // it to one PartnerSchool. Null for the platform's normal
+  // individually-enrolled classes.
+  schoolId?: string | null;
   createdAt: Date;
 }
 

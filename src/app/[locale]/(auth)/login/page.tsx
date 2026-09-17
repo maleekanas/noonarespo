@@ -87,7 +87,11 @@ export default async function LoginPage({
       redirect(`/${locale}/student`);
     } else if (role === RoleType.TEACHER) {
       redirect(`/${locale}/teacher`);
-    } else if (role === RoleType.SUPER_ADMIN || role === RoleType.SCHOOL_ADMIN || role === RoleType.ACADEMIC_ADMIN) {
+    } else if (role === RoleType.SCHOOL_ADMIN) {
+      // Scoped to their own school's dashboard, not the platform-wide
+      // /admin area -- see requireSchoolAdminSession.
+      redirect(`/${locale}/school-admin`);
+    } else if (role === RoleType.SUPER_ADMIN || role === RoleType.ACADEMIC_ADMIN) {
       redirect(`/${locale}/admin`);
     } else if (role === RoleType.FINANCE_ADMIN) {
       redirect(`/${locale}/admin`);

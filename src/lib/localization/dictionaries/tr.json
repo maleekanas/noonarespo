@@ -1154,7 +1154,15 @@
     "creatingAccountsLabel": "Hesaplar oluşturuluyor...",
     "confirmBatchOnboardButton": "Toplu Eklemeyi Onayla 🚀",
     "cancelButton": "İptal",
-    "onboardFeedbackTemplate": "{schoolName} okulunda {count} gerçek öğrenci hesabı oluşturuldu. Kalan koltuk: {seats}"
+    "onboardFeedbackTemplate": "{schoolName} okulunda {count} gerçek öğrenci hesabı oluşturuldu. Kalan koltuk: {seats}",
+    "createSchoolAdminButton": "Okul Yöneticisi Oluştur",
+    "createSchoolAdminModalHeading": "Kurumsal Yönetici Hesabı Oluştur",
+    "createSchoolAdminScopeNote": "Bu hesap yalnızca bu okulun öğrenci listesini, sınıflarını ve raporlarını görüntüleyip yönetebilecek -- başka bir kurumunkini asla.",
+    "createSchoolAdminSuccessMessage": "Bu kurum için gerçek bir okul yöneticisi hesabı oluşturuldu.",
+    "createSchoolAdminFullNameLabel": "Yöneticinin tam adı",
+    "createSchoolAdminEmailLabel": "E-posta (isteğe bağlı)",
+    "createSchoolAdminEmailHint": "Otomatik bir dahili giriş e-postası oluşturmak için boş bırakın.",
+    "createSchoolAdminConfirmButton": "Yönetici Hesabı Oluştur"
   },
   "parentBilling": {
     "breadcrumbParentDashboard": "Veli Paneli",

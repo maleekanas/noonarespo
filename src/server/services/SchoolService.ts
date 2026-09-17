@@ -4,6 +4,7 @@ import {
   PartnerSchool,
   RosterStudentInput,
   OnboardedStudentAccount,
+  OnboardedSchoolAdminAccount,
 } from "../repositories/SchoolRepository";
 import { getDictionary } from "@/lib/localization";
 
@@ -90,6 +91,23 @@ export class SchoolService {
     additionalSeats: number;
   }): Promise<PartnerSchool> {
     return schoolRepository.allocateSeats(params.schoolId, params.additionalSeats);
+  }
+
+  /**
+   * Creates the first (or an additional) real SCHOOL_ADMIN login for a
+   * partner school, scoped to that school only. Without this there was no
+   * way to actually populate the SCHOOL_ADMIN role with a real account --
+   * see requireSchoolAdminSession for what that scoping now enforces.
+   */
+  async createSchoolAdmin(params: {
+    schoolId: string;
+    fullName: string;
+    email?: string;
+  }): Promise<OnboardedSchoolAdminAccount> {
+    return schoolRepository.createSchoolAdmin(params.schoolId, {
+      fullName: params.fullName,
+      email: params.email,
+    });
   }
 }
 

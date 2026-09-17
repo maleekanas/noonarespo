@@ -1154,7 +1154,15 @@
     "creatingAccountsLabel": "Accounts worden aangemaakt...",
     "confirmBatchOnboardButton": "Groepsimport bevestigen 🚀",
     "cancelButton": "Annuleren",
-    "onboardFeedbackTemplate": "{count} echte leerlingaccounts zijn aangemaakt in {schoolName}. Resterende plaatsen: {seats}"
+    "onboardFeedbackTemplate": "{count} echte leerlingaccounts zijn aangemaakt in {schoolName}. Resterende plaatsen: {seats}",
+    "createSchoolAdminButton": "Schoolbeheerder aanmaken",
+    "createSchoolAdminModalHeading": "Institutioneel beheerdersaccount aanmaken",
+    "createSchoolAdminScopeNote": "Dit account kan alleen de leerlingenlijst, klassen en rapportages van deze school zien en beheren -- nooit die van een andere instelling.",
+    "createSchoolAdminSuccessMessage": "Er is een echt schoolbeheerdersaccount aangemaakt voor deze instelling.",
+    "createSchoolAdminFullNameLabel": "Volledige naam van de beheerder",
+    "createSchoolAdminEmailLabel": "E-mail (optioneel)",
+    "createSchoolAdminEmailHint": "Laat leeg om automatisch een intern inlog-e-mailadres te genereren.",
+    "createSchoolAdminConfirmButton": "Beheerdersaccount aanmaken"
   },
   "parentBilling": {
     "breadcrumbParentDashboard": "Ouderdashboard",

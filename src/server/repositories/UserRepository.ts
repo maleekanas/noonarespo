@@ -5,6 +5,7 @@ import {
   DomainStudentProfile,
   DomainParentProfile,
   DomainTeacherProfile,
+  DomainAdministratorProfile,
 } from "./types";
 import { RoleType, AgeGroup, RelationshipType } from "@prisma/client";
 import { prisma } from "@/lib/database/prisma";
@@ -68,6 +69,10 @@ class UserRepository {
     return prisma.teacherProfile.findUnique({ where: { userId } });
   }
 
+  async findAdministratorProfileByUserId(userId: string): Promise<DomainAdministratorProfile | null> {
+    return prisma.administratorProfile.findUnique({ where: { userId } });
+  }
+
   async getAllTeachers(): Promise<DomainTeacherProfile[]> {
     // Intentionally unfiltered (including inactive teachers) -- this is
     // used by the admin teacher-management page, which needs to see and
@@ -101,7 +106,9 @@ class UserRepository {
 
   async updateTeacherProfile(
     teacherId: string,
-    data: Partial<Pick<DomainTeacherProfile, "hourlyRateMinorUnits" | "isActive">>
+    data: Partial<
+      Pick<DomainTeacherProfile, "hourlyRateMinorUnits" | "isActive" | "isCertified" | "employmentType">
+    >
   ): Promise<DomainTeacherProfile | null> {
     // findTeacherProfileById() returns a fresh, detached object from each
     // Prisma read -- unlike the old in-memory Map, mutating the returned

@@ -4,10 +4,18 @@ import { revalidatePath } from "next/cache";
 import { administrationService } from "@/server/services/AdministrationService";
 import { billingService } from "@/server/services/BillingService";
 import { requireAdminSession } from "@/lib/auth/currentUser";
+import { EmploymentType } from "@prisma/client";
 import {
   DollarSign,
   Award,
+  BadgeCheck,
 } from "lucide-react";
+
+const EMPLOYMENT_TYPE_LABEL_AR: Record<EmploymentType, string> = {
+  FULL_TIME: "دوام كامل",
+  PART_TIME: "دوام جزئي",
+  CONTRACT: "بعقد تعاون",
+};
 
 export default async function AdminTeachersPage({
   params,
@@ -17,6 +25,9 @@ export default async function AdminTeachersPage({
   const { locale } = await params;
   const adminSession = await requireAdminSession(locale);
   const teachers = await administrationService.getAllTeachers();
+  const certifiedCount = teachers.filter((t) => t.isCertified).length;
+  const certifiedPercentage =
+    teachers.length > 0 ? Math.round((certifiedCount / teachers.length) * 100) : 0;
 
   async function handleUpdateRate(formData: FormData) {
     "use server";
@@ -55,6 +66,26 @@ export default async function AdminTeachersPage({
     revalidatePath(`/${locale}/admin/audit-logs`);
   }
 
+  async function handleUpdateCertification(formData: FormData) {
+    "use server";
+    const teacherId = formData.get("teacherId")?.toString();
+    const isCertified = formData.get("isCertified")?.toString() === "true";
+    const employmentType = (formData.get("employmentType")?.toString() || "CONTRACT") as EmploymentType;
+
+    if (!teacherId) return;
+
+    await administrationService.updateTeacherCertification(
+      teacherId,
+      isCertified,
+      employmentType,
+      adminSession
+    );
+
+    revalidatePath(`/${locale}/admin/teachers`);
+    revalidatePath(`/${locale}/admin/audit-logs`);
+    revalidatePath(`/${locale}/schools`);
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       {/* Header */}
@@ -78,7 +109,9 @@ export default async function AdminTeachersPage({
         <div className="flex items-center gap-3">
           <div className="px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold flex items-center gap-1.5">
             <Award className="w-4 h-4 text-emerald-600" />
-            <span>100% من الكادر يحملون إجازات بالسند المعتمد</span>
+            <span>
+              {certifiedPercentage}% من الكادر ({certifiedCount} من {teachers.length}) معتمدون رسمياً
+            </span>
           </div>
         </div>
       </div>
@@ -109,8 +142,17 @@ export default async function AdminTeachersPage({
                     >
                       {teacher.isActive ? "نشط ومتاح ✓" : "معلق مؤقتاً ⏸"}
                     </span>
+                    {teacher.isCertified && (
+                      <span className="px-2.5 py-0.5 rounded-full text-xs font-bold border bg-indigo-50 text-indigo-700 border-indigo-200 inline-flex items-center gap-1">
+                        <BadgeCheck className="w-3.5 h-3.5" />
+                        معتمد
+                      </span>
+                    )}
                   </div>
                   <p className="text-xs text-slate-500 mt-1">{teacher.email}</p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">
+                    {EMPLOYMENT_TYPE_LABEL_AR[teacher.employmentType]}
+                  </p>
                   <p className="text-xs text-slate-600 mt-1.5 font-medium">
                     {teacher.qualifications}
                   </p>
@@ -141,7 +183,7 @@ export default async function AdminTeachersPage({
             </div>
 
             {/* Hourly Rate Adjustment Form & Status Toggle */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pt-2">
               {/* Hourly Rate Setting Form */}
               <form
                 action={handleUpdateRate}
@@ -212,6 +254,48 @@ export default async function AdminTeachersPage({
                   </button>
                 </form>
               </div>
+
+              {/* Certification & Employment Type -- backs the public "Certified,
+                  Full-Time Educators" claim with a real, admin-verified,
+                  per-teacher fact instead of an assumed constant. */}
+              <form
+                action={handleUpdateCertification}
+                className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-3"
+              >
+                <input type="hidden" name="teacherId" value={teacher.id} />
+                <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                  <BadgeCheck className="w-4 h-4 text-indigo-600" />
+                  <span>الاعتماد ونوع التوظيف</span>
+                </span>
+
+                <label className="flex items-center gap-2 text-xs font-bold text-slate-700">
+                  <input
+                    type="checkbox"
+                    name="isCertified"
+                    value="true"
+                    defaultChecked={teacher.isCertified}
+                    className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                  />
+                  <span>تم التحقق من إجازة الإسناد الرسمية</span>
+                </label>
+
+                <select
+                  name="employmentType"
+                  defaultValue={teacher.employmentType}
+                  className="w-full p-2 rounded-xl border border-slate-200 text-xs font-bold focus:ring-2 focus:ring-indigo-500 bg-white"
+                >
+                  <option value="FULL_TIME">دوام كامل</option>
+                  <option value="PART_TIME">دوام جزئي</option>
+                  <option value="CONTRACT">بعقد تعاون</option>
+                </select>
+
+                <button
+                  type="submit"
+                  className="w-full py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs transition-colors"
+                >
+                  حفظ الاعتماد
+                </button>
+              </form>
             </div>
           </div>
         ))}

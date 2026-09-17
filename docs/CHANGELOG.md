@@ -4,6 +4,32 @@ All notable changes to the Kids Arabic Academy platform will be documented in th
 
 ---
 
+## [Real Multi-Tenant B2B: School Scoping, Admin Permissions, Data Fixes] - 2026-09-17
+### ⚠️ Requires a manual production database step before this is fully live
+This release adds new columns/relations to `prisma/schema.prisma` (`ClassGroup.schoolId`, `AdministratorProfile.schoolId`, `TeacherProfile.isCertified`/`employmentType`, the new `EmploymentType` enum). This project has no migration files -- schema changes reach the production database via `npx prisma db push` (see `docs/DEPLOYMENT.md`), and the sandbox this was built in has no database credentials to run that command. **Run `npx prisma db push` against production before (or immediately after) this deploy goes live** -- until then, any code path touching the new fields will error against the live database. Everything else in this entry assumes that step has been done.
+
+### Context
+The founder's own audit was mostly right but one part was already fixed in an earlier session: batch roster onboarding (`SchoolRepository.onboardRoster`) already creates real `User` + `StudentProfile` + `STUDENT` role accounts, not a counter bump -- confirmed by direct code read, not assumption. What genuinely was not real: classes had no way to be scoped to a school, `SCHOOL_ADMIN` was treated identically to every other admin role with zero real accounts ever using it, and several of the six "What's Included" claims on the public For Schools page were backed by hardcoded/fake data rather than real per-record facts. This release fixes all of that.
+
+### Added
+- **Real multi-tenancy schema**: `ClassGroup.schoolId`, `AdministratorProfile.schoolId` (both optional FKs to `PartnerSchool`, `onDelete: SetNull`, indexed), and a new `EmploymentType` enum (`FULL_TIME`/`PART_TIME`/`CONTRACT`) plus `TeacherProfile.isCertified`/`employmentType`.
+- **School-scoped admin permissions**: `requireAdminSession` no longer treats `SCHOOL_ADMIN` the same as `SUPER_ADMIN`/`ACADEMIC_ADMIN`/`FINANCE_ADMIN` -- it's removed from that flat role list. A new `requireSchoolAdminSession()` resolves a school admin's real `AdministratorProfile.schoolId` from the database on every request (never trusted from the session cookie) and gates a brand-new `/school-admin` route.
+- **Institutional Admin Dashboard** (`/school-admin`): a real, per-school dashboard -- license seat usage, real enrolled-student counts, the school's own real class list (not the platform's), a real school-scoped attendance rate, bulk roster onboarding scoped to that school only, and class creation that's automatically locked to that school. A school admin cannot see or act on another institution's data from here.
+- **Creating a real `SCHOOL_ADMIN` account**: there was no way to do this before (zero real accounts existed). `SchoolRepository.createSchoolAdmin` + a "Create School Admin" action on the super-admin Institutional B2B Hub (`admin/schools`) creates a real login scoped to one school and hands back one-time credentials, the same pattern as roster onboarding.
+- **Multi-tenancy enforcement on enrollment**: `AcademicService.enrollStudent` now rejects enrolling a student into a class scoped to a different school than the student's own (or mixing a school-scoped class with a non-institutional student) -- `SCHOOL_SCOPE_MISMATCH`.
+- Super-admin class creation (`admin/classes`) can now optionally scope a new class to a partner school.
+
+### Fixed (backing the "For Schools -> What's Included" claims with real data)
+- **Certified, Full-Time Educators**: `AdministrationRepository.getAllTeachersAdmin()` previously returned the *same hardcoded fake email and qualifications string* for every teacher, and constant fake `assignedClassesCount`/`totalHoursTaught` (always 1 and 16) -- which also made the platform's `totalHoursDelivered` stat fake, since it summed that constant. Now reads each teacher's real account email, their real `qualifications`/`certifications` fields, a real assigned-class count (`TeacherAssignment`), and real hours from completed `ClassSession` durations. The admin Teachers page's hardcoded "100% hold accredited certification" badge is replaced with a real percentage computed from the new admin-verified `isCertified` field, with a form to set it per teacher.
+- **Attendance & Progress Reporting**: `AdministrationService.getSchoolAnalyticsOverview()` returned hardcoded `overallAttendanceRate: 96.5` and `retentionRatePercentage: 98.2` literals unconditionally. Both are now computed for real -- attendance from a new `AttendanceRepository.calculateOverallAttendanceRate()` (optionally school-scoped), retention from the real share of enrolled accounts that are still `ACTIVE`. Note this is an honest number, not a cosmetic one: with little attendance history recorded yet, this will show a low or 0% rate rather than the previous fake 96.5% until real attendance accumulates.
+- **Structured, Accredited Curriculum** and **Bulk Roster Onboarding**: confirmed already genuinely real in a prior session (7 real `Program`/`Course`/`CourseLevel` records; real account creation on roster import) -- no code change needed, verified by direct read rather than re-implemented.
+- **Real-Time Collaborative Classroom / Institutional Admin Dashboard**: were not real at all before this release -- see "Added" above.
+
+### Open item for the founder (not blocking, not actioned)
+- The word **"Accredited"** in "Structured, Accredited Curriculum" has no backing accreditation-body data anywhere in the system (no accrediting organization, certificate number, or standard is recorded against the curriculum). The curriculum itself is real and structured; whether it is *accredited* by a specific body is a factual claim only the founder can confirm or soften the wording on.
+
+---
+
 ## [Legal-Packet Follow-Up: Real Broadcast Emails & Corrected Legal Text] - 2026-09-17
 ### Added
 - A genuinely working admin-triggered "email all parents" broadcast, on `admin/integrations`, that dispatches a real email (via the existing `notificationDispatcherService`/`EmailAdapter`/Resend pipeline -- the same one already proven for password-reset emails) to every ACTIVE parent account. This is the actual delivery mechanism behind the Terms of Service's and Privacy Policy's promises to email parents about a price change (ToS §4) or a change that materially affects their subscription or the Privacy Policy (ToS §11 / Privacy §9) -- previously nothing in the codebase actually sent those emails.

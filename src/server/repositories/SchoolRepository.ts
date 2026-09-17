@@ -39,6 +39,12 @@ export interface OnboardedStudentAccount {
   tempPassword: string;
 }
 
+export interface OnboardedSchoolAdminAccount {
+  fullName: string;
+  email: string;
+  tempPassword: string;
+}
+
 // Rough midpoint age used only to seed a placeholder date of birth for
 // institutional roster imports, which supply an age band rather than an
 // exact birthdate. Flagged on the profile via notesInternal so staff know
@@ -50,11 +56,19 @@ const AGE_GROUP_MIDPOINT_YEARS: Record<AgeGroup, number> = {
   AGE_14_16: 15,
 };
 
+// Selects the school + real linked-record counts together, so every read
+// path below shows genuine multi-tenant data (real enrolled students, real
+// classes scoped to this school) instead of the legacy stored counters,
+// which could drift or reflect nothing real at all for pre-existing rows.
+const SCHOOL_COUNTS_INCLUDE = {
+  _count: { select: { students: true, classGroups: true, administrators: true } },
+} as const;
+
 class SchoolRepository {
   async getAllSchools(): Promise<PartnerSchool[]> {
     const rows = await prisma.partnerSchool.findMany({
       orderBy: { createdAt: "asc" },
-      include: { _count: { select: { students: true } } },
+      include: SCHOOL_COUNTS_INCLUDE,
     });
     return rows.map((row) => this.toSchool(row));
   }
@@ -62,7 +76,7 @@ class SchoolRepository {
   async getSchoolById(id: string): Promise<PartnerSchool | null> {
     const row = await prisma.partnerSchool.findUnique({
       where: { id },
-      include: { _count: { select: { students: true } } },
+      include: SCHOOL_COUNTS_INCLUDE,
     });
     return row ? this.toSchool(row) : null;
   }
@@ -86,7 +100,7 @@ class SchoolRepository {
         curriculumTrackAr: school.curriculumTrackAr,
         createdAt: school.createdAt,
       },
-      include: { _count: { select: { students: true } } },
+      include: SCHOOL_COUNTS_INCLUDE,
     });
     return this.toSchool(row);
   }
@@ -98,9 +112,71 @@ class SchoolRepository {
     const row = await prisma.partnerSchool.update({
       where: { id: schoolId },
       data: { licenseSeatsTotal: { increment: additionalSeats } },
-      include: { _count: { select: { students: true } } },
+      include: SCHOOL_COUNTS_INCLUDE,
     });
     return this.toSchool(row);
+  }
+
+  /**
+   * Creates a real login (User + AdministratorProfile{scope: SCHOOL_ADMIN,
+   * schoolId} + SCHOOL_ADMIN role) scoped to exactly this school. Before
+   * this existed there was no way to create a SCHOOL_ADMIN account at
+   * all -- the role existed in the schema and in requireAdminSession's
+   * flat role check, but zero real accounts ever used it, so the
+   * school-scoped permissions this unlocks (see requireSchoolAdminSession)
+   * had nobody to apply to.
+   */
+  async createSchoolAdmin(
+    schoolId: string,
+    admin: { fullName: string; email?: string }
+  ): Promise<OnboardedSchoolAdminAccount> {
+    const existing = await prisma.partnerSchool.findUnique({ where: { id: schoolId } });
+    if (!existing) throw new Error(`School not found: ${schoolId}`);
+
+    const schoolAdminRole = await prisma.role.findUnique({ where: { name: RoleType.SCHOOL_ADMIN } });
+    if (!schoolAdminRole) {
+      throw new Error(
+        "The SCHOOL_ADMIN role does not exist in the database yet. Run the seed script (npm run db:seed) first."
+      );
+    }
+
+    const [firstName, ...rest] = admin.fullName.trim().split(/\s+/);
+    const lastName = rest.join(" ") || "Admin";
+    const tempPassword = crypto.randomBytes(6).toString("base64url");
+    const passwordHash = await bcrypt.hash(tempPassword, 10);
+
+    const emailSlug =
+      firstName
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "")
+        .slice(0, 20) || "admin";
+    const email =
+      admin.email?.trim().toLowerCase() ||
+      `${emailSlug}.${crypto.randomBytes(3).toString("hex")}@${schoolId}.admins.arabickidsacademy.internal`;
+
+    await prisma.$transaction(async (tx) => {
+      const createdAdmin = await tx.administratorProfile.create({
+        data: {
+          firstName: firstName || "Admin",
+          lastName,
+          scope: RoleType.SCHOOL_ADMIN,
+          schoolId,
+          user: {
+            create: {
+              email,
+              passwordHash,
+              localePreference: "ar",
+            },
+          },
+        },
+      });
+
+      await tx.userRole.create({
+        data: { userId: createdAdmin.userId, roleId: schoolAdminRole.id },
+      });
+    });
+
+    return { fullName: admin.fullName.trim(), email, tempPassword };
   }
 
   /**
@@ -200,7 +276,7 @@ class SchoolRepository {
 
     const updatedRow = await prisma.partnerSchool.findUniqueOrThrow({
       where: { id: schoolId },
-      include: { _count: { select: { students: true } } },
+      include: SCHOOL_COUNTS_INCLUDE,
     });
 
     return { school: this.toSchool(updatedRow), createdAccounts };
@@ -222,7 +298,7 @@ class SchoolRepository {
     contractStatus: string;
     curriculumTrackAr: string;
     createdAt: Date;
-    _count?: { students: number };
+    _count?: { students: number; classGroups: number; administrators?: number };
   }): PartnerSchool {
     return {
       id: row.id,
@@ -233,7 +309,10 @@ class SchoolRepository {
       city: row.city,
       licenseSeatsTotal: row.licenseSeatsTotal,
       licenseSeatsUsed: row.licenseSeatsUsed,
-      classesCount: row.classesCount,
+      // Real count of classes scoped to this school (ClassGroup.schoolId)
+      // when available, rather than the legacy stored counter, which never
+      // moved regardless of what classes actually existed.
+      classesCount: row._count ? row._count.classGroups : row.classesCount,
       // Real count of linked student accounts when available, rather than the
       // legacy stored counter, which could drift or (for pre-existing seed
       // rows) reflect nothing real at all.

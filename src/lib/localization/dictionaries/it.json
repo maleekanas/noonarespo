@@ -1154,7 +1154,15 @@
     "creatingAccountsLabel": "Creazione account in corso...",
     "confirmBatchOnboardButton": "Conferma importazione in blocco 🚀",
     "cancelButton": "Annulla",
-    "onboardFeedbackTemplate": "{count} account studente reali sono stati creati in {schoolName}. Posti rimanenti: {seats}"
+    "onboardFeedbackTemplate": "{count} account studente reali sono stati creati in {schoolName}. Posti rimanenti: {seats}",
+    "createSchoolAdminButton": "Crea amministratore scolastico",
+    "createSchoolAdminModalHeading": "Crea account amministratore istituzionale",
+    "createSchoolAdminScopeNote": "Questo account potrà vedere e gestire solo l'elenco studenti, le classi e i report di questa scuola, mai quelli di un'altra istituzione.",
+    "createSchoolAdminSuccessMessage": "È stato creato un account amministratore scolastico reale per questa istituzione.",
+    "createSchoolAdminFullNameLabel": "Nome completo dell'amministratore",
+    "createSchoolAdminEmailLabel": "Email (facoltativo)",
+    "createSchoolAdminEmailHint": "Lascia vuoto per generare automaticamente un'email di accesso interna.",
+    "createSchoolAdminConfirmButton": "Crea account amministratore"
   },
   "parentBilling": {
     "breadcrumbParentDashboard": "Bacheca genitore",

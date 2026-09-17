@@ -88,6 +88,14 @@ class AcademicRepository {
     return prisma.classGroup.findUnique({ where: { id } });
   }
 
+  // Real, school-scoped class list -- what makes the B2B "Institutional
+  // Admin Dashboard" and "Real-Time Collaborative Classroom" claims
+  // genuine multi-tenancy instead of every school seeing the same
+  // platform-wide class list.
+  async getClassGroupsBySchoolId(schoolId: string): Promise<DomainClassGroup[]> {
+    return prisma.classGroup.findMany({ where: { schoolId }, orderBy: { createdAt: "desc" } });
+  }
+
   async getEnrollmentsByClassGroupId(classGroupId: string): Promise<DomainClassEnrollment[]> {
     return prisma.classEnrollment.findMany({
       where: { classGroupId, status: EnrollmentStatus.ACTIVE },
@@ -112,6 +120,7 @@ class AcademicRepository {
     name: string;
     classType: ClassType;
     capacityMax?: number;
+    schoolId?: string | null;
   }): Promise<DomainClassGroup> {
     return prisma.classGroup.create({
       data: {
@@ -120,6 +129,7 @@ class AcademicRepository {
         classType: data.classType,
         capacityMax: data.capacityMax || (data.classType === ClassType.PRIVATE_1_ON_1 ? 1 : 6),
         isActive: true,
+        schoolId: data.schoolId || null,
       },
     });
   }

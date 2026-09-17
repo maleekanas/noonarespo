@@ -23,6 +23,18 @@ export class AcademicService {
       throw new Error("CLASS_INACTIVE: Cannot enroll in an inactive class group");
     }
 
+    // Multi-tenancy boundary: a class scoped to a partner school (the B2B
+    // "Real-Time Collaborative Classroom") may only enroll that school's
+    // own roster students, and a school's roster student may not be
+    // enrolled into another school's class or a general-platform class
+    // meant for individually-enrolled families. Two unscoped (null/null)
+    // sides are the normal individual-enrollment path and remain allowed.
+    if ((classGroup.schoolId ?? null) !== (student.schoolId ?? null)) {
+      throw new Error(
+        "SCHOOL_SCOPE_MISMATCH: This student and class group belong to different schools -- a student can only be enrolled in classes scoped to their own institution."
+      );
+    }
+
     // Check existing enrollments in this class
     const currentEnrollments = await academicRepository.getEnrollmentsByClassGroupId(classGroupId);
     const alreadyEnrolled = currentEnrollments.some((e) => e.studentId === studentId);
@@ -48,6 +60,7 @@ export class AcademicService {
     name: string;
     classType: ClassType;
     capacityMax?: number;
+    schoolId?: string | null;
   }): Promise<DomainClassGroup> {
     const defaultCapacity = data.classType === ClassType.PRIVATE_1_ON_1 ? 1 : 6;
     const capacity = data.capacityMax !== undefined ? data.capacityMax : defaultCapacity;
@@ -64,6 +77,11 @@ export class AcademicService {
       ...data,
       capacityMax: capacity,
     });
+  }
+
+  /** Real, school-scoped class list for the Institutional Admin Dashboard. */
+  async getClassGroupsForSchool(schoolId: string): Promise<DomainClassGroup[]> {
+    return academicRepository.getClassGroupsBySchoolId(schoolId);
   }
 
   /**

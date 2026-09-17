@@ -222,6 +222,12 @@ model ParentProfile {
   @@map("parent_profiles")
 }
 
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+}
+
 model TeacherProfile {
   id                   String    @id @default(uuid())
   userId               String    @unique
@@ -235,6 +241,12 @@ model TeacherProfile {
   hourlyRateMinorUnits Int       @default(2500) // Default $25.00/hr in minor units
   languagesSpoken      String?   // Comma separated, e.g. "Arabic, English"
   isActive             Boolean   @default(true)
+  // Backs the public "Certified, Full-Time Educators" claim on the For
+  // Schools page with real, per-teacher data instead of a hardcoded
+  // "100%" badge. isCertified is true only once an admin has verified the
+  // teacher's certifications field against real documentation.
+  isCertified          Boolean         @default(false)
+  employmentType       EmploymentType  @default(CONTRACT)
 
   user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   assignments          TeacherAssignment[]
@@ -257,12 +269,19 @@ model AdministratorProfile {
   firstName String
   lastName  String
   scope     RoleType @default(SCHOOL_ADMIN)
+  // Set only for a SCHOOL_ADMIN: which PartnerSchool this admin is scoped
+  // to (they can see/manage only this school's roster, classes and
+  // reports). Null for SUPER_ADMIN / ACADEMIC_ADMIN / FINANCE_ADMIN, whose
+  // scope is platform-wide.
+  schoolId  String?
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  partnerSchool PartnerSchool? @relation(fields: [schoolId], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@index([schoolId])
   @@map("administrator_profiles")
 }
 
@@ -358,8 +377,17 @@ model ClassGroup {
   classType     ClassType          @default(GROUP)
   capacityMax   Int                @default(6) // Default 6 students for optimal interaction
   isActive      Boolean            @default(true)
+  // Set only for a class created under the B2B institutional flow, scoping
+  // it (and everything hanging off it: enrollments, sessions, attendance,
+  // homework) to one PartnerSchool. Null for the platform's normal
+  // individually-enrolled classes. This is what makes the "Real-Time
+  // Collaborative Classroom" and "Institutional Admin Dashboard" claims on
+  // the For Schools page real: a school admin's view is filtered by this
+  // field rather than showing every class on the platform.
+  schoolId      String?
 
   courseLevel   CourseLevel        @relation(fields: [courseLevelId], references: [id], onDelete: Cascade)
+  partnerSchool PartnerSchool?     @relation(fields: [schoolId], references: [id], onDelete: SetNull)
   enrollments   ClassEnrollment[]
   assignments   TeacherAssignment[]
   sessions      ClassSession[]
@@ -369,6 +397,7 @@ model ClassGroup {
   createdAt     DateTime           @default(now())
   updatedAt     DateTime           @updatedAt
 
+  @@index([schoolId])
   @@map("class_groups")
 }
 
@@ -815,6 +844,8 @@ model PartnerSchool {
   curriculumTrackAr String
 
   students          StudentProfile[]
+  classGroups       ClassGroup[]
+  administrators    AdministratorProfile[]
 
   createdAt         DateTime @default(now())
 

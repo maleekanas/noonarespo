@@ -1154,7 +1154,15 @@
     "creatingAccountsLabel": "جارِ إنشاء الحسابات...",
     "confirmBatchOnboardButton": "تأكيد تسجيل الدفعة 🚀",
     "cancelButton": "إلغاء",
-    "onboardFeedbackTemplate": "تم إنشاء {count} حساب طالب حقيقي بنجاح في {schoolName}. المقاعد المتبقية: {seats}"
+    "onboardFeedbackTemplate": "تم إنشاء {count} حساب طالب حقيقي بنجاح في {schoolName}. المقاعد المتبقية: {seats}",
+    "createSchoolAdminButton": "إنشاء مدير مؤسسة",
+    "createSchoolAdminModalHeading": "إنشاء حساب مدير مؤسسة",
+    "createSchoolAdminScopeNote": "سيتمكن هذا الحساب فقط من رؤية وإدارة قوائم الطلاب والفصول والتقارير الخاصة بهذه المؤسسة حصراً، دون غيرها.",
+    "createSchoolAdminSuccessMessage": "تم إنشاء حساب مدير مؤسسة حقيقي لهذه المؤسسة.",
+    "createSchoolAdminFullNameLabel": "الاسم الكامل للمدير",
+    "createSchoolAdminEmailLabel": "البريد الإلكتروني (اختياري)",
+    "createSchoolAdminEmailHint": "اتركه فارغاً لإنشاء بريد إلكتروني داخلي تلقائياً لتسجيل الدخول.",
+    "createSchoolAdminConfirmButton": "إنشاء حساب المدير"
   },
   "parentBilling": {
     "breadcrumbParentDashboard": "لوحة ولي الأمر",

@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { RoleType, UserStatus, AgeGroup } from "@prisma/client";
+import { RoleType, UserStatus, AgeGroup, EmploymentType } from "@prisma/client";
 import { prisma } from "@/lib/database/prisma";
 import { userRepository } from "./UserRepository";
 
@@ -83,6 +83,8 @@ export interface TeacherAdminRecord {
   experienceYears: number;
   hourlyRateMinorUnits: number;
   isActive: boolean;
+  isCertified: boolean;
+  employmentType: EmploymentType;
   assignedClassesCount: number;
   totalHoursTaught: number;
 }
@@ -1462,6 +1464,15 @@ class AdministrationRepository {
     });
   }
 
+  /** Real per-school student counts, for the Institutional Admin Dashboard. */
+  async countStudentsBySchool(schoolId: string): Promise<{ total: number; active: number }> {
+    const [total, active] = await Promise.all([
+      prisma.studentProfile.count({ where: { schoolId } }),
+      prisma.studentProfile.count({ where: { schoolId, user: { status: UserStatus.ACTIVE } } }),
+    ]);
+    return { total, active };
+  }
+
   // Now writes to the real User.status column -- the same column the login
   // page checks (`user.status !== "ACTIVE"` blocks sign-in). A suspension
   // previously only touched an in-memory Map that the real login flow never
@@ -1483,22 +1494,52 @@ class AdministrationRepository {
   }
 
   // --- Teacher Admin ---
+  // Previously every teacher was returned with the SAME hardcoded fake
+  // email and qualifications string, and constant fake
+  // assignedClassesCount/totalHoursTaught (1 and 16) regardless of who
+  // they actually were -- which also made totalHoursDelivered in
+  // getSchoolAnalyticsOverview() fake, since it summed that constant.
+  // This now reads the teacher's real account email, their real
+  // qualifications/certifications fields, their real assigned-class count
+  // (TeacherAssignment) and real hours actually delivered (sum of
+  // COMPLETED ClassSession durations), the same real-data pattern already
+  // used by getAllStudentsAdmin above.
   async getAllTeachersAdmin(): Promise<TeacherAdminRecord[]> {
-    const teachers = await userRepository.getAllTeachers();
-    return teachers.map((t) => ({
-      id: t.id,
-      userId: t.userId,
-      firstName: t.firstName,
-      lastName: t.lastName,
-      email: "ustadh.ahmed@kidsarabicacademy.internal",
-      qualifications: "بكالوريوس لغة عربية ودراسات إسلامية، إجازة بالسند المتصل في قراءة حفص",
-      languagesSpoken: t.languagesSpoken || "العربية، الإنجليزية",
-      experienceYears: t.experienceYears,
-      hourlyRateMinorUnits: t.hourlyRateMinorUnits,
-      isActive: t.isActive,
-      assignedClassesCount: 1,
-      totalHoursTaught: 16,
-    }));
+    const teachers = await prisma.teacherProfile.findMany({
+      include: {
+        user: { select: { email: true } },
+        assignments: { select: { id: true } },
+        sessions: {
+          where: { status: "COMPLETED" },
+          select: { startTimeUtc: true, endTimeUtc: true },
+        },
+      },
+      orderBy: { firstName: "asc" },
+    });
+
+    return teachers.map((t) => {
+      const totalHoursTaught = t.sessions.reduce((sum, s) => {
+        const hours = (s.endTimeUtc.getTime() - s.startTimeUtc.getTime()) / (1000 * 60 * 60);
+        return sum + Math.max(0, hours);
+      }, 0);
+
+      return {
+        id: t.id,
+        userId: t.userId,
+        firstName: t.firstName,
+        lastName: t.lastName,
+        email: t.user.email,
+        qualifications: t.qualifications || t.certifications || "لم يتم تسجيل المؤهلات بعد",
+        languagesSpoken: t.languagesSpoken || "العربية، الإنجليزية",
+        experienceYears: t.experienceYears,
+        hourlyRateMinorUnits: t.hourlyRateMinorUnits,
+        isActive: t.isActive,
+        isCertified: t.isCertified,
+        employmentType: t.employmentType,
+        assignedClassesCount: t.assignments.length,
+        totalHoursTaught: Math.round(totalHoursTaught * 10) / 10,
+      };
+    });
   }
 
   async updateTeacherRate(teacherId: string, newRateMinorUnits: number): Promise<void> {
@@ -1507,6 +1548,19 @@ class AdministrationRepository {
 
   async updateTeacherActiveStatus(teacherId: string, isActive: boolean): Promise<void> {
     await userRepository.updateTeacherProfile(teacherId, { isActive });
+  }
+
+  /**
+   * Admin-verified certification/employment status -- backs the "Certified,
+   * Full-Time Educators" claim on the public For Schools page with a real,
+   * per-teacher, admin-attested fact instead of a hardcoded "100%" badge.
+   */
+  async updateTeacherCertification(
+    teacherId: string,
+    isCertified: boolean,
+    employmentType: EmploymentType
+  ): Promise<void> {
+    await userRepository.updateTeacherProfile(teacherId, { isCertified, employmentType });
   }
 }
 

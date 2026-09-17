@@ -3,12 +3,14 @@ import Link from "next/link";
 import { revalidatePath } from "next/cache";
 import { academicRepository } from "@/server/repositories/AcademicRepository";
 import { academicService } from "@/server/services/AcademicService";
+import { schoolService } from "@/server/services/SchoolService";
 import { ClassType } from "@prisma/client";
 import { requireAdminSession } from "@/lib/auth/currentUser";
 import {
   Users,
   PlusCircle,
   Calendar,
+  Building2,
 } from "lucide-react";
 
 export default async function AdminClassesPage({
@@ -21,6 +23,8 @@ export default async function AdminClassesPage({
   const classGroups = await academicRepository.getAllClassGroups();
   const allLevels = await academicRepository.getAllLevels();
   const allCourses = await academicRepository.getAllCourses();
+  const allSchools = await schoolService.getAllSchools();
+  const schoolsById = Object.fromEntries(allSchools.map((s) => [s.id, s]));
 
   const classEnrollmentCounts: Record<string, number> = {};
   for (const cg of classGroups) {
@@ -35,6 +39,7 @@ export default async function AdminClassesPage({
     const courseLevelId = formData.get("courseLevelId")?.toString() || "level-a1-reading";
     const classType = (formData.get("classType")?.toString() || "GROUP") as ClassType;
     const capacityStr = formData.get("capacityMax")?.toString() || "6";
+    const schoolId = formData.get("schoolId")?.toString() || "";
 
     if (!name) return;
 
@@ -43,9 +48,12 @@ export default async function AdminClassesPage({
       courseLevelId,
       classType,
       capacityMax: parseInt(capacityStr, 10),
+      schoolId: schoolId || null,
     });
 
     revalidatePath(`/${locale}/admin/classes`);
+    revalidatePath(`/${locale}/admin/schools`);
+    revalidatePath(`/${locale}/school-admin`);
     revalidatePath(`/${locale}/parent/enroll`);
   }
 
@@ -97,10 +105,16 @@ export default async function AdminClassesPage({
                   className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-6"
                 >
                   <div className="space-y-2">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span className="px-2.5 py-0.5 rounded-full bg-brand-50 text-brand-700 font-bold text-[11px]">
                         {cg.classType === "GROUP" ? "فصل جماعي مصغر" : "درس خاص 1 على 1"}
                       </span>
+                      {cg.schoolId && schoolsById[cg.schoolId] && (
+                        <span className="px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 font-bold text-[11px] inline-flex items-center gap-1">
+                          <Building2 className="w-3 h-3" />
+                          {schoolsById[cg.schoolId].nameAr}
+                        </span>
+                      )}
                       <span className="text-xs text-slate-400">ID: {cg.id}</span>
                     </div>
 
@@ -196,6 +210,27 @@ export default async function AdminClassesPage({
                 defaultValue={6}
                 className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
               />
+            </div>
+
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">
+                المؤسسة الشريكة (اختياري)
+              </label>
+              <select
+                name="schoolId"
+                defaultValue=""
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
+              >
+                <option value="">فصل فردي عام (بدون مؤسسة)</option>
+                {allSchools.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.nameAr}
+                  </option>
+                ))}
+              </select>
+              <p className="text-[11px] text-slate-500 mt-1">
+                عند اختيار مؤسسة، يقتصر هذا الفصل على طلاب تلك المؤسسة فقط.
+              </p>
             </div>
 
             <button

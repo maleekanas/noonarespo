@@ -33,6 +33,43 @@ class AttendanceRepository {
     return { ...record, recordedAt: record.createdAt };
   }
 
+  /**
+   * Real platform-wide (or, when schoolId is given, school-scoped)
+   * attendance rate -- replaces the hardcoded 96.5% literal that used to
+   * sit in AdministrationService.getSchoolAnalyticsOverview() regardless
+   * of what attendance had actually been recorded. Present + Late count as
+   * attended, matching calculateStudentAttendanceRate's definition above.
+   */
+  async calculateOverallAttendanceRate(schoolId?: string): Promise<{
+    totalRecords: number;
+    presentRecords: number;
+    ratePercentage: number;
+  }> {
+    const where = schoolId
+      ? { student: { schoolId } }
+      : {};
+
+    const [totalRecords, presentRecords] = await Promise.all([
+      prisma.attendanceRecord.count({ where }),
+      prisma.attendanceRecord.count({
+        where: {
+          ...where,
+          status: { in: [AttendanceStatus.PRESENT, AttendanceStatus.LATE] },
+        },
+      }),
+    ]);
+
+    if (totalRecords === 0) {
+      return { totalRecords: 0, presentRecords: 0, ratePercentage: 0 };
+    }
+
+    return {
+      totalRecords,
+      presentRecords,
+      ratePercentage: Math.round((presentRecords / totalRecords) * 100),
+    };
+  }
+
   async calculateStudentAttendanceRate(studentId: string): Promise<{
     totalSessions: number;
     presentSessions: number;

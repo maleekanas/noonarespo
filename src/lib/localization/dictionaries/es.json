@@ -1154,7 +1154,15 @@
     "creatingAccountsLabel": "Creando cuentas...",
     "confirmBatchOnboardButton": "Confirmar importación masiva 🚀",
     "cancelButton": "Cancelar",
-    "onboardFeedbackTemplate": "Se crearon {count} cuentas de estudiante reales en {schoolName}. Plazas restantes: {seats}"
+    "onboardFeedbackTemplate": "Se crearon {count} cuentas de estudiante reales en {schoolName}. Plazas restantes: {seats}",
+    "createSchoolAdminButton": "Crear administrador escolar",
+    "createSchoolAdminModalHeading": "Crear cuenta de administrador institucional",
+    "createSchoolAdminScopeNote": "Esta cuenta solo podrá ver y gestionar la lista de estudiantes, las clases y los informes de esta escuela, nunca los de otra institución.",
+    "createSchoolAdminSuccessMessage": "Se creó una cuenta real de administrador escolar para esta institución.",
+    "createSchoolAdminFullNameLabel": "Nombre completo del administrador",
+    "createSchoolAdminEmailLabel": "Correo electrónico (opcional)",
+    "createSchoolAdminEmailHint": "Déjelo en blanco para generar automáticamente un correo interno de inicio de sesión.",
+    "createSchoolAdminConfirmButton": "Crear cuenta de administrador"
   },
   "parentBilling": {
     "breadcrumbParentDashboard": "Panel de padres",

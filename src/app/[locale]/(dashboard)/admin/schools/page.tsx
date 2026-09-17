@@ -2,6 +2,7 @@ import React from "react";
 import Link from "next/link";
 import { ArrowRight, Building2, ShieldCheck } from "lucide-react";
 import { schoolService } from "@/server/services/SchoolService";
+import { administrationService } from "@/server/services/AdministrationService";
 import { SchoolManagementClient } from "@/components/admin/SchoolManagementClient";
 import { getDictionary } from "@/lib/localization";
 import { requireAdminSession } from "@/lib/auth/currentUser";
@@ -28,6 +29,27 @@ export default async function AdminSchoolsPage({
     "use server";
     await requireAdminSession(locale);
     return schoolService.onboardBatchRoster({ ...params, locale });
+  }
+
+  async function handleCreateSchoolAdminAction(params: {
+    schoolId: string;
+    fullName: string;
+    email?: string;
+  }) {
+    "use server";
+    const adminSession = await requireAdminSession(locale);
+    const account = await schoolService.createSchoolAdmin(params);
+
+    await administrationService.recordAuditLog({
+      category: "USER_MANAGEMENT",
+      action: "SCHOOL_ADMIN_CREATED",
+      actor: adminSession,
+      targetEntityId: params.schoolId,
+      targetEntityType: "PartnerSchool",
+      diffSummary: `إنشاء حساب مدير مؤسسة جديد [${account.email}] لمؤسسة [${params.schoolId}]`,
+    });
+
+    return account;
   }
 
   return (
@@ -69,6 +91,7 @@ export default async function AdminSchoolsPage({
         kpis={kpis}
         locale={locale}
         onOnboardBatch={handleOnboardBatchAction}
+        onCreateSchoolAdmin={handleCreateSchoolAdminAction}
       />
     </div>
   );
