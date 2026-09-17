@@ -16,8 +16,8 @@ All notable changes to the Kids Arabic Academy platform will be documented in th
 - **Privacy Policy §5 (Who We Share Information With)**: listed Stripe/Vercel/Neon but omitted three sub-processors the app genuinely sends personal data to -- Resend (transactional email), Sentry (error monitoring), and Pusher (real-time classroom signaling/whiteboard). All three are now disclosed.
 - Both fixes were applied identically across all 6 locale dictionaries (ar, en, es, it, nl, tr) to keep full locale parity, matching the pattern used throughout this engagement.
 
-### Known remaining gap (carried forward from the attorney-review packet, not resolved here)
-- The legal entity name used throughout the Terms of Service and Privacy Policy ("3-Tech, Groningen, the Netherlands") could not be confirmed as accurate during this session and was left unchanged -- this still needs the founder's direct confirmation before the pages are considered final. Everything else in the attorney packet's LOW/MEDIUM-priority findings (cookie-policy gap, DPA confirmations, translation-conflict clause) remains intentionally unactioned, left for the founder/attorney's judgment as originally scoped.
+### Resolved (follow-up, same day)
+- **Legal entity name**: the founder confirmed Arabic Kids Academy is operated as a branch of 3-Tech (3-tech.eu), registered in the Netherlands -- so "3-Tech ... the Netherlands," already used throughout the Terms of Service and Privacy Policy, is accurate and required no text change. 3-tech.eu is currently a "coming soon" placeholder with no address or KVK (Dutch Chamber of Commerce) number published, so the Groningen city reference and the absence of a KVK number are unconfirmed rather than known-wrong; add a KVK number to both pages if/when one is available. Everything else in the attorney packet's LOW/MEDIUM-priority findings (cookie-policy gap, DPA confirmations, translation-conflict clause) remains intentionally unactioned, left for the founder/attorney's judgment as originally scoped.
 
 ---
 
