@@ -2,11 +2,23 @@ import {
   recommendationRepository,
   LearningRecommendation,
   StudentMilestoneProgress,
+  CEFRMilestoneItem,
   CuratedLearningResource,
 } from "../repositories/RecommendationRepository";
 import { progressService } from "./ProgressService";
 import { gamificationService } from "./GamificationService";
 import { userRepository } from "../repositories/UserRepository";
+import { roadmapRepository } from "../repositories/RoadmapRepository";
+
+// CEFR tiers in curriculum order, matching the cefrMilestone tags on
+// RoadmapRepository's quest nodes and PlacementRepository's recommendedLevelCode.
+const CEFR_LEVEL_ORDER = ["PRE_A1", "A1", "A2", "B1"] as const;
+const CEFR_LEVEL_TITLES_AR: Record<(typeof CEFR_LEVEL_ORDER)[number], string> = {
+  PRE_A1: "التأسيس المبدئي: أشكال الحروف والحركات",
+  A1: "المستوى A1: الانطلاقة الأولى في القراءة والنطق",
+  A2: "المستوى A2: الانطلاق والطلاقة التعبيرية",
+  B1: "المستوى B1: الفصاحة والمحادثة المتقدمة",
+};
 
 export interface StudentCompetencyOverview {
   listeningScore: number;
@@ -89,36 +101,18 @@ export class RecommendationService {
       ];
     }
 
-    // 3. Milestone Progress
+    // 3. Milestone Progress -- this used to fall back to a fixed, fabricated
+    // "100% achieved" / "70% overall" checklist for every real student the
+    // moment they weren't the seeded demo account, regardless of what
+    // they'd actually done (the same class of bug as the fake certificate
+    // verification and pre-seeded roadmap progress issues already fixed
+    // elsewhere in this app). It's now derived from the student's real,
+    // persisted RoadmapNodeProgress rows via roadmapRepository, grouped by
+    // CEFR tier -- a tier only shows as achieved once every quest node
+    // tagged with it is genuinely COMPLETED.
     let milestoneProgress = await recommendationRepository.getMilestonesByStudentId(studentId);
     if (!milestoneProgress) {
-      milestoneProgress = {
-        studentId,
-        currentLevel: "A1",
-        targetLevel: "A2",
-        targetLevelTitleAr: "المستوى A2: الانطلاق والطلاقة التعبيرية",
-        overallProgressPercent: 70,
-        milestones: [
-          {
-            code: "M1_PHONICS",
-            titleAr: "إتقان نطق الحروف الـ 28 بجميع الحركات الثلاث والسكون",
-            isAchieved: true,
-            evidenceAr: "تم الإنجاز بنسبة 100%",
-          },
-          {
-            code: "M2_READING",
-            titleAr: "قراءة نصوص قصيرة بسرعة 35 كلمة/دقيقة",
-            isAchieved: true,
-            evidenceAr: "تم تحقيق الهدف في الاختبار الأسبوعي",
-          },
-          {
-            code: "M3_QURAN",
-            titleAr: "حفظ وتجويد قصار السور المحددة في المنهج",
-            isAchieved: false,
-            evidenceAr: "قيد المتابعة والتدريب في استوديو التلاوة",
-          },
-        ],
-      };
+      milestoneProgress = await this.deriveMilestoneProgressFromRoadmap(studentId);
     }
 
     // 4. Curated Resources
@@ -141,6 +135,64 @@ export class RecommendationService {
       milestoneProgress,
       curatedResources,
       recommendedDailyMinutes: Math.max(15, recommendedDailyMinutes),
+    };
+  }
+
+  /**
+   * Builds a real CEFR milestone checklist from the student's actual
+   * roadmap-node completion data instead of a static, identical-for-everyone
+   * stand-in. A tier is "achieved" only once every quest node tagged with
+   * that CEFR level is COMPLETED; the target tier is the first one not yet
+   * fully achieved (or the highest tier, once everything is).
+   */
+  private async deriveMilestoneProgressFromRoadmap(
+    studentId: string
+  ): Promise<StudentMilestoneProgress> {
+    const progress = await roadmapRepository.getStudentProgress(studentId);
+
+    const milestones: CEFRMilestoneItem[] = [];
+    for (const level of CEFR_LEVEL_ORDER) {
+      const levelNodes = progress.nodes.filter((n) => n.cefrMilestone === level);
+      if (levelNodes.length === 0) continue;
+
+      const completedCount = levelNodes.filter((n) => n.status === "COMPLETED").length;
+      const isAchieved = completedCount === levelNodes.length;
+
+      milestones.push({
+        code: level,
+        titleAr: CEFR_LEVEL_TITLES_AR[level],
+        isAchieved,
+        evidenceAr: isAchieved
+          ? `تم إكمال جميع محطات هذا المستوى (${completedCount}/${levelNodes.length})`
+          : `${completedCount}/${levelNodes.length} محطات مكتملة حتى الآن`,
+      });
+    }
+
+    let currentLevel: string = CEFR_LEVEL_ORDER[0];
+    let targetIndex = 0;
+    for (let i = 0; i < milestones.length; i++) {
+      if (milestones[i].isAchieved) {
+        currentLevel = milestones[i].code;
+        targetIndex = Math.min(i + 1, milestones.length - 1);
+      } else {
+        targetIndex = i;
+        break;
+      }
+    }
+
+    const targetMilestone = milestones[targetIndex];
+    const targetLevel = targetMilestone?.code ?? CEFR_LEVEL_ORDER[0];
+    const targetLevelTitleAr =
+      CEFR_LEVEL_TITLES_AR[targetLevel as (typeof CEFR_LEVEL_ORDER)[number]] ??
+      CEFR_LEVEL_TITLES_AR[CEFR_LEVEL_ORDER[0]];
+
+    return {
+      studentId,
+      currentLevel,
+      targetLevel,
+      targetLevelTitleAr,
+      overallProgressPercent: progress.pathCompletionPercentage,
+      milestones,
     };
   }
 
