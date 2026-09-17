@@ -219,7 +219,7 @@ export class DataExportService {
     ]);
 
     const bundle = {
-      system: "Kids Arabic Academy",
+      system: "Arabic Kids Academy",
       schemaVersion: "1.0.0",
       exportTimestamp: new Date().toISOString(),
       compliance: ["GDPR Article 20 (Data Portability)", "COPPA (Children's Online Privacy Protection)"],

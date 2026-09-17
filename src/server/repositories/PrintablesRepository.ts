@@ -208,6 +208,102 @@ class InMemoryPrintablesRepository {
         },
       ],
     });
+
+    // 6. Coloring & Tanween / Sukoon (complements the short-vowels set above)
+    this.printables.set("printable-tanween-sukoon-coloring", {
+      id: "printable-tanween-sukoon-coloring",
+      titleAr: "بطاقات تلوين التنوين والسكون ومطابقة الأصوات",
+      titleEn: "Tanween & Sukoon Coloring and Sound-Matching Cards",
+      category: "COLORING_HARAKAT",
+      categoryNameAr: "تلوين وأنشطة تفاعلية",
+      targetAgeGroup: "AGE_4_6",
+      pageCount: 3,
+      paperFormat: "A4_LANDSCAPE",
+      thumbnailEmoji: "🖍️",
+      descriptionAr: "صفحات تلوين ومطابقة تشرح التنوين بالفتح والضم والكسر، والسكون، بأسلوب مرح مناسب للمبتدئين.",
+      descriptionEn: "Coloring and matching pages introducing Tanween (Fathatayn, Dammatayn, Kasratayn) and Sukoon in a playful, beginner-friendly way.",
+      qrCodeDestinationUrl: "/student/pronunciation",
+      qrCodeLabelAr: "امسح الرمز للاستماع لنموذج المعلم ومطابقة النطق",
+      items: [
+        {
+          titleAr: "التنوين: صوتان في نهاية الكلمة 🎈🎈",
+          guideTextAr: "لون التنوين بالأخضر ثم استمع للنموذج وكرر الكلمة بصوت عالٍ.",
+          guideTextEn: "Color every Tanween mark green, then listen to the model and repeat the word aloud.",
+          practiceLinesCount: 2,
+          sampleCharacters: ["كِتَابٌ 📗", "قَلَمًا ✏️", "بَيْتٍ 🏠"],
+          illustrationEmoji: "🎈",
+        },
+        {
+          titleAr: "السكون: توقف قصير وهادئ 🤫",
+          guideTextAr: "لون دائرة السكون باللون الرمادي واستمع للفرق بين الحركة والسكون.",
+          guideTextEn: "Color the Sukoon circle grey and listen for the difference between a vowel and a stop.",
+          practiceLinesCount: 2,
+          sampleCharacters: ["مَسْجِدٌ 🕌", "قَمْرٌ 🌙", "عَيْنٌ 👁️"],
+          illustrationEmoji: "🤫",
+        },
+      ],
+    });
+
+    // 7. Prophetic Comics (Part 2) -- same real Nuh story as packet #4,
+    // approached through a different activity type (sequencing/retelling
+    // rather than coloring/matching) so both packets legitimately point at
+    // the one prophetic story that currently exists as a real, narrated,
+    // interactive digital reader (StoryRepository id "story-nuh-ark").
+    this.printables.set("printable-nuh-ark-sequencing", {
+      id: "printable-nuh-ark-sequencing",
+      titleAr: "بطاقات ترتيب أحداث قصة سيدنا نوح عليه السلام وإعادة السرد",
+      titleEn: "Prophet Nuh's Ark Story-Sequencing & Retelling Cards",
+      category: "PROPHETIC_COMICS",
+      categoryNameAr: "قصص الأنبياء الورقية",
+      targetAgeGroup: "AGE_7_10",
+      pageCount: 2,
+      paperFormat: "A4_LANDSCAPE",
+      thumbnailEmoji: "📖",
+      descriptionAr: "بطاقات قص ولصق لترتيب أحداث القصة زمنياً، تشجع الطفل على إعادة سرد القصة بكلماته بعد سماع الرواية الرقمية.",
+      descriptionEn: "Cut-and-order story cards for sequencing the Ark narrative, encouraging the child to retell it in their own words after listening to the digital narration.",
+      qrCodeDestinationUrl: "/student/stories/story-nuh-ark",
+      qrCodeLabelAr: "امسح الرمز للاستماع إلى القصة كاملة بصوت الراوي",
+      items: [
+        {
+          titleAr: "ترتيب الأحداث: من بداية القصة إلى نهايتها",
+          guideTextAr: "اقصص البطاقات الأربع وأعد ترتيبها بالتسلسل الصحيح ثم الصقها في الصفحة.",
+          guideTextEn: "Cut out the four cards and reorder them into the correct sequence, then glue them onto the page.",
+          practiceLinesCount: 2,
+          sampleCharacters: ["السَّفِينَةُ 🚢", "الطُّوفَانُ 🌊", "الحَيَوَانَاتُ 🐘", "الأَمَانُ 🌈"],
+          illustrationEmoji: "🔢",
+        },
+      ],
+    });
+
+    // 8. Vocabulary Flashcards (real, matching the category name and the
+    // Phonics Arcade's word-building content -- قَلَم / شَمْس / نَجْم /
+    // كِتَاب -- so the QR destination genuinely reinforces the same words
+    // printed on the card, not a generic unrelated page).
+    this.printables.set("printable-everyday-vocabulary-flashcards", {
+      id: "printable-everyday-vocabulary-flashcards",
+      titleAr: "بطاقات مفردات يومية مصورة (الشمس، القلم، النجم، الكتاب)",
+      titleEn: "Everyday Illustrated Vocabulary Flashcards",
+      category: "VOCABULARY_FLASHCARDS",
+      categoryNameAr: "ملصقات وبطاقات تعليمية",
+      targetAgeGroup: "AGE_4_6",
+      pageCount: 2,
+      paperFormat: "A4_LANDSCAPE",
+      thumbnailEmoji: "🗂️",
+      descriptionAr: "بطاقات مفردات مصورة لكلمات يومية شائعة، للقص واللعب بها كبطاقات ذاكرة أو تعليقها على الثلاجة.",
+      descriptionEn: "Illustrated flashcards for common everyday words, ready to cut out and use as a memory-match game or stick on the fridge.",
+      qrCodeDestinationUrl: "/student/activities",
+      qrCodeLabelAr: "امسح الرمز لسماع نطق كل كلمة واللعب في ورشة الأصوات",
+      items: [
+        {
+          titleAr: "بطاقات الأدوات والطبيعة",
+          guideTextAr: "لون كل بطاقة ثم اقصها بمساعدة أحد الوالدين واستخدمها في لعبة الذاكرة.",
+          guideTextEn: "Color each card, cut it out with a parent's help, and use it for a memory-matching game.",
+          practiceLinesCount: 4,
+          sampleCharacters: ["قَلَمٌ ✏️", "شَمْسٌ ☀️", "نَجْمٌ ⭐", "كِتَابٌ 📗"],
+          illustrationEmoji: "🗂️",
+        },
+      ],
+    });
   }
 
   async getAllPrintables(): Promise<PrintablePacket[]> {

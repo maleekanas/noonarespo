@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     status: "ok",
     timestamp: new Date().toISOString(),
     version: "0.1.0",
-    platform: "Kids Arabic Academy",
+    platform: "Arabic Kids Academy",
     supportedLocales: locales,
     defaultLocale: defaultLocale,
   });

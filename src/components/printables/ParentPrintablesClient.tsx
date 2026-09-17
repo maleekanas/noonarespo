@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Printer,
   FileText,
@@ -8,6 +8,7 @@ import {
   Eye,
   X,
 } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
 import {
   PrintablePacket,
   PrintableCategory,
@@ -29,6 +30,27 @@ export function ParentPrintablesClient({
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
   const [activePreviewPacket, setActivePreviewPacket] =
     useState<PrintablePacket | null>(null);
+  // Resolved on mount only (window is unavailable during SSR): this is what
+  // makes the printed QR code a real, scannable link rather than a decorative
+  // graphic -- it always points at whichever origin this page is actually
+  // running on (production domain, preview deployment, or localhost), so a
+  // sheet printed from a preview deployment doesn't silently point students
+  // at the wrong environment.
+  const [siteOrigin, setSiteOrigin] = useState<string>("");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setSiteOrigin(window.location.origin);
+    }
+  }, []);
+
+  function buildQrDestinationUrl(packet: PrintablePacket): string {
+    const origin = siteOrigin || "https://www.arabickidsacademy.com";
+    // source=printable_qr lets teacher/admin analytics (and server logs)
+    // distinguish scans that arrived from a printed sheet from normal
+    // in-app navigation, without changing where the link actually lands.
+    return `${origin}/${locale}${packet.qrCodeDestinationUrl}?source=printable_qr&packet=${packet.id}`;
+  }
 
   const categories = [
     { id: "ALL", label: pp.categoryAllLabel },
@@ -200,7 +222,7 @@ export function ParentPrintablesClient({
                       {pp.worksheetTaglineLabel}
                     </div>
                     <div className="text-base font-black text-slate-900">
-                      Kids Arabic Academy • {pp.homeLearningBookletLabel}
+                      Arabic Kids Academy • {pp.homeLearningBookletLabel}
                     </div>
                   </div>
                   <div className="text-3xl">🌟</div>
@@ -282,22 +304,24 @@ export function ParentPrintablesClient({
                   ))}
                 </div>
 
-                {/* QR Code Verification & Audio Link Footer */}
+                {/* QR Code Verification & Audio Link Footer -- a real,
+                    scannable QR code (rendered as crisp print-safe SVG, not
+                    a decorative mock) encoding the actual URL of a real,
+                    audio-enabled page in the app (Pronunciation Studio,
+                    Quran Studio, the story reader, or the Phonics Arcade --
+                    each of which plays real audio via the Web Speech API or
+                    the recorded teacher model). Scanning it with a phone
+                    camera opens that page directly. */}
                 <div className="border-2 border-emerald-500 rounded-2xl p-4 bg-emerald-50/60 flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-16 h-16 bg-white border border-slate-300 rounded-xl flex items-center justify-center p-1 shrink-0 shadow-sm">
-                      {/* Stylized QR Code Graphic */}
-                      <div className="w-full h-full border-2 border-slate-900 p-1 flex flex-col justify-between">
-                        <div className="flex justify-between">
-                          <div className="w-3 h-3 bg-slate-900" />
-                          <div className="w-3 h-3 bg-slate-900" />
-                        </div>
-                        <div className="text-[8px] font-black font-mono text-center">ARABIC</div>
-                        <div className="flex justify-between">
-                          <div className="w-3 h-3 bg-slate-900" />
-                          <div className="w-2 h-2 bg-emerald-600 rounded-full" />
-                        </div>
-                      </div>
+                    <div className="w-16 h-16 bg-white border border-slate-300 rounded-xl flex items-center justify-center p-1.5 shrink-0 shadow-sm">
+                      <QRCodeSVG
+                        value={buildQrDestinationUrl(activePreviewPacket)}
+                        size={56}
+                        level="M"
+                        marginSize={0}
+                        title={activePreviewPacket.qrCodeLabelAr}
+                      />
                     </div>
                     <div>
                       <div className="text-xs font-black text-emerald-950">

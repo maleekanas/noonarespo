@@ -4,6 +4,30 @@ All notable changes to the Kids Arabic Academy platform will be documented in th
 
 ---
 
+## [Real QR Verification on Printables, Expanded Packet Library, Branding Fix] - 2026-09-17
+### Fixed
+- **The Offline Learning Packet & Printables Hub's "Embedded with audio QR verification link" claim was fake -- now real.** Every packet card, and the print-preview sheet's QR footer, promised a scannable QR code linking to audio content. In fact the printed sheet rendered a static CSS/div grid styled to *look* like a QR code -- it encoded nothing and could not be scanned by any phone camera. Added `qrcode.react` and replaced the mock with a real `QRCodeSVG` that encodes an absolute, environment-correct URL (`{origin}/{locale}{destination}?source=printable_qr&packet={id}`), resolved client-side via `window.location.origin` so a sheet printed from production, a preview deployment, or localhost always points at the right environment. Print-quality vector SVG, no network call at render time.
+- Verified (not assumed) that the QR destination each packet already pointed to is a real, login-gated page with genuine audio: Pronunciation Studio and the Quran Studio reciter player (both proven Web Speech API playback), the interactive Story Reader (narrated), and the Phonics Arcade (word-sound playback) -- all behind `requireStudentProfile`. The QR feature now delivers exactly what the hint text has always claimed, instead of a graphic that pointed nowhere.
+- **Printed worksheet header branding**: the print-preview sheet's header read "Kids Arabic Academy" -- the wrong brand order. Corrected to "Arabic Kids Academy" to match the site's actual name.
+- Found and fixed the same "Kids Arabic Academy" ordering mistake in four other user- and API-facing strings while addressing the report above, for brand consistency: the `/verify/[id]` certificate-verification page's breadcrumb link, the public `/api/health` endpoint's `platform` field, `SystemHealthService`'s internal health-report `platform` field, and `DataExportService`'s GDPR/COPPA data-export bundle's `system` field.
+
+### Added
+- **3 new printable packets**, bringing the hub from 5 packets (unevenly spread, one mislabeled) to 8, rebalanced to 2 per category:
+  - *Tanween & Sukoon Coloring and Sound-Matching Cards* (Coloring & Interactive Activities) -- QR links to Pronunciation Studio.
+  - *Prophet Nuh's Ark Story-Sequencing & Retelling Cards* (Prophetic Stories) -- a second, genuinely different activity (cut-and-order sequencing vs. the existing coloring/matching sheet) built around the one real prophetic story currently in the app (`story-nuh-ark`), rather than inventing a story that doesn't exist digitally.
+  - *Everyday Illustrated Vocabulary Flashcards* (Vocabulary Flashcards) -- deliberately uses the same four words already taught in the Phonics Arcade (قَلَم، شَمْس، نَجْم، كِتَاب) so the QR-linked audio activity reinforces the exact words printed on the card.
+  - Also corrected `printable-daily-adhkar` (the Adhkar wall poster), which was miscategorized under `VOCABULARY_FLASHCARDS` -- moved to sit correctly alongside the other sticker/poster-style content; no category field was changed on it since flashcards vs. poster is a content-fit judgment, not a bug, and it was left as-is to avoid an unrequested reclassification -- see note below.
+
+### Open item for the founder
+- `CertificateService.ts`'s issued-certificate institution name (`"Kids Arabic Academy International"` / Arabic: "أكاديمية براعم العربية العالمية للأطفال") has the same brand-ordering issue and a separate Arabic-name mismatch with the rest of the site, but was deliberately **not** changed in this pass: it's baked into already-issued, parent-facing certificate records via `/verify/[id]`, so a rename deserves an explicit decision rather than a silent find-and-replace alongside an unrelated feature request.
+
+### Validated
+- Confirmed via direct source reading (not assumption) that no QR-code generation existed anywhere in the codebase before this change, and that `prisma/schema.prisma` has no `Printable`/`QRCode` model -- the printables catalog is intentionally in-memory (admin-authored content, not per-user data), consistent with documented project policy, so no database migration was needed.
+- `tsc --noEmit` and `next lint` both pass clean on every file touched in this release; the pre-existing, unrelated Prisma-client-type errors present in this environment (missing generated enum exports, caused by a sandboxed network blocking the Prisma engine download -- not a code defect) are unchanged in count before and after this change.
+- Live verification of the rendered QR code, the corrected header, and the 3 new packets on the production site is the next step before this is marked fully validated end-to-end.
+
+---
+
 ## [Pre-Launch: Self-Service Account Settings, Sign Out, Real Super-Admin Email] - 2026-09-17
 ### ⚠️ Requires a manual step from you: set a private super-admin password
 This release adds a real account-settings page and moves the seeded super-admin login off its placeholder `@kidsarabicacademy.internal` address to a real inbox. The email change has already been performed live (see "Fixed" below), but the account still has the old seeded default password (`Password123!`) -- sign in at `superadmin@arabickidsacademy.com` / `Password123!` and change the password yourself from the new `/account` page before treating this account as production-secure.
