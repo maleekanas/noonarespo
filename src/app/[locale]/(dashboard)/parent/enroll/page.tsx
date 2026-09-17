@@ -5,7 +5,8 @@ import { userRepository } from "@/server/repositories/UserRepository";
 import { academicRepository } from "@/server/repositories/AcademicRepository";
 import { academicService } from "@/server/services/AcademicService";
 import { requireParentProfile } from "@/lib/auth/currentUser";
-import { Users, BookOpen, CheckCircle2 } from "lucide-react";
+import { getParentAccessLevel } from "@/lib/auth/subscriptionAccess";
+import { Users, BookOpen, CheckCircle2, Lock, Sparkles } from "lucide-react";
 
 export default async function ParentEnrollPage({
   params,
@@ -18,6 +19,16 @@ export default async function ParentEnrollPage({
   const { studentId: selectedStudentIdParam, program: selectedProgramParam } = await searchParams;
   const { profile } = await requireParentProfile(locale);
   const parentId = profile.id;
+
+  // Live class enrollment is the single highest-value feature in the app --
+  // it's the one thing that consumes real teacher capacity rather than being
+  // a self-serve recorded/audio experience. It's deliberately excluded from
+  // the 1-day free trial (see subscriptionAccess.ts) so a trial account can
+  // fully explore pronunciation/phonics/stories/Quran/printables to see how
+  // strong the platform is at teaching, while live classes stay a clear
+  // reason to convert to a paid plan.
+  const access = await getParentAccessLevel(parentId);
+  const isTrialLocked = access.level === "TRIAL";
 
   const children = await userRepository.getLinkedChildren(parentId);
   const selectedStudentId = selectedStudentIdParam || (children.length > 0 ? children[0].id : "");
@@ -61,6 +72,17 @@ export default async function ParentEnrollPage({
     const classGroupId = formData.get("classGroupId")?.toString();
 
     if (!studentId || !classGroupId) return;
+
+    // Defense in depth: the UI below already hides the enrollment grid
+    // during a trial, but a direct form POST must not be able to bypass
+    // that -- so the same access check is re-derived and enforced here
+    // server-side rather than trusted from the client.
+    const { profile: enrollingProfile } = await requireParentProfile(locale);
+    const enrollingAccess = await getParentAccessLevel(enrollingProfile.id);
+    if (enrollingAccess.level === "TRIAL") {
+      console.warn("Blocked enrollment attempt from trial account:", enrollingProfile.id);
+      return;
+    }
 
     try {
       await academicService.enrollStudent(studentId, classGroupId);
@@ -146,7 +168,31 @@ export default async function ParentEnrollPage({
         })}
       </div>
 
-      {/* Available Class Groups Grid */}
+      {/* Trial Upsell -- replaces the live class enrollment grid entirely
+          while on the 1-day free trial. Live classes are the one feature
+          that consumes real teacher time/capacity, so they're the clearest,
+          highest-value reason to convert to a paid plan. */}
+      {isTrialLocked ? (
+        <div className="bg-gradient-to-br from-brand-600 to-brand-700 rounded-3xl p-8 sm:p-10 text-white text-center space-y-4 shadow-lg shadow-brand-500/20">
+          <div className="w-14 h-14 rounded-2xl bg-white/15 flex items-center justify-center mx-auto">
+            <Lock className="w-7 h-7" />
+          </div>
+          <h2 className="text-xl font-extrabold">
+            الفصول المباشرة مع المعلمين غير متاحة خلال التجربة المجانية
+          </h2>
+          <p className="text-sm text-white/80 max-w-lg mx-auto leading-relaxed">
+            جرّب استوديو النطق، وألعاب الصوتيات، وقارئ القصص، وتلاوة القرآن، والمطبوعات القابلة للطباعة مجاناً
+            الآن لتكتشف قوة المنهج. الاشتراك في فصل جماعي مباشر مع معلم متخصص متاح فقط للحسابات المدفوعة.
+          </p>
+          <Link
+            href={`/${locale}/parent/billing`}
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white text-brand-700 font-bold text-sm shadow-md hover:opacity-90 transition-all"
+          >
+            <Sparkles className="w-4 h-4" />
+            <span>الترقية الآن للانضمام إلى فصل مباشر</span>
+          </Link>
+        </div>
+      ) : (
       <div className="space-y-6">
         <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
           <BookOpen className="w-5 h-5 text-brand-600" />
@@ -231,6 +277,7 @@ export default async function ParentEnrollPage({
           })}
         </div>
       </div>
+      )}
     </div>
   );
 }

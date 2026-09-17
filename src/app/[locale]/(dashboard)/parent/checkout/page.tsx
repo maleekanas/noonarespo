@@ -9,29 +9,39 @@ import {
   Lock,
   ShieldAlert,
   Info,
+  Sparkles,
 } from "lucide-react";
 import { DirectionalIcon } from "@/components/shared/DirectionalIcon";
 import { requireParentProfile } from "@/lib/auth/currentUser";
+
+// A 1-day free trial: TRIAL_DAYS days of full-price-plan card authorization
+// with no charge, auto-converting to that plan's normal price unless
+// cancelled first. Fixed at the trial plan's own tier (plan-starter, the
+// cheapest) rather than whatever plan a coupon-hunting link might name, so
+// the trial can't be used to sneak a discount onto a bigger plan.
+const TRIAL_DAYS = 1;
+const TRIAL_PLAN_ID = "plan-starter";
 
 export default async function ParentCheckoutPage({
   params,
   searchParams,
 }: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ planId?: string; coupon?: string; cancelled?: string }>;
+  searchParams: Promise<{ planId?: string; coupon?: string; cancelled?: string; trial?: string }>;
 }) {
   const { locale } = await params;
-  const { planId: planIdParam, coupon: couponParam, cancelled } = await searchParams;
+  const { planId: planIdParam, coupon: couponParam, cancelled, trial } = await searchParams;
   const { session, profile } = await requireParentProfile(locale);
   const parentId = profile.id;
+  const isTrialCheckout = trial === "1";
 
   const allPlans = await billingService.getAllPlans();
-  const selectedPlanId = planIdParam || "plan-group";
+  const selectedPlanId = isTrialCheckout ? TRIAL_PLAN_ID : planIdParam || "plan-group";
   const selectedPlan = allPlans.find((p) => p.id === selectedPlanId) || allPlans[1];
 
   const calculation = await billingService.calculateCheckoutPrice(
     selectedPlan.id,
-    couponParam
+    isTrialCheckout ? undefined : couponParam
   );
 
   const stripeReady = isStripeConfigured();
@@ -40,6 +50,7 @@ export default async function ParentCheckoutPage({
     "use server";
     const planId = formData.get("planId")?.toString() || selectedPlan.id;
     const couponCode = formData.get("couponCode")?.toString() || "";
+    const trialParam = formData.get("trial")?.toString() || "";
 
     const { url } = await createStripeCheckoutSession({
       parentId,
@@ -47,6 +58,7 @@ export default async function ParentCheckoutPage({
       planId,
       couponCode: couponCode || undefined,
       locale,
+      trialDays: trialParam === "1" ? TRIAL_DAYS : undefined,
     });
 
     redirect(url);
@@ -78,6 +90,21 @@ export default async function ParentCheckoutPage({
         </div>
       </div>
 
+      {isTrialCheckout && (
+        <div className="flex items-start gap-3 px-5 py-4 rounded-2xl bg-emerald-50 border-2 border-emerald-200 text-emerald-900">
+          <Sparkles className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
+          <div className="text-xs leading-relaxed">
+            <p className="font-extrabold text-sm mb-1">تجربتك المجانية ليوم واحد 🎉</p>
+            <p>
+              لن يتم خصم أي مبلغ اليوم. بطاقتك تُستخدم فقط لتفعيل الحساب، وبعد 24 ساعة يتحوّل اشتراكك تلقائياً إلى{" "}
+              <span className="font-bold">{selectedPlan.nameAr}</span> بسعر{" "}
+              <span className="font-bold">{billingService.formatPrice(selectedPlan.priceMinorUnits)}/شهرياً</span>{" "}
+              ما لم تُلغِ الاشتراك قبل ذلك من صفحة الفوترة بضغطة واحدة.
+            </p>
+          </div>
+        </div>
+      )}
+
       {cancelled && (
         <div className="flex items-center gap-2 px-4 py-3 rounded-2xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-bold">
           <ShieldAlert className="w-4 h-4 flex-shrink-0" />
@@ -95,7 +122,22 @@ export default async function ParentCheckoutPage({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left 2 Cols: Plan Selection & Payment Form */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Plan Picker Cards */}
+          {/* Plan Picker Cards -- fixed to the trial plan during a trial
+              checkout, since the trial is a specific $0-for-1-day offer on
+              the Starter plan, not a free pick of any tier. */}
+          {isTrialCheckout ? (
+            <div className="p-5 rounded-3xl border-2 border-emerald-500 bg-emerald-50/40">
+              <span className="text-sm font-bold text-slate-900">{selectedPlan.nameAr}</span>
+              <span className="text-xl font-extrabold text-emerald-700 block mt-2">
+                مجاناً ليوم واحد
+                <span className="text-xs text-slate-500 font-normal">
+                  {" "}
+                  ثم {billingService.formatPrice(selectedPlan.priceMinorUnits)} / شهرياً
+                </span>
+              </span>
+              <p className="text-[11px] text-slate-500 mt-1">{selectedPlan.descriptionAr}</p>
+            </div>
+          ) : (
           <div className="space-y-3">
             <label className="block text-xs font-bold text-slate-700">
               1. اختر الباقة التعليمية المناسبة:
@@ -130,11 +172,13 @@ export default async function ParentCheckoutPage({
               ))}
             </div>
           </div>
+          )}
 
           {/* Checkout Submission Form */}
           <form action={handleCheckout} className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-6">
             <input type="hidden" name="planId" value={selectedPlan.id} />
-            <input type="hidden" name="couponCode" value={couponParam || ""} />
+            <input type="hidden" name="couponCode" value={isTrialCheckout ? "" : couponParam || ""} />
+            {isTrialCheckout && <input type="hidden" name="trial" value="1" />}
 
             <div className="space-y-3">
               <label className="block text-xs font-bold text-slate-700">
@@ -143,8 +187,9 @@ export default async function ParentCheckoutPage({
               <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex items-start gap-3 text-xs text-slate-600">
                 <Info className="w-4 h-4 text-brand-600 flex-shrink-0 mt-0.5" />
                 <span>
-                  سيتم تحويلك إلى صفحة الدفع الآمنة والمعتمدة من Stripe لإدخال بيانات بطاقتك مباشرة.
-                  نحن لا نطّلع على بيانات بطاقتك ولا نخزّنها على خوادمنا إطلاقاً.
+                  {isTrialCheckout
+                    ? "سيتم تحويلك إلى صفحة الدفع الآمنة والمعتمدة من Stripe لتوثيق بطاقتك. لن يتم خصم أي مبلغ الآن -- أول خصم فعلي يحدث فقط بعد انتهاء يوم التجربة المجاني."
+                    : "سيتم تحويلك إلى صفحة الدفع الآمنة والمعتمدة من Stripe لإدخال بيانات بطاقتك مباشرة. نحن لا نطّلع على بيانات بطاقتك ولا نخزّنها على خوادمنا إطلاقاً."}
                 </span>
               </div>
             </div>
@@ -154,7 +199,11 @@ export default async function ParentCheckoutPage({
               disabled={!stripeReady}
               className="w-full py-4 rounded-2xl gradient-brand text-white font-extrabold text-sm shadow-md hover:opacity-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <span>المتابعة إلى الدفع الآمن — {billingService.formatPrice(calculation.totalMinorUnits)}</span>
+              <span>
+                {isTrialCheckout
+                  ? "بدء التجربة المجانية ليوم واحد — $0.00 الآن"
+                  : `المتابعة إلى الدفع الآمن — ${billingService.formatPrice(calculation.totalMinorUnits)}`}
+              </span>
               <DirectionalIcon icon={ArrowRight} locale={locale} className="w-4 h-4" />
             </button>
           </form>
@@ -177,11 +226,11 @@ export default async function ParentCheckoutPage({
               <div className="flex items-center justify-between text-slate-600">
                 <span>السعر الأساسي:</span>
                 <span className="font-medium text-slate-800">
-                  {billingService.formatPrice(calculation.subtotalMinorUnits)}
+                  {isTrialCheckout ? "$0.00 (اليوم الأول مجاناً)" : billingService.formatPrice(calculation.subtotalMinorUnits)}
                 </span>
               </div>
 
-              {calculation.couponApplied && (
+              {!isTrialCheckout && calculation.couponApplied && (
                 <div className="flex items-center justify-between text-emerald-600 font-bold bg-emerald-50 p-2 rounded-xl">
                   <span>خصم كوبون ({calculation.couponApplied.code}):</span>
                   <span>-{billingService.formatPrice(calculation.discountMinorUnits)}</span>
@@ -194,14 +243,22 @@ export default async function ParentCheckoutPage({
               </div>
 
               <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-base font-extrabold text-slate-900">
-                <span>الإجمالي النهائي:</span>
+                <span>الإجمالي المستحق اليوم:</span>
                 <span className="text-brand-700 text-xl">
-                  {billingService.formatPrice(calculation.totalMinorUnits)}
+                  {isTrialCheckout ? "$0.00" : billingService.formatPrice(calculation.totalMinorUnits)}
                 </span>
               </div>
+              {isTrialCheckout && (
+                <p className="text-[11px] text-slate-400">
+                  ثم {billingService.formatPrice(selectedPlan.priceMinorUnits)}/شهرياً تلقائياً بعد 24 ساعة، ما لم تُلغِ.
+                </p>
+              )}
             </div>
 
-            {/* Coupon Application Box */}
+            {/* Coupon Application Box -- not offered on the trial, which is
+                already free for its 1 day and converts to plan-starter's
+                undiscounted price (see TRIAL_PLAN_ID above). */}
+            {!isTrialCheckout && (
             <div className="pt-4 border-t border-slate-100 space-y-2">
               <label className="block text-xs font-bold text-slate-700">
                 هل لديك كوبون خصم؟
@@ -226,6 +283,7 @@ export default async function ParentCheckoutPage({
                 </div>
               </div>
             </div>
+            )}
           </div>
         </div>
       </div>

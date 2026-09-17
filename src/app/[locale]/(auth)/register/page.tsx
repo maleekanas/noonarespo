@@ -3,11 +3,12 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
 import { getDictionary } from "@/lib/localization";
-import { createSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/database/prisma";
 import { checkRateLimit, getClientIp, RATE_LIMITS } from "@/lib/security/rateLimit";
-import { RoleType } from "@prisma/client";
-import { GraduationCap, AlertCircle } from "lucide-react";
+import { createEmailVerificationToken } from "@/lib/auth/emailVerification";
+import { notificationDispatcherService } from "@/server/services/NotificationDispatcherService";
+import { RoleType, UserStatus } from "@prisma/client";
+import { GraduationCap, AlertCircle, MailCheck } from "lucide-react";
 
 // There was previously NO way for a real visitor to create an account on
 // this site at all -- every "Enroll now" / pricing button on the homepage,
@@ -16,19 +17,24 @@ import { GraduationCap, AlertCircle } from "lucide-react";
 // was a temporary, secret-gated admin route built for internal testing.
 // This page is the real, public self-service registration flow: it
 // creates a genuine Prisma-backed User + ParentProfile (+ PARENT role
-// grant), the same way the admin test route does, then signs the new
-// parent in immediately.
+// grant), same as the admin test route did -- except the account now
+// starts PENDING_VERIFICATION and must confirm its email (see
+// verify-email/page.tsx) before it can sign in at all, rather than being
+// signed in immediately. This matters most for the public 1-day free
+// trial: a trial is only worth offering with no friction if it can't also
+// be farmed with disposable/fake addresses.
 
 export default async function RegisterPage({
   params,
   searchParams,
 }: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ error?: string; plan?: string }>;
+  searchParams: Promise<{ error?: string; plan?: string; trial?: string; sent?: string }>;
 }) {
   const { locale } = await params;
-  const { error, plan } = await searchParams;
+  const { error, plan, trial, sent } = await searchParams;
   const dict = getDictionary(locale);
+  const isTrialSignup = trial === "1";
 
   async function handleRegister(formData: FormData) {
     "use server";
@@ -40,9 +46,12 @@ export default async function RegisterPage({
     const password = formData.get("password")?.toString() || "";
     const confirmPassword = formData.get("confirmPassword")?.toString() || "";
     const planParam = formData.get("plan")?.toString() || "";
+    const trialParam = formData.get("trial")?.toString() || "";
 
     const redirectWithError = (reason: string) => {
-      const suffix = planParam ? `&plan=${encodeURIComponent(planParam)}` : "";
+      const suffix =
+        (planParam ? `&plan=${encodeURIComponent(planParam)}` : "") +
+        (trialParam === "1" ? "&trial=1" : "");
       redirect(`/${locale}/register?error=${reason}${suffix}`);
     };
 
@@ -89,6 +98,7 @@ export default async function RegisterPage({
         email,
         passwordHash,
         localePreference: locale,
+        status: UserStatus.PENDING_VERIFICATION,
         parentProfile: {
           create: {
             firstName,
@@ -104,18 +114,28 @@ export default async function RegisterPage({
       data: { userId: createdUser.id, roleId: parentRole.id },
     });
 
-    await createSession({
-      id: createdUser.id,
-      email: createdUser.email,
-      name: `${firstName} ${lastName}`,
-      role: RoleType.PARENT,
-      locale,
+    const rawToken = await createEmailVerificationToken(createdUser.id);
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.arabickidsacademy.com";
+    const planSuffix = planParam ? `&plan=${encodeURIComponent(planParam)}` : "";
+    const trialSuffix = trialParam === "1" ? "&trial=1" : "";
+    const verifyUrl = `${siteUrl}/${locale}/verify-email?token=${rawToken}${planSuffix}${trialSuffix}`;
+
+    await notificationDispatcherService.dispatch("EMAIL", {
+      recipientContact: email,
+      recipientName: `${firstName} ${lastName}`,
+      eventName: "EMAIL_VERIFICATION",
+      titleAr: trialParam === "1" ? "أكّد بريدك الإلكتروني لبدء تجربتك المجانية ليوم واحد" : "أكّد بريدك الإلكتروني",
+      bodyAr: `مرحباً ${firstName}، شكراً لتسجيلك في أكاديمية الأطفال العرب. اضغط على الزر أدناه لتأكيد بريدك الإلكتروني وتفعيل حسابك. هذا الرابط صالح لمدة 24 ساعة.`,
+      actionUrl: verifyUrl,
     });
 
-    if (planParam) {
-      redirect(`/${locale}/parent/checkout?planId=${encodeURIComponent(planParam)}`);
-    }
-    redirect(`/${locale}/parent`);
+    // No session is created here -- the account is PENDING_VERIFICATION
+    // and can't sign in (see login/page.tsx's status check) until the
+    // email link above is confirmed.
+    const sentSuffix =
+      (planParam ? `&plan=${encodeURIComponent(planParam)}` : "") +
+      (trialParam === "1" ? "&trial=1" : "");
+    redirect(`/${locale}/register?sent=1${sentSuffix}`);
   }
 
   const errorMessages: Record<string, string> = {
@@ -135,13 +155,29 @@ export default async function RegisterPage({
             <GraduationCap className="w-7 h-7" />
           </div>
           <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
-            {dict.auth.registerTitle}
+            {isTrialSignup ? dict.auth.trialRegisterTitle : dict.auth.registerTitle}
           </h1>
           <p className="text-xs text-slate-500 max-w-xs mx-auto">
-            {dict.auth.registerSubtitle}
+            {isTrialSignup ? dict.auth.trialRegisterSubtitle : dict.auth.registerSubtitle}
           </p>
         </div>
 
+        {isTrialSignup && sent !== "1" && (
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs text-emerald-800 font-semibold">
+            {dict.auth.trialRegisterBanner}
+          </div>
+        )}
+
+        {sent === "1" ? (
+          <div className="flex items-start gap-2.5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3.5 text-sm text-emerald-800">
+            <MailCheck className="w-5 h-5 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-bold">{dict.auth.verifyEmailSentTitle}</p>
+              <p className="text-xs mt-1 text-emerald-700">{dict.auth.verifyEmailSentMessage}</p>
+            </div>
+          </div>
+        ) : (
+        <>
         {error && errorMessages[error] && (
           <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-xs font-semibold text-red-700">
             <AlertCircle className="w-4 h-4 shrink-0" />
@@ -151,6 +187,7 @@ export default async function RegisterPage({
 
         <form action={handleRegister} className="space-y-4">
           {plan && <input type="hidden" name="plan" value={plan} />}
+          {isTrialSignup && <input type="hidden" name="trial" value="1" />}
 
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -248,6 +285,8 @@ export default async function RegisterPage({
             {dict.auth.submitRegister}
           </button>
         </form>
+        </>
+        )}
 
         <div className="pt-4 border-t border-slate-100 text-center text-xs text-slate-500">
           <span>{dict.auth.alreadyHaveAccount} </span>

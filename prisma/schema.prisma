@@ -46,6 +46,7 @@ model User {
   adminProfile     AdministratorProfile?
   auditLogs        AuditLog[]
   passwordResetTokens PasswordResetToken[]
+  emailVerificationTokens EmailVerificationToken[]
 
   @@map("users")
 }
@@ -63,6 +64,25 @@ model PasswordResetToken {
 
   @@index([userId])
   @@map("password_reset_tokens")
+}
+
+// Same shape/pattern as PasswordResetToken (sha256-hashed token at rest, a
+// 24h expiry, one-time use via usedAt). Backs the "verified email" step
+// required before a new registrant -- created with UserStatus.PENDING_VERIFICATION
+// -- can sign in, most notably for the public 1-day free trial signup.
+model EmailVerificationToken {
+  id        String    @id @default(uuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@map("email_verification_tokens")
 }
 
 model Role {

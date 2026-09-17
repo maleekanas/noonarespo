@@ -102,6 +102,15 @@ export default async function ParentDashboardPage({
   ]);
   const latestInvoice = recentInvoices[0] || null;
 
+  // Hours remaining on a 1-day trial, computed the same "lazy expiry" way
+  // as getParentAccessLevel (compare the stored currentPeriodEnd to now)
+  // rather than calling that helper again and re-querying the subscription
+  // we already have in hand.
+  const trialHoursRemaining =
+    subscription && subscription.status === SubscriptionStatus.TRIALING
+      ? Math.max(0, Math.ceil((subscription.currentPeriodEnd.getTime() - Date.now()) / (1000 * 60 * 60)))
+      : null;
+
   const attendanceLabel = (rate: number) => {
     if (rate >= 95) return pd.attendanceExcellent;
     if (rate >= 80) return pd.attendanceGood;
@@ -357,12 +366,28 @@ export default async function ParentDashboardPage({
                 {billingService.formatPrice(subscription.plan.priceMinorUnits, subscription.plan.currency)}
                 <span className="text-sm font-semibold text-slate-500">{pd.perMonth}</span>
               </div>
-              <p className="text-xs text-slate-500">
-                {isAr ? subscription.plan.nameAr : subscription.plan.nameEn}
-                {" · "}
-                {pd.renewsPrefix}
-                {subscription.currentPeriodEnd.toISOString().split("T")[0]}
-              </p>
+              {subscription.status === SubscriptionStatus.TRIALING ? (
+                <>
+                  <p className="text-xs text-slate-500">
+                    {trialHoursRemaining !== null && trialHoursRemaining > 0
+                      ? pd.trialHoursRemaining.replace("{hours}", String(trialHoursRemaining))
+                      : pd.trialEndingSoon}
+                  </p>
+                  <Link
+                    href={`/${locale}/parent/checkout`}
+                    className="text-xs text-brand-600 font-bold hover:underline"
+                  >
+                    {pd.trialUpgradeNow}
+                  </Link>
+                </>
+              ) : (
+                <p className="text-xs text-slate-500">
+                  {isAr ? subscription.plan.nameAr : subscription.plan.nameEn}
+                  {" · "}
+                  {pd.renewsPrefix}
+                  {subscription.currentPeriodEnd.toISOString().split("T")[0]}
+                </p>
+              )}
             </>
           ) : (
             <>

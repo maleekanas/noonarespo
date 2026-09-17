@@ -281,6 +281,62 @@ export default async function HomePage({
           </p>
         </div>
 
+        {/* 1-Day Free Trial -- the public, zero-commitment entry point into
+            the platform. Visible to every anonymous visitor on the homepage
+            (not gated behind a plan pick), so it's a standout banner above
+            the 3 paid plans rather than a 4th card competing with them. */}
+        <div className="mb-10 max-w-5xl mx-auto">
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-500 via-teal-500 to-brand-600 p-8 sm:p-10 shadow-xl shadow-emerald-500/20">
+            <div className="relative flex flex-col lg:flex-row lg:items-center gap-8">
+              <div className="flex-1 space-y-4 text-white">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm text-[11px] font-extrabold uppercase tracking-wider">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>{dict.pricing.trialBadge}</span>
+                </div>
+                <h3 className="text-2xl sm:text-3xl font-extrabold leading-tight">
+                  {dict.pricing.trialTitle}
+                </h3>
+                <p className="text-sm text-white/85 max-w-lg leading-relaxed">
+                  {dict.pricing.trialSubtitle}
+                </p>
+                <ul className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2 text-[11px] font-semibold text-white/90 pt-1">
+                  <li className="flex items-center gap-1.5">
+                    <Volume2 className="w-3.5 h-3.5 shrink-0" />
+                    <span>{dict.pricing.trialFeature1}</span>
+                  </li>
+                  <li className="flex items-center gap-1.5">
+                    <Moon className="w-3.5 h-3.5 shrink-0" />
+                    <span>{dict.pricing.trialFeature2}</span>
+                  </li>
+                  <li className="flex items-center gap-1.5">
+                    <PenTool className="w-3.5 h-3.5 shrink-0" />
+                    <span>{dict.pricing.trialFeature3}</span>
+                  </li>
+                  <li className="flex items-center gap-1.5">
+                    <BookOpen className="w-3.5 h-3.5 shrink-0" />
+                    <span>{dict.pricing.trialFeature4}</span>
+                  </li>
+                  <li className="flex items-center gap-1.5">
+                    <Headphones className="w-3.5 h-3.5 shrink-0" />
+                    <span>{dict.pricing.trialFeature5}</span>
+                  </li>
+                </ul>
+              </div>
+              <div className="shrink-0 flex flex-col items-stretch sm:items-center gap-2 lg:w-64">
+                <Link
+                  href={`/${locale}/register?plan=plan-starter&trial=1`}
+                  className="block text-center py-3.5 px-6 rounded-xl text-sm font-extrabold bg-white text-emerald-700 hover:bg-slate-50 transition-colors shadow-md"
+                >
+                  {dict.pricing.trialCta}
+                </Link>
+                <span className="text-[11px] text-white/75 text-center">
+                  {dict.pricing.trialNote}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
           {/* Plan 1: Group */}
           <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm flex flex-col justify-between">

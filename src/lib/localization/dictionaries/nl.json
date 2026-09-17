@@ -117,7 +117,17 @@
       "25% korting vanaf het tweede kind",
       "Geconsolideerde facturatie en toegewijde gezinsondersteuning",
       "Volledige toegang tot alle spellen, bibliotheek en Koranstudio"
-    ]
+    ],
+    "trialBadge": "1-Daagse Gratis Proefperiode",
+    "trialTitle": "Probeer Arabic Kids Academy 1 dag gratis",
+    "trialSubtitle": "Ontdek hoe sterk onze lesmethode is — volledige toegang tot uitspraaktraining, fonetiekspellen, verhalen lezen en Koranrecitatie-audio, zonder verplichtingen.",
+    "trialFeature1": "Uitspraakstudio",
+    "trialFeature2": "Koranstudio",
+    "trialFeature3": "Fonetiek Arcade",
+    "trialFeature4": "Verhalenlezer",
+    "trialFeature5": "Afdrukcentrum",
+    "trialCta": "Start Mijn Gratis Proefperiode",
+    "trialNote": "Kaart vereist, vandaag $0. Zeg op elk moment op voordat de proefperiode eindigt."
   },
   "safetyBanner": {
     "badge": "Handvest voor kindbescherming en privacy",
@@ -179,7 +189,18 @@
     "termsAgreementConnector": "en ons",
     "privacyPolicyLink": "Privacybeleid",
     "termsAgreementSuffix": ".",
-    "passwordChangedMessage": "Je wachtwoord is succesvol gewijzigd. Log in met je nieuwe wachtwoord."
+    "passwordChangedMessage": "Je wachtwoord is succesvol gewijzigd. Log in met je nieuwe wachtwoord.",
+    "trialRegisterTitle": "Start je gratis proefperiode van 1 dag",
+    "trialRegisterSubtitle": "Maak je account aan om een volledige dag toegang te krijgen tot uitspraaktraining, fonetiekspellen, verhalen en Koranrecitatie-audio.",
+    "trialRegisterBanner": "Gratis voor 1 dag, daarna $49/maand tenzij je opzegt. Vandaag geen kosten.",
+    "verifyEmailSentTitle": "Controleer je e-mail",
+    "verifyEmailSentMessage": "We hebben een bevestigingslink naar je e-mailadres gestuurd. Klik erop om je account te verifiëren en verder te gaan.",
+    "verifyEmailTitle": "Bevestig je e-mailadres",
+    "verifyEmailSubtitle": "Klik hieronder om je e-mailadres te verifiëren en je account te activeren.",
+    "verifyEmailHint": "Dit bevestigt dat jij het echt bent, ter bescherming van je account en gratis proefperiode.",
+    "confirmEmailCta": "Bevestig mijn e-mail",
+    "verifyTokenInvalidTitle": "Link verlopen of ongeldig",
+    "verifyTokenInvalidMessage": "Deze verificatielink is ongeldig of verlopen. Registreer opnieuw om een nieuwe te krijgen."
   },
   "account": {
     "title": "Accountinstellingen",
@@ -688,7 +709,10 @@
     "paidStatus": "Betaald",
     "invoiceStatusLine": "{status} ({price})",
     "noInvoicesYet": "Nog geen facturen",
-    "viewAllInvoices": "Alle facturen bekijken"
+    "viewAllInvoices": "Alle facturen bekijken",
+    "trialHoursRemaining": "Nog {hours}u over van je gratis proefperiode",
+    "trialEndingSoon": "Je gratis proefperiode loopt bijna af",
+    "trialUpgradeNow": "Nu upgraden →"
   },
   "adminSystemHealth": {
     "statusOperational": "Operationeel",

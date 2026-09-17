@@ -117,7 +117,17 @@
       "İkinci çocuktan itibaren %25 indirim",
       "Birleşik faturalandırma ve aileye özel destek",
       "Tüm oyunlara, hikayelere ve Kur'an stüdyosuna tam erişim"
-    ]
+    ],
+    "trialBadge": "1 Günlük Ücretsiz Deneme",
+    "trialTitle": "Arabic Kids Academy'yi 1 gün ücretsiz deneyin",
+    "trialSubtitle": "Eğitimimizin ne kadar güçlü olduğunu keşfedin — telaffuz alıştırmalarına, fonetik oyunlarına, hikaye okumaya ve Kur'an tilaveti seslerine tam erişim, hiçbir taahhüt olmadan.",
+    "trialFeature1": "Telaffuz Stüdyosu",
+    "trialFeature2": "Kur'an Stüdyosu",
+    "trialFeature3": "Fonetik Arcade",
+    "trialFeature4": "Hikaye Okuyucu",
+    "trialFeature5": "Yazdırılabilir Materyaller",
+    "trialCta": "Ücretsiz Denememi Başlat",
+    "trialNote": "Kart gerekli, bugün $0. Deneme süresi bitmeden istediğiniz zaman iptal edebilirsiniz."
   },
   "safetyBanner": {
     "badge": "Çocuk Koruma ve Tam Gizlilik İlkeleri",
@@ -179,7 +189,18 @@
     "termsAgreementConnector": "ve",
     "privacyPolicyLink": "Gizlilik Politikası'nı",
     "termsAgreementSuffix": " kabul etmiş olursun.",
-    "passwordChangedMessage": "Şifreniz başarıyla değiştirildi. Lütfen yeni şifrenizle giriş yapın."
+    "passwordChangedMessage": "Şifreniz başarıyla değiştirildi. Lütfen yeni şifrenizle giriş yapın.",
+    "trialRegisterTitle": "1 Günlük Ücretsiz Denemenizi Başlatın",
+    "trialRegisterSubtitle": "Telaffuz alıştırmaları, fonetik oyunları, hikayeler ve Kur'an tilaveti seslerine tam bir gün erişim için hesabınızı oluşturun.",
+    "trialRegisterBanner": "1 gün ücretsiz, ardından iptal etmezseniz ayda $49. Bugün ücret alınmaz.",
+    "verifyEmailSentTitle": "E-postanızı Kontrol Edin",
+    "verifyEmailSentMessage": "E-posta adresinize bir onay bağlantısı gönderdik. Hesabınızı doğrulamak ve devam etmek için tıklayın.",
+    "verifyEmailTitle": "E-postanızı Onaylayın",
+    "verifyEmailSubtitle": "E-posta adresinizi doğrulamak ve hesabınızı etkinleştirmek için aşağıya tıklayın.",
+    "verifyEmailHint": "Bu, gerçekten siz olduğunuzu doğrular ve hesabınızı ile ücretsiz denemenizi korur.",
+    "confirmEmailCta": "E-postamı Onayla",
+    "verifyTokenInvalidTitle": "Bağlantının Süresi Doldu veya Geçersiz",
+    "verifyTokenInvalidMessage": "Bu doğrulama bağlantısı geçersiz veya süresi dolmuş. Yeni bir bağlantı almak için lütfen tekrar kayıt olun."
   },
   "account": {
     "title": "Hesap Ayarları",
@@ -688,7 +709,10 @@
     "paidStatus": "Ödendi",
     "invoiceStatusLine": "{status} ({price})",
     "noInvoicesYet": "Henüz fatura yok",
-    "viewAllInvoices": "Tüm faturaları görüntüle"
+    "viewAllInvoices": "Tüm faturaları görüntüle",
+    "trialHoursRemaining": "Ücretsiz denemenizde {hours} saat kaldı",
+    "trialEndingSoon": "Ücretsiz deneme süreniz sona eriyor",
+    "trialUpgradeNow": "Şimdi Yükselt →"
   },
   "adminSystemHealth": {
     "statusOperational": "Çalışıyor",

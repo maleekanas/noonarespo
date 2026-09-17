@@ -4,12 +4,15 @@ import { revalidatePath } from "next/cache";
 import { userRepository } from "@/server/repositories/UserRepository";
 import { AgeGroup, RelationshipType } from "@prisma/client";
 import { requireParentProfile } from "@/lib/auth/currentUser";
+import { getParentAccessLevel } from "@/lib/auth/subscriptionAccess";
 import {
   Users,
   UserPlus,
   ShieldCheck,
   GraduationCap,
   ArrowRight,
+  Lock,
+  Sparkles,
 } from "lucide-react";
 import { DirectionalIcon } from "@/components/shared/DirectionalIcon";
 
@@ -23,6 +26,13 @@ export default async function ParentChildrenPage({
   const parentId = profile.id;
   const children = await userRepository.getLinkedChildren(parentId);
 
+  // A 1-day free trial is scoped to exploring the platform with a single
+  // child profile -- a family enrolling multiple children is exactly the
+  // signal of a household ready to become a real paying customer, so
+  // adding a 2nd (or later) child is gated behind converting to a paid plan.
+  const access = await getParentAccessLevel(parentId);
+  const isChildLimitReached = access.level === "TRIAL" && children.length >= 1;
+
   async function handleAddChild(formData: FormData) {
     "use server";
     const firstName = formData.get("firstName")?.toString() || "";
@@ -32,6 +42,20 @@ export default async function ParentChildrenPage({
     const notes = formData.get("notesInternal")?.toString() || "";
 
     if (!firstName || !lastName) return;
+
+    // Defense in depth: the UI below already swaps the add-child form for
+    // an upsell card once a trial account has 1 child, but a direct form
+    // POST must not be able to bypass that -- re-check server-side here
+    // against a fresh count rather than trusting the client.
+    const { profile: addingProfile } = await requireParentProfile(locale);
+    const addingAccess = await getParentAccessLevel(addingProfile.id);
+    if (addingAccess.level === "TRIAL") {
+      const existingChildren = await userRepository.getLinkedChildren(addingProfile.id);
+      if (existingChildren.length >= 1) {
+        console.warn("Blocked add-child attempt beyond trial limit:", addingProfile.id);
+        return;
+      }
+    }
 
     await userRepository.createChildWithParentLink(parentId, {
       firstName,
@@ -144,7 +168,29 @@ export default async function ParentChildrenPage({
           </div>
         </div>
 
-        {/* Right Col: Add New Child Form */}
+        {/* Right Col: Add New Child Form (or trial upsell once the 1-child
+            trial limit is reached) */}
+        {isChildLimitReached ? (
+          <div className="bg-gradient-to-br from-brand-600 to-brand-700 rounded-3xl p-6 text-white shadow-lg shadow-brand-500/20 space-y-4 text-center">
+            <div className="w-12 h-12 rounded-2xl bg-white/15 flex items-center justify-center mx-auto">
+              <Lock className="w-6 h-6" />
+            </div>
+            <h3 className="text-base font-bold">
+              إضافة طفل ثانٍ غير متاحة خلال التجربة المجانية
+            </h3>
+            <p className="text-xs text-white/80 leading-relaxed">
+              التجربة المجانية ليوم واحد مخصصة لملف طفل واحد. قم بالترقية للاشتراك المدفوع لإضافة بقية إخوته
+              والاستفادة من كامل مزايا الأكاديمية لكل أبنائك.
+            </p>
+            <Link
+              href={`/${locale}/parent/billing`}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white text-brand-700 font-bold text-xs shadow-md hover:opacity-90 transition-all"
+            >
+              <Sparkles className="w-4 h-4" />
+              <span>الترقية الآن</span>
+            </Link>
+          </div>
+        ) : (
         <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-6">
           <div className="space-y-1">
             <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
@@ -233,6 +279,7 @@ export default async function ParentChildrenPage({
             </button>
           </form>
         </div>
+        )}
       </div>
     </div>
   );

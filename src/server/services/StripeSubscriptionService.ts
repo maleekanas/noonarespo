@@ -112,6 +112,10 @@ export async function createStripeCheckoutSession(params: {
   planId: string;
   couponCode?: string;
   locale: string;
+  /** When set, Stripe collects the card now but doesn't charge it until
+   * this many days have passed -- used for the public 1-day free trial.
+   * Absent/undefined for a normal, immediate-charge checkout. */
+  trialDays?: number;
 }): Promise<{ url: string }> {
   const stripe = getStripeClient();
   const calculation = await billingService.calculateCheckoutPrice(params.planId, params.couponCode);
@@ -159,13 +163,16 @@ export async function createStripeCheckoutSession(params: {
       planId: plan.id,
       couponCode: params.couponCode || "",
       locale: params.locale,
+      isTrialSignup: params.trialDays ? "true" : "",
     },
     subscription_data: {
+      ...(params.trialDays ? { trial_period_days: params.trialDays } : {}),
       metadata: {
         parentId: params.parentId,
         planId: plan.id,
         couponCode: params.couponCode || "",
         locale: params.locale,
+        isTrialSignup: params.trialDays ? "true" : "",
       },
     },
   });
@@ -204,6 +211,14 @@ export async function fulfillCheckoutSession(session: Stripe.Checkout.Session): 
   const prismaPlan = await findOrCreatePrismaPlan(calculation.plan);
 
   let currentPeriodEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+  // Defaults to ACTIVE for a normal, immediate-charge checkout. Overwritten
+  // below from the real Stripe subscription status whenever we can read it
+  // -- most importantly so a 1-day-free-trial checkout (subscription_data:
+  // {trial_period_days}) is recorded as TRIALING, not ACTIVE, from the
+  // moment it's created. Getting this wrong would mean a trial signup's
+  // access-level gate (getParentAccessLevel) never sees TRIALING at all,
+  // silently granting full paid access for free.
+  let subscriptionStatus: SubscriptionStatus = SubscriptionStatus.ACTIVE;
   if (typeof session.subscription === "string") {
     try {
       const stripeSub = await stripe.subscriptions.retrieve(session.subscription);
@@ -211,6 +226,7 @@ export async function fulfillCheckoutSession(session: Stripe.Checkout.Session): 
       // its line items (flexible billing mode) — read it from there.
       const periodEnd = stripeSub.items.data[0]?.current_period_end;
       if (periodEnd) currentPeriodEnd = new Date(periodEnd * 1000);
+      subscriptionStatus = mapStripeSubscriptionStatus(stripeSub.status);
     } catch (err) {
       console.error("[stripe webhook] failed to retrieve subscription for period end", err);
     }
@@ -241,14 +257,18 @@ export async function fulfillCheckoutSession(session: Stripe.Checkout.Session): 
     if (activeSub) {
       await tx.subscription.update({
         where: { id: activeSub.id },
-        data: { currentPeriodEnd, stripeSubscriptionId: stripeSubscriptionId ?? activeSub.stripeSubscriptionId },
+        data: {
+          currentPeriodEnd,
+          status: subscriptionStatus,
+          stripeSubscriptionId: stripeSubscriptionId ?? activeSub.stripeSubscriptionId,
+        },
       });
     } else {
       await tx.subscription.create({
         data: {
           parentId,
           planId: prismaPlan.id,
-          status: SubscriptionStatus.ACTIVE,
+          status: subscriptionStatus,
           currentPeriodStart: now,
           currentPeriodEnd,
           stripeSubscriptionId,

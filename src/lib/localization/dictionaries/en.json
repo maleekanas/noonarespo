@@ -117,7 +117,17 @@
       "25% discount on the second child and beyond",
       "Unified billing & dedicated family support",
       "Full access to all games, library & Quran studio"
-    ]
+    ],
+    "trialBadge": "1-Day Free Trial",
+    "trialTitle": "Try Arabic Kids Academy Free for 1 Day",
+    "trialSubtitle": "See how strong our teaching really is — full access to pronunciation practice, phonics games, story reading, and Qur'an recitation audio, no commitment required.",
+    "trialFeature1": "Pronunciation Studio",
+    "trialFeature2": "Qur'an Studio",
+    "trialFeature3": "Phonics Arcade",
+    "trialFeature4": "Story Reader",
+    "trialFeature5": "Printables Hub",
+    "trialCta": "Start My Free Trial",
+    "trialNote": "Card required, $0 today. Cancel anytime before your trial ends."
   },
   "safetyBanner": {
     "badge": "Child Protection & Complete Privacy Charter",
@@ -179,7 +189,18 @@
     "termsAgreementConnector": "and our",
     "privacyPolicyLink": "Privacy Policy",
     "termsAgreementSuffix": ".",
-    "passwordChangedMessage": "Your password has been changed successfully. Please sign in with your new password."
+    "passwordChangedMessage": "Your password has been changed successfully. Please sign in with your new password.",
+    "trialRegisterTitle": "Start Your 1-Day Free Trial",
+    "trialRegisterSubtitle": "Create your account to unlock a full day of pronunciation practice, phonics games, stories, and Qur'an recitation audio.",
+    "trialRegisterBanner": "Free for 1 day, then $49/month unless you cancel. No charge today.",
+    "verifyEmailSentTitle": "Check Your Email",
+    "verifyEmailSentMessage": "We've sent a confirmation link to your email address. Click it to verify your account and continue.",
+    "verifyEmailTitle": "Confirm Your Email",
+    "verifyEmailSubtitle": "Click below to verify your email address and activate your account.",
+    "verifyEmailHint": "This confirms it's really you, so your account and free trial are protected.",
+    "confirmEmailCta": "Confirm My Email",
+    "verifyTokenInvalidTitle": "Link Expired or Invalid",
+    "verifyTokenInvalidMessage": "This verification link is invalid or has expired. Please register again to get a new one."
   },
   "account": {
     "title": "Account Settings",
@@ -688,7 +709,10 @@
     "paidStatus": "Paid",
     "invoiceStatusLine": "{status} ({price})",
     "noInvoicesYet": "No invoices yet",
-    "viewAllInvoices": "View all invoices"
+    "viewAllInvoices": "View all invoices",
+    "trialHoursRemaining": "{hours}h left in your free trial",
+    "trialEndingSoon": "Your free trial is ending",
+    "trialUpgradeNow": "Upgrade now →"
   },
   "adminSystemHealth": {
     "statusOperational": "Operational",

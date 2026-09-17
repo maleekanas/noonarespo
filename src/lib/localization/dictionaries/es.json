@@ -117,7 +117,17 @@
       "25% de descuento a partir del segundo hijo",
       "Facturación unificada y soporte dedicado para familias",
       "Acceso completo a todos los juegos, biblioteca y estudio Corán"
-    ]
+    ],
+    "trialBadge": "Prueba Gratis de 1 Día",
+    "trialTitle": "Prueba Arabic Kids Academy gratis por 1 día",
+    "trialSubtitle": "Descubre la fuerza real de nuestra enseñanza: acceso completo a práctica de pronunciación, juegos de fonética, lectura de cuentos y audio de recitación del Corán, sin compromiso.",
+    "trialFeature1": "Estudio de Pronunciación",
+    "trialFeature2": "Estudio del Corán",
+    "trialFeature3": "Arcade de Fonética",
+    "trialFeature4": "Lector de Cuentos",
+    "trialFeature5": "Centro de Imprimibles",
+    "trialCta": "Comenzar Mi Prueba Gratis",
+    "trialNote": "Se requiere tarjeta, $0 hoy. Cancela cuando quieras antes de que termine la prueba."
   },
   "safetyBanner": {
     "badge": "Carta de Protección Infantil y Privacidad Total",
@@ -179,7 +189,18 @@
     "termsAgreementConnector": "y nuestra",
     "privacyPolicyLink": "Política de Privacidad",
     "termsAgreementSuffix": ".",
-    "passwordChangedMessage": "Tu contraseña se ha cambiado correctamente. Inicia sesión con tu nueva contraseña."
+    "passwordChangedMessage": "Tu contraseña se ha cambiado correctamente. Inicia sesión con tu nueva contraseña.",
+    "trialRegisterTitle": "Comienza tu prueba gratis de 1 día",
+    "trialRegisterSubtitle": "Crea tu cuenta para desbloquear un día completo de práctica de pronunciación, juegos de fonética, cuentos y audio de recitación del Corán.",
+    "trialRegisterBanner": "Gratis por 1 día, luego $49/mes a menos que canceles. Sin cargo hoy.",
+    "verifyEmailSentTitle": "Revisa tu correo",
+    "verifyEmailSentMessage": "Hemos enviado un enlace de confirmación a tu correo electrónico. Haz clic en él para verificar tu cuenta y continuar.",
+    "verifyEmailTitle": "Confirma tu correo electrónico",
+    "verifyEmailSubtitle": "Haz clic abajo para verificar tu correo electrónico y activar tu cuenta.",
+    "verifyEmailHint": "Esto confirma que realmente eres tú, para proteger tu cuenta y tu prueba gratuita.",
+    "confirmEmailCta": "Confirmar mi correo",
+    "verifyTokenInvalidTitle": "Enlace caducado o no válido",
+    "verifyTokenInvalidMessage": "Este enlace de verificación no es válido o ha caducado. Regístrate de nuevo para obtener uno nuevo."
   },
   "account": {
     "title": "Configuración de la Cuenta",
@@ -688,7 +709,10 @@
     "paidStatus": "Pagado",
     "invoiceStatusLine": "{status} ({price})",
     "noInvoicesYet": "Aún no hay facturas",
-    "viewAllInvoices": "Ver todas las facturas"
+    "viewAllInvoices": "Ver todas las facturas",
+    "trialHoursRemaining": "Quedan {hours}h de tu prueba gratis",
+    "trialEndingSoon": "Tu prueba gratis está por terminar",
+    "trialUpgradeNow": "Actualizar ahora →"
   },
   "adminSystemHealth": {
     "statusOperational": "Operativo",
