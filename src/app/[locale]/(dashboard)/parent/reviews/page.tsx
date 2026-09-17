@@ -13,13 +13,13 @@ import { requireParentProfile } from "@/lib/auth/currentUser";
 import { userRepository } from "@/server/repositories/UserRepository";
 import { academicRepository } from "@/server/repositories/AcademicRepository";
 import { getDictionary } from "@/lib/localization";
+import { reviewTranslationAdapter } from "@/lib/integrations/ai/ReviewTranslationAdapter";
 
 // rev.titleAr/commentAr/adminReplyAr hold only the language the reviewer or
 // admin actually typed in -- there is no titleEn/commentEn pair to fall back
-// to, unlike other bilingual DB fields elsewhere in the app. Displaying
-// user-submitted review text as-is regardless of the viewer's locale is a
-// separate, larger follow-up (would need a translation pipeline, not a
-// schema-free fix) and is out of scope for this UI-chrome pass.
+// to, unlike other bilingual DB fields elsewhere in the app. Live-translated
+// below via reviewTranslationAdapter for locales other than Arabic; falls
+// back to the original text if translation isn't configured or fails.
 const INTL_LOCALE: Record<string, string> = {
   ar: "ar-SA", en: "en-US", nl: "nl-NL", tr: "tr-TR", it: "it-IT", es: "es-ES",
 };
@@ -72,6 +72,16 @@ export default async function ParentReviewsPage({
   const summary = activeTeacher
     ? await reviewService.getTeacherReviewSummary(activeTeacher.teacherId)
     : { averageRating: 0, totalReviewsCount: 0, reviews: [] as Awaited<ReturnType<typeof reviewService.getTeacherReviewSummary>>["reviews"] };
+
+  const translations = await reviewTranslationAdapter.translateReviewBatch(
+    summary.reviews.map((rev) => ({
+      id: rev.id,
+      title: rev.titleAr,
+      comment: rev.commentAr,
+      adminReply: rev.adminReplyAr,
+    })),
+    locale
+  );
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-5xl">
@@ -252,7 +262,13 @@ export default async function ParentReviewsPage({
           </div>
 
           <div className="space-y-4">
-            {summary.reviews.map((rev) => (
+            {summary.reviews.map((rev) => {
+              const translated = translations.get(rev.id);
+              const displayTitle = translated?.title ?? rev.titleAr;
+              const displayComment = translated?.comment ?? rev.commentAr;
+              const displayAdminReply = translated?.adminReply ?? rev.adminReplyAr;
+
+              return (
               <div
                 key={rev.id}
                 className="bg-white border border-slate-200/90 rounded-3xl p-6 shadow-sm space-y-3"
@@ -270,6 +286,11 @@ export default async function ParentReviewsPage({
                             <ShieldCheck className="w-3 h-3 text-emerald-600" />
                             {pr.verifiedParentBadge}
                           </span>
+                          {translated && (
+                            <span className="inline-flex items-center px-2 py-0.5 bg-purple-50 text-purple-700 border border-purple-200 rounded-full text-[10px] font-semibold">
+                              {pr.translatedBadgeLabel}
+                            </span>
+                          )}
                         </div>
                         <div className="text-[10px] text-slate-400">
                           {rev.createdAt.toLocaleDateString(INTL_LOCALE[locale] || "en-US")}
@@ -289,23 +310,24 @@ export default async function ParentReviewsPage({
                   </div>
                 </div>
 
-                <div className="text-xs sm:text-sm font-bold text-slate-900">{rev.titleAr}</div>
-                <p className="text-xs text-slate-600 leading-relaxed">{rev.commentAr}</p>
+                <div className="text-xs sm:text-sm font-bold text-slate-900">{displayTitle}</div>
+                <p className="text-xs text-slate-600 leading-relaxed">{displayComment}</p>
 
                 {/* Academy Response */}
-                {rev.adminReplyAr && (
+                {displayAdminReply && (
                   <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs space-y-1 mt-2">
                     <div className="font-bold text-slate-800 text-[11px] flex items-center gap-1.5">
                       <span className="w-1.5 h-1.5 rounded-full bg-brand-600" />
                       <span>{pr.academyReplyLabel}</span>
                     </div>
                     <p className="text-[11px] text-slate-600 leading-relaxed ps-3">
-                      {rev.adminReplyAr}
+                      {displayAdminReply}
                     </p>
                   </div>
                 )}
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>

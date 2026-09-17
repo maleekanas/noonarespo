@@ -32,12 +32,13 @@ export default async function StoryReaderPage({
       studentId: studentProfile.id,
       storyId: id,
       selectedOptions,
+      locale,
     });
     return {
       scorePercentage: result.scorePercentage,
       isPassed: result.isPassed,
       xpAwarded: result.xpAwarded,
-      feedbackMessageAr: result.feedbackMessageAr,
+      feedbackMessage: result.feedbackMessage,
     };
   }
 
@@ -68,6 +69,14 @@ export default async function StoryReaderPage({
         <InteractiveStoryReader
           story={story}
           locale={locale}
+          dict={sr}
+          categoryLabel={
+            story.category === "PROPHETIC_STORIES"
+              ? dict.studentStories.categoryBadgeProphetic
+              : story.category === "ISLAMIC_VALUES"
+              ? dict.studentStories.categoryBadgeIslamicValues
+              : dict.studentStories.categoryBadgeLanguage
+          }
           onQuizSubmit={submitQuizAction}
         />
       </div>

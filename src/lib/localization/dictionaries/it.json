@@ -726,7 +726,8 @@
     "verifiedTestimonialsHeading": "Testimonianze verificate dei genitori",
     "reviewsSuffix": "recensioni",
     "verifiedParentBadge": "Genitore verificato",
-    "academyReplyLabel": "Risposta dell'amministrazione dell'accademia:"
+    "academyReplyLabel": "Risposta dell'amministrazione dell'accademia:",
+    "translatedBadgeLabel": "Tradotto"
   },
   "studentQuranStudio": {
     "backToStudentDashboard": "Torna alla dashboard studente",
@@ -803,7 +804,8 @@
     "officialAdminReplyLabel": "Risposta ufficiale dell'amministrazione:",
     "approveButton": "Approva",
     "flagButton": "Segnala",
-    "verifiedGovernanceLabel": "Governance verificata"
+    "verifiedGovernanceLabel": "Governance verificata",
+    "translatedBadgeLabel": "Tradotto"
   },
   "studentPronunciation": {
     "backToStudentDashboard": "Torna alla dashboard studente",
@@ -847,6 +849,32 @@
   },
   "studentStoryReader": {
     "backToStoryLibrary": "Torna alla libreria delle storie",
-    "interactiveVocalizedReader": "Lettore vocalizzato interattivo"
+    "interactiveVocalizedReader": "Lettore vocalizzato interattivo",
+    "stopNarrationButton": "Ferma la narrazione",
+    "listenToPageButton": "Ascolta la pagina",
+    "speedSlowLabel": "0,8x Lento",
+    "speedNormalLabel": "1,0x Normale",
+    "speedTooltip": "Regola la velocità della narrazione",
+    "translationShownButton": "Traduzione: Visibile",
+    "translationHiddenButton": "Traduzione: Nascosta",
+    "pageIndicatorLabel": "Pagina {current} di {total}",
+    "tapWordHint": "Tocca una parola per sentirne la pronuncia",
+    "tapToListenTitle": "Tocca per ascoltare",
+    "prevPageButton": "Pagina precedente",
+    "nextPageButton": "Pagina successiva",
+    "startQuizButton": "Inizia il quiz di comprensione (+{xp} XP)",
+    "quizModeLabel": "Quiz di comprensione della lettura",
+    "quizHeadingTemplate": "Cosa abbiamo imparato dalla storia: {title}?",
+    "rereadButton": "Rileggi la storia",
+    "congratsHeading": "Congratulazioni, campione! 🎉",
+    "goodAttemptHeading": "Bel tentativo!",
+    "badgeUnlockedLabel": "Distintivo sbloccato: Esploratore di Storie ⭐",
+    "moralLessonLabel": "Morale e valore educativo:",
+    "submitQuizButton": "Invia le risposte e guadagna +{xp} XP",
+    "submittingLabel": "Verifica delle risposte in corso...",
+    "exploreNewStoryButton": "Scopri una nuova storia",
+    "feedbackPassedTemplate": "Ben fatto, campione! Hai capito la morale della storia \"{title}\" e guadagnato {xp} XP!",
+    "feedbackFailedTemplate": "Buona lettura! Rileggi la storia per ottenere il punteggio pieno e gli XP.",
+    "categoryLabel": "Categoria"
   }
 }

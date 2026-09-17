@@ -105,7 +105,10 @@ STRIPE_WEBHOOK_SECRET=""
 SENTRY_DSN=""                   # server + edge errors
 NEXT_PUBLIC_SENTRY_DSN=""       # browser errors (safe to expose — write-only)
 
-# AI Tutor — Anthropic Claude (falls back to a scripted practice conversation if unset)
+# AI Tutor & Review Translation — Anthropic Claude. Powers the AI Tutor
+# (falls back to a scripted practice conversation if unset) and live
+# translation of parent reviews/academy replies into non-Arabic locales
+# (falls back to showing the original text as written if unset or a call fails).
 ANTHROPIC_API_KEY=""
 ```
 

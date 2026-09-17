@@ -726,7 +726,8 @@
     "verifiedTestimonialsHeading": "آراء أولياء الأمور الموثقة",
     "reviewsSuffix": "تقييمات",
     "verifiedParentBadge": "ولي أمر معتمد",
-    "academyReplyLabel": "رد إدارة أكاديمية براعم العربية:"
+    "academyReplyLabel": "رد إدارة أكاديمية براعم العربية:",
+    "translatedBadgeLabel": "مُترجَم"
   },
   "studentQuranStudio": {
     "backToStudentDashboard": "العودة إلى لوحة الطالب",
@@ -803,7 +804,8 @@
     "officialAdminReplyLabel": "رد الإدارة المعتمد:",
     "approveButton": "اعتماد النشر",
     "flagButton": "حجب التقييم",
-    "verifiedGovernanceLabel": "حوكمة مراجعة الجودة نشطة"
+    "verifiedGovernanceLabel": "حوكمة مراجعة الجودة نشطة",
+    "translatedBadgeLabel": "مُترجَم"
   },
   "studentPronunciation": {
     "backToStudentDashboard": "العودة إلى لوحة الطالب",
@@ -847,6 +849,32 @@
   },
   "studentStoryReader": {
     "backToStoryLibrary": "العودة إلى مكتبة القصص",
-    "interactiveVocalizedReader": "القارئ التفاعلي الملون"
+    "interactiveVocalizedReader": "القارئ التفاعلي الملون",
+    "stopNarrationButton": "إيقاف القراءة",
+    "listenToPageButton": "استماع للصفحة",
+    "speedSlowLabel": "0.8x بطيء",
+    "speedNormalLabel": "1.0x عادي",
+    "speedTooltip": "تعديل سرعة القراءة الصوتية",
+    "translationShownButton": "الترجمة: ظاهرة",
+    "translationHiddenButton": "الترجمة: مخفية",
+    "pageIndicatorLabel": "الصفحة {current} من {total}",
+    "tapWordHint": "اضغط على أي كلمة لسماع نطقها الفردي",
+    "tapToListenTitle": "اضغط للاستماع",
+    "prevPageButton": "الصفحة السابقة",
+    "nextPageButton": "الصفحة التالية",
+    "startQuizButton": "بدء اختبار الفهم (+{xp} XP)",
+    "quizModeLabel": "اختبار الفهم والاستيعاب القرائي",
+    "quizHeadingTemplate": "ماذا تعلمنا من قصة: {title}؟",
+    "rereadButton": "إعادة قراءة القصة",
+    "congratsHeading": "تهانينا يا بطل! 🎉",
+    "goodAttemptHeading": "محاولة جيدة!",
+    "badgeUnlockedLabel": "تم فتح وسام: مستكشف القصص والعِبر ⭐",
+    "moralLessonLabel": "العِبرة والقيمة التربوية:",
+    "submitQuizButton": "تسجيل الإجابات والحصول على +{xp} XP",
+    "submittingLabel": "جارِ التحقق من الإجابات...",
+    "exploreNewStoryButton": "استكشاف قصة جديدة",
+    "feedbackPassedTemplate": "أحسنت يا بطل! لقد استوعبت العِبرة من قصة «{title}» وحصلت على {xp} نقطة XP!",
+    "feedbackFailedTemplate": "قراءة جيدة! راجع القصة مرة أخرى لتحصل على العلامة الكاملة ونقاط XP.",
+    "categoryLabel": "التصنيف"
   }
 }

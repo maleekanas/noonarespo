@@ -2,7 +2,14 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { StoryBook } from "@/server/repositories/StoryRepository";
+import {
+  StoryBook,
+  getStoryTitle,
+  getPageGloss,
+  getQuizQuestionText,
+  getQuizOptions,
+  getMoralLesson,
+} from "@/server/repositories/StoryRepository";
 import {
   Volume2,
   Play,
@@ -17,26 +24,57 @@ import {
 } from "lucide-react";
 import { DirectionalIcon } from "@/components/shared/DirectionalIcon";
 
+interface StoryReaderDict {
+  backToStoryLibrary: string;
+  stopNarrationButton: string;
+  listenToPageButton: string;
+  speedSlowLabel: string;
+  speedNormalLabel: string;
+  speedTooltip: string;
+  translationShownButton: string;
+  translationHiddenButton: string;
+  pageIndicatorLabel: string;
+  tapWordHint: string;
+  tapToListenTitle: string;
+  prevPageButton: string;
+  nextPageButton: string;
+  startQuizButton: string;
+  quizModeLabel: string;
+  quizHeadingTemplate: string;
+  rereadButton: string;
+  congratsHeading: string;
+  goodAttemptHeading: string;
+  badgeUnlockedLabel: string;
+  moralLessonLabel: string;
+  submitQuizButton: string;
+  submittingLabel: string;
+  exploreNewStoryButton: string;
+}
+
 interface InteractiveStoryReaderProps {
   story: StoryBook;
   locale: string;
+  dict: StoryReaderDict;
+  categoryLabel: string;
   onQuizSubmit: (selectedOptions: Record<string, number>) => Promise<{
     scorePercentage: number;
     isPassed: boolean;
     xpAwarded: number;
-    feedbackMessageAr: string;
+    feedbackMessage: string;
   }>;
 }
 
 export function InteractiveStoryReader({
   story,
   locale,
+  dict,
+  categoryLabel,
   onQuizSubmit,
 }: InteractiveStoryReaderProps) {
   const [currentPageIdx, setCurrentPageIdx] = useState(0);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [audioSpeed, setAudioSpeed] = useState<0.8 | 1.0>(1.0);
-  const [showEnglishTranslation, setShowEnglishTranslation] = useState(true);
+  const [showTranslation, setShowTranslation] = useState(true);
   const [activeWordPronouncing, setActiveWordPronouncing] = useState<string | null>(null);
 
   // Quiz Mode State
@@ -47,15 +85,18 @@ export function InteractiveStoryReader({
     scorePercentage: number;
     isPassed: boolean;
     xpAwarded: number;
-    feedbackMessageAr: string;
+    feedbackMessage: string;
   } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const currentPage = story.pages[currentPageIdx];
   const isFirstPage = currentPageIdx === 0;
   const isLastPage = currentPageIdx === story.pages.length - 1;
+  const localizedTitle = getStoryTitle(story, locale);
 
-  // Speech synthesis for word or page
+  // Speech synthesis for word or page -- always pronounces the Arabic
+  // reading-practice text itself, regardless of the viewer's UI locale,
+  // since that's the language being taught.
   function pronounceText(text: string) {
     if (typeof window !== "undefined" && "speechSynthesis" in window) {
       window.speechSynthesis.cancel();
@@ -138,7 +179,8 @@ export function InteractiveStoryReader({
     setQuizResult(null);
   }
 
-  // Split page text into individual words for click-to-pronounce
+  // Split page text into individual words for click-to-pronounce -- always
+  // the Arabic reading text, never the translation gloss.
   const words = currentPage ? currentPage.textAr.split(" ") : [];
 
   return (
@@ -151,12 +193,12 @@ export function InteractiveStoryReader({
             className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors flex items-center gap-1.5 text-xs font-bold"
           >
             <DirectionalIcon icon={ArrowRight} locale={locale} className="w-4 h-4" />
-            <span>مكتبة القصص</span>
+            <span>{dict.backToStoryLibrary}</span>
           </Link>
 
           <div>
             <span className="text-[11px] font-bold text-brand-600 block">
-              {story.categoryTitleAr}
+              {categoryLabel}
             </span>
             <h1 className="text-base font-extrabold text-slate-900 truncate max-w-xs sm:max-w-md">
               {story.titleAr}
@@ -180,12 +222,12 @@ export function InteractiveStoryReader({
                 {isPlayingAudio ? (
                   <>
                     <Pause className="w-3.5 h-3.5" />
-                    <span>إيقاف القراءة</span>
+                    <span>{dict.stopNarrationButton}</span>
                   </>
                 ) : (
                   <>
                     <Play className="w-3.5 h-3.5 fill-white" />
-                    <span>استماع للصفحة</span>
+                    <span>{dict.listenToPageButton}</span>
                   </>
                 )}
               </button>
@@ -194,23 +236,23 @@ export function InteractiveStoryReader({
                 type="button"
                 onClick={() => setAudioSpeed((s) => (s === 1.0 ? 0.8 : 1.0))}
                 className="px-2.5 py-2 rounded-xl border border-slate-200 text-slate-700 text-xs font-bold font-mono hover:bg-slate-100"
-                title="تعديل سرعة القراءة الصوتية"
+                title={dict.speedTooltip}
               >
-                {audioSpeed === 0.8 ? "0.8x بطيء" : "1.0x عادي"}
+                {audioSpeed === 0.8 ? dict.speedSlowLabel : dict.speedNormalLabel}
               </button>
             </>
           )}
 
           <button
             type="button"
-            onClick={() => setShowEnglishTranslation((v) => !v)}
+            onClick={() => setShowTranslation((v) => !v)}
             className={`px-3 py-2 rounded-xl text-xs font-bold border transition-all ${
-              showEnglishTranslation
+              showTranslation
                 ? "bg-purple-50 text-purple-700 border-purple-200"
                 : "bg-slate-50 text-slate-500 border-slate-200"
             }`}
           >
-            {showEnglishTranslation ? "الترجمة: ظاهرة" : "الترجمة: مخفية"}
+            {showTranslation ? dict.translationShownButton : dict.translationHiddenButton}
           </button>
         </div>
       </div>
@@ -221,7 +263,9 @@ export function InteractiveStoryReader({
           {/* Page Indicator & Progress Dots */}
           <div className="flex items-center justify-between pb-4 border-b border-slate-100">
             <span className="text-xs font-bold text-slate-500">
-              الصفحة {currentPageIdx + 1} من {story.pages.length}
+              {dict.pageIndicatorLabel
+                .replace("{current}", String(currentPageIdx + 1))
+                .replace("{total}", String(story.pages.length))}
             </span>
 
             <div className="flex items-center gap-1.5">
@@ -247,7 +291,7 @@ export function InteractiveStoryReader({
             </div>
             <span className="text-xs font-bold text-slate-400 mt-3 flex items-center gap-1">
               <Volume2 className="w-3.5 h-3.5 text-brand-600" />
-              <span>اضغط على أي كلمة لسماع نطقها الفردي</span>
+              <span>{dict.tapWordHint}</span>
             </span>
           </div>
 
@@ -265,7 +309,7 @@ export function InteractiveStoryReader({
                         ? "bg-amber-300 text-slate-950 scale-105 shadow-xs font-black"
                         : "hover:bg-amber-200/70 hover:text-brand-900"
                     }`}
-                    title="اضغط للاستماع"
+                    title={dict.tapToListenTitle}
                   >
                     {word}
                   </span>
@@ -273,10 +317,10 @@ export function InteractiveStoryReader({
               })}
             </div>
 
-            {/* English Translation */}
-            {showEnglishTranslation && (
+            {/* Translation Gloss, in the viewer's own locale */}
+            {showTranslation && (
               <p className="text-xs sm:text-sm text-slate-500 max-w-xl mx-auto italic pt-2 border-t border-amber-200/50">
-                &ldquo;{currentPage.textEn}&rdquo;
+                &ldquo;{getPageGloss(currentPage, locale)}&rdquo;
               </p>
             )}
           </div>
@@ -290,7 +334,7 @@ export function InteractiveStoryReader({
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-slate-300 text-slate-700 font-bold text-xs hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
             >
               <DirectionalIcon icon={ArrowRight} locale={locale} className="w-4 h-4" />
-              <span>الصفحة السابقة</span>
+              <span>{dict.prevPageButton}</span>
             </button>
 
             <button
@@ -298,7 +342,7 @@ export function InteractiveStoryReader({
               onClick={handleNextPage}
               className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl gradient-brand text-white font-bold text-xs shadow-md hover:opacity-95 transition-all"
             >
-              <span>{isLastPage ? "بدء اختبار الفهم (+35 XP)" : "الصفحة التالية"}</span>
+              <span>{isLastPage ? dict.startQuizButton.replace("{xp}", String(story.xpReward)) : dict.nextPageButton}</span>
               <DirectionalIcon icon={ArrowLeft} locale={locale} className="w-4 h-4" />
             </button>
           </div>
@@ -309,10 +353,10 @@ export function InteractiveStoryReader({
           <div className="flex items-center justify-between pb-4 border-b border-slate-100">
             <div>
               <span className="text-xs font-bold text-brand-600 uppercase tracking-wider">
-                اختبار الفهم والاستيعاب القرائي
+                {dict.quizModeLabel}
               </span>
               <h2 className="text-xl font-extrabold text-slate-900 mt-0.5">
-                ماذا تعلمنا من قصة: {story.titleAr}؟
+                {dict.quizHeadingTemplate.replace("{title}", localizedTitle)}
               </h2>
             </div>
 
@@ -322,7 +366,7 @@ export function InteractiveStoryReader({
               className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-slate-500 hover:bg-slate-100 text-xs font-bold"
             >
               <RotateCcw className="w-3.5 h-3.5" />
-              <span>إعادة قراءة القصة</span>
+              <span>{dict.rereadButton}</span>
             </button>
           </div>
 
@@ -339,16 +383,16 @@ export function InteractiveStoryReader({
                 <Trophy className="w-8 h-8 text-amber-500 shrink-0" />
                 <div>
                   <h3 className="text-lg font-black">
-                    {quizResult.isPassed ? "تهانينا يا بطل! 🎉" : "محاولة جيدة!"}
+                    {quizResult.isPassed ? dict.congratsHeading : dict.goodAttemptHeading}
                   </h3>
-                  <p className="text-xs font-semibold">{quizResult.feedbackMessageAr}</p>
+                  <p className="text-xs font-semibold">{quizResult.feedbackMessage}</p>
                 </div>
               </div>
 
               {quizResult.isPassed && (
                 <div className="pt-2 flex items-center gap-2 text-xs font-extrabold text-emerald-800">
                   <Sparkles className="w-4 h-4 text-emerald-600" />
-                  <span>تم فتح وسام: مستكشف القصص والعِبر ⭐</span>
+                  <span>{dict.badgeUnlockedLabel}</span>
                 </div>
               )}
             </div>
@@ -358,6 +402,7 @@ export function InteractiveStoryReader({
           <div className="space-y-6">
             {story.quizQuestions.map((q, qIndex) => {
               const selected = selectedAnswers[q.id];
+              const localizedOptions = getQuizOptions(q, locale);
               return (
                 <div
                   key={q.id}
@@ -368,12 +413,12 @@ export function InteractiveStoryReader({
                       {qIndex + 1}
                     </span>
                     <h3 className="text-sm font-extrabold text-slate-900 leading-snug">
-                      {q.questionAr}
+                      {getQuizQuestionText(q, locale)}
                     </h3>
                   </div>
 
                   <div className="space-y-2 ps-8">
-                    {q.optionsAr.map((opt, optIndex) => {
+                    {localizedOptions.map((opt, optIndex) => {
                       const isChosen = selected === optIndex;
                       const isCorrect = optIndex === q.correctOptionIndex;
 
@@ -414,7 +459,7 @@ export function InteractiveStoryReader({
 
                   {quizSubmitted && (
                     <div className="p-3 rounded-xl bg-amber-50 text-[11px] text-amber-900 border border-amber-200 ps-8">
-                      <strong>العِبرة والقيمة التربوية:</strong> {q.moralLessonAr}
+                      <strong>{dict.moralLessonLabel}</strong> {getMoralLesson(q, locale)}
                     </div>
                   )}
                 </div>
@@ -432,7 +477,7 @@ export function InteractiveStoryReader({
               }
               className="w-full py-3.5 rounded-2xl gradient-brand text-white font-extrabold text-sm shadow-md hover:opacity-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
-              {isSubmitting ? "جارِ التحقق من الإجابات..." : "تسجيل الإجابات والحصول على +35 XP"}
+              {isSubmitting ? dict.submittingLabel : dict.submitQuizButton.replace("{xp}", String(story.xpReward))}
             </button>
           ) : (
             <div className="flex items-center justify-between pt-4 border-t border-slate-100">
@@ -441,14 +486,14 @@ export function InteractiveStoryReader({
                 onClick={handleRestartStory}
                 className="px-5 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-50"
               >
-                إعادة قراءة القصة
+                {dict.rereadButton}
               </button>
 
               <Link
                 href={`/${locale}/student/stories`}
                 className="px-6 py-2.5 rounded-xl gradient-brand text-white font-bold text-xs shadow-sm hover:opacity-95"
               >
-                استكشاف قصة جديدة ←
+                {dict.exploreNewStoryButton} ←
               </Link>
             </div>
           )}

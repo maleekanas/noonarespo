@@ -726,7 +726,8 @@
     "verifiedTestimonialsHeading": "Doğrulanmış Veli Yorumları",
     "reviewsSuffix": "değerlendirme",
     "verifiedParentBadge": "Doğrulanmış Veli",
-    "academyReplyLabel": "Akademi Yönetimi Yanıtı:"
+    "academyReplyLabel": "Akademi Yönetimi Yanıtı:",
+    "translatedBadgeLabel": "Çevrildi"
   },
   "studentQuranStudio": {
     "backToStudentDashboard": "Öğrenci Panosuna Dön",
@@ -803,7 +804,8 @@
     "officialAdminReplyLabel": "Resmi Yönetici Yanıtı:",
     "approveButton": "Onayla",
     "flagButton": "İşaretle",
-    "verifiedGovernanceLabel": "Doğrulanmış Yönetişim"
+    "verifiedGovernanceLabel": "Doğrulanmış Yönetişim",
+    "translatedBadgeLabel": "Çevrildi"
   },
   "studentPronunciation": {
     "backToStudentDashboard": "Öğrenci Panosuna Dön",
@@ -847,6 +849,32 @@
   },
   "studentStoryReader": {
     "backToStoryLibrary": "Hikaye Kütüphanesine Dön",
-    "interactiveVocalizedReader": "Etkileşimli Sesli Harekeli Okuyucu"
+    "interactiveVocalizedReader": "Etkileşimli Sesli Harekeli Okuyucu",
+    "stopNarrationButton": "Anlatımı Durdur",
+    "listenToPageButton": "Sayfayı Dinle",
+    "speedSlowLabel": "0.8x Yavaş",
+    "speedNormalLabel": "1.0x Normal",
+    "speedTooltip": "Anlatım hızını ayarla",
+    "translationShownButton": "Çeviri: Görünür",
+    "translationHiddenButton": "Çeviri: Gizli",
+    "pageIndicatorLabel": "Sayfa {current} / {total}",
+    "tapWordHint": "Telaffuzunu duymak için herhangi bir kelimeye dokun",
+    "tapToListenTitle": "Dinlemek için dokun",
+    "prevPageButton": "Önceki Sayfa",
+    "nextPageButton": "Sonraki Sayfa",
+    "startQuizButton": "Anlama Testine Başla (+{xp} XP)",
+    "quizModeLabel": "Okuduğunu Anlama Testi",
+    "quizHeadingTemplate": "\"{title}\" hikayesinden ne öğrendik?",
+    "rereadButton": "Hikayeyi Yeniden Oku",
+    "congratsHeading": "Tebrikler kahraman! 🎉",
+    "goodAttemptHeading": "Güzel bir deneme!",
+    "badgeUnlockedLabel": "Rozet açıldı: Hikaye Kaşifi ⭐",
+    "moralLessonLabel": "Ders ve eğitici değer:",
+    "submitQuizButton": "Cevapları Gönder ve +{xp} XP Kazan",
+    "submittingLabel": "Cevaplarınız kontrol ediliyor...",
+    "exploreNewStoryButton": "Yeni Bir Hikaye Keşfet",
+    "feedbackPassedTemplate": "Aferin kahraman! \"{title}\" hikayesinden dersi anladın ve {xp} XP kazandın!",
+    "feedbackFailedTemplate": "Güzel okuma! Tam puanı ve XP'yi almak için hikayeyi tekrar gözden geçir.",
+    "categoryLabel": "Kategori"
   }
 }

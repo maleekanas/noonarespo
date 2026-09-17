@@ -2,8 +2,10 @@ import {
   storyRepository,
   StoryBook,
   StoryCategory,
+  getStoryTitle,
 } from "../repositories/StoryRepository";
 import { gamificationService } from "./GamificationService";
+import { getDictionary } from "@/lib/localization";
 
 export interface StoryQuizEvaluation {
   storyId: string;
@@ -13,7 +15,7 @@ export interface StoryQuizEvaluation {
   totalQuestions: number;
   xpAwarded: number;
   newTotalXp: number;
-  feedbackMessageAr: string;
+  feedbackMessage: string;
 }
 
 export class StoryService {
@@ -32,6 +34,7 @@ export class StoryService {
     studentId: string;
     storyId: string;
     selectedOptions: Record<string, number>; // questionId -> selectedOptionIndex
+    locale?: string;
   }): Promise<StoryQuizEvaluation> {
     const story = await storyRepository.getStoryById(params.storyId);
     if (!story) {
@@ -74,9 +77,14 @@ export class StoryService {
       completedAt: new Date(),
     });
 
-    const feedbackMessageAr = isPassed
-      ? `أحسنت يا بطل! لقد استوعبت العِبرة من قصة «${story.titleAr}» وحصلت على ${xpAwarded} نقطة XP!`
-      : `قراءة جيدة! راجع القصة مرة أخرى لتحصل على العلامة الكاملة ونقاط XP.`;
+    const locale = params.locale || "ar";
+    const dict = getDictionary(locale);
+    const ssr = dict.studentStoryReader;
+    const localizedTitle = getStoryTitle(story, locale);
+
+    const feedbackMessage = isPassed
+      ? ssr.feedbackPassedTemplate.replace("{title}", localizedTitle).replace("{xp}", String(xpAwarded))
+      : ssr.feedbackFailedTemplate;
 
     return {
       storyId: params.storyId,
@@ -86,7 +94,7 @@ export class StoryService {
       totalQuestions,
       xpAwarded,
       newTotalXp,
-      feedbackMessageAr,
+      feedbackMessage,
     };
   }
 }

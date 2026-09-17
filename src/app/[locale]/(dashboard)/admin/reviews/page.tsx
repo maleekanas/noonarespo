@@ -11,10 +11,13 @@ import {
 import { reviewService } from "@/server/services/ReviewService";
 import { ReviewStatus } from "@/server/repositories/ReviewRepository";
 import { getDictionary } from "@/lib/localization";
+import { reviewTranslationAdapter } from "@/lib/integrations/ai/ReviewTranslationAdapter";
 
 // rev.titleAr/commentAr/adminReplyAr hold only the language the reviewer or
-// admin actually typed in -- a separate, larger follow-up (see parent
-// reviews page), out of scope for this UI-chrome pass.
+// admin actually typed in -- live-translated below via
+// reviewTranslationAdapter for locales other than Arabic (see parent
+// reviews page for the same pattern); falls back to the original text if
+// translation isn't configured or fails.
 const INTL_LOCALE: Record<string, string> = {
   ar: "ar-SA", en: "en-US", nl: "nl-NL", tr: "tr-TR", it: "it-IT", es: "es-ES",
 };
@@ -30,6 +33,16 @@ export default async function AdminReviewModerationPage({
   const arm = dict.adminReviews;
 
   const allReviews = await reviewService.getAllReviewsForAdmin();
+
+  const translations = await reviewTranslationAdapter.translateReviewBatch(
+    allReviews.map((rev) => ({
+      id: rev.id,
+      title: rev.titleAr,
+      comment: rev.commentAr,
+      adminReply: rev.adminReplyAr,
+    })),
+    locale
+  );
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
@@ -54,7 +67,13 @@ export default async function AdminReviewModerationPage({
 
       {/* Reviews Moderation List */}
       <div className="space-y-4">
-        {allReviews.map((rev) => (
+        {allReviews.map((rev) => {
+          const translated = translations.get(rev.id);
+          const displayTitle = translated?.title ?? rev.titleAr;
+          const displayComment = translated?.comment ?? rev.commentAr;
+          const displayAdminReply = translated?.adminReply ?? rev.adminReplyAr;
+
+          return (
           <div
             key={rev.id}
             className="bg-white border border-slate-200/90 rounded-3xl p-6 shadow-sm space-y-4"
@@ -70,6 +89,11 @@ export default async function AdminReviewModerationPage({
                     <span className="text-xs font-normal text-slate-500">
                       {arm.ratedTeacherLabel.replace("{teacher}", rev.teacherName)}
                     </span>
+                    {translated && (
+                      <span className="inline-flex items-center px-2 py-0.5 bg-purple-50 text-purple-700 border border-purple-200 rounded-full text-[10px] font-semibold">
+                        {arm.translatedBadgeLabel}
+                      </span>
+                    )}
                   </div>
                   <div className="text-[11px] text-slate-400">
                     {rev.createdAt.toLocaleDateString(INTL_LOCALE[locale] || "en-US")}
@@ -102,18 +126,18 @@ export default async function AdminReviewModerationPage({
             </div>
 
             <div>
-              <h3 className="font-bold text-slate-900 text-sm mb-1">{rev.titleAr}</h3>
-              <p className="text-xs text-slate-600 leading-relaxed">{rev.commentAr}</p>
+              <h3 className="font-bold text-slate-900 text-sm mb-1">{displayTitle}</h3>
+              <p className="text-xs text-slate-600 leading-relaxed">{displayComment}</p>
             </div>
 
             {/* Admin Reply */}
-            {rev.adminReplyAr && (
+            {displayAdminReply && (
               <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs space-y-1">
                 <div className="font-bold text-slate-700 text-[11px] flex items-center gap-1">
                   <MessageSquare className="w-3.5 h-3.5 text-brand-600" />
                   <span>{arm.officialAdminReplyLabel}</span>
                 </div>
-                <p className="text-slate-600 text-[11px] ps-2">{rev.adminReplyAr}</p>
+                <p className="text-slate-600 text-[11px] ps-2">{displayAdminReply}</p>
               </div>
             )}
 
@@ -157,7 +181,8 @@ export default async function AdminReviewModerationPage({
               </span>
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

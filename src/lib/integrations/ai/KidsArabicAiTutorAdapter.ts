@@ -4,6 +4,7 @@ import {
   GeneratedLessonPlan,
   LessonPlanRequest,
 } from "./types";
+import { callAnthropicTool, isAnthropicConfigured } from "./anthropicClient";
 
 /**
  * Live integration with Anthropic's Claude API. This is the only provider
@@ -15,14 +16,10 @@ import {
  * response was one of four hardcoded, keyword-matched strings regardless of
  * configuration. That mismatch is fixed here: the badge and the behavior
  * now come from the same place.
+ *
+ * The actual request/response plumbing now lives in anthropicClient.ts,
+ * shared with ReviewTranslationAdapter.
  */
-const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
-const ANTHROPIC_VERSION = "2023-06-01";
-// Overridable via ANTHROPIC_MODEL in case Anthropic renames/retires this
-// model id after this code was written -- no redeploy needed, just update
-// the env var in Vercel.
-const DEFAULT_MODEL = "claude-haiku-4-5-20251001";
-const REQUEST_TIMEOUT_MS = 15000;
 
 const STUDENT_SYSTEM_PROMPT = `أنت "فصيح"، معلم افتراضي ذكي وودود متخصص في تعليم الأطفال اللغة العربية الفصحى وتلاوة القرآن الكريم، داخل تطبيق تعليمي آمن مخصص للأطفال.
 
@@ -36,68 +33,6 @@ const STUDENT_SYSTEM_PROMPT = `أنت "فصيح"، معلم افتراضي ذك�
 7. امنح نقاط تشجيعية (XP) بين 5 و20 حسب مدى مشاركة الطفل وجودة رسالته.`;
 
 const TEACHER_SYSTEM_PROMPT = `أنت مساعد ذكي لمعلمي اللغة العربية والقرآن الكريم للأطفال. مهمتك تصميم خطة درس تفاعلية عملية وجاهزة للتطبيق المباشر في الفصل، مكتوبة بالعربية الفصحى، ومناسبة تماماً للفئة العمرية والمستوى والمدة الزمنية المحددة من المعلم.`;
-
-interface AnthropicContentBlock {
-  type: string;
-  input?: unknown;
-  [key: string]: unknown;
-}
-
-interface AnthropicResponse {
-  content?: AnthropicContentBlock[];
-  error?: { type?: string; message?: string };
-}
-
-async function callAnthropicTool(params: {
-  apiKey: string;
-  system: string;
-  messages: Array<{ role: "user" | "assistant"; content: string }>;
-  toolName: string;
-  toolDescription: string;
-  toolSchema: Record<string, unknown>;
-  maxTokens: number;
-}): Promise<Record<string, unknown>> {
-  const response = await fetch(ANTHROPIC_API_URL, {
-    method: "POST",
-    headers: {
-      "x-api-key": params.apiKey,
-      "anthropic-version": ANTHROPIC_VERSION,
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
-      model: process.env.ANTHROPIC_MODEL || DEFAULT_MODEL,
-      max_tokens: params.maxTokens,
-      system: params.system,
-      messages: params.messages,
-      tools: [
-        {
-          name: params.toolName,
-          description: params.toolDescription,
-          input_schema: params.toolSchema,
-        },
-      ],
-      tool_choice: { type: "tool", name: params.toolName },
-    }),
-    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-  });
-
-  const body = (await response.json()) as AnthropicResponse;
-
-  if (!response.ok) {
-    throw new Error(
-      `Anthropic API error (${response.status}): ${body.error?.message || "unknown error"}`
-    );
-  }
-
-  const toolUse = (body.content || []).find(
-    (block) => block.type === "tool_use" && typeof block.input === "object" && block.input !== null
-  );
-  if (!toolUse || typeof toolUse.input !== "object" || toolUse.input === null) {
-    throw new Error("Anthropic API response did not include the expected structured reply");
-  }
-
-  return toolUse.input as Record<string, unknown>;
-}
 
 /**
  * Sanitizes an app-level conversation history into Anthropic's required
@@ -204,7 +139,7 @@ export class KidsArabicAiTutorAdapter implements AiTutorProvider {
   private fallback = new ScriptedPracticeTutor();
 
   isConfigured(): boolean {
-    return Boolean(process.env.ANTHROPIC_API_KEY);
+    return isAnthropicConfigured();
   }
 
   async generateStudentDialogue(
@@ -212,8 +147,7 @@ export class KidsArabicAiTutorAdapter implements AiTutorProvider {
     context?: { studentAgeGroup?: string; currentLevel?: string },
     conversationHistory?: AiChatMessage[]
   ): Promise<AiChatMessage> {
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) {
+    if (!isAnthropicConfigured()) {
       return this.fallback.reply(studentMessage);
     }
 
@@ -227,7 +161,6 @@ export class KidsArabicAiTutorAdapter implements AiTutorProvider {
         : "";
 
       const input = await callAnthropicTool({
-        apiKey,
         system: STUDENT_SYSTEM_PROMPT + contextNote,
         messages,
         toolName: "respond_to_student",
@@ -275,8 +208,7 @@ export class KidsArabicAiTutorAdapter implements AiTutorProvider {
   }
 
   async generateTeacherLessonPlan(request: LessonPlanRequest): Promise<GeneratedLessonPlan> {
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) {
+    if (!isAnthropicConfigured()) {
       return { ...this.fallback.lessonPlan(request), isAiGenerated: false };
     }
 
@@ -289,7 +221,6 @@ export class KidsArabicAiTutorAdapter implements AiTutorProvider {
 - مدة الحصة: ${request.durationMinutes} دقيقة`;
 
       const input = await callAnthropicTool({
-        apiKey,
         system: TEACHER_SYSTEM_PROMPT,
         messages: [{ role: "user", content: userMessage }],
         toolName: "submit_lesson_plan",

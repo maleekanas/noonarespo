@@ -726,7 +726,8 @@
     "verifiedTestimonialsHeading": "Geverifieerde ouderervaringen",
     "reviewsSuffix": "beoordelingen",
     "verifiedParentBadge": "Geverifieerde ouder",
-    "academyReplyLabel": "Reactie van de academie:"
+    "academyReplyLabel": "Reactie van de academie:",
+    "translatedBadgeLabel": "Vertaald"
   },
   "studentQuranStudio": {
     "backToStudentDashboard": "Terug naar studentendashboard",
@@ -803,7 +804,8 @@
     "officialAdminReplyLabel": "Officieel antwoord van de administratie:",
     "approveButton": "Goedkeuren",
     "flagButton": "Markeren",
-    "verifiedGovernanceLabel": "Geverifieerd beheer"
+    "verifiedGovernanceLabel": "Geverifieerd beheer",
+    "translatedBadgeLabel": "Vertaald"
   },
   "studentPronunciation": {
     "backToStudentDashboard": "Terug naar studentendashboard",
@@ -847,6 +849,32 @@
   },
   "studentStoryReader": {
     "backToStoryLibrary": "Terug naar verhalenbibliotheek",
-    "interactiveVocalizedReader": "Interactieve gevocaliseerde lezer"
+    "interactiveVocalizedReader": "Interactieve gevocaliseerde lezer",
+    "stopNarrationButton": "Voorlezen stoppen",
+    "listenToPageButton": "Luister naar de pagina",
+    "speedSlowLabel": "0,8x Langzaam",
+    "speedNormalLabel": "1,0x Normaal",
+    "speedTooltip": "Pas de voorleessnelheid aan",
+    "translationShownButton": "Vertaling: Zichtbaar",
+    "translationHiddenButton": "Vertaling: Verborgen",
+    "pageIndicatorLabel": "Pagina {current} van {total}",
+    "tapWordHint": "Tik op een woord om de uitspraak te horen",
+    "tapToListenTitle": "Tik om te luisteren",
+    "prevPageButton": "Vorige pagina",
+    "nextPageButton": "Volgende pagina",
+    "startQuizButton": "Begin begripstoets (+{xp} XP)",
+    "quizModeLabel": "Leesbegrip- en verwerkingstoets",
+    "quizHeadingTemplate": "Wat hebben we geleerd van het verhaal: {title}?",
+    "rereadButton": "Verhaal opnieuw lezen",
+    "congratsHeading": "Gefeliciteerd, kampioen! 🎉",
+    "goodAttemptHeading": "Goede poging!",
+    "badgeUnlockedLabel": "Badge ontgrendeld: Verhalenontdekker ⭐",
+    "moralLessonLabel": "Les & pedagogische waarde:",
+    "submitQuizButton": "Antwoorden indienen en +{xp} XP verdienen",
+    "submittingLabel": "Antwoorden worden gecontroleerd...",
+    "exploreNewStoryButton": "Ontdek een nieuw verhaal",
+    "feedbackPassedTemplate": "Goed gedaan, kampioen! Je hebt de les uit het verhaal \"{title}\" begrepen en {xp} XP verdiend!",
+    "feedbackFailedTemplate": "Goed gelezen! Lees het verhaal nog eens om de volledige score en XP te behalen.",
+    "categoryLabel": "Categorie"
   }
 }

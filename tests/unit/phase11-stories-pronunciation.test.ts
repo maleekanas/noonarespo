@@ -63,7 +63,7 @@ describe("Phase 11: Interactive Illustrated Storybook & Prophetic Values Suite",
     assert.strictEqual(result.correctCount, story.quizQuestions.length);
     assert.strictEqual(result.xpAwarded, 35);
     assert.ok(result.newTotalXp > 0);
-    assert.ok(result.feedbackMessageAr.includes("35"));
+    assert.ok(result.feedbackMessage.includes("35"));
 
     // Check progress was persisted
     const progress = await storyRepository.getProgress(studentId, storyId);

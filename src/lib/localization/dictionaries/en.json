@@ -726,7 +726,8 @@
     "verifiedTestimonialsHeading": "Verified Parent Testimonials",
     "reviewsSuffix": "reviews",
     "verifiedParentBadge": "Verified Parent",
-    "academyReplyLabel": "Academy Administration Reply:"
+    "academyReplyLabel": "Academy Administration Reply:",
+    "translatedBadgeLabel": "Translated"
   },
   "studentQuranStudio": {
     "backToStudentDashboard": "Back to Student Dashboard",
@@ -803,7 +804,8 @@
     "officialAdminReplyLabel": "Official Admin Reply:",
     "approveButton": "Approve",
     "flagButton": "Flag",
-    "verifiedGovernanceLabel": "Verified Governance"
+    "verifiedGovernanceLabel": "Verified Governance",
+    "translatedBadgeLabel": "Translated"
   },
   "studentPronunciation": {
     "backToStudentDashboard": "Back to Student Dashboard",
@@ -847,6 +849,32 @@
   },
   "studentStoryReader": {
     "backToStoryLibrary": "Back to Story Library",
-    "interactiveVocalizedReader": "Interactive Vocalized Reader"
+    "interactiveVocalizedReader": "Interactive Vocalized Reader",
+    "stopNarrationButton": "Stop Narration",
+    "listenToPageButton": "Listen to Page",
+    "speedSlowLabel": "0.8x Slow",
+    "speedNormalLabel": "1.0x Normal",
+    "speedTooltip": "Adjust narration speed",
+    "translationShownButton": "Translation: Shown",
+    "translationHiddenButton": "Translation: Hidden",
+    "pageIndicatorLabel": "Page {current} of {total}",
+    "tapWordHint": "Tap any word to hear it pronounced",
+    "tapToListenTitle": "Tap to listen",
+    "prevPageButton": "Previous Page",
+    "nextPageButton": "Next Page",
+    "startQuizButton": "Start Comprehension Quiz (+{xp} XP)",
+    "quizModeLabel": "Reading Comprehension Quiz",
+    "quizHeadingTemplate": "What did we learn from the story: {title}?",
+    "rereadButton": "Reread the Story",
+    "congratsHeading": "Congratulations, champion! 🎉",
+    "goodAttemptHeading": "Good attempt!",
+    "badgeUnlockedLabel": "Badge unlocked: Story Explorer ⭐",
+    "moralLessonLabel": "Moral & Educational Value:",
+    "submitQuizButton": "Submit Answers & Earn +{xp} XP",
+    "submittingLabel": "Checking your answers...",
+    "exploreNewStoryButton": "Explore a New Story",
+    "feedbackPassedTemplate": "Well done, champion! You understood the lesson from the story \"{title}\" and earned {xp} XP!",
+    "feedbackFailedTemplate": "Good reading! Review the story again to get the full score and XP.",
+    "categoryLabel": "Category"
   }
 }
