@@ -4,6 +4,15 @@ All notable changes to the Kids Arabic Academy platform will be documented in th
 
 ---
 
+## [Resolved: Unbacked "Accredited" Marketing Claim] - 2026-09-17
+### Fixed
+- Resolves the "Open item for the founder" flagged in the entry directly below: the word **"Accredited"** was used in six places across the site (homepage program cards, the For Schools "What's Included" grid, the programs catalog header/tag/cohort description, and a "Certificates" dashboard tile) with no accrediting body, certificate number, or standard recorded anywhere in the system to back it -- a real false-advertising exposure, especially on the page used to sell B2B contracts to schools.
+- Replaced with wording that is actually backed by real, verifiable data: "Structured"/"Comprehensive" curriculum (backed by the real 7 `Program`/`Course`/`CourseLevel` records), and "Verified" for the student Certificates tile (backed by the real certificate-verification flow at `/verify/[id]`, fixed in an earlier session). "Certified teachers" wording was left untouched where it already appeared, since teacher certification is now a real, admin-verified per-teacher field (`TeacherProfile.isCertified`, added in the multi-tenant B2B release below).
+- Applied identically across all 6 locale dictionaries (ar, en, es, it, nl, tr), matching the translation-parity pattern used throughout this engagement.
+- No accreditation claim was reintroduced. If the founder can point to a real accrediting body for the curriculum, the stronger wording can be restored with that citation attached.
+
+---
+
 ## [Real Multi-Tenant B2B: School Scoping, Admin Permissions, Data Fixes] - 2026-09-17
 ### ⚠️ Requires a manual production database step before this is fully live
 This release adds new columns/relations to `prisma/schema.prisma` (`ClassGroup.schoolId`, `AdministratorProfile.schoolId`, `TeacherProfile.isCertified`/`employmentType`, the new `EmploymentType` enum). This project has no migration files -- schema changes reach the production database via `npx prisma db push` (see `docs/DEPLOYMENT.md`), and the sandbox this was built in has no database credentials to run that command. **Run `npx prisma db push` against production before (or immediately after) this deploy goes live** -- until then, any code path touching the new fields will error against the live database. Everything else in this entry assumes that step has been done.
@@ -25,8 +34,8 @@ The founder's own audit was mostly right but one part was already fixed in an ea
 - **Structured, Accredited Curriculum** and **Bulk Roster Onboarding**: confirmed already genuinely real in a prior session (7 real `Program`/`Course`/`CourseLevel` records; real account creation on roster import) -- no code change needed, verified by direct read rather than re-implemented.
 - **Real-Time Collaborative Classroom / Institutional Admin Dashboard**: were not real at all before this release -- see "Added" above.
 
-### Open item for the founder (not blocking, not actioned)
-- The word **"Accredited"** in "Structured, Accredited Curriculum" has no backing accreditation-body data anywhere in the system (no accrediting organization, certificate number, or standard is recorded against the curriculum). The curriculum itself is real and structured; whether it is *accredited* by a specific body is a factual claim only the founder can confirm or soften the wording on.
+### Open item for the founder -- resolved same day, see entry above
+- The word **"Accredited"** in "Structured, Accredited Curriculum" had no backing accreditation-body data anywhere in the system (no accrediting organization, certificate number, or standard was recorded against the curriculum). Rather than leave an unbacked claim live, the wording was softened to what the data actually supports -- see "[Resolved: Unbacked \"Accredited\" Marketing Claim]" above. If the founder can point to a real accrediting body, the stronger wording can be restored with that citation attached.
 
 ---
 
