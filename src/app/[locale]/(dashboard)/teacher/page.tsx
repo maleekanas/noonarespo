@@ -10,6 +10,7 @@ import {
   GraduationCap,
 } from "lucide-react";
 import { getDictionary } from "@/lib/localization";
+import { requireTeacherProfile } from "@/lib/auth/currentUser";
 
 export default async function TeacherDashboardPage({
   params,
@@ -17,6 +18,7 @@ export default async function TeacherDashboardPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
+  await requireTeacherProfile(locale);
   const dict = getDictionary(locale);
   const td = dict.teacherDashboard;
 

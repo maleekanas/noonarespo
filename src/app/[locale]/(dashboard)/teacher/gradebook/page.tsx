@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { gradebookService } from "@/server/services/GradebookService";
 import { academicRepository } from "@/server/repositories/AcademicRepository";
 import { userRepository } from "@/server/repositories/UserRepository";
+import { requireTeacherProfile } from "@/lib/auth/currentUser";
 import {
   GraduationCap,
   Star,
@@ -21,6 +22,7 @@ export default async function TeacherGradebookPage({
   searchParams: Promise<{ classId?: string }>;
 }) {
   const { locale } = await params;
+  await requireTeacherProfile(locale);
   const { classId: queryClassId } = await searchParams;
 
   const defaultClassId = "class-reading-a1-cohort1";
@@ -52,6 +54,7 @@ export default async function TeacherGradebookPage({
 
   async function handleRecordLiveEvaluation(formData: FormData) {
     "use server";
+    await requireTeacherProfile(locale);
     const studentId = formData.get("studentId") as string;
     const wordsPerMinute = Number(formData.get("wordsPerMinute") || 35);
     const makharijScore = Number(formData.get("makharijScore") || 90);

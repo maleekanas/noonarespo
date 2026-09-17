@@ -4,6 +4,7 @@ import { ArrowRight, Building2, ShieldCheck } from "lucide-react";
 import { schoolService } from "@/server/services/SchoolService";
 import { SchoolManagementClient } from "@/components/admin/SchoolManagementClient";
 import { getDictionary } from "@/lib/localization";
+import { requireAdminSession } from "@/lib/auth/currentUser";
 
 export default async function AdminSchoolsPage({
   params,
@@ -11,6 +12,7 @@ export default async function AdminSchoolsPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
+  await requireAdminSession(locale);
   const isAr = locale === "ar";
   const dict = getDictionary(locale);
   const sc = dict.adminSchools;
@@ -24,6 +26,7 @@ export default async function AdminSchoolsPage({
     ageGroup: "AGE_4_6" | "AGE_7_10" | "AGE_11_13" | "AGE_14_16";
   }) {
     "use server";
+    await requireAdminSession(locale);
     return schoolService.onboardBatchRoster({ ...params, locale });
   }
 

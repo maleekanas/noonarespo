@@ -4,6 +4,7 @@ import { payrollService } from "@/server/services/PayrollService";
 import { billingService } from "@/server/services/BillingService";
 import { prisma } from "@/lib/database/prisma";
 import { InvoiceStatus } from "@prisma/client";
+import { requireAdminSession } from "@/lib/auth/currentUser";
 import { Download, FileText } from "lucide-react";
 
 const INVOICE_STATUS_LABELS_AR: Record<InvoiceStatus, string> = {
@@ -28,6 +29,7 @@ export default async function AdminFinancePage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
+  await requireAdminSession(locale);
 
   const overview = await payrollService.getFinanceOverview();
   const allInvoices = await prisma.invoice.findMany({

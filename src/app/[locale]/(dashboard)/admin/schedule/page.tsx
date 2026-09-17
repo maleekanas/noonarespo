@@ -5,6 +5,7 @@ import { schedulingRepository } from "@/server/repositories/SchedulingRepository
 import { schedulingService } from "@/server/services/SchedulingService";
 import { academicRepository } from "@/server/repositories/AcademicRepository";
 import { userRepository } from "@/server/repositories/UserRepository";
+import { requireAdminSession } from "@/lib/auth/currentUser";
 import {
   Calendar,
   Clock,
@@ -19,6 +20,7 @@ export default async function AdminSchedulePage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
+  await requireAdminSession(locale);
   const sessions = await schedulingRepository.getAllSessions();
   const classGroups = await academicRepository.getAllClassGroups();
 
@@ -38,6 +40,7 @@ export default async function AdminSchedulePage({
 
   async function handleScheduleSession(formData: FormData) {
     "use server";
+    await requireAdminSession(locale);
     const classGroupId = formData.get("classGroupId")?.toString() || "class-reading-a1-cohort1";
     const startDateTimeStr = formData.get("startDateTime")?.toString() || "";
     const durationMinutesStr = formData.get("durationMinutes")?.toString() || "45";

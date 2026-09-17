@@ -23,6 +23,7 @@ import {
   Building2,
 } from "lucide-react";
 import { getDictionary } from "@/lib/localization";
+import { requireAdminSession } from "@/lib/auth/currentUser";
 
 export default async function AdminDashboardPage({
   params,
@@ -30,6 +31,7 @@ export default async function AdminDashboardPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
+  await requireAdminSession(locale);
   const dict = getDictionary(locale);
   const ad = dict.adminDashboard;
 

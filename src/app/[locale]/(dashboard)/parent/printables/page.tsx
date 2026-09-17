@@ -4,6 +4,7 @@ import { ArrowRight, Printer, FileText } from "lucide-react";
 import { printablesRepository } from "@/server/repositories/PrintablesRepository";
 import { ParentPrintablesClient } from "@/components/printables/ParentPrintablesClient";
 import { getDictionary } from "@/lib/localization";
+import { requireParentProfile } from "@/lib/auth/currentUser";
 
 export default async function ParentPrintablesPage({
   params,
@@ -11,6 +12,7 @@ export default async function ParentPrintablesPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
+  await requireParentProfile(locale);
   const isAr = locale === "ar";
   const dict = getDictionary(locale);
   const pt = dict.parentPrintables;

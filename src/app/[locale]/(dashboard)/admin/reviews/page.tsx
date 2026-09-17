@@ -12,6 +12,7 @@ import { reviewService } from "@/server/services/ReviewService";
 import { ReviewStatus } from "@/server/repositories/ReviewRepository";
 import { getDictionary } from "@/lib/localization";
 import { reviewTranslationAdapter } from "@/lib/integrations/ai/ReviewTranslationAdapter";
+import { requireAdminSession } from "@/lib/auth/currentUser";
 
 // rev.titleAr/commentAr/adminReplyAr hold only the language the reviewer or
 // admin actually typed in -- live-translated below via
@@ -28,6 +29,7 @@ export default async function AdminReviewModerationPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
+  await requireAdminSession(locale);
   const isAr = locale === "ar";
   const dict = getDictionary(locale);
   const arm = dict.adminReviews;
@@ -147,6 +149,7 @@ export default async function AdminReviewModerationPage({
                 <form
                   action={async () => {
                     "use server";
+                    await requireAdminSession(locale);
                     await reviewService.moderateReview(rev.id, "APPROVED" as ReviewStatus);
                   }}
                 >
@@ -162,6 +165,7 @@ export default async function AdminReviewModerationPage({
                 <form
                   action={async () => {
                     "use server";
+                    await requireAdminSession(locale);
                     await reviewService.moderateReview(rev.id, "FLAGGED" as ReviewStatus);
                   }}
                 >

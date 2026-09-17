@@ -6,6 +6,7 @@ import { notificationDispatcherService } from "@/server/services/NotificationDis
 import { storageService } from "@/server/services/StorageService";
 import { aiService } from "@/server/services/AiService";
 import { NotificationChannel } from "@/lib/integrations/notifications/types";
+import { requireAdminSession } from "@/lib/auth/currentUser";
 import {
   Video,
   MessageSquare,
@@ -23,6 +24,7 @@ export default async function AdminIntegrationsPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
+  await requireAdminSession(locale);
 
   const meetingPlatforms = meetingManager.getPlatformStatuses();
   const notificationChannels = notificationDispatcherService.getChannelStatuses();
@@ -32,6 +34,7 @@ export default async function AdminIntegrationsPage({
 
   async function handleTestDispatch(formData: FormData) {
     "use server";
+    await requireAdminSession(locale);
     const channel = (formData.get("channel")?.toString() || "WHATSAPP") as NotificationChannel;
     const recipient = formData.get("recipient")?.toString() || "+966501234567";
 

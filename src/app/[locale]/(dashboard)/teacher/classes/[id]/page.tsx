@@ -6,6 +6,7 @@ import { academicRepository } from "@/server/repositories/AcademicRepository";
 import { schedulingRepository } from "@/server/repositories/SchedulingRepository";
 import { attendanceService } from "@/server/services/AttendanceService";
 import { AttendanceStatus } from "@prisma/client";
+import { requireTeacherProfile } from "@/lib/auth/currentUser";
 import {
   Users,
   Video,
@@ -19,6 +20,7 @@ export default async function TeacherClassDetailPage({
   params: Promise<{ locale: string; id: string }>;
 }) {
   const { locale, id } = await params;
+  await requireTeacherProfile(locale);
   const classGroup = await academicRepository.getClassGroupById(id);
 
   if (!classGroup) {
@@ -36,6 +38,7 @@ export default async function TeacherClassDetailPage({
 
   async function handleMarkAttendance(formData: FormData) {
     "use server";
+    await requireTeacherProfile(locale);
     const sessionId = formData.get("sessionId")?.toString();
     const studentId = formData.get("studentId")?.toString();
     const status = formData.get("status")?.toString() as AttendanceStatus;

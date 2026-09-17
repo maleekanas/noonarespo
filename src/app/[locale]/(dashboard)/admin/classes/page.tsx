@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { academicRepository } from "@/server/repositories/AcademicRepository";
 import { academicService } from "@/server/services/AcademicService";
 import { ClassType } from "@prisma/client";
+import { requireAdminSession } from "@/lib/auth/currentUser";
 import {
   Users,
   PlusCircle,
@@ -16,6 +17,7 @@ export default async function AdminClassesPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
+  await requireAdminSession(locale);
   const classGroups = await academicRepository.getAllClassGroups();
   const allLevels = await academicRepository.getAllLevels();
   const allCourses = await academicRepository.getAllCourses();
@@ -28,6 +30,7 @@ export default async function AdminClassesPage({
 
   async function handleCreateClass(formData: FormData) {
     "use server";
+    await requireAdminSession(locale);
     const name = formData.get("name")?.toString() || "";
     const courseLevelId = formData.get("courseLevelId")?.toString() || "level-a1-reading";
     const classType = (formData.get("classType")?.toString() || "GROUP") as ClassType;

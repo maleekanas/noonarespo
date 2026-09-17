@@ -2,6 +2,7 @@ import React from "react";
 import Link from "next/link";
 import { aiService } from "@/server/services/AiService";
 import { academicRepository } from "@/server/repositories/AcademicRepository";
+import { requireTeacherProfile } from "@/lib/auth/currentUser";
 import {
   Bot,
   Sparkles,
@@ -25,6 +26,7 @@ export default async function TeacherAiAssistantPage({
   }>;
 }) {
   const { locale } = await params;
+  await requireTeacherProfile(locale);
   const query = await searchParams;
 
   const programs = await academicRepository.getAllPrograms();

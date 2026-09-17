@@ -2,6 +2,7 @@ import React from "react";
 import Link from "next/link";
 import { administrationService } from "@/server/services/AdministrationService";
 import { AuditActionCategory } from "@/server/repositories/AdministrationRepository";
+import { requireAdminSession } from "@/lib/auth/currentUser";
 import {
   ShieldCheck,
   Lock,
@@ -17,6 +18,7 @@ export default async function AdminAuditLogsPage({
   searchParams: Promise<{ category?: string }>;
 }) {
   const { locale } = await params;
+  await requireAdminSession(locale);
   const { category: filterCategory } = await searchParams;
 
   const logs = await administrationService.getAuditLogs(
