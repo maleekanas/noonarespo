@@ -4,6 +4,23 @@ All notable changes to the Kids Arabic Academy platform will be documented in th
 
 ---
 
+## [Legal-Packet Follow-Up: Real Broadcast Emails & Corrected Legal Text] - 2026-09-17
+### Added
+- A genuinely working admin-triggered "email all parents" broadcast, on `admin/integrations`, that dispatches a real email (via the existing `notificationDispatcherService`/`EmailAdapter`/Resend pipeline -- the same one already proven for password-reset emails) to every ACTIVE parent account. This is the actual delivery mechanism behind the Terms of Service's and Privacy Policy's promises to email parents about a price change (ToS §4) or a change that materially affects their subscription or the Privacy Policy (ToS §11 / Privacy §9) -- previously nothing in the codebase actually sent those emails.
+- `NotificationPayload.eventName` gained a new `"ACCOUNT_NOTICE"` member for this broadcast type.
+- `UserRepository.getAllParentsWithContact()`: the codebase had `getAllTeachers()` but no equivalent for parents. Added, scoped to `ACTIVE` users only, following the same Prisma-backed pattern as the rest of the repository.
+- Every broadcast send is recorded in the admin audit log (`AdministrationRepository.addAuditLog`, category `USER_MANAGEMENT`) with the subject line and a sent/failed count, so there's a durable record of what was sent to parents and when.
+
+### Fixed
+- **ToS §5 (Cancellation)**: previously said cancellation only happens by emailing `privacy@arabickidsacademy.com` with a two-business-day turnaround -- no longer true since the parent billing page (`parent/billing`) has shipped a real self-service "Manage or Cancel Subscription" button that opens the Stripe Billing Portal for instant, one-click cancellation. The clause now describes the real self-service flow, with the email route kept as a documented fallback.
+- **Privacy Policy §5 (Who We Share Information With)**: listed Stripe/Vercel/Neon but omitted three sub-processors the app genuinely sends personal data to -- Resend (transactional email), Sentry (error monitoring), and Pusher (real-time classroom signaling/whiteboard). All three are now disclosed.
+- Both fixes were applied identically across all 6 locale dictionaries (ar, en, es, it, nl, tr) to keep full locale parity, matching the pattern used throughout this engagement.
+
+### Known remaining gap (carried forward from the attorney-review packet, not resolved here)
+- The legal entity name used throughout the Terms of Service and Privacy Policy ("3-Tech, Groningen, the Netherlands") could not be confirmed as accurate during this session and was left unchanged -- this still needs the founder's direct confirmation before the pages are considered final. Everything else in the attorney packet's LOW/MEDIUM-priority findings (cookie-policy gap, DPA confirmations, translation-conflict clause) remains intentionally unactioned, left for the founder/attorney's judgment as originally scoped.
+
+---
+
 ## [Phase 0: Discovery & Requirements Integration] - 2026-09-03
 ### Added
 - Received and committed [`PROJECT_BRIEF.md`](file:///c:/Temp/Projects/kids-arabic-academy/PROJECT_BRIEF.md).

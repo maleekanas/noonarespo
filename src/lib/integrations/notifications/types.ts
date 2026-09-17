@@ -10,7 +10,8 @@ export interface NotificationPayload {
     | "CONFERENCE_CONFIRMED"
     | "INVOICE_ISSUED"
     | "PASSWORD_RESET"
-    | "B2B_INQUIRY";
+    | "B2B_INQUIRY"
+    | "ACCOUNT_NOTICE";
   titleAr: string;
   bodyAr: string;
   actionUrl?: string;

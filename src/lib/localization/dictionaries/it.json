@@ -399,7 +399,7 @@
       },
       "s5": {
         "title": "5. Disdetta",
-        "body": "Puoi disdire il tuo abbonamento in qualsiasi momento inviando un'email a privacy@arabickidsacademy.com, ed elaboreremo la tua richiesta entro due giorni lavorativi. Il tuo accesso rimane attivo fino alla fine del periodo di fatturazione già pagato, senza costi aggiuntivi e senza rimborso parziale per i giorni non utilizzati (fatta eccezione per la garanzia di 14 giorni descritta di seguito)."
+        "body": "Puoi disdire il tuo abbonamento in qualsiasi momento, istantaneamente e senza attese, dal pulsante \"Gestisci o annulla l'abbonamento\" nella tua pagina di fatturazione, che apre il nostro portale di fatturazione sicuro Stripe, dove la disdetta avviene con un clic. Il tuo accesso rimane attivo fino alla fine del periodo di fatturazione già pagato, senza costi aggiuntivi e senza rimborso parziale per i giorni non utilizzati (fatta eccezione per la garanzia di 14 giorni descritta di seguito). Se non riesci a utilizzare il portale self-service, puoi anche inviare un'email a privacy@arabickidsacademy.com ed elaboreremo la tua richiesta entro due giorni lavorativi."
       },
       "s6": {
         "title": "6. Politica di Rimborso",
@@ -462,7 +462,7 @@
       },
       "s5": {
         "title": "5. Con Chi Condividiamo le Informazioni",
-        "body": "Stripe — esclusivamente per l'elaborazione dei pagamenti (certificato PCI-DSS); Stripe non riceve mai i dati di apprendimento di tuo figlio. I fornitori di hosting e database che gestiscono la piattaforma (attualmente Vercel e Neon). Non vendiamo i tuoi dati personali e non li condividiamo con reti pubblicitarie o data broker. Qualsiasi trasferimento di dati al di fuori dei Paesi Bassi o dell'UE (ad esempio ai fornitori con sede negli Stati Uniti sopra indicati) si basa su garanzie adeguate, come le clausole contrattuali standard di tali fornitori."
+        "body": "Stripe — esclusivamente per l'elaborazione dei pagamenti (certificato PCI-DSS); Stripe non riceve mai i dati di apprendimento di tuo figlio. I fornitori di hosting e database che gestiscono la piattaforma (attualmente Vercel e Neon). Resend, per l'invio delle email relative all'account e alle notifiche. Sentry, per il monitoraggio degli errori e l'affidabilità della piattaforma (configurato per non ricevere mai informazioni di identificazione personale). Pusher, per le funzionalità della classe in tempo reale come la segnalazione audio/video dal vivo e la lavagna interattiva. Non vendiamo i tuoi dati personali e non li condividiamo con reti pubblicitarie o data broker. Qualsiasi trasferimento di dati al di fuori dei Paesi Bassi o dell'UE (ad esempio ai fornitori con sede negli Stati Uniti sopra indicati) si basa su garanzie adeguate, come le clausole contrattuali standard di tali fornitori."
       },
       "s6": {
         "title": "6. Conservazione dei Dati",

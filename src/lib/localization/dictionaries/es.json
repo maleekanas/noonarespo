@@ -399,7 +399,7 @@
       },
       "s5": {
         "title": "5. Cancelación",
-        "body": "Puede cancelar su suscripción en cualquier momento enviando un correo electrónico a privacy@arabickidsacademy.com, y procesaremos su solicitud dentro de dos días hábiles. Su acceso permanece activo hasta el final del período de facturación ya pagado, sin cargos adicionales y sin reembolso parcial por los días no utilizados (fuera de la garantía de 14 días descrita a continuación)."
+        "body": "Puede cancelar su suscripción en cualquier momento, de forma instantánea y sin esperar, desde el botón \"Gestionar o cancelar suscripción\" en su página de facturación, que abre nuestro portal de facturación seguro de Stripe, donde la cancelación se realiza con un solo clic. Su acceso permanece activo hasta el final del período de facturación ya pagado, sin cargos adicionales y sin reembolso parcial por los días no utilizados (fuera de la garantía de 14 días descrita a continuación). Si no puede usar el portal de autoservicio, también puede enviar un correo electrónico a privacy@arabickidsacademy.com y procesaremos su solicitud dentro de dos días hábiles."
       },
       "s6": {
         "title": "6. Política de Reembolso",
@@ -462,7 +462,7 @@
       },
       "s5": {
         "title": "5. Con Quién Compartimos la Información",
-        "body": "Stripe — únicamente para el procesamiento de pagos (certificado PCI-DSS); Stripe nunca recibe los registros de aprendizaje de su hijo. Los proveedores de alojamiento y bases de datos que operan la plataforma (actualmente Vercel y Neon). No vendemos su información personal ni la compartimos con redes publicitarias o intermediarios de datos. Cualquier transferencia de datos fuera de los Países Bajos o la UE (por ejemplo, a los proveedores con sede en EE. UU. mencionados anteriormente) se basa en garantías adecuadas, como las cláusulas contractuales tipo de dichos proveedores."
+        "body": "Stripe — únicamente para el procesamiento de pagos (certificado PCI-DSS); Stripe nunca recibe los registros de aprendizaje de su hijo. Los proveedores de alojamiento y bases de datos que operan la plataforma (actualmente Vercel y Neon). Resend, para el envío de correos electrónicos de cuenta y notificaciones. Sentry, para la monitorización de errores y la fiabilidad de la plataforma (configurado para no recibir nunca información de identificación personal). Pusher, para funciones de clase en tiempo real como la señalización de audio/vídeo en vivo y la pizarra interactiva. No vendemos su información personal ni la compartimos con redes publicitarias o intermediarios de datos. Cualquier transferencia de datos fuera de los Países Bajos o la UE (por ejemplo, a los proveedores con sede en EE. UU. mencionados anteriormente) se basa en garantías adecuadas, como las cláusulas contractuales tipo de dichos proveedores."
       },
       "s6": {
         "title": "6. Conservación de Datos",

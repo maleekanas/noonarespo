@@ -1,12 +1,16 @@
 import React from "react";
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { meetingManager } from "@/lib/integrations/meetings/MeetingManager";
 import { notificationDispatcherService } from "@/server/services/NotificationDispatcherService";
 import { storageService } from "@/server/services/StorageService";
 import { aiService } from "@/server/services/AiService";
 import { NotificationChannel } from "@/lib/integrations/notifications/types";
 import { requireAdminSession } from "@/lib/auth/currentUser";
+import { getClientIp } from "@/lib/security/rateLimit";
+import { userRepository } from "@/server/repositories/UserRepository";
+import { administrationRepository } from "@/server/repositories/AdministrationRepository";
 import {
   Video,
   MessageSquare,
@@ -16,14 +20,18 @@ import {
   Play,
   Send,
   Zap,
+  Megaphone,
 } from "lucide-react";
 
 export default async function AdminIntegrationsPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ locale: string }>;
+  searchParams: Promise<{ broadcastSent?: string; broadcastFailed?: string }>;
 }) {
   const { locale } = await params;
+  const { broadcastSent, broadcastFailed } = await searchParams;
   await requireAdminSession(locale);
 
   const meetingPlatforms = meetingManager.getPlatformStatuses();
@@ -31,6 +39,7 @@ export default async function AdminIntegrationsPage({
   const storageStatus = storageService.getStorageStatus();
   const aiStatus = aiService.getAiStatus();
   const dispatchHistory = notificationDispatcherService.getDispatchHistory(6);
+  const activeParentCount = (await userRepository.getAllParentsWithContact()).length;
 
   async function handleTestDispatch(formData: FormData) {
     "use server";
@@ -47,6 +56,60 @@ export default async function AdminIntegrationsPage({
     });
 
     revalidatePath(`/${locale}/admin/integrations`);
+  }
+
+  // Real, admin-triggered email to every active parent account -- the
+  // mechanism behind the Terms of Service's promises to notify parents by
+  // email of a price change (s4) or a material change to their subscription
+  // or to the Privacy Policy (s9/s11). Those clauses previously had no code
+  // path that actually sent anything; this genuinely dispatches via the
+  // same notificationDispatcherService/EmailAdapter pipeline the
+  // password-reset flow uses (real delivery through Resend when
+  // RESEND_API_KEY is configured, a clearly-labeled dev-sandbox mock
+  // otherwise -- see the "Multi-Channel" panel above for current status).
+  async function handleBroadcastNotice(formData: FormData) {
+    "use server";
+    const admin = await requireAdminSession(locale);
+    const subject = formData.get("subject")?.toString().trim() || "";
+    const body = formData.get("body")?.toString().trim() || "";
+
+    if (!subject || !body) {
+      redirect(`/${locale}/admin/integrations`);
+    }
+
+    const parents = await userRepository.getAllParentsWithContact();
+
+    let sent = 0;
+    let failed = 0;
+    for (const parent of parents) {
+      const result = await notificationDispatcherService.dispatch("EMAIL", {
+        recipientContact: parent.email,
+        recipientName: parent.name,
+        eventName: "ACCOUNT_NOTICE",
+        titleAr: subject,
+        bodyAr: body,
+      });
+      if (result.isDelivered) sent += 1;
+      else failed += 1;
+    }
+
+    const ip = await getClientIp();
+    await administrationRepository.addAuditLog({
+      category: "USER_MANAGEMENT",
+      action: "BROADCAST_ACCOUNT_NOTICE_EMAIL",
+      actorId: admin.id,
+      actorEmail: admin.email,
+      actorRole: admin.role,
+      targetEntityId: "ALL_PARENTS",
+      targetEntityType: "ParentProfile",
+      ipAddress: ip,
+      diffSummary: `Subject: "${subject}" -- sent to ${sent}/${parents.length} parents (${failed} failed)`,
+    });
+
+    revalidatePath(`/${locale}/admin/integrations`);
+    redirect(
+      `/${locale}/admin/integrations?broadcastSent=${sent}&broadcastFailed=${failed}`
+    );
   }
 
   return (
@@ -74,6 +137,16 @@ export default async function AdminIntegrationsPage({
           <span>4 منظومات تكامل رئيسية متصلة وجاهزة</span>
         </div>
       </div>
+
+      {(broadcastSent !== undefined || broadcastFailed !== undefined) && (
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3.5 text-sm text-emerald-800 flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4 shrink-0" />
+          <span>
+            تم إرسال الإشعار إلى {broadcastSent} من أولياء الأمور بنجاح
+            {Number(broadcastFailed) > 0 ? `، وفشل الإرسال لـ ${broadcastFailed} حساب` : ""}.
+          </span>
+        </div>
+      )}
 
       {/* The 4 Integration Pillars */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -255,6 +328,60 @@ export default async function AdminIntegrationsPage({
             ))}
           </div>
         </div>
+      </div>
+
+      {/* Account-wide Email Broadcast -- real delivery for the price-change /
+          policy-change notices the Terms of Service and Privacy Policy
+          promise to send by email (ToS §4/§11, Privacy §9). */}
+      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-4">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+          <h2 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
+            <Megaphone className="w-5 h-5 text-rose-600" />
+            <span>إشعار جماعي بالبريد الإلكتروني لجميع أولياء الأمور</span>
+          </h2>
+          <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+            {activeParentCount} حساب ولي أمر نشط
+          </span>
+        </div>
+
+        <p className="text-xs text-slate-500 leading-relaxed">
+          يُستخدم هذا لتنفيذ الوعود الفعلية الواردة في شروط الخدمة وسياسة الخصوصية بإخطار أولياء الأمور عبر البريد
+          الإلكتروني عند تغيّر الأسعار، أو عند أي تعديل جوهري يؤثر على الاشتراك أو على سياسة الخصوصية. عند الإرسال،
+          تُرسل رسالة حقيقية إلى كل حساب ولي أمر نشط عبر نفس قناة البريد الإلكتروني المعتمدة (Resend)، ويُسجَّل كل
+          إرسال جماعي في سجل التدقيق (Audit Log).
+        </p>
+
+        <form action={handleBroadcastNotice} className="space-y-3 text-xs">
+          <div>
+            <label className="block font-bold text-slate-700 mb-1">عنوان الرسالة (Subject)</label>
+            <input
+              name="subject"
+              type="text"
+              required
+              placeholder="تحديث على أسعار الاشتراك اعتباراً من الفاتورة القادمة"
+              className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-rose-500 text-start"
+            />
+          </div>
+
+          <div>
+            <label className="block font-bold text-slate-700 mb-1">نص الرسالة (Body)</label>
+            <textarea
+              name="body"
+              required
+              rows={4}
+              placeholder="مرحباً، نود إعلامكم بأن..."
+              className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-rose-500 text-start"
+            />
+          </div>
+
+          <button
+            type="submit"
+            className="w-full sm:w-auto py-2.5 px-5 rounded-xl bg-rose-600 text-white font-bold text-xs shadow-md shadow-rose-500/20 hover:opacity-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <Megaphone className="w-3.5 h-3.5" />
+            <span>إرسال الإشعار إلى جميع أولياء الأمور</span>
+          </button>
+        </form>
       </div>
     </div>
   );

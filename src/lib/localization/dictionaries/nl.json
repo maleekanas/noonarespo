@@ -399,7 +399,7 @@
       },
       "s5": {
         "title": "5. Opzegging",
-        "body": "U kunt uw abonnement op elk moment opzeggen door een e-mail te sturen naar privacy@arabickidsacademy.com, en wij verwerken uw verzoek binnen twee werkdagen. Uw toegang blijft actief tot het einde van de reeds betaalde factureringsperiode, zonder extra kosten en zonder gedeeltelijke terugbetaling voor ongebruikte dagen (buiten de hieronder beschreven 14-dagen-garantie)."
+        "body": "U kunt uw abonnement op elk moment direct en zonder wachttijd opzeggen via de knop \"Abonnement beheren of annuleren\" op uw factureringspagina — deze opent ons beveiligde Stripe-factureringsportaal, waar opzeggen met één klik gebeurt. Uw toegang blijft actief tot het einde van de reeds betaalde factureringsperiode, zonder extra kosten en zonder gedeeltelijke terugbetaling voor ongebruikte dagen (buiten de hieronder beschreven 14-dagen-garantie). Kunt u het selfservice-portaal niet gebruiken, dan kunt u ook een e-mail sturen naar privacy@arabickidsacademy.com en verwerken wij uw verzoek binnen twee werkdagen."
       },
       "s6": {
         "title": "6. Terugbetalingsbeleid",
@@ -462,7 +462,7 @@
       },
       "s5": {
         "title": "5. Met wie wij gegevens delen",
-        "body": "Stripe — uitsluitend voor betalingsverwerking (PCI-DSS-gecertificeerd); Stripe ontvangt nooit de leergegevens van uw kind. De hosting- en databaseproviders die het platform draaien (momenteel Vercel en Neon). Wij verkopen uw persoonsgegevens niet en delen deze niet met advertentienetwerken of databrokers. Elke overdracht van gegevens buiten Nederland of de EU (bijvoorbeeld naar de hierboven genoemde in de VS gevestigde providers) berust op passende waarborgen, zoals de standaardcontractbepalingen van die providers."
+        "body": "Stripe — uitsluitend voor betalingsverwerking (PCI-DSS-gecertificeerd); Stripe ontvangt nooit de leergegevens van uw kind. De hosting- en databaseproviders die het platform draaien (momenteel Vercel en Neon). Resend, voor het verzenden van account- en meldings-e-mails. Sentry, voor foutmonitoring en platformbetrouwbaarheid (zo geconfigureerd dat het nooit persoonlijk identificeerbare informatie ontvangt). Pusher, voor realtime klasfuncties zoals live audio-/videosignalering en het interactieve whiteboard. Wij verkopen uw persoonsgegevens niet en delen deze niet met advertentienetwerken of databrokers. Elke overdracht van gegevens buiten Nederland of de EU (bijvoorbeeld naar de hierboven genoemde in de VS gevestigde providers) berust op passende waarborgen, zoals de standaardcontractbepalingen van die providers."
       },
       "s6": {
         "title": "6. Bewaartermijn van gegevens",

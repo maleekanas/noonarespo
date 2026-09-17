@@ -399,7 +399,7 @@
       },
       "s5": {
         "title": "5. İptal",
-        "body": "Aboneliğinizi istediğiniz zaman privacy@arabickidsacademy.com adresine e-posta göndererek iptal edebilirsiniz ve talebinizi iki iş günü içinde işleme alacağız. Erişiminiz, zaten ödemesini yaptığınız faturalandırma döneminin sonuna kadar, ek ücret olmaksızın ve kullanılmayan günler için kısmi iade yapılmaksızın (aşağıda açıklanan 14 günlük garanti hariç) aktif kalır."
+        "body": "Aboneliğinizi, fatura sayfanızdaki \"Aboneliği Yönet veya İptal Et\" düğmesinden, beklemeden ve anında iptal edebilirsiniz — bu düğme, iptalin tek tıklamayla yapıldığı güvenli Stripe fatura portalımızı açar. Erişiminiz, zaten ödemesini yaptığınız faturalandırma döneminin sonuna kadar, ek ücret olmaksızın ve kullanılmayan günler için kısmi iade yapılmaksızın (aşağıda açıklanan 14 günlük garanti hariç) aktif kalır. Kendi kendine hizmet portalını kullanamıyorsanız, privacy@arabickidsacademy.com adresine e-posta göndererek talebinizi iletebilirsiniz; talebinizi iki iş günü içinde işleme alacağız."
       },
       "s6": {
         "title": "6. İade Politikası",
@@ -462,7 +462,7 @@
       },
       "s5": {
         "title": "5. Bilgileri Kimlerle Paylaşıyoruz",
-        "body": "Stripe — yalnızca ödeme işleme için (PCI-DSS sertifikalı); Stripe, çocuğunuzun öğrenme kayıtlarını asla almaz. Platformu çalıştıran barındırma ve veritabanı sağlayıcıları (şu anda Vercel ve Neon). Kişisel bilgilerinizi satmıyoruz ve reklam ağları veya veri komisyoncularıyla paylaşmıyoruz. Verilerin Hollanda veya AB dışına aktarılması (örneğin yukarıdaki ABD merkezli sağlayıcılara), bu sağlayıcıların standart sözleşme hükümleri gibi uygun güvencelere dayanır."
+        "body": "Stripe — yalnızca ödeme işleme için (PCI-DSS sertifikalı); Stripe, çocuğunuzun öğrenme kayıtlarını asla almaz. Platformu çalıştıran barındırma ve veritabanı sağlayıcıları (şu anda Vercel ve Neon). Hesap ve bildirim e-postalarının gönderilmesi için Resend. Hata izleme ve platform güvenilirliği için Sentry (kişisel olarak tanımlanabilir bilgi almayacak şekilde yapılandırılmıştır). Canlı ders sırasında anlık ses/video sinyalleşmesi ve etkileşimli beyaz tahta gibi gerçek zamanlı sınıf özellikleri için Pusher. Kişisel bilgilerinizi satmıyoruz ve reklam ağları veya veri komisyoncularıyla paylaşmıyoruz. Verilerin Hollanda veya AB dışına aktarılması (örneğin yukarıdaki ABD merkezli sağlayıcılara), bu sağlayıcıların standart sözleşme hükümleri gibi uygun güvencelere dayanır."
       },
       "s6": {
         "title": "6. Veri Saklama",

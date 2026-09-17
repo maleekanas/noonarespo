@@ -75,6 +75,30 @@ class UserRepository {
     return prisma.teacherProfile.findMany({ orderBy: { firstName: "asc" } });
   }
 
+  /**
+   * Every parent account's contact info, for admin-triggered account-wide
+   * notices (e.g. a price or policy change the Terms of Service promises to
+   * email parents about -- see ACCOUNT_NOTICE in NotificationPayload). Only
+   * ACTIVE users are included: a suspended or deleted account shouldn't be
+   * emailed, and an account without a confirmed email address isn't a real
+   * delivery target.
+   */
+  async getAllParentsWithContact(): Promise<
+    Array<{ parentId: string; userId: string; name: string; email: string }>
+  > {
+    const parents = await prisma.parentProfile.findMany({
+      where: { user: { status: "ACTIVE" } },
+      include: { user: { select: { email: true } } },
+      orderBy: { firstName: "asc" },
+    });
+    return parents.map((p) => ({
+      parentId: p.id,
+      userId: p.userId,
+      name: `${p.firstName} ${p.lastName}`,
+      email: p.user.email,
+    }));
+  }
+
   async updateTeacherProfile(
     teacherId: string,
     data: Partial<Pick<DomainTeacherProfile, "hourlyRateMinorUnits" | "isActive">>

@@ -399,7 +399,7 @@
       },
       "s5": {
         "title": "5. Cancellation",
-        "body": "You may cancel your subscription at any time by emailing privacy@arabickidsacademy.com, and we will process your request within two business days. Your access remains active through the end of the billing period you've already paid for, with no additional charges and no partial refund for unused days (outside of the 14-day guarantee described below)."
+        "body": "You may cancel your subscription at any time, instantly and without waiting, from the \"Manage or Cancel Subscription\" button on your billing page — this opens our secure Stripe billing portal, where cancellation takes one click. Your access remains active through the end of the billing period you've already paid for, with no additional charges and no partial refund for unused days (outside of the 14-day guarantee described below). If you're unable to use the self-service portal, you may also email privacy@arabickidsacademy.com and we will process your request within two business days."
       },
       "s6": {
         "title": "6. Refund Policy",
@@ -462,7 +462,7 @@
       },
       "s5": {
         "title": "5. Who We Share Information With",
-        "body": "Stripe — for payment processing only (PCI-DSS certified); Stripe never receives your child's learning records. The hosting and database providers that run the platform (currently Vercel and Neon). We do not sell your personal information, and we do not share it with ad networks or data brokers. Any transfer of data outside the Netherlands or the EU (for example, to the US-based providers above) relies on appropriate safeguards, such as those providers' standard contractual clauses."
+        "body": "Stripe — for payment processing only (PCI-DSS certified); Stripe never receives your child's learning records. The hosting and database providers that run the platform (currently Vercel and Neon). Resend, for sending account and notification emails. Sentry, for error monitoring and platform reliability (configured to never receive personally identifiable information). Pusher, for real-time classroom features such as live audio/video signaling and the interactive whiteboard. We do not sell your personal information, and we do not share it with ad networks or data brokers. Any transfer of data outside the Netherlands or the EU (for example, to the US-based providers above) relies on appropriate safeguards, such as those providers' standard contractual clauses."
       },
       "s6": {
         "title": "6. Data Retention",
