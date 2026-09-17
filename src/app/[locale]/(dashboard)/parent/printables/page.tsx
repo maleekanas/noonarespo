@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowRight, Printer, FileText } from "lucide-react";
 import { printablesRepository } from "@/server/repositories/PrintablesRepository";
 import { ParentPrintablesClient } from "@/components/printables/ParentPrintablesClient";
+import { getDictionary } from "@/lib/localization";
 
 export default async function ParentPrintablesPage({
   params,
@@ -11,6 +12,8 @@ export default async function ParentPrintablesPage({
 }) {
   const { locale } = await params;
   const isAr = locale === "ar";
+  const dict = getDictionary(locale);
+  const pt = dict.parentPrintables;
 
   const printables = await printablesRepository.getAllPrintables();
 
@@ -22,21 +25,19 @@ export default async function ParentPrintablesPage({
           <div className="flex items-center gap-2 text-sm text-slate-500 mb-1">
             <Link href={`/${locale}/parent`} className="hover:text-brand-600 flex items-center gap-1">
               <ArrowRight className={`w-3.5 h-3.5 ${isAr ? "" : "rotate-180"}`} />
-              {isAr ? "العودة إلى لوحة ولي الأمر" : "Back to Parent Dashboard"}
+              {pt.backToParentDashboard}
             </Link>
             <span>/</span>
             <span className="text-slate-800 font-medium">
-              {isAr ? "مركز الكراسات والمطبوعات" : "Printables Hub"}
+              {pt.breadcrumbCurrent}
             </span>
           </div>
           <h1 className="text-2xl md:text-3xl font-black text-slate-900 flex items-center gap-3">
             <Printer className="w-8 h-8 text-brand-600" />
-            {isAr ? "مركز الكراسات المنزلية وأوراق العمل المطبوعة 🖨️" : "Offline Learning Packet & Printables Hub 🖨️"}
+            {pt.pageHeading}
           </h1>
           <p className="text-sm text-slate-600 mt-1">
-            {isAr
-              ? "أوراق عمل وكراسات خط النسخ وتلوين الحركات مصممة لمقاس A4 بدقة عالية، مزودة برموز QR لربط الممارسة الورقية بالنطق الصوتي التفاعلي."
-              : "High-resolution A4 printable handwriting sheets, letter tracing templates, and coloring pages embedded with verification QR codes."}
+            {pt.pageSubtitle}
           </p>
         </div>
 
@@ -44,10 +45,10 @@ export default async function ParentPrintablesPage({
           <FileText className="w-6 h-6 text-emerald-600 shrink-0" />
           <div className="text-xs">
             <div className="font-bold text-emerald-900 text-sm">
-              {isAr ? "تنسيق جاهز للطباعة (A4)" : "Print-Ready A4 Format"}
+              {pt.printReadyLabel}
             </div>
             <div className="text-emerald-700">
-              {isAr ? "يدعم الطابعات المنزلية والملونة" : "Compatible with all home printers"}
+              {pt.homePrintersDesc}
             </div>
           </div>
         </div>

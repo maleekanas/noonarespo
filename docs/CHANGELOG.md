@@ -415,3 +415,20 @@ All notable changes to the Kids Arabic Academy platform will be documented in th
 
 ### Remaining gap
 - The 12 dashboard sub-pages (system-health, reviews, quran-studio, stories, data-export, roadmap, pronunciation, flashcards, printables, schools, etc.) still use the same `isAr`-only pattern -- next follow-up batch, per the agreed phased rollout.
+
+---
+
+## [Full 6-Language Coverage: 12 Dashboard Sub-Pages] - 2026-09-17
+### Fixed
+- **All 12 dashboard sub-pages, all 6 languages**: closed the gap flagged above. Each page's UI chrome (breadcrumbs, headings, subtitles, labels) previously used the same `isAr ? arabicText : englishText` shortcut that silently showed English to Dutch, Turkish, Italian, and Spanish users. Replaced with new per-page dictionary namespaces -- `adminSystemHealth` (26 keys), `parentReviews` (26 keys), `studentQuranStudio` (17 keys), `studentStories` (20 keys), `adminDataExport` (23 keys), `adminReviews` (9 keys), `studentPronunciation` (6 keys), `studentFlashcards` (6 keys), `studentRoadmap` (6 keys), `adminSchools` (6 keys), `parentPrintables` (6 keys), `studentStoryReader` (2 keys) -- with real translations written for all 6 locales, and `{placeholder}`-style `.replace()` templating for strings that interpolate dynamic data (teacher names, student first names, seat counts, etc.).
+- **Real bugs fixed en route**:
+  - `parent/reviews` and `admin/reviews` formatted dates with a hardcoded `isAr ? "ar-SA" : "en-US"`, always showing US date formatting to Dutch/Turkish/Italian/Spanish users; fixed with a proper `INTL_LOCALE` map in both files.
+  - `parent/reviews`: the star-rating filter `<select>` options were hardcoded Arabic text with no `isAr` ternary at all, so every locale (including English) saw Arabic labels; converted to dictionary keys.
+  - `student/quran-studio`: the "ممتاز" (Excellent) recitation-score suffix was hardcoded Arabic shown to every locale regardless of selection; converted to a dictionary key. The page also had a hardcoded placeholder name ("Zayd's Verified Recitations") instead of the actual signed-in student's name; now templated from `studentProfile.firstName`.
+  - `admin/reviews`: the "قيم {teacherName}" (rated ...) label was hardcoded Arabic shown to every locale; converted to a templated dictionary key.
+- **Documented exceptions kept on the `isAr` fallback pattern** (consistent with prior releases): `rule.nameAr/nameEn` and `t.ruleTitleAr/ruleTitleEn` in `student/quran-studio` (internationally-recognized Tajweed transliteration terms -- e.g. Qalqalah, Idgham, Ikhfa, Madd -- are the correct form for all non-Arabic locales, not a translation gap); `rev.titleAr/commentAr/adminReplyAr` in `parent/reviews` and `admin/reviews`, and `story.titleAr` in `student/stories/[id]` (genuinely bilingual-only reviewer/author-submitted content with no other-language pair -- translating real user-submitted text is a separate, larger follow-up requiring a translation pipeline); the RTL directional-icon flip (`isAr ? "" : "rotate-180"` on `<ArrowRight>`) present in every file (layout direction, not translatable text).
+- Verified zero net-new TypeScript errors (`tsc --noEmit` diffed against the pre-change baseline via `git stash`) and zero ESLint/`next lint` warnings across all 12 files; confirmed full key-parity (707 flattened keys, identical key sets) across all 6 dictionary JSON files.
+
+### Remaining gap
+- The bilingual-only DB/seeded content noted above (review text, story titles, badge/plan/course titles from the earlier dashboards batch) is still Arabic/English only -- a genuine translation-pipeline project, out of scope for a UI-chrome pass.
+- This closes out the full dashboards + sub-pages rollout: public pages, program/curriculum content, and now all main dashboards and sub-pages have full 6-language UI-chrome coverage.

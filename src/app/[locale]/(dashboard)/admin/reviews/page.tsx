@@ -10,6 +10,14 @@ import {
 } from "lucide-react";
 import { reviewService } from "@/server/services/ReviewService";
 import { ReviewStatus } from "@/server/repositories/ReviewRepository";
+import { getDictionary } from "@/lib/localization";
+
+// rev.titleAr/commentAr/adminReplyAr hold only the language the reviewer or
+// admin actually typed in -- a separate, larger follow-up (see parent
+// reviews page), out of scope for this UI-chrome pass.
+const INTL_LOCALE: Record<string, string> = {
+  ar: "ar-SA", en: "en-US", nl: "nl-NL", tr: "tr-TR", it: "it-IT", es: "es-ES",
+};
 
 export default async function AdminReviewModerationPage({
   params,
@@ -18,6 +26,8 @@ export default async function AdminReviewModerationPage({
 }) {
   const { locale } = await params;
   const isAr = locale === "ar";
+  const dict = getDictionary(locale);
+  const arm = dict.adminReviews;
 
   const allReviews = await reviewService.getAllReviewsForAdmin();
 
@@ -28,19 +38,17 @@ export default async function AdminReviewModerationPage({
         <div className="flex items-center gap-2 text-sm text-slate-500 mb-1">
           <Link href={`/${locale}/admin`} className="hover:text-brand-600 flex items-center gap-1">
             <ArrowRight className={`w-3.5 h-3.5 ${isAr ? "" : "rotate-180"}`} />
-            {isAr ? "العودة إلى لوحة العمليات" : "Back to Admin Hub"}
+            {arm.backToAdminHub}
           </Link>
           <span>/</span>
-          <span className="text-slate-800 font-medium">{isAr ? "إدارة التقييمات والجودة" : "Review Moderation"}</span>
+          <span className="text-slate-800 font-medium">{arm.breadcrumbCurrent}</span>
         </div>
         <h1 className="text-2xl md:text-3xl font-black text-slate-900 flex items-center gap-3">
           <Star className="w-8 h-8 text-amber-500 fill-amber-500" />
-          {isAr ? "إدارة تقييمات أولياء الأمور وجودة التدريس" : "Teacher Reviews & Quality Moderation"}
+          {arm.pageHeading}
         </h1>
         <p className="text-sm text-slate-600 mt-1">
-          {isAr
-            ? "مراجعة واعتماد تقييمات أولياء الأمور للمعلمين والمقررات لضمان المصداقية ومتابعة جودة الفصول."
-            : "Review, approve, and moderate parent feedback to maintain academy standards and transparency."}
+          {arm.pageSubtitle}
         </p>
       </div>
 
@@ -60,11 +68,11 @@ export default async function AdminReviewModerationPage({
                   <div className="font-bold text-slate-900 text-sm flex items-center gap-2">
                     <span>{rev.parentName}</span>
                     <span className="text-xs font-normal text-slate-500">
-                      قيم {rev.teacherName}
+                      {arm.ratedTeacherLabel.replace("{teacher}", rev.teacherName)}
                     </span>
                   </div>
                   <div className="text-[11px] text-slate-400">
-                    {rev.createdAt.toLocaleDateString(isAr ? "ar-SA" : "en-US")}
+                    {rev.createdAt.toLocaleDateString(INTL_LOCALE[locale] || "en-US")}
                   </div>
                 </div>
               </div>
@@ -103,7 +111,7 @@ export default async function AdminReviewModerationPage({
               <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs space-y-1">
                 <div className="font-bold text-slate-700 text-[11px] flex items-center gap-1">
                   <MessageSquare className="w-3.5 h-3.5 text-brand-600" />
-                  <span>{isAr ? "رد الإدارة المعتمد:" : "Official Admin Reply:"}</span>
+                  <span>{arm.officialAdminReplyLabel}</span>
                 </div>
                 <p className="text-slate-600 text-[11px] ps-2">{rev.adminReplyAr}</p>
               </div>
@@ -123,7 +131,7 @@ export default async function AdminReviewModerationPage({
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold rounded-xl border border-emerald-200 transition-colors"
                   >
                     <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>{isAr ? "اعتماد النشر" : "Approve"}</span>
+                    <span>{arm.approveButton}</span>
                   </button>
                 </form>
 
@@ -138,14 +146,14 @@ export default async function AdminReviewModerationPage({
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold rounded-xl border border-rose-200 transition-colors"
                   >
                     <Flag className="w-3.5 h-3.5" />
-                    <span>{isAr ? "حجب التقييم" : "Flag"}</span>
+                    <span>{arm.flagButton}</span>
                   </button>
                 </form>
               </div>
 
               <span className="text-[11px] text-slate-400 flex items-center gap-1">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                <span>{isAr ? "حوكمة مراجعة الجودة نشطة" : "Verified Governance"}</span>
+                <span>{arm.verifiedGovernanceLabel}</span>
               </span>
             </div>
           </div>

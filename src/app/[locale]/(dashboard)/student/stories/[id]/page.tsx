@@ -5,6 +5,7 @@ import { ArrowRight, BookOpen } from "lucide-react";
 import { storyService } from "@/server/services/StoryService";
 import { InteractiveStoryReader } from "@/components/stories/InteractiveStoryReader";
 import { requireStudentProfile } from "@/lib/auth/currentUser";
+import { getDictionary } from "@/lib/localization";
 
 export default async function StoryReaderPage({
   params,
@@ -13,6 +14,8 @@ export default async function StoryReaderPage({
 }) {
   const { locale, id } = await params;
   const isAr = locale === "ar";
+  const dict = getDictionary(locale);
+  const sr = dict.studentStoryReader;
   await requireStudentProfile(locale);
 
   const story = await storyService.getStoryDetails(id);
@@ -49,7 +52,7 @@ export default async function StoryReaderPage({
               className="hover:text-brand-600 flex items-center gap-1.5 font-medium transition-colors"
             >
               <ArrowRight className={`w-4 h-4 ${isAr ? "" : "rotate-180"}`} />
-              {isAr ? "العودة إلى مكتبة القصص" : "Back to Story Library"}
+              {sr.backToStoryLibrary}
             </Link>
             <span>/</span>
             <span className="text-slate-800 font-bold truncate max-w-xs">{story.titleAr}</span>
@@ -57,7 +60,7 @@ export default async function StoryReaderPage({
 
           <div className="flex items-center gap-2 text-xs bg-brand-50 border border-brand-200 text-brand-800 px-3 py-1.5 rounded-full font-bold">
             <BookOpen className="w-3.5 h-3.5 text-brand-600" />
-            <span>{isAr ? "القارئ التفاعلي الملون" : "Interactive Vocalized Reader"}</span>
+            <span>{sr.interactiveVocalizedReader}</span>
           </div>
         </div>
 

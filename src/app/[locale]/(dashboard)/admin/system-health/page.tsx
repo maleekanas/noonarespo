@@ -19,7 +19,7 @@ import {
   Globe,
 } from "lucide-react";
 import { systemHealthService, type HealthState, type SubsystemHealth } from "@/server/services/SystemHealthService";
-import { languages, type Locale } from "@/lib/localization";
+import { languages, type Locale, getDictionary } from "@/lib/localization";
 
 export default async function SystemHealthPage({
   params,
@@ -28,6 +28,8 @@ export default async function SystemHealthPage({
 }) {
   const { locale } = await params;
   const isAr = locale === "ar";
+  const dict = getDictionary(locale);
+  const sh = dict.adminSystemHealth;
   const report = await systemHealthService.getComprehensiveHealthReport();
 
   function renderStatusBadge(status: HealthState) {
@@ -35,7 +37,7 @@ export default async function SystemHealthPage({
       return (
         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
           <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-          {isAr ? "تعمل بكفاءة" : "Operational"}
+          {sh.statusOperational}
         </span>
       );
     }
@@ -43,14 +45,14 @@ export default async function SystemHealthPage({
       return (
         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200">
           <AlertCircle className="w-3.5 h-3.5 text-amber-600" />
-          {isAr ? "أداء منخفض" : "Degraded"}
+          {sh.statusDegraded}
         </span>
       );
     }
     return (
       <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-800 border border-rose-200">
         <XCircle className="w-3.5 h-3.5 text-rose-600" />
-        {isAr ? "متوقف" : "Offline"}
+        {sh.statusOffline}
       </span>
     );
   }
@@ -84,19 +86,17 @@ export default async function SystemHealthPage({
           <div className="flex items-center gap-2 text-sm text-slate-500 mb-1">
             <Link href={`/${locale}/admin`} className="hover:text-brand-600 flex items-center gap-1">
               <ArrowRight className={`w-3.5 h-3.5 ${isAr ? "" : "rotate-180"}`} />
-              {isAr ? "العودة إلى لوحة العمليات" : "Back to Admin Hub"}
+              {sh.backToAdminHub}
             </Link>
             <span>/</span>
-            <span className="text-slate-800 font-medium">{isAr ? "صحة النظام والمراقبة" : "System Health & Diagnostics"}</span>
+            <span className="text-slate-800 font-medium">{sh.breadcrumbCurrent}</span>
           </div>
           <h1 className="text-2xl md:text-3xl font-black text-slate-900 flex items-center gap-3">
             <Activity className="w-7 h-7 text-emerald-600" />
-            {isAr ? "مراقبة سلامة الأنظمة والخدمات" : "System Health & Observability"}
+            {sh.pageHeading}
           </h1>
           <p className="text-sm text-slate-600 mt-1">
-            {isAr
-              ? "متابعة فورية لأداء قواعد البيانات، منصات الفصول الافتراضية، قنوات الإشعارات، التخزين السحابي الخاص، ومحركات الذكاء الاصطناعي."
-              : "Real-time health telemetry across database, virtual classrooms, notifications, private cloud storage, and AI educational engines."}
+            {sh.pageSubtitle}
           </p>
         </div>
 
@@ -106,7 +106,7 @@ export default async function SystemHealthPage({
             className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 text-sm font-semibold rounded-xl hover:bg-slate-50 shadow-sm transition-all"
           >
             <RefreshCw className="w-4 h-4 text-slate-500" />
-            <span>{isAr ? "تحديث الفحص" : "Refresh Telemetry"}</span>
+            <span>{sh.refreshTelemetry}</span>
           </Link>
           <a
             href="/api/health?full=true"
@@ -114,7 +114,7 @@ export default async function SystemHealthPage({
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 text-white text-sm font-semibold rounded-xl hover:bg-slate-800 shadow-sm transition-all"
           >
-            <span>{isAr ? "عرض JSON المباشر" : "Raw JSON API"}</span>
+            <span>{sh.rawJsonApi}</span>
           </a>
         </div>
       </div>
@@ -129,34 +129,34 @@ export default async function SystemHealthPage({
             <div>
               <div className="flex items-center gap-3">
                 <h2 className="text-xl md:text-2xl font-bold">
-                  {isAr ? "جميع الأنظمة تعمل بكفاءة تامة" : "All Core Systems Fully Operational"}
+                  {sh.allSystemsOperational}
                 </h2>
                 <span className="px-3 py-1 bg-white/20 rounded-full text-xs font-semibold backdrop-blur-sm">
                   {report.status}
                 </span>
               </div>
               <p className="text-emerald-100 text-sm mt-1">
-                {isAr
-                  ? `زمن الاستجابة الكلي للفحص: ${report.totalLatencyMs} مللي ثانية | الإصدار v${report.version}`
-                  : `Total diagnostic sweep latency: ${report.totalLatencyMs}ms | Build v${report.version}`}
+                {sh.latencySummary
+                  .replace("{ms}", String(report.totalLatencyMs))
+                  .replace("{version}", report.version)}
               </p>
             </div>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 border-t md:border-t-0 md:border-s border-white/20 pt-4 md:pt-0 md:ps-6">
             <div>
-              <div className="text-xs text-emerald-200">{isAr ? "زمن تشغيل الخادم" : "Server Uptime"}</div>
+              <div className="text-xs text-emerald-200">{sh.serverUptime}</div>
               <div className="text-lg font-bold">
                 {uptimeHours}h {uptimeMinutes}m {uptimeSecs}s
               </div>
             </div>
             <div>
-              <div className="text-xs text-emerald-200">{isAr ? "استهلاك الذاكرة Heap" : "Heap Memory"}</div>
+              <div className="text-xs text-emerald-200">{sh.heapMemory}</div>
               <div className="text-lg font-bold">{report.telemetry.memoryUsageMb.heapUsed} MB</div>
             </div>
             <div className="col-span-2 md:col-span-1">
-              <div className="text-xs text-emerald-200">{isAr ? "اللغات المدعومة" : "Active Locales"}</div>
-              <div className="text-lg font-bold">6 {isAr ? "لغات عالمية" : "Locales"}</div>
+              <div className="text-xs text-emerald-200">{sh.activeLocales}</div>
+              <div className="text-lg font-bold">6 {sh.localesSuffix}</div>
             </div>
           </div>
         </div>
@@ -165,7 +165,7 @@ export default async function SystemHealthPage({
       {/* Subsystem Health Cards Grid */}
       <h2 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
         <Server className="w-5 h-5 text-brand-600" />
-        {isAr ? "حالة الأركان الأساسية للبنية التحتية" : "Subsystem Health Status"}
+        {sh.subsystemHealthHeading}
       </h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
@@ -205,7 +205,7 @@ export default async function SystemHealthPage({
             <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
               <span className="flex items-center gap-1">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                {isAr ? "فحص آمن ومحمي" : "Secure Verified"}
+                {sh.secureVerified}
               </span>
               <span className="text-[10px] text-slate-400">ISO-8601</span>
             </div>
@@ -219,30 +219,30 @@ export default async function SystemHealthPage({
         <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm">
           <h2 className="text-base font-bold text-slate-900 mb-4 flex items-center gap-2">
             <Cpu className="w-5 h-5 text-indigo-600" />
-            {isAr ? "بيانات بيئة التشغيل والخادم (Node.js)" : "Runtime Environment & Telemetry"}
+            {sh.runtimeEnvHeading}
           </h2>
 
           <div className="space-y-3 text-sm">
             <div className="flex justify-between py-2 border-b border-slate-100">
-              <span className="text-slate-500">{isAr ? "إصدار Node.js" : "Node.js Version"}</span>
+              <span className="text-slate-500">{sh.nodeVersionLabel}</span>
               <span className="font-mono font-semibold text-slate-800">{report.telemetry.nodeVersion}</span>
             </div>
             <div className="flex justify-between py-2 border-b border-slate-100">
-              <span className="text-slate-500">{isAr ? "بيئة التشغيل" : "Environment"}</span>
+              <span className="text-slate-500">{sh.environmentLabel}</span>
               <span className="font-mono font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
                 {report.telemetry.environment}
               </span>
             </div>
             <div className="flex justify-between py-2 border-b border-slate-100">
-              <span className="text-slate-500">{isAr ? "إجمالي الذاكرة المحجوزة (RSS)" : "Resident Memory (RSS)"}</span>
+              <span className="text-slate-500">{sh.residentMemoryLabel}</span>
               <span className="font-mono font-semibold text-slate-800">{report.telemetry.memoryUsageMb.rss} MB</span>
             </div>
             <div className="flex justify-between py-2 border-b border-slate-100">
-              <span className="text-slate-500">{isAr ? "الذاكرة المخصصة للـ Heap" : "Heap Total"}</span>
+              <span className="text-slate-500">{sh.heapTotalLabel}</span>
               <span className="font-mono font-semibold text-slate-800">{report.telemetry.memoryUsageMb.heapTotal} MB</span>
             </div>
             <div className="flex justify-between py-2">
-              <span className="text-slate-500">{isAr ? "الذاكرة المستهلكة فعلياً" : "Heap Used"}</span>
+              <span className="text-slate-500">{sh.heapUsedLabel}</span>
               <span className="font-mono font-semibold text-slate-800">{report.telemetry.memoryUsageMb.heapUsed} MB</span>
             </div>
           </div>
@@ -252,13 +252,11 @@ export default async function SystemHealthPage({
         <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm">
           <h2 className="text-base font-bold text-slate-900 mb-4 flex items-center gap-2">
             <Globe className="w-5 h-5 text-blue-600" />
-            {isAr ? "تغطية اللغات الدولية (6 لغات)" : "International Language Coverage (6 Locales)"}
+            {sh.languageCoverageHeading}
           </h2>
 
           <p className="text-xs text-slate-600 mb-4">
-            {isAr
-              ? "وفقاً لمتطلبات وثيقة المشروع، تم تفعيل ودعم 6 لغات عالمية مع دعم كامل للاتجاه من اليمين لليسار (RTL) للعربية."
-              : "In accordance with PROJECT_BRIEF.md, 6 global languages are fully supported with RTL support for Arabic."}
+            {sh.languageCoverageDesc}
           </p>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -285,9 +283,7 @@ export default async function SystemHealthPage({
           <div className="mt-5 p-3 bg-brand-50 border border-brand-200 rounded-xl text-xs text-brand-800 flex items-center gap-2">
             <Clock className="w-4 h-4 text-brand-600 shrink-0" />
             <span>
-              {isAr
-                ? "يتم توليد جميع الصفحات الثابتة لجميع اللغات الستة تلقائياً عبر generateStaticParams."
-                : "All static pages for the 6 locales are generated automatically via Next.js generateStaticParams."}
+              {sh.staticGenDesc}
             </span>
           </div>
         </div>

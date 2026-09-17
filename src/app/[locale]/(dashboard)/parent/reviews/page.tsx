@@ -12,6 +12,17 @@ import { reviewService } from "@/server/services/ReviewService";
 import { requireParentProfile } from "@/lib/auth/currentUser";
 import { userRepository } from "@/server/repositories/UserRepository";
 import { academicRepository } from "@/server/repositories/AcademicRepository";
+import { getDictionary } from "@/lib/localization";
+
+// rev.titleAr/commentAr/adminReplyAr hold only the language the reviewer or
+// admin actually typed in -- there is no titleEn/commentEn pair to fall back
+// to, unlike other bilingual DB fields elsewhere in the app. Displaying
+// user-submitted review text as-is regardless of the viewer's locale is a
+// separate, larger follow-up (would need a translation pipeline, not a
+// schema-free fix) and is out of scope for this UI-chrome pass.
+const INTL_LOCALE: Record<string, string> = {
+  ar: "ar-SA", en: "en-US", nl: "nl-NL", tr: "tr-TR", it: "it-IT", es: "es-ES",
+};
 
 
 export default async function ParentReviewsPage({
@@ -24,6 +35,8 @@ export default async function ParentReviewsPage({
   const { locale } = await params;
   const { teacherId: queryTeacherId } = await searchParams;
   const isAr = locale === "ar";
+  const dict = getDictionary(locale);
+  const pr = dict.parentReviews;
   const { profile } = await requireParentProfile(locale);
 
   // Resolve the real teacher(s) actually assigned to this parent's children,
@@ -67,19 +80,17 @@ export default async function ParentReviewsPage({
         <div className="flex items-center gap-2 text-sm text-slate-500 mb-1">
           <Link href={`/${locale}/parent/billing`} className="hover:text-brand-600 flex items-center gap-1">
             <ArrowRight className={`w-3.5 h-3.5 ${isAr ? "" : "rotate-180"}`} />
-            {isAr ? "العودة لبوابة ولي الأمر" : "Back to Parent Portal"}
+            {pr.backToParentPortal}
           </Link>
           <span>/</span>
-          <span className="text-slate-800 font-medium">{isAr ? "تقييمات وتجارب أولياء الأمور" : "Parent Reviews"}</span>
+          <span className="text-slate-800 font-medium">{pr.breadcrumbCurrent}</span>
         </div>
         <h1 className="text-2xl md:text-3xl font-black text-slate-900 flex items-center gap-3">
           <Star className="w-8 h-8 text-amber-500 fill-amber-500" />
-          {isAr ? "تقييمات الكادر التعليمي وتجارب أولياء الأمور ⭐" : "Teacher Reviews & Ratings ⭐"}
+          {pr.pageHeading}
         </h1>
         <p className="text-sm text-slate-600 mt-1">
-          {isAr
-            ? "شارك تجربتك التربوية وقيم أداء معلمي أطفالك لدعم مجتمع الأكاديمية وضمان أعلى معايير الجودة التعليمية."
-            : "Share your feedback and rate your children's teachers to help fellow families and maintain educational excellence."}
+          {pr.pageSubtitle}
         </p>
       </div>
 
@@ -104,9 +115,7 @@ export default async function ParentReviewsPage({
 
       {!activeTeacher ? (
         <div className="bg-white border border-slate-200/90 rounded-3xl p-8 shadow-sm text-center text-sm text-slate-500">
-          {isAr
-            ? "لا يوجد معلم معيّن لأطفالك بعد. سيظهر هنا بمجرد تسجيل طفلك في فصل."
-            : "No teacher is assigned to your children yet. This will appear once your child is enrolled in a class."}
+          {pr.noTeacherAssigned}
         </div>
       ) : (
       <>
@@ -120,13 +129,11 @@ export default async function ParentReviewsPage({
             <div className="flex items-center gap-2">
               <h2 className="text-xl sm:text-2xl font-black">{activeTeacher.teacherName}</h2>
               <span className="px-2.5 py-0.5 bg-white/20 text-xs font-bold rounded-full">
-                {isAr ? "معلم معتمد" : "Verified Teacher"}
+                {pr.verifiedTeacherBadge}
               </span>
             </div>
             <p className="text-xs text-amber-100 mt-1">
-              {isAr
-                ? `معلم طفلك: ${activeTeacher.studentNames.join("، ")}`
-                : `Teaching: ${activeTeacher.studentNames.join(", ")}`}
+              {pr.teachingLabel.replace("{names}", activeTeacher.studentNames.join(pr.nameJoinSeparator))}
             </p>
           </div>
         </div>
@@ -138,13 +145,13 @@ export default async function ParentReviewsPage({
               <Star className="w-6 h-6 fill-white text-white" />
             </div>
             <div className="text-xs text-amber-100 mt-0.5">
-              {summary.totalReviewsCount} {isAr ? "تقييمات موثقة" : "verified reviews"}
+              {summary.totalReviewsCount} {pr.verifiedReviewsSuffix}
             </div>
           </div>
 
           <div className="ps-4 border-s border-white/20">
             <div className="text-2xl font-black">100%</div>
-            <div className="text-xs text-amber-100">{isAr ? "يوصون به" : "Recommended"}</div>
+            <div className="text-xs text-amber-100">{pr.recommendedLabel}</div>
           </div>
         </div>
       </div>
@@ -155,7 +162,7 @@ export default async function ParentReviewsPage({
           <div className="bg-white border border-slate-200/90 rounded-3xl p-6 shadow-sm space-y-4 sticky top-6">
             <div className="flex items-center gap-2 text-slate-900 font-bold text-sm">
               <Sparkles className="w-4 h-4 text-amber-500" />
-              <span>{isAr ? `أضف تقييمك لـ ${activeTeacher.teacherName}` : "Submit Your Review"}</span>
+              <span>{pr.submitReviewFor.replace("{teacher}", activeTeacher.teacherName)}</span>
             </div>
 
             <form
@@ -180,29 +187,29 @@ export default async function ParentReviewsPage({
             >
               <div>
                 <label className="block font-bold text-slate-700 mb-1">
-                  {isAr ? "التقييم العام (بالنجوم):" : "Star Rating:"}
+                  {pr.starRatingLabel}
                 </label>
                 <select
                   name="rating"
                   defaultValue="5"
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-medium focus:ring-2 focus:ring-brand-500 outline-none"
                 >
-                  <option value="5">⭐⭐⭐⭐⭐ ممتاز (5 من 5)</option>
-                  <option value="4">⭐⭐⭐⭐ جيد جداً (4 من 5)</option>
-                  <option value="3">⭐⭐⭐ جيد (3 من 5)</option>
-                  <option value="2">⭐⭐ مقبول (2 من 5)</option>
-                  <option value="1">⭐ ضعيف (1 من 5)</option>
+                  <option value="5">{pr.ratingOption5}</option>
+                  <option value="4">{pr.ratingOption4}</option>
+                  <option value="3">{pr.ratingOption3}</option>
+                  <option value="2">{pr.ratingOption2}</option>
+                  <option value="1">{pr.ratingOption1}</option>
                 </select>
               </div>
 
               <div>
                 <label className="block font-bold text-slate-700 mb-1">
-                  {isAr ? "عنوان التقييم:" : "Review Title:"}
+                  {pr.reviewTitleLabel}
                 </label>
                 <input
                   type="text"
                   name="title"
-                  placeholder={isAr ? "مثال: أسلوب ملهم وتطور سريع لابني" : "e.g. Great teacher, very patient"}
+                  placeholder={pr.reviewTitlePlaceholder}
                   required
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none"
                 />
@@ -210,12 +217,12 @@ export default async function ParentReviewsPage({
 
               <div>
                 <label className="block font-bold text-slate-700 mb-1">
-                  {isAr ? "رأيك التربوي المفصل:" : "Detailed Feedback:"}
+                  {pr.detailedFeedbackLabel}
                 </label>
                 <textarea
                   name="comment"
                   rows={4}
-                  placeholder={isAr ? "اكتب انطباعك عن تعامل المعلم وتفاعل طفلك معه..." : "Write your thoughts on the teacher..."}
+                  placeholder={pr.detailedFeedbackPlaceholder}
                   required
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none"
                 />
@@ -226,7 +233,7 @@ export default async function ParentReviewsPage({
                 className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl shadow-sm transition-all flex items-center justify-center gap-2"
               >
                 <Send className="w-3.5 h-3.5" />
-                <span>{isAr ? "نشر التقييم المعتمد" : "Publish Review"}</span>
+                <span>{pr.publishReviewButton}</span>
               </button>
             </form>
           </div>
@@ -237,10 +244,10 @@ export default async function ParentReviewsPage({
           <div className="flex items-center justify-between mb-2">
             <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
               <MessageSquare className="w-4 h-4 text-brand-600" />
-              <span>{isAr ? "آراء أولياء الأمور الموثقة" : "Verified Parent Testimonials"}</span>
+              <span>{pr.verifiedTestimonialsHeading}</span>
             </h3>
             <span className="text-xs text-slate-500">
-              {summary.totalReviewsCount} {isAr ? "تقييمات" : "reviews"}
+              {summary.totalReviewsCount} {pr.reviewsSuffix}
             </span>
           </div>
 
@@ -261,11 +268,11 @@ export default async function ParentReviewsPage({
                           <span>{rev.parentName}</span>
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full text-[10px] font-semibold">
                             <ShieldCheck className="w-3 h-3 text-emerald-600" />
-                            {isAr ? "ولي أمر معتمد" : "Verified Parent"}
+                            {pr.verifiedParentBadge}
                           </span>
                         </div>
                         <div className="text-[10px] text-slate-400">
-                          {rev.createdAt.toLocaleDateString(isAr ? "ar-SA" : "en-US")}
+                          {rev.createdAt.toLocaleDateString(INTL_LOCALE[locale] || "en-US")}
                         </div>
                       </div>
                     </div>
@@ -290,7 +297,7 @@ export default async function ParentReviewsPage({
                   <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs space-y-1 mt-2">
                     <div className="font-bold text-slate-800 text-[11px] flex items-center gap-1.5">
                       <span className="w-1.5 h-1.5 rounded-full bg-brand-600" />
-                      <span>{isAr ? "رد إدارة أكاديمية براعم العربية:" : "Academy Administration Reply:"}</span>
+                      <span>{pr.academyReplyLabel}</span>
                     </div>
                     <p className="text-[11px] text-slate-600 leading-relaxed ps-3">
                       {rev.adminReplyAr}

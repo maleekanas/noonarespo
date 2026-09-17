@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { storyService } from "@/server/services/StoryService";
 import { StoryCategory } from "@/server/repositories/StoryRepository";
+import { getDictionary } from "@/lib/localization";
 
 export default async function StudentStoriesCatalogPage({
   params,
@@ -24,6 +25,8 @@ export default async function StudentStoriesCatalogPage({
   const { locale } = await params;
   const { category: filterCategory } = await searchParams;
   const isAr = locale === "ar";
+  const dict = getDictionary(locale);
+  const ss = dict.studentStories;
 
   const allStories = await storyService.getStoryCatalog(
     filterCategory && ["PROPHETIC_STORIES", "ISLAMIC_VALUES", "LANGUAGE_ADVENTURE"].includes(filterCategory)
@@ -34,32 +37,28 @@ export default async function StudentStoriesCatalogPage({
   const categories = [
     {
       id: "ALL",
-      nameAr: "جميع القصص 📚",
-      nameEn: "All Stories 📚",
+      name: ss.categoryAll,
       icon: BookOpen,
       href: `/${locale}/student/stories`,
       active: !filterCategory,
     },
     {
       id: "PROPHETIC_STORIES",
-      nameAr: "قصص الأنبياء 🕊️",
-      nameEn: "Prophetic Stories 🕊️",
+      name: ss.categoryProphetic,
       icon: Scroll,
       href: `/${locale}/student/stories?category=PROPHETIC_STORIES`,
       active: filterCategory === "PROPHETIC_STORIES",
     },
     {
       id: "ISLAMIC_VALUES",
-      nameAr: "القيم الإسلامية 💖",
-      nameEn: "Islamic Values 💖",
+      name: ss.categoryIslamicValues,
       icon: HeartHandshake,
       href: `/${locale}/student/stories?category=ISLAMIC_VALUES`,
       active: filterCategory === "ISLAMIC_VALUES",
     },
     {
       id: "LANGUAGE_ADVENTURE",
-      nameAr: "مغامرات لغوية 🧭",
-      nameEn: "Language Adventures 🧭",
+      name: ss.categoryLanguageAdventure,
       icon: Compass,
       href: `/${locale}/student/stories?category=LANGUAGE_ADVENTURE`,
       active: filterCategory === "LANGUAGE_ADVENTURE",
@@ -74,19 +73,17 @@ export default async function StudentStoriesCatalogPage({
           <div className="flex items-center gap-2 text-sm text-slate-500 mb-1">
             <Link href={`/${locale}/student`} className="hover:text-brand-600 flex items-center gap-1">
               <ArrowRight className={`w-3.5 h-3.5 ${isAr ? "" : "rotate-180"}`} />
-              {isAr ? "العودة إلى لوحة الطالب" : "Back to Student Dashboard"}
+              {ss.backToStudentDashboard}
             </Link>
             <span>/</span>
-            <span className="text-slate-800 font-medium">{isAr ? "مكتبة القصص المصورة" : "Illustrated Stories"}</span>
+            <span className="text-slate-800 font-medium">{ss.breadcrumbCurrent}</span>
           </div>
           <h1 className="text-2xl md:text-3xl font-black text-slate-900 flex items-center gap-3">
             <span className="text-3xl">📖</span>
-            {isAr ? "مكتبة القصص المصورة والقيم النبوية" : "Illustrated Storybook & Prophetic Tales"}
+            {ss.pageHeading}
           </h1>
           <p className="text-sm text-slate-600 mt-1">
-            {isAr
-              ? "اقرأ واستمع لأجمل القصص المصورة بالتشكيل الكامل، استمع لنطق كل كلمة، وأجب عن أسئلة الفهم لتحصد نقاط XP!"
-              : "Read and listen to illustrated vocalized Arabic stories, click any word to hear its pronunciation, and complete comprehension quizzes for XP!"}
+            {ss.pageSubtitle}
           </p>
         </div>
 
@@ -94,10 +91,10 @@ export default async function StudentStoriesCatalogPage({
           <Trophy className="w-6 h-6 text-amber-600 shrink-0 animate-bounce" />
           <div className="text-xs">
             <div className="font-bold text-amber-900 text-sm">
-              {isAr ? "+35 XP لكل قصة مكتملة" : "+35 XP per completed story"}
+              {ss.xpPerStory}
             </div>
             <div className="text-amber-700">
-              {isAr ? "مع شهادة المستكشف الصغير" : "Includes Story Explorer badge"}
+              {ss.includesExplorerBadge}
             </div>
           </div>
         </div>
@@ -118,7 +115,7 @@ export default async function StudentStoriesCatalogPage({
               }`}
             >
               <Icon className="w-4 h-4" />
-              <span>{isAr ? cat.nameAr : cat.nameEn}</span>
+              <span>{cat.name}</span>
             </Link>
           );
         })}
@@ -141,15 +138,15 @@ export default async function StudentStoriesCatalogPage({
                 {/* Category Badge */}
                 <div className="absolute top-3 right-3 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-slate-700 shadow-sm border border-slate-200">
                   {story.category === "PROPHETIC_STORIES"
-                    ? (isAr ? "🕊️ قصص نبوية" : "🕊️ Prophetic")
+                    ? ss.categoryBadgeProphetic
                     : story.category === "ISLAMIC_VALUES"
-                    ? (isAr ? "💖 قيم إسلامية" : "💖 Islamic Values")
-                    : (isAr ? "🧭 مغامرة لغوية" : "🧭 Language")}
+                    ? ss.categoryBadgeIslamicValues
+                    : ss.categoryBadgeLanguage}
                 </div>
 
                 {/* Age Group */}
                 <div className="absolute bottom-3 left-3 bg-slate-900/70 text-white backdrop-blur px-2.5 py-0.5 rounded-lg text-xs font-medium">
-                  {isAr ? "الأعمار:" : "Ages:"} {story.ageGroup === "AGE_4_6" ? "4-6" : story.ageGroup === "AGE_7_10" ? "7-10" : "11-13"}
+                  {ss.agesLabel} {story.ageGroup === "AGE_4_6" ? "4-6" : story.ageGroup === "AGE_7_10" ? "7-10" : "11-13"}
                 </div>
               </div>
 
@@ -166,11 +163,11 @@ export default async function StudentStoriesCatalogPage({
                   <div className="flex items-center gap-4 text-xs text-slate-600 bg-slate-50 p-2.5 rounded-xl mb-4">
                     <div className="flex items-center gap-1">
                       <BookOpen className="w-3.5 h-3.5 text-brand-600" />
-                      <span>{story.pages.length} {isAr ? "صفحات مصورة" : "pages"}</span>
+                      <span>{story.pages.length} {ss.pagesSuffix}</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <Clock className="w-3.5 h-3.5 text-amber-600" />
-                      <span>~{story.readingDurationMinutes} {isAr ? "دقائق" : "mins"}</span>
+                      <span>~{story.readingDurationMinutes} {ss.minsSuffix}</span>
                     </div>
                     <div className="flex items-center gap-1 font-bold text-emerald-700 ml-auto">
                       <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
@@ -184,7 +181,7 @@ export default async function StudentStoriesCatalogPage({
                   className="w-full py-3 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-2xl flex items-center justify-center gap-2 shadow-md shadow-brand-100 transition-colors"
                 >
                   <BookOpen className="w-4 h-4" />
-                  <span>{isAr ? "ابدأ القراءة والتفاعل 📖" : "Open Illustrated Storybook 📖"}</span>
+                  <span>{ss.openStorybookButton}</span>
                 </Link>
               </div>
             </div>
@@ -199,12 +196,10 @@ export default async function StudentStoriesCatalogPage({
         </div>
         <div>
           <h4 className="text-base font-black text-emerald-950 mb-1">
-            {isAr ? "ميزة النطق الصوتي التفاعلي للكلمات" : "Interactive Word-by-Word Voice Pronunciation"}
+            {ss.voicePronunciationHeading}
           </h4>
           <p className="text-xs md:text-sm text-emerald-800 leading-relaxed">
-            {isAr
-              ? "داخل كل قصة، يمكنك النقر على أي كلمة عربية مشكولة للاستماع إلى نطقها السليم بالحركات، كما يمكنك تشغيل الراوي الصوتي والاستماع لكامل الصفحة مع التحكم في السرعة."
-              : "Inside every storybook, click on any Arabic word to hear its vocalized pronunciation, or toggle the audio narrator to hear full-page dramatized reading with adjustable speed."}
+            {ss.voicePronunciationDesc}
           </p>
         </div>
         <div className="shrink-0">
@@ -213,7 +208,7 @@ export default async function StudentStoriesCatalogPage({
             className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-sm transition-colors flex items-center gap-2"
           >
             <CheckCircle2 className="w-4 h-4" />
-            <span>{isAr ? "زيارة استوديو النطق" : "Visit Voice Studio"}</span>
+            <span>{ss.visitVoiceStudioButton}</span>
           </Link>
         </div>
       </div>

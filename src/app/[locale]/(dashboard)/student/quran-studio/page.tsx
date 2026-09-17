@@ -13,6 +13,19 @@ import {
 } from "lucide-react";
 import { quranService } from "@/server/services/QuranService";
 import { requireStudentProfile } from "@/lib/auth/currentUser";
+import { getDictionary } from "@/lib/localization";
+
+// tajweedRulesLegend rule.nameAr/nameEn, per-verse t.ruleTitleAr/ruleTitleEn,
+// currentSurah.nameAr/nameEn, and sub.teacherFeedbackAr are seeded/DB-backed
+// content and Quranic recitation terminology that intentionally stays on the
+// isAr fallback -- transliterated Tajweed terms (Qalqalah, Idgham, Ikhfa...)
+// are the correct, internationally-recognized form even for non-Arabic
+// locales, and translating the underlying Quranic text/feedback is a
+// separate, larger follow-up, consistent with the Program/CurriculumModule
+// precedent.
+const INTL_LOCALE: Record<string, string> = {
+  ar: "ar-SA", en: "en-US", nl: "nl-NL", tr: "tr-TR", it: "it-IT", es: "es-ES",
+};
 
 export default async function QuranStudioPage({
   params,
@@ -24,6 +37,8 @@ export default async function QuranStudioPage({
   const { locale } = await params;
   const { surah: activeSurahId } = await searchParams;
   const isAr = locale === "ar";
+  const dict = getDictionary(locale);
+  const qs = dict.studentQuranStudio;
   const { profile: studentProfile } = await requireStudentProfile(locale);
   const studentId = studentProfile.id;
 
@@ -46,27 +61,25 @@ export default async function QuranStudioPage({
           <div className="flex items-center gap-2 text-sm text-slate-500 mb-1">
             <Link href={`/${locale}/student`} className="hover:text-brand-600 flex items-center gap-1">
               <ArrowRight className={`w-3.5 h-3.5 ${isAr ? "" : "rotate-180"}`} />
-              {isAr ? "العودة إلى لوحة الطالب" : "Back to Student Dashboard"}
+              {qs.backToStudentDashboard}
             </Link>
             <span>/</span>
-            <span className="text-slate-800 font-medium">{isAr ? "استوديو التلاوة والتجويد" : "Quran Studio"}</span>
+            <span className="text-slate-800 font-medium">{qs.breadcrumbCurrent}</span>
           </div>
           <h1 className="text-2xl md:text-3xl font-black text-slate-900 flex items-center gap-3">
             <BookOpen className="w-8 h-8 text-emerald-600" />
-            {isAr ? "استوديو التلاوة الملونة وأحكام التجويد 📖" : "Interactive Quran & Tajweed Studio 📖"}
+            {qs.pageHeading}
           </h1>
           <p className="text-sm text-slate-600 mt-1">
-            {isAr
-              ? "استمع للآيات بالرسم العثماني الملون، تدرب على أحكام التجويد، وسجل تلاوتك بصوتك للحصول على تقييم المعلم ونقاط XP!"
-              : "Listen to color-coded Tajweed verses in Uthmani script, record your recitation, and earn teacher feedback + XP rewards!"}
+            {qs.pageSubtitle}
           </p>
         </div>
 
         <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-900 px-4 py-2 rounded-2xl">
           <Award className="w-5 h-5 text-amber-600 shrink-0" />
           <div className="text-xs">
-            <span className="font-bold">{isAr ? "مكافأة الإتقان:" : "Recitation Reward:"}</span>{" "}
-            <span>+25 XP {isAr ? "لكل تلاوة متقنة" : "per verified Surah"}</span>
+            <span className="font-bold">{qs.recitationRewardLabel}</span>{" "}
+            <span>+25 XP {qs.perVerifiedSurah}</span>
           </div>
         </div>
       </div>
@@ -88,7 +101,7 @@ export default async function QuranStudioPage({
               <span>{s.number}.</span>
               <span>{s.nameAr}</span>
               <span className={`text-[10px] ${isSelected ? "text-emerald-100" : "text-slate-400"}`}>
-                ({s.versesCount} {isAr ? "آيات" : "verses"})
+                ({s.versesCount} {qs.versesSuffix})
               </span>
             </Link>
           );
@@ -102,7 +115,7 @@ export default async function QuranStudioPage({
           <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
             <div className="text-xs font-bold text-slate-800 mb-3 flex items-center gap-1.5">
               <HelpCircle className="w-4 h-4 text-brand-600" />
-              <span>{isAr ? "دليل ألوان أحكام التجويد المعتمدة:" : "Color-Coded Tajweed Guide:"}</span>
+              <span>{qs.tajweedGuideLabel}</span>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {tajweedRulesLegend.map((rule, idx) => (
@@ -124,7 +137,7 @@ export default async function QuranStudioPage({
           <div className="bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-8 shadow-sm space-y-8">
             <div className="text-center pb-4 border-b border-slate-100">
               <div className="text-xs font-semibold text-emerald-700 tracking-wider">
-                {currentSurah.revelationType === "MECCAN" ? (isAr ? "مَكِّيَّة" : "Meccan") : (isAr ? "مَدَنِيَّة" : "Medinan")}
+                {currentSurah.revelationType === "MECCAN" ? qs.meccanLabel : qs.medinanLabel}
               </div>
               <h2 className="text-2xl sm:text-3xl font-black text-slate-900 mt-1 font-serif">
                 {currentSurah.nameAr}
@@ -166,7 +179,7 @@ export default async function QuranStudioPage({
                   {v.tajweedAnnotations.length > 0 && (
                     <div className="pt-2 border-t border-slate-200/60 flex flex-wrap items-center gap-2">
                       <span className="text-[10px] font-bold text-slate-500">
-                        {isAr ? "الأحكام في هذه الآية:" : "Tajweed in this Ayah:"}
+                        {qs.tajweedInAyahLabel}
                       </span>
                       {v.tajweedAnnotations.map((t, tIdx) => (
                         <span
@@ -192,7 +205,7 @@ export default async function QuranStudioPage({
           <div className="bg-gradient-to-br from-emerald-900 to-teal-950 text-white rounded-3xl p-6 shadow-md space-y-5">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-emerald-300">
-                {isAr ? "مسجل التلاوة التفاعلي" : "Recitation Recorder"}
+                {qs.recitationRecorderLabel}
               </span>
               <span className="px-2 py-0.5 bg-emerald-800/80 rounded-full text-[10px] text-emerald-200 font-semibold">
                 Mic Active
@@ -245,7 +258,7 @@ export default async function QuranStudioPage({
                 className="w-full py-3 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-950 font-black text-xs rounded-2xl shadow-md transition-all flex items-center justify-center gap-2"
               >
                 <Sparkles className="w-4 h-4" />
-                <span>{isAr ? "إرسال التلاوة للتقييم (+25 XP) ⭐" : "Submit Recitation for Review (+25 XP) ⭐"}</span>
+                <span>{qs.submitRecitationButton}</span>
               </button>
             </form>
           </div>
@@ -254,12 +267,10 @@ export default async function QuranStudioPage({
           <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-3">
             <h3 className="text-xs font-bold text-slate-900 flex items-center gap-2">
               <Volume2 className="w-4 h-4 text-brand-600" />
-              <span>{isAr ? "الاستماع للشيخ المعلم (نموذج محاكي)" : "Teacher Model Audio"}</span>
+              <span>{qs.teacherModelAudioLabel}</span>
             </h3>
             <p className="text-xs text-slate-600">
-              {isAr
-                ? "استمع لقراءة الشيخ المعلم بتمهل لملاحظة أماكن القلقلة والمدود بدقة."
-                : "Listen to the Sheikh's clear recitation to observe Tajweed stops and vowel durations."}
+              {qs.teacherModelAudioDesc}
             </p>
             <div className="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-xl">
               <div className="text-xs font-bold text-slate-800">
@@ -279,7 +290,7 @@ export default async function QuranStudioPage({
           <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-3">
             <h3 className="text-xs font-bold text-slate-900 flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-              <span>{isAr ? "سجل التلاوات المعتمدة لـ زيد" : "Zayd's Verified Recitations"}</span>
+              <span>{qs.verifiedRecitationsHeading.replace("{name}", studentProfile.firstName)}</span>
             </h3>
 
             <div className="space-y-2">
@@ -288,14 +299,14 @@ export default async function QuranStudioPage({
                   <div className="flex items-center justify-between">
                     <span className="font-bold text-emerald-950">سورة الإخلاص</span>
                     <span className="font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded">
-                      {sub.overallScore}% ممتاز
+                      {sub.overallScore}% {qs.excellentLabel}
                     </span>
                   </div>
                   <div className="text-[11px] text-emerald-900 leading-relaxed">
                     {sub.teacherFeedbackAr}
                   </div>
                   <div className="text-[10px] text-slate-400 pt-1">
-                    +{sub.xpAwarded} XP • {sub.submittedAt.toLocaleDateString("ar-SA")}
+                    +{sub.xpAwarded} XP • {sub.submittedAt.toLocaleDateString(INTL_LOCALE[locale] || "en-US")}
                   </div>
                 </div>
               ))}
