@@ -5,8 +5,8 @@ All notable changes to the Kids Arabic Academy platform will be documented in th
 ---
 
 ## [Pre-Launch: Self-Service Account Settings, Sign Out, Real Super-Admin Email] - 2026-09-17
-### ⚠️ Requires a manual production step: log in and set a private super-admin password
-This release adds a real account-settings page and moves the seeded super-admin login off its placeholder `@kidsarabicacademy.internal` address. The account still has the old seeded default password (`Password123!`) until you sign in and change it yourself from the new `/account` page -- see "Fixed" below for the new login email.
+### ⚠️ Requires a manual step from you: set a private super-admin password
+This release adds a real account-settings page and moves the seeded super-admin login off its placeholder `@kidsarabicacademy.internal` address to a real inbox. The email change has already been performed live (see "Fixed" below), but the account still has the old seeded default password (`Password123!`) -- sign in at `superadmin@arabickidsacademy.com` / `Password123!` and change the password yourself from the new `/account` page before treating this account as production-secure.
 
 ### Added
 - **`/account`**: a single, role-agnostic account settings page reachable from every dashboard (parent, student, teacher, every admin role, school admin) via a new profile icon in each dashboard's header. Lets any logged-in user change their own password (current password required, rate-limited per user and per IP, ends the session and requires a fresh login afterward) and change their own login email (uniqueness-checked, refreshes the session immediately). Neither was previously possible without a direct database write -- the only password-change path in the whole app was the public forgot-password email flow, and there was no way to change an account's email at all.
@@ -15,8 +15,13 @@ This release adds a real account-settings page and moves the seeded super-admin 
 - Two new per-user rate limits (`ACCOUNT_CHANGE_PASSWORD_PER_USER`, `ACCOUNT_CHANGE_EMAIL_PER_USER`) alongside the existing IP/email-keyed ones.
 
 ### Fixed
-- **Super-admin account moved to a real, founder-controlled email**: the only administrative account in the system was seeded with the placeholder address `superadmin@kidsarabicacademy.internal`, which cannot receive email -- meaning the account's forgot-password flow was unusable for it. The account's email has been changed (live, via the new `/account` page, by the founder) to `superadmin@arabickidsacademy.com`, a real inbox the founder can receive mail at. `prisma/seed.ts`'s seeded super-admin email was updated to match, so a future reseed won't create a duplicate stale admin account under the old address.
+- **Super-admin account moved to a real, founder-controlled email**: the only administrative account in the system was seeded with the placeholder address `superadmin@kidsarabicacademy.internal`, which cannot receive email -- meaning the account's forgot-password flow was unusable for it. The account's email has been changed live, via the new `/account` page, to `superadmin@arabickidsacademy.com`, a real inbox the founder can receive mail at -- confirmed by signing in with the new email and seeing it reflected in the account page's "Current Email" field. `prisma/seed.ts`'s seeded super-admin email was updated to match, so a future reseed won't create a duplicate stale admin account under the old address.
 - Confirmed `NEXT_PUBLIC_HIDE_DEMO_SWITCHER=true` is still set in the live Production environment (checked again this release) -- the one-click demo-login shortcuts on the login page, including the super-admin one, are not reachable on the live site.
+
+### Validated
+- Live end-to-end test of the full `/account` password-change flow on the seeded teacher account: wrong-current-password correctly rejected ("Your current password is incorrect."), correct submission succeeded, forced a sign-out, showed the login-page success banner, and the account could immediately sign back in -- confirming both the guard and the redirect work in production, not just locally.
+- Confirmed the "Account Settings" link is present and the `/account` page loads with the correct live email for three real roles in production: SUPER_ADMIN, TEACHER (seeded accounts), and PARENT (a fresh account created through the real public registration flow for this test). STUDENT and SCHOOL_ADMIN dashboards received the identical code change (same component, same guard) and passed the project-wide Typecheck, but weren't exercised live in this pass since neither role has a standing test account with known credentials.
+- Confirmed working Sign Out from a live dashboard (teacher): correctly ends the session and returns to `/login`.
 
 ---
 
