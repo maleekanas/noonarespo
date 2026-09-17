@@ -45,6 +45,42 @@ class UserRepository {
     };
   }
 
+  async findUserById(id: string): Promise<DomainUser | null> {
+    const user = await prisma.user.findUnique({
+      where: { id },
+      include: { userRoles: { include: { role: true } } },
+    });
+    if (!user) return null;
+    return {
+      id: user.id,
+      email: user.email,
+      passwordHash: user.passwordHash,
+      status: user.status,
+      localePreference: user.localePreference,
+      mfaEnabled: user.mfaEnabled,
+      role: user.userRoles[0]?.role.name ?? RoleType.PARENT,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    };
+  }
+
+  /**
+   * Self-service account settings, used by every role from the shared
+   * /account page (src/app/[locale]/(dashboard)/account/page.tsx) -- this
+   * is what lets the founder move the seeded super-admin account off its
+   * placeholder @kidsarabicacademy.internal address onto a real inbox they
+   * control, and what any logged-in user (parent, teacher, student, admin,
+   * school admin) uses to change their own password without having to log
+   * out and go through the forgot-password email flow.
+   */
+  async updatePassword(userId: string, passwordHash: string): Promise<void> {
+    await prisma.user.update({ where: { id: userId }, data: { passwordHash } });
+  }
+
+  async updateEmail(userId: string, newEmail: string): Promise<void> {
+    await prisma.user.update({ where: { id: userId }, data: { email: newEmail.toLowerCase() } });
+  }
+
   async findParentProfileByUserId(userId: string): Promise<DomainParentProfile | null> {
     return prisma.parentProfile.findUnique({ where: { userId } });
   }

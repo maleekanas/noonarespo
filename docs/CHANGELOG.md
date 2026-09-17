@@ -4,6 +4,22 @@ All notable changes to the Kids Arabic Academy platform will be documented in th
 
 ---
 
+## [Pre-Launch: Self-Service Account Settings, Sign Out, Real Super-Admin Email] - 2026-09-17
+### ⚠️ Requires a manual production step: log in and set a private super-admin password
+This release adds a real account-settings page and moves the seeded super-admin login off its placeholder `@kidsarabicacademy.internal` address. The account still has the old seeded default password (`Password123!`) until you sign in and change it yourself from the new `/account` page -- see "Fixed" below for the new login email.
+
+### Added
+- **`/account`**: a single, role-agnostic account settings page reachable from every dashboard (parent, student, teacher, every admin role, school admin) via a new profile icon in each dashboard's header. Lets any logged-in user change their own password (current password required, rate-limited per user and per IP, ends the session and requires a fresh login afterward) and change their own login email (uniqueness-checked, refreshes the session immediately). Neither was previously possible without a direct database write -- the only password-change path in the whole app was the public forgot-password email flow, and there was no way to change an account's email at all.
+- **Working Sign Out**: `destroySession()` (in `src/lib/auth/session.ts`) has existed since the very first version of the auth system but was never called from anywhere in the UI -- there was no functioning "Sign Out" button anywhere in the app. `/account` now has one.
+- `UserRepository.findUserById`, `updatePassword`, `updateEmail` -- the repository methods backing the above.
+- Two new per-user rate limits (`ACCOUNT_CHANGE_PASSWORD_PER_USER`, `ACCOUNT_CHANGE_EMAIL_PER_USER`) alongside the existing IP/email-keyed ones.
+
+### Fixed
+- **Super-admin account moved to a real, founder-controlled email**: the only administrative account in the system was seeded with the placeholder address `superadmin@kidsarabicacademy.internal`, which cannot receive email -- meaning the account's forgot-password flow was unusable for it. The account's email has been changed (live, via the new `/account` page, by the founder) to `superadmin@arabickidsacademy.com`, a real inbox the founder can receive mail at. `prisma/seed.ts`'s seeded super-admin email was updated to match, so a future reseed won't create a duplicate stale admin account under the old address.
+- Confirmed `NEXT_PUBLIC_HIDE_DEMO_SWITCHER=true` is still set in the live Production environment (checked again this release) -- the one-click demo-login shortcuts on the login page, including the super-admin one, are not reachable on the live site.
+
+---
+
 ## [Resolved: Unbacked "Accredited" Marketing Claim] - 2026-09-17
 ### Fixed
 - Resolves the "Open item for the founder" flagged in the entry directly below: the word **"Accredited"** was used in six places across the site (homepage program cards, the For Schools "What's Included" grid, the programs catalog header/tag/cohort description, and a "Certificates" dashboard tile) with no accrediting body, certificate number, or standard recorded anywhere in the system to back it -- a real false-advertising exposure, especially on the page used to sell B2B contracts to schools.

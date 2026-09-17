@@ -21,6 +21,7 @@ import {
   Download,
   Star,
   Building2,
+  UserCog,
 } from "lucide-react";
 import { getDictionary } from "@/lib/localization";
 import { requireAdminSession } from "@/lib/auth/currentUser";
@@ -194,6 +195,13 @@ export default async function AdminDashboardPage({
           >
             <FileSpreadsheet className="w-4 h-4 text-slate-600" />
             <span>{ad.viewAggregateReports}</span>
+          </Link>
+          <Link
+            href={`/${locale}/account`}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700 transition-colors"
+            title={dict.account.title}
+          >
+            <UserCog className="w-4 h-4 text-slate-600" />
           </Link>
           <div className="px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />

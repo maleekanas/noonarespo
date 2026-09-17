@@ -178,7 +178,25 @@
     "termsOfServiceLink": "Términos de Servicio",
     "termsAgreementConnector": "y nuestra",
     "privacyPolicyLink": "Política de Privacidad",
-    "termsAgreementSuffix": "."
+    "termsAgreementSuffix": ".",
+    "passwordChangedMessage": "Tu contraseña se ha cambiado correctamente. Inicia sesión con tu nueva contraseña."
+  },
+  "account": {
+    "title": "Configuración de la Cuenta",
+    "subtitle": "Actualiza tu correo electrónico y contraseña de acceso",
+    "backToDashboard": "Volver al Panel",
+    "emailSectionTitle": "Correo de Acceso",
+    "currentEmailLabel": "Correo Actual",
+    "newEmailLabel": "Nueva Dirección de Correo",
+    "updateEmailButton": "Actualizar Correo",
+    "emailUpdatedMessage": "Tu dirección de correo ha sido actualizada.",
+    "invalidEmail": "Introduce una dirección de correo válida.",
+    "passwordSectionTitle": "Contraseña",
+    "currentPasswordLabel": "Contraseña Actual",
+    "updatePasswordButton": "Actualizar Contraseña",
+    "passwordChangeSignsOutNotice": "Cambiar tu contraseña cerrará tu sesión — deberás iniciar sesión de nuevo con la nueva.",
+    "wrongCurrentPassword": "Tu contraseña actual es incorrecta.",
+    "signOutButton": "Cerrar Sesión"
   },
   "footer": {
     "copyright": "Todos los derechos reservados © 2026 Academia Árabe para Niños.",

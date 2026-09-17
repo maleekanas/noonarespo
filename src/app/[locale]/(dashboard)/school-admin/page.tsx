@@ -1,4 +1,5 @@
 import React from "react";
+import Link from "next/link";
 import { revalidatePath } from "next/cache";
 import { notFound } from "next/navigation";
 import { requireSchoolAdminSession } from "@/lib/auth/currentUser";
@@ -8,7 +9,8 @@ import { academicRepository } from "@/server/repositories/AcademicRepository";
 import { administrationService } from "@/server/services/AdministrationService";
 import { SchoolAdminRosterClient } from "@/components/admin/SchoolAdminRosterClient";
 import { ClassType, AgeGroup } from "@prisma/client";
-import { Building2, Users, Layers, Calendar, PlusCircle } from "lucide-react";
+import { Building2, Users, Layers, Calendar, PlusCircle, UserCog } from "lucide-react";
+import { getDictionary } from "@/lib/localization";
 
 /**
  * The real Institutional Admin Dashboard: everything on this page is
@@ -28,6 +30,7 @@ export default async function SchoolAdminDashboardPage({
 }) {
   const { locale } = await params;
   const { schoolId } = await requireSchoolAdminSession(locale);
+  const dict = getDictionary(locale);
 
   const school = await schoolService.getSchoolDetails(schoolId);
   if (!school) {
@@ -92,13 +95,22 @@ export default async function SchoolAdminDashboardPage({
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-      <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm">
-        <div className="flex items-center gap-2 text-xs font-bold text-indigo-600 mb-1">
-          <Building2 className="w-4 h-4" />
-          <span>لوحة تحكم المؤسسة الشريكة</span>
+      <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm flex items-start justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2 text-xs font-bold text-indigo-600 mb-1">
+            <Building2 className="w-4 h-4" />
+            <span>لوحة تحكم المؤسسة الشريكة</span>
+          </div>
+          <h1 className="text-2xl font-extrabold text-slate-900">{school.nameAr}</h1>
+          <p className="text-xs text-slate-500 mt-1">{school.nameEn}</p>
         </div>
-        <h1 className="text-2xl font-extrabold text-slate-900">{school.nameAr}</h1>
-        <p className="text-xs text-slate-500 mt-1">{school.nameEn}</p>
+        <Link
+          href={`/${locale}/account`}
+          className="p-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors shrink-0"
+          title={dict.account.title}
+        >
+          <UserCog className="w-5 h-5" />
+        </Link>
       </div>
 
       {/* Scoped KPIs */}

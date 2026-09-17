@@ -16,10 +16,10 @@ export default async function LoginPage({
   searchParams,
 }: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ error?: string; reset?: string }>;
+  searchParams: Promise<{ error?: string; reset?: string; passwordChanged?: string }>;
 }) {
   const { locale } = await params;
-  const { error, reset } = await searchParams;
+  const { error, reset, passwordChanged } = await searchParams;
   const dict = getDictionary(locale);
 
   async function handleLogin(formData: FormData) {
@@ -136,6 +136,13 @@ export default async function LoginPage({
           </div>
         )}
 
+        {passwordChanged === "success" && (
+          <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-xs font-semibold text-emerald-700">
+            <CheckCircle2 className="w-4 h-4 shrink-0" />
+            <span>{dict.auth.passwordChangedMessage}</span>
+          </div>
+        )}
+
         {/* Credentials Form */}
         <form action={handleLogin} className="space-y-4">
           <div>
@@ -230,7 +237,7 @@ export default async function LoginPage({
               </form>
 
               <form action={handleLogin}>
-                <input type="hidden" name="email" value="superadmin@kidsarabicacademy.internal" />
+                <input type="hidden" name="email" value="superadmin@arabickidsacademy.com" />
                 <input type="hidden" name="password" value="Password123!" />
                 <button
                   type="submit"

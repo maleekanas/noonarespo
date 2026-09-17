@@ -24,10 +24,10 @@ async function main() {
 
   // 2. Seed Admin Users
   const superAdminUser = await prisma.user.upsert({
-    where: { email: "superadmin@kidsarabicacademy.internal" },
+    where: { email: "superadmin@arabickidsacademy.com" },
     update: {},
     create: {
-      email: "superadmin@kidsarabicacademy.internal",
+      email: "superadmin@arabickidsacademy.com",
       passwordHash: defaultPasswordHash,
       localePreference: "ar",
       adminProfile: {

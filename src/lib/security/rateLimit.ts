@@ -103,4 +103,9 @@ export const RATE_LIMITS = {
   FORGOT_PASSWORD_PER_EMAIL: { max: 3, windowSeconds: 60 * 60 },
   RESET_PASSWORD_SUBMIT_PER_IP: { max: 20, windowSeconds: 60 * 60 },
   B2B_INQUIRY_PER_IP: { max: 5, windowSeconds: 60 * 60 },
+  // Self-service changes from the logged-in /account page -- keyed per user
+  // id (not IP/email), since the attacker scenario here is a stolen/shared
+  // session guessing the real current password, not credential stuffing.
+  ACCOUNT_CHANGE_PASSWORD_PER_USER: { max: 10, windowSeconds: 60 * 60 },
+  ACCOUNT_CHANGE_EMAIL_PER_USER: { max: 5, windowSeconds: 60 * 60 },
 } as const;

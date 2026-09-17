@@ -178,7 +178,25 @@
     "termsOfServiceLink": "Servicevoorwaarden",
     "termsAgreementConnector": "en ons",
     "privacyPolicyLink": "Privacybeleid",
-    "termsAgreementSuffix": "."
+    "termsAgreementSuffix": ".",
+    "passwordChangedMessage": "Je wachtwoord is succesvol gewijzigd. Log in met je nieuwe wachtwoord."
+  },
+  "account": {
+    "title": "Accountinstellingen",
+    "subtitle": "Werk je inlog-e-mailadres en wachtwoord bij",
+    "backToDashboard": "Terug naar Dashboard",
+    "emailSectionTitle": "Inlog-e-mail",
+    "currentEmailLabel": "Huidig E-mailadres",
+    "newEmailLabel": "Nieuw E-mailadres",
+    "updateEmailButton": "E-mail Bijwerken",
+    "emailUpdatedMessage": "Je e-mailadres is bijgewerkt.",
+    "invalidEmail": "Voer een geldig e-mailadres in.",
+    "passwordSectionTitle": "Wachtwoord",
+    "currentPasswordLabel": "Huidig Wachtwoord",
+    "updatePasswordButton": "Wachtwoord Bijwerken",
+    "passwordChangeSignsOutNotice": "Als je je wachtwoord wijzigt, word je uitgelogd — je moet opnieuw inloggen met het nieuwe wachtwoord.",
+    "wrongCurrentPassword": "Je huidige wachtwoord is onjuist.",
+    "signOutButton": "Uitloggen"
   },
   "footer": {
     "copyright": "Alle rechten voorbehouden © 2026 Arabische Kids Academie.",

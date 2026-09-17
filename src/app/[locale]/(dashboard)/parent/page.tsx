@@ -14,6 +14,7 @@ import {
   Star,
   Target,
   Printer,
+  UserCog,
 } from "lucide-react";
 import { DirectionalIcon } from "@/components/shared/DirectionalIcon";
 import { userRepository } from "@/server/repositories/UserRepository";
@@ -136,6 +137,13 @@ export default async function ParentDashboardPage({
 
         {/* Multi-Child Switcher Control & Notifications Shortcut */}
         <div className="flex items-center gap-3">
+          <Link
+            href={`/${locale}/account`}
+            className="p-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
+            title={dict.account.title}
+          >
+            <UserCog className="w-5 h-5" />
+          </Link>
           <Link
             href={`/${locale}/parent/notifications`}
             className="relative p-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"

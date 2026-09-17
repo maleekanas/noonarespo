@@ -8,6 +8,7 @@ import {
   Users,
   Bot,
   GraduationCap,
+  UserCog,
 } from "lucide-react";
 import { getDictionary } from "@/lib/localization";
 import { requireTeacherProfile } from "@/lib/auth/currentUser";
@@ -53,6 +54,14 @@ export default async function TeacherDashboardPage({
             <span className="text-2xl font-extrabold text-amber-500 block">4.95 ★</span>
             <span className="text-[11px] text-slate-500 font-medium">{td.parentRatingLabel}</span>
           </div>
+          <div className="w-px h-8 bg-slate-200" />
+          <Link
+            href={`/${locale}/account`}
+            className="p-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
+            title={dict.account.title}
+          >
+            <UserCog className="w-5 h-5" />
+          </Link>
         </div>
       </div>
 

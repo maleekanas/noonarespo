@@ -15,6 +15,7 @@ import {
   Mic,
   Compass,
   Layers,
+  UserCog,
 } from "lucide-react";
 import { gamificationService } from "@/server/services/GamificationService";
 import { schedulingService } from "@/server/services/SchedulingService";
@@ -71,6 +72,14 @@ export default async function StudentDashboardPage({
                 : sd.noLiveSessionScheduled}
             </p>
           </div>
+
+          <Link
+            href={`/${locale}/account`}
+            className="p-2.5 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur-md text-white transition-colors self-start"
+            title={dict.account.title}
+          >
+            <UserCog className="w-5 h-5" />
+          </Link>
 
           {/* Gamification Live Counters */}
           <div className="flex items-center gap-4 bg-white/10 backdrop-blur-md px-6 py-4 rounded-2xl border border-white/20">

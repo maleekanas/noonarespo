@@ -178,7 +178,25 @@
     "termsOfServiceLink": "Hizmet Şartları'nı",
     "termsAgreementConnector": "ve",
     "privacyPolicyLink": "Gizlilik Politikası'nı",
-    "termsAgreementSuffix": " kabul etmiş olursun."
+    "termsAgreementSuffix": " kabul etmiş olursun.",
+    "passwordChangedMessage": "Şifreniz başarıyla değiştirildi. Lütfen yeni şifrenizle giriş yapın."
+  },
+  "account": {
+    "title": "Hesap Ayarları",
+    "subtitle": "Giriş e-postanızı ve şifrenizi güncelleyin",
+    "backToDashboard": "Panele Dön",
+    "emailSectionTitle": "Giriş E-postası",
+    "currentEmailLabel": "Mevcut E-posta",
+    "newEmailLabel": "Yeni E-posta Adresi",
+    "updateEmailButton": "E-postayı Güncelle",
+    "emailUpdatedMessage": "E-posta adresiniz güncellendi.",
+    "invalidEmail": "Lütfen geçerli bir e-posta adresi girin.",
+    "passwordSectionTitle": "Şifre",
+    "currentPasswordLabel": "Mevcut Şifre",
+    "updatePasswordButton": "Şifreyi Güncelle",
+    "passwordChangeSignsOutNotice": "Şifrenizi değiştirmek oturumunuzu kapatacaktır — yeni şifrenizle tekrar giriş yapmanız gerekecek.",
+    "wrongCurrentPassword": "Mevcut şifreniz yanlış.",
+    "signOutButton": "Çıkış Yap"
   },
   "footer": {
     "copyright": "Tüm hakları saklıdır © 2026 Arapça Çocuk Akademisi.",

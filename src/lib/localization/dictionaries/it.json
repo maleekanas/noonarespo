@@ -178,7 +178,25 @@
     "termsOfServiceLink": "Termini di Servizio",
     "termsAgreementConnector": "e la nostra",
     "privacyPolicyLink": "Informativa sulla Privacy",
-    "termsAgreementSuffix": "."
+    "termsAgreementSuffix": ".",
+    "passwordChangedMessage": "La tua password è stata modificata con successo. Accedi con la nuova password."
+  },
+  "account": {
+    "title": "Impostazioni Account",
+    "subtitle": "Aggiorna la tua email e password di accesso",
+    "backToDashboard": "Torna alla Dashboard",
+    "emailSectionTitle": "Email di Accesso",
+    "currentEmailLabel": "Email Attuale",
+    "newEmailLabel": "Nuovo Indirizzo Email",
+    "updateEmailButton": "Aggiorna Email",
+    "emailUpdatedMessage": "Il tuo indirizzo email è stato aggiornato.",
+    "invalidEmail": "Inserisci un indirizzo email valido.",
+    "passwordSectionTitle": "Password",
+    "currentPasswordLabel": "Password Attuale",
+    "updatePasswordButton": "Aggiorna Password",
+    "passwordChangeSignsOutNotice": "Cambiare la password disconnetterà la tua sessione — dovrai accedere di nuovo con la nuova password.",
+    "wrongCurrentPassword": "La tua password attuale non è corretta.",
+    "signOutButton": "Esci"
   },
   "footer": {
     "copyright": "Tutti i diritti riservati © 2026 Accademia Araba per Bambini.",

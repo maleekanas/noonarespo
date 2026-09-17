@@ -178,7 +178,25 @@
     "termsOfServiceLink": "Terms of Service",
     "termsAgreementConnector": "and our",
     "privacyPolicyLink": "Privacy Policy",
-    "termsAgreementSuffix": "."
+    "termsAgreementSuffix": ".",
+    "passwordChangedMessage": "Your password has been changed successfully. Please sign in with your new password."
+  },
+  "account": {
+    "title": "Account Settings",
+    "subtitle": "Update your login email and password",
+    "backToDashboard": "Back to Dashboard",
+    "emailSectionTitle": "Login Email",
+    "currentEmailLabel": "Current Email",
+    "newEmailLabel": "New Email Address",
+    "updateEmailButton": "Update Email",
+    "emailUpdatedMessage": "Your email address has been updated.",
+    "invalidEmail": "Please enter a valid email address.",
+    "passwordSectionTitle": "Password",
+    "currentPasswordLabel": "Current Password",
+    "updatePasswordButton": "Update Password",
+    "passwordChangeSignsOutNotice": "Changing your password will sign you out — you'll need to log back in with the new one.",
+    "wrongCurrentPassword": "Your current password is incorrect.",
+    "signOutButton": "Sign Out"
   },
   "footer": {
     "copyright": "All rights reserved © 2026 Arabic Kids Academy.",

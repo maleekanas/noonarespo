@@ -178,7 +178,25 @@
     "termsOfServiceLink": "شروط الخدمة",
     "termsAgreementConnector": "و",
     "privacyPolicyLink": "سياسة الخصوصية",
-    "termsAgreementSuffix": "."
+    "termsAgreementSuffix": ".",
+    "passwordChangedMessage": "تم تغيير كلمة المرور بنجاح. الرجاء تسجيل الدخول بكلمة المرور الجديدة."
+  },
+  "account": {
+    "title": "إعدادات الحساب",
+    "subtitle": "تحديث البريد الإلكتروني وكلمة المرور الخاصة بتسجيل الدخول",
+    "backToDashboard": "العودة إلى لوحة التحكم",
+    "emailSectionTitle": "البريد الإلكتروني لتسجيل الدخول",
+    "currentEmailLabel": "البريد الإلكتروني الحالي",
+    "newEmailLabel": "البريد الإلكتروني الجديد",
+    "updateEmailButton": "تحديث البريد الإلكتروني",
+    "emailUpdatedMessage": "تم تحديث بريدك الإلكتروني بنجاح.",
+    "invalidEmail": "الرجاء إدخال بريد إلكتروني صحيح.",
+    "passwordSectionTitle": "كلمة المرور",
+    "currentPasswordLabel": "كلمة المرور الحالية",
+    "updatePasswordButton": "تحديث كلمة المرور",
+    "passwordChangeSignsOutNotice": "سيؤدي تغيير كلمة المرور إلى تسجيل خروجك -- ستحتاج لتسجيل الدخول مجدداً بكلمة المرور الجديدة.",
+    "wrongCurrentPassword": "كلمة المرور الحالية غير صحيحة.",
+    "signOutButton": "تسجيل الخروج"
   },
   "footer": {
     "copyright": "جميع الحقوق محفوظة © 2026 أكاديمية براعم العربية للأطفال.",
