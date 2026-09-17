@@ -6,11 +6,10 @@ import { requireParentProfile } from "@/lib/auth/currentUser";
 import { prisma } from "@/lib/database/prisma";
 import { GraduationCap } from "lucide-react";
 import { PrintButton } from "@/components/shared/PrintButton";
+import { getDictionary } from "@/lib/localization";
 
-const PROVIDER_LABELS_AR: Record<string, string> = {
-  STRIPE: "بطاقة بنكية عبر Stripe",
-  MOCK: "بطاقة ائتمانية (تجريبي)",
-};
+const COMPANY_TAX_ID = "310245892100003";
+const VAT_RATE_PERCENT = 0;
 
 export default async function ParentInvoiceDetailPage({
   params,
@@ -18,7 +17,14 @@ export default async function ParentInvoiceDetailPage({
   params: Promise<{ locale: string; id: string }>;
 }) {
   const { locale, id } = await params;
+  const dict = getDictionary(locale);
+  const pid = dict.parentInvoiceDetail;
   const { profile } = await requireParentProfile(locale);
+
+  const PROVIDER_LABELS: Record<string, string> = {
+    STRIPE: pid.providerStripeLabel,
+    MOCK: pid.providerMockLabel,
+  };
 
   // Invoices are always scoped to the logged-in parent — never trust the
   // URL id alone, so one parent can't view another parent's invoice by
@@ -38,7 +44,7 @@ export default async function ParentInvoiceDetailPage({
   );
   const paymentProvider = invoice.payments[0]?.provider;
   const paymentMethodLabel = paymentProvider
-    ? PROVIDER_LABELS_AR[paymentProvider] || paymentProvider
+    ? PROVIDER_LABELS[paymentProvider] || paymentProvider
     : "—";
 
   return (
@@ -48,20 +54,20 @@ export default async function ParentInvoiceDetailPage({
         <div>
           <div className="flex items-center gap-2 text-xs font-bold text-brand-600 mb-1">
             <Link href={`/${locale}/parent`} className="hover:underline">
-              لوحة ولي الأمر
+              {pid.breadcrumbParentDashboard}
             </Link>
             <span>/</span>
             <Link href={`/${locale}/parent/billing`} className="hover:underline">
-              الفواتير
+              {pid.breadcrumbInvoices}
             </Link>
             <span>/</span>
-            <span>تفاصيل الفاتورة</span>
+            <span>{pid.breadcrumbInvoiceDetail}</span>
           </div>
           <h1 className="text-2xl font-extrabold text-slate-900">
-            الفاتورة الضريبية الرسمية 📄
+            {pid.pageHeading}
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            إيصال سداد مالي معتمد برقم ترخيص: {invoice.invoiceNumber}
+            {pid.pageSubtitleTemplate.replace("{invoiceNumber}", invoice.invoiceNumber)}
           </p>
         </div>
 
@@ -70,9 +76,9 @@ export default async function ParentInvoiceDetailPage({
             href={`/${locale}/parent/billing`}
             className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors"
           >
-            العودة لسجل الفواتير
+            {pid.backToInvoicesButton}
           </Link>
-          <PrintButton label="طباعة الفاتورة (PDF)" />
+          <PrintButton label={pid.printInvoiceButton} />
         </div>
       </div>
 
@@ -86,23 +92,23 @@ export default async function ParentInvoiceDetailPage({
             </div>
             <div>
               <h2 className="text-xl font-extrabold text-slate-900">
-                أكاديمية براعم العربية للأطفال
+                {pid.academyNameLabel}
               </h2>
               <span className="text-xs text-slate-500 font-medium">
-                شركة براعم التعليمية المحدودة • الرقم الضريبي: 310245892100003
+                {pid.companyLegalTemplate.replace("{taxId}", COMPANY_TAX_ID)}
               </span>
             </div>
           </div>
 
           <div className="text-center sm:text-end space-y-1">
             <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-200">
-              {invoice.status === "PAID" ? "مدفوعة بالكامل ✓" : invoice.status}
+              {invoice.status === "PAID" ? pid.invoiceStatusPaidFull : invoice.status}
             </span>
             <h3 className="text-lg font-extrabold text-slate-900 block font-mono mt-1">
               {invoice.invoiceNumber}
             </h3>
             <span className="text-xs text-slate-400 block">
-              تاريخ الفاتورة: {invoice.createdAt.toISOString().split("T")[0]}
+              {pid.invoiceDateTemplate.replace("{date}", invoice.createdAt.toISOString().split("T")[0])}
             </span>
           </div>
         </div>
@@ -110,19 +116,19 @@ export default async function ParentInvoiceDetailPage({
         {/* Bill To & Payment Info */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-xs text-slate-600 pb-6 border-b border-slate-100">
           <div className="space-y-1">
-            <span className="font-bold text-slate-900 block text-sm">فاتورة إلى:</span>
+            <span className="font-bold text-slate-900 block text-sm">{pid.billToLabel}</span>
             <span className="font-bold text-slate-800 block">
               {profile.firstName} {profile.lastName}
             </span>
-            <span>العنوان: {profile.billingAddress || "غير محدد"}</span>
-            <span className="block">الهاتف: {profile.phoneNumber}</span>
+            <span>{pid.addressLabel} {profile.billingAddress || pid.notSpecifiedLabel}</span>
+            <span className="block">{pid.phoneLabel} {profile.phoneNumber}</span>
           </div>
 
           <div className="space-y-1 sm:text-end">
-            <span className="font-bold text-slate-900 block text-sm">تفاصيل السداد:</span>
-            <span>طريقة الدفع: {paymentMethodLabel}</span>
-            <span className="block">حالة المعاملة: تم الخصم والتأكيد المباشر</span>
-            <span className="block">العملة: {invoice.currency} (الدولار الأمريكي)</span>
+            <span className="font-bold text-slate-900 block text-sm">{pid.paymentDetailsLabel}</span>
+            <span>{pid.paymentMethodLabel} {paymentMethodLabel}</span>
+            <span className="block">{pid.transactionStatusLabel}</span>
+            <span className="block">{pid.currencyLabel} {invoice.currency} {pid.usdCurrencyNote}</span>
           </div>
         </div>
 
@@ -131,10 +137,10 @@ export default async function ParentInvoiceDetailPage({
           <table className="w-full text-xs text-start">
             <thead>
               <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider">
-                <th className="py-3 text-start">البند والوصف</th>
-                <th className="py-3 text-center">الكمية</th>
-                <th className="py-3 text-end">سعر الوحدة</th>
-                <th className="py-3 text-end">المجموع</th>
+                <th className="py-3 text-start">{pid.tableItemDescriptionHeader}</th>
+                <th className="py-3 text-center">{pid.tableQuantityHeader}</th>
+                <th className="py-3 text-end">{pid.tableUnitPriceHeader}</th>
+                <th className="py-3 text-end">{pid.tableTotalHeader}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -158,7 +164,7 @@ export default async function ParentInvoiceDetailPage({
         <div className="pt-4 border-t border-slate-200 flex justify-end">
           <div className="w-72 space-y-2 text-xs">
             <div className="flex items-center justify-between text-slate-600">
-              <span>المجموع الفرعي:</span>
+              <span>{pid.subtotalLabel}</span>
               <span className="font-bold text-slate-900">
                 {billingService.formatPrice(invoice.subtotalMinorUnits, invoice.currency)}
               </span>
@@ -166,18 +172,18 @@ export default async function ParentInvoiceDetailPage({
 
             {discountMinorUnits > 0 && (
               <div className="flex items-center justify-between text-emerald-600 font-bold">
-                <span>خصم الكوبون:</span>
+                <span>{pid.couponDiscountLabel}</span>
                 <span>-{billingService.formatPrice(discountMinorUnits, invoice.currency)}</span>
               </div>
             )}
 
             <div className="flex items-center justify-between text-slate-600">
-              <span>ضريبة القيمة المضافة (0%):</span>
+              <span>{pid.vatLabelTemplate.replace("{rate}", String(VAT_RATE_PERCENT))}</span>
               <span>{billingService.formatPrice(invoice.taxMinorUnits, invoice.currency)}</span>
             </div>
 
             <div className="pt-2 border-t-2 border-slate-900 flex items-center justify-between text-base font-extrabold text-slate-900">
-              <span>الإجمالي المسدد:</span>
+              <span>{pid.totalPaidLabel}</span>
               <span className="text-brand-700 text-xl">
                 {billingService.formatPrice(invoice.totalMinorUnits, invoice.currency)}
               </span>
@@ -187,8 +193,8 @@ export default async function ParentInvoiceDetailPage({
 
         {/* Footer Notes */}
         <div className="pt-6 border-t border-slate-100 text-center text-slate-400 text-[11px] space-y-1">
-          <p>شكراً لثقتكم بأكاديمية براعم العربية. نتمنى لأبنائكم رحلة تعليمية مباركة وممتعة.</p>
-          <p>لأي استفسارات بخصوص الفاتورة، يُرجى التواصل مع قسم المالية: billing@arabickidsacademy.com</p>
+          <p>{pid.thankYouNote}</p>
+          <p>{pid.financeContactNote}</p>
         </div>
       </div>
     </div>

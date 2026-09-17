@@ -509,3 +509,30 @@ export async function createBillingPortalSession(params: {
 
   return { url: portalSession.url };
 }
+
+/**
+ * Checks whether a subscription has been scheduled to cancel at the end of
+ * its current billing period -- the default behavior when a parent cancels
+ * through the Stripe Billing Portal (they keep access until currentPeriodEnd
+ * rather than losing it immediately). `syncSubscriptionStatus` only reacts to
+ * Stripe's top-level `status` field, which stays "active" the whole time a
+ * cancellation is pending, so without this the billing page has no way to
+ * tell the parent their cancellation actually went through until the
+ * subscription flips to CANCELLED at period end -- a self-service flow that
+ * looks like it silently failed. Reads live from Stripe rather than adding a
+ * new persisted column, so it needs no schema migration. Best-effort: a
+ * failed lookup (network hiccup, deleted subscription) returns null and the
+ * page simply omits the banner rather than failing to render.
+ */
+export async function getSubscriptionCancellationState(
+  stripeSubscriptionId: string
+): Promise<{ cancelAtPeriodEnd: boolean } | null> {
+  try {
+    const stripe = getStripeClient();
+    const stripeSub = await stripe.subscriptions.retrieve(stripeSubscriptionId);
+    return { cancelAtPeriodEnd: Boolean(stripeSub.cancel_at_period_end) };
+  } catch (err) {
+    console.error("[billing] failed to check subscription cancellation state", err);
+    return null;
+  }
+}
