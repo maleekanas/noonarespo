@@ -403,3 +403,15 @@ All notable changes to the Kids Arabic Academy platform will be documented in th
 
 ### Remaining gap
 - Dashboards (Parent/Student/Teacher/Admin and their sub-pages) still use the same `isAr`-only pattern -- next phase.
+
+---
+
+## [Full 6-Language Coverage: Main 4 Dashboards] - 2026-09-16
+### Fixed
+- **Teacher, Student, Admin, and Parent dashboard landing pages, all 6 languages**: closed the highest-traffic gap flagged above. Each page's static/translatable UI chrome (headings, labels, button/link text, empty states) previously used an `isAr ? arabicText : englishText` shortcut that silently showed English to Dutch, Turkish, Italian, and Spanish users. Replaced with new per-role dictionary namespaces -- `teacherDashboard` (30 keys), `studentDashboard` (43 keys), `adminDashboard` (46 keys), `parentDashboard` (59 keys) -- with real translations written for all 6 locales, and `{placeholder}`-style `.replace()` templating for strings that interpolate dynamic data (names, counts, XP, scores, statuses, actor/IP audit lines, etc.).
+- **Real formatting bug, Student and Parent dashboards**: `nextSession.startTimeUtc` was being formatted with `toLocaleString`/`Intl.DateTimeFormat(isAr ? "ar" : "en-US", ...)`, so every non-Arabic locale (Dutch, Turkish, Italian, Spanish) always got US date/time formatting regardless of the visitor's actual locale. Fixed with a proper `INTL_LOCALE` map (`ar: "ar", en: "en-US", nl: "nl-NL", tr: "tr-TR", it: "it-IT", es: "es-ES"`) in both files.
+- **Known, documented exceptions kept on the `isAr` fallback pattern** (consistent with the Program/CurriculumModule precedent from the prior release): `profile.levelTitleAr/En` and `badge.titleAr/titleEn` (Student), `subscription.plan.nameAr/nameEn`, `badge.titleAr/titleEn`, and `course.titleAr/titleEn` (Parent) -- these are seeded, database-backed content that currently only exists in Arabic/English, a separate and larger follow-up from this UI-chrome fix.
+- Verified zero net-new TypeScript errors (`tsc --noEmit` diffed against the pre-change baseline via `git stash`) and zero ESLint/`next lint` warnings across all four files; confirmed full key-parity (554 flattened keys, identical key sets) across all 6 dictionary JSON files.
+
+### Remaining gap
+- The 12 dashboard sub-pages (system-health, reviews, quran-studio, stories, data-export, roadmap, pronunciation, flashcards, printables, schools, etc.) still use the same `isAr`-only pattern -- next follow-up batch, per the agreed phased rollout.

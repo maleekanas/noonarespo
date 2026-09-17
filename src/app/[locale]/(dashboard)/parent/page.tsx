@@ -26,6 +26,17 @@ import { billingService } from "@/server/services/BillingService";
 import { prisma } from "@/lib/database/prisma";
 import { SubscriptionStatus } from "@prisma/client";
 import { requireParentProfile } from "@/lib/auth/currentUser";
+import { getDictionary } from "@/lib/localization";
+
+// subscription.plan.nameAr/nameEn, gamification badge.titleAr/titleEn, and
+// course.titleAr/titleEn are seeded, DB-backed content that (like
+// Program/CurriculumModule) currently only exists in Arabic/English -- a
+// separate, larger follow-up from the UI-chrome fix below. Non-Arabic
+// locales fall back to the English content value, same as the established
+// convention elsewhere in the app.
+const INTL_LOCALE: Record<string, string> = {
+  ar: "ar", en: "en-US", nl: "nl-NL", tr: "tr-TR", it: "it-IT", es: "es-ES",
+};
 
 export default async function ParentDashboardPage({
   params,
@@ -36,6 +47,8 @@ export default async function ParentDashboardPage({
 }) {
   const { locale } = await params;
   const isAr = locale === "ar";
+  const dict = getDictionary(locale);
+  const pd = dict.parentDashboard;
   const { studentId: selectedParam } = await searchParams;
   const { profile } = await requireParentProfile(locale);
   const parentId = profile.id;
@@ -89,13 +102,13 @@ export default async function ParentDashboardPage({
   const latestInvoice = recentInvoices[0] || null;
 
   const attendanceLabel = (rate: number) => {
-    if (rate >= 95) return isAr ? "ممتاز" : "Excellent";
-    if (rate >= 80) return isAr ? "جيد" : "Good";
-    return isAr ? "يحتاج متابعة" : "Needs attention";
+    if (rate >= 95) return pd.attendanceExcellent;
+    if (rate >= 80) return pd.attendanceGood;
+    return pd.attendanceNeedsAttention;
   };
 
   const nextSessionTimeLabel = nextSession
-    ? new Intl.DateTimeFormat(isAr ? "ar" : "en-US", {
+    ? new Intl.DateTimeFormat(INTL_LOCALE[locale] || "en-US", {
         weekday: "long",
         hour: "numeric",
         minute: "2-digit",
@@ -111,17 +124,13 @@ export default async function ParentDashboardPage({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm">
         <div>
           <span className="text-xs font-bold text-brand-600 uppercase tracking-wider">
-            {isAr ? "بوابة ولي الأمر الموحدة" : "Unified Parent Portal"}
+            {pd.portalBadge}
           </span>
           <h1 className="text-2xl font-extrabold text-slate-900 mt-1">
-            {isAr
-              ? `أهلاً بك، أ/ ${profile.firstName} ${profile.lastName} 👨‍👧`
-              : `Welcome, ${profile.firstName} ${profile.lastName} 👨‍👧`}
+            {pd.welcomeHeading.replace("{firstName}", profile.firstName).replace("{lastName}", profile.lastName)}
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            {isAr
-              ? "متابعة شاملة لرحلة أطفالك التعليمية، الكفاءات اللغوية، والتواصل المباشر مع المعلمين"
-              : "Comprehensive tracking of your children's learning journey, competencies, and teacher messaging"}
+            {pd.subtitle}
           </p>
         </div>
 
@@ -150,7 +159,7 @@ export default async function ParentDashboardPage({
                     : "text-slate-600 hover:text-slate-900"
                 }`}
               >
-                {child.firstName} ({child.ageGroup === "AGE_4_6" ? (isAr ? "5 سنوات" : "5 yrs") : (isAr ? "8 سنوات" : "8 yrs")})
+                {child.firstName} ({child.ageGroup === "AGE_4_6" ? pd.age4to6 : pd.age7to12})
               </Link>
             ))}
           </div>
@@ -167,8 +176,8 @@ export default async function ParentDashboardPage({
             <Printer className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="text-xs font-bold text-slate-900">{isAr ? "الكراسات والمطبوعات" : "A4 Printables"}</h3>
-            <span className="text-[10px] text-slate-500 block mt-0.5">{isAr ? "خط وتلوين (A4)" : "Tracing & QR"}</span>
+            <h3 className="text-xs font-bold text-slate-900">{pd.printablesTitle}</h3>
+            <span className="text-[10px] text-slate-500 block mt-0.5">{pd.printablesDesc}</span>
           </div>
         </Link>
 
@@ -180,8 +189,8 @@ export default async function ParentDashboardPage({
             <Target className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="text-xs font-bold text-slate-900">{isAr ? "توصيات المسار" : "AI Learning Plan"}</h3>
-            <span className="text-[10px] text-slate-500 block mt-0.5">{isAr ? "خطة CEFR الذكية" : "CEFR Guidance"}</span>
+            <h3 className="text-xs font-bold text-slate-900">{pd.learningPlanTitle}</h3>
+            <span className="text-[10px] text-slate-500 block mt-0.5">{pd.learningPlanDesc}</span>
           </div>
         </Link>
 
@@ -193,8 +202,8 @@ export default async function ParentDashboardPage({
             <Award className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="text-xs font-bold text-slate-900">{isAr ? "مؤشرات الكفاءات" : "Competencies"}</h3>
-            <span className="text-[10px] text-slate-500 block mt-0.5">{isAr ? "رادار الإتقان" : "Mastery Radar"}</span>
+            <h3 className="text-xs font-bold text-slate-900">{pd.competenciesTitle}</h3>
+            <span className="text-[10px] text-slate-500 block mt-0.5">{pd.competenciesDesc}</span>
           </div>
         </Link>
 
@@ -206,8 +215,8 @@ export default async function ParentDashboardPage({
             <MessageSquare className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="text-xs font-bold text-slate-900">{isAr ? "المحادثات المباشرة" : "Messages"}</h3>
-            <span className="text-[10px] text-slate-500 block mt-0.5">{isAr ? "تواصل مع المعلم" : "Teacher Chat"}</span>
+            <h3 className="text-xs font-bold text-slate-900">{pd.messagesTitle}</h3>
+            <span className="text-[10px] text-slate-500 block mt-0.5">{pd.messagesDesc}</span>
           </div>
         </Link>
 
@@ -219,8 +228,8 @@ export default async function ParentDashboardPage({
             <Video className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="text-xs font-bold text-slate-900">{isAr ? "لقاء فردي (15 د)" : "1-on-1 Meet"}</h3>
-            <span className="text-[10px] text-slate-500 block mt-0.5">{isAr ? "استشارة مرئية" : "Video Advisory"}</span>
+            <h3 className="text-xs font-bold text-slate-900">{pd.meetTitle}</h3>
+            <span className="text-[10px] text-slate-500 block mt-0.5">{pd.meetDesc}</span>
           </div>
         </Link>
 
@@ -232,8 +241,8 @@ export default async function ParentDashboardPage({
             <FileText className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="text-xs font-bold text-slate-900">{isAr ? "التقرير الأسبوعي" : "Weekly Report"}</h3>
-            <span className="text-[10px] text-slate-500 block mt-0.5">{isAr ? "ملخص الإنجازات" : "Progress Summary"}</span>
+            <h3 className="text-xs font-bold text-slate-900">{pd.weeklyReportTitle}</h3>
+            <span className="text-[10px] text-slate-500 block mt-0.5">{pd.weeklyReportDesc}</span>
           </div>
         </Link>
 
@@ -245,8 +254,8 @@ export default async function ParentDashboardPage({
             <Star className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="text-xs font-bold text-slate-900">{isAr ? "تقييم الكادر" : "Teacher Reviews"}</h3>
-            <span className="text-[10px] text-slate-500 block mt-0.5">{isAr ? "تقييم موثق" : "Verified Review"}</span>
+            <h3 className="text-xs font-bold text-slate-900">{pd.reviewsTitle}</h3>
+            <span className="text-[10px] text-slate-500 block mt-0.5">{pd.reviewsDesc}</span>
           </div>
         </Link>
       </div>
@@ -255,7 +264,7 @@ export default async function ParentDashboardPage({
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-2">
           <div className="flex items-center justify-between text-xs text-slate-500 font-semibold">
-            <span>{isAr ? "نسبة الحضور" : "Attendance Rate"}</span>
+            <span>{pd.attendanceRateLabel}</span>
             {attendanceSummary && attendanceSummary.totalSessions > 0 && (
               <span className="text-emerald-600 font-bold">
                 {attendanceSummary.ratePercentage}% {attendanceLabel(attendanceSummary.ratePercentage)}
@@ -268,20 +277,20 @@ export default async function ParentDashboardPage({
                 {attendanceSummary.presentSessions} / {attendanceSummary.totalSessions}
               </div>
               <p className="text-xs text-slate-500">
-                {isAr ? "حصة مسجلة حتى الآن هذا الفصل" : "Sessions recorded so far this term"}
+                {pd.sessionsRecordedTerm}
               </p>
             </>
           ) : (
             <>
               <div className="text-3xl font-extrabold text-slate-300">—</div>
-              <p className="text-xs text-slate-500">{isAr ? "لا توجد حصص مسجلة بعد" : "No classes recorded yet"}</p>
+              <p className="text-xs text-slate-500">{pd.noClassesRecorded}</p>
             </>
           )}
         </div>
 
         <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-2">
           <div className="flex items-center justify-between text-xs text-slate-500 font-semibold">
-            <span>{isAr ? "متوسط درجات الواجبات" : "Homework Average"}</span>
+            <span>{pd.homeworkAverageLabel}</span>
             {homeworkSummary && homeworkSummary.averageScorePercentage !== null && (
               <span className="text-brand-600 font-bold">{homeworkSummary.averageScorePercentage}%</span>
             )}
@@ -292,22 +301,17 @@ export default async function ParentDashboardPage({
                 {(homeworkSummary.averageScorePercentage / 10).toFixed(1)} / 10
               </div>
               <p className="text-xs text-slate-500">
-                {isAr
-                  ? `بناءً على ${homeworkSummary.gradedCount} واجب مصحح`
-                  : `Based on ${homeworkSummary.gradedCount} graded submission${homeworkSummary.gradedCount === 1 ? "" : "s"}`}
+                {(homeworkSummary.gradedCount === 1 ? pd.basedOnGradedSingular : pd.basedOnGradedPlural).replace(
+                  "{count}",
+                  String(homeworkSummary.gradedCount)
+                )}
               </p>
             </>
           ) : (
             <>
               <div className="text-3xl font-extrabold text-slate-300">—</div>
               <p className="text-xs text-slate-500">
-                {homeworkSummary && homeworkSummary.totalSubmissions > 0
-                  ? isAr
-                    ? "بانتظار تصحيح المعلم"
-                    : "Awaiting teacher grading"
-                  : isAr
-                    ? "لم يتم تسليم أي واجب بعد"
-                    : "No homework submitted yet"}
+                {homeworkSummary && homeworkSummary.totalSubmissions > 0 ? pd.awaitingGrading : pd.noHomeworkYet}
               </p>
             </>
           )}
@@ -315,31 +319,27 @@ export default async function ParentDashboardPage({
 
         <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-2">
           <div className="flex items-center justify-between text-xs text-slate-500 font-semibold">
-            <span>{isAr ? "النقاط والأوسمة" : "XP & Badges"}</span>
+            <span>{pd.xpBadgesLabel}</span>
             {gamification && (
-              <span className="text-amber-500 font-bold">{isAr ? `المستوى ${gamification.level}` : `Level ${gamification.level}`}</span>
+              <span className="text-amber-500 font-bold">{pd.levelLabel.replace("{level}", String(gamification.level))}</span>
             )}
           </div>
           <div className="text-3xl font-extrabold text-slate-900">{gamification ? `${gamification.totalXp} XP` : "0 XP"}</div>
           <p className="text-xs text-slate-500">
             {gamification && gamification.unlockedBadges.length > 0
-              ? gamification.unlockedBadges.map((b) => (isAr ? b.titleAr : b.titleEn)).join(isAr ? " و" : " & ")
+              ? gamification.unlockedBadges.map((b) => (isAr ? b.titleAr : b.titleEn)).join(pd.badgeJoinSeparator)
               : gamification && gamification.streakDays > 0
-                ? isAr
-                  ? `سلسلة مواظبة ${gamification.streakDays} يوم`
-                  : `${gamification.streakDays}-day learning streak`
-                : isAr
-                  ? "استمر لتحصل على أول وسام!"
-                  : "Keep learning to earn your first badge!"}
+                ? pd.streakDays.replace("{days}", String(gamification.streakDays))
+                : pd.firstBadgeEncouragement}
           </p>
         </div>
 
         <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-2">
           <div className="flex items-center justify-between text-xs text-slate-500 font-semibold">
-            <span>{isAr ? "حالة الاشتراك المالي" : "Subscription Status"}</span>
+            <span>{pd.subscriptionStatusLabel}</span>
             {subscription && (
               <span className="text-emerald-600 font-bold">
-                {isAr ? "نشط" : subscription.status === SubscriptionStatus.TRIALING ? "Trialing" : "Active"}
+                {subscription.status === SubscriptionStatus.TRIALING ? pd.statusTrialing : pd.statusActive}
               </span>
             )}
           </div>
@@ -347,20 +347,20 @@ export default async function ParentDashboardPage({
             <>
               <div className="text-2xl font-extrabold text-slate-900">
                 {billingService.formatPrice(subscription.plan.priceMinorUnits, subscription.plan.currency)}
-                <span className="text-sm font-semibold text-slate-500">{isAr ? " / شهر" : " / mo"}</span>
+                <span className="text-sm font-semibold text-slate-500">{pd.perMonth}</span>
               </div>
               <p className="text-xs text-slate-500">
                 {isAr ? subscription.plan.nameAr : subscription.plan.nameEn}
                 {" · "}
-                {isAr ? "التجديد في " : "Renews "}
+                {pd.renewsPrefix}
                 {subscription.currentPeriodEnd.toISOString().split("T")[0]}
               </p>
             </>
           ) : (
             <>
-              <div className="text-2xl font-extrabold text-slate-300">{isAr ? "لا يوجد اشتراك" : "No subscription"}</div>
+              <div className="text-2xl font-extrabold text-slate-300">{pd.noSubscriptionLabel}</div>
               <Link href={`/${locale}/parent/checkout`} className="text-xs text-brand-600 font-bold hover:underline">
-                {isAr ? "اشترك الآن" : "Subscribe now"}
+                {pd.subscribeNow}
               </Link>
             </>
           )}
@@ -375,13 +375,13 @@ export default async function ParentDashboardPage({
             <div className="flex items-center justify-between">
               <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-brand-600" />
-                <span>{isAr ? "أحدث تقييم وتغذية راجعة من المعلم" : "Latest Teacher Evaluation & Feedback"}</span>
+                <span>{pd.latestEvaluationHeading}</span>
               </h3>
               <Link
                 href={`/${locale}/parent/reports/weekly?studentId=${selectedChild?.id}`}
                 className="text-xs text-brand-600 font-bold hover:underline flex items-center gap-1"
               >
-                <span>{isAr ? "التقرير الأسبوعي" : "Weekly Report"}</span>
+                <span>{pd.weeklyReportTitle}</span>
                 <DirectionalIcon icon={ArrowRight} locale={locale} className="w-3.5 h-3.5" />
               </Link>
             </div>
@@ -405,7 +405,7 @@ export default async function ParentDashboardPage({
                     </div>
                   </div>
                   <span className="text-xs font-bold px-3 py-1 rounded-full bg-emerald-100 text-emerald-800">
-                    {isAr ? `العلامة: ${latestFeedback.score}/100` : `Grade: ${latestFeedback.score}/100`}
+                    {pd.gradeLabel.replace("{score}", String(latestFeedback.score))}
                   </span>
                 </div>
 
@@ -414,7 +414,7 @@ export default async function ParentDashboardPage({
             ) : (
               <div className="p-5 rounded-2xl bg-slate-50 border border-dashed border-slate-200 text-center">
                 <p className="text-xs text-slate-500">
-                  {isAr ? "لا يوجد تقييم من المعلم بعد" : "No teacher evaluation yet"}
+                  {pd.noEvaluationYet}
                 </p>
               </div>
             )}
@@ -424,7 +424,7 @@ export default async function ParentDashboardPage({
           <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-4">
             <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
               <Calendar className="w-5 h-5 text-purple-600" />
-              <span>{isAr ? "جدول الحصص القادمة هذا الأسبوع" : "Upcoming Schedule This Week"}</span>
+              <span>{pd.upcomingScheduleHeading}</span>
             </h3>
 
             <div className="space-y-3 text-xs">
@@ -437,19 +437,19 @@ export default async function ParentDashboardPage({
                       <span className="text-slate-500">
                         {nextSessionTimeLabel}
                         {" · "}
-                        {isAr ? `${nextSessionDurationMinutes} دقيقة` : `${nextSessionDurationMinutes} mins`}
+                        {pd.minutesLabel.replace("{mins}", String(nextSessionDurationMinutes))}
                       </span>
                     </div>
                   </div>
                   <span className="text-slate-600 font-semibold">
-                    {isAr
-                      ? `مع الأستاذ ${nextSession.teacherFirstName} ${nextSession.teacherLastName}`
-                      : `with ${nextSession.teacherFirstName} ${nextSession.teacherLastName}`}
+                    {pd.withTeacher
+                      .replace("{firstName}", nextSession.teacherFirstName)
+                      .replace("{lastName}", nextSession.teacherLastName)}
                   </span>
                 </div>
               ) : (
                 <div className="p-3.5 rounded-xl border border-dashed border-slate-200 text-center text-slate-500">
-                  {isAr ? "لا توجد حصص قادمة مجدولة حالياً" : "No upcoming sessions scheduled"}
+                  {pd.noUpcomingSessions}
                 </div>
               )}
             </div>
@@ -461,25 +461,23 @@ export default async function ParentDashboardPage({
           <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-4">
             <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
               <Users className="w-4 h-4 text-brand-600" />
-              <span>{isAr ? "إدارة الأبناء والتسجيل" : "Children & Enrollments"}</span>
+              <span>{pd.childrenEnrollmentsHeading}</span>
             </h3>
             <p className="text-xs text-slate-500 leading-relaxed">
-              {isAr
-                ? "إضافة طفل جديد، أو تعديل البيانات الشخصية، أو تسجيل في فصول إضافية."
-                : "Add a new child, update profile details, or enroll in additional tracks."}
+              {pd.childrenEnrollmentsDesc}
             </p>
             <div className="space-y-2">
               <Link
                 href={`/${locale}/parent/children`}
                 className="w-full py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700 transition-colors text-center block"
               >
-                {isAr ? "إدارة ملفات الأبناء" : "Manage Child Profiles"}
+                {pd.manageChildProfiles}
               </Link>
               <Link
                 href={`/${locale}/parent/enroll`}
                 className="w-full py-2.5 rounded-xl gradient-brand text-white font-bold text-xs shadow-sm hover:opacity-95 transition-all text-center block"
               >
-                {isAr ? "تسجيل في فصول جديدة" : "Enroll in New Tracks"}
+                {pd.enrollNewTracks}
               </Link>
             </div>
           </div>
@@ -487,7 +485,7 @@ export default async function ParentDashboardPage({
           <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-4">
             <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
               <CreditCard className="w-4 h-4 text-emerald-600" />
-              <span>{isAr ? "سجل الفواتير والاشتراك" : "Billing & Invoices"}</span>
+              <span>{pd.billingInvoicesHeading}</span>
             </h3>
 
             <div className="space-y-2 text-xs">
@@ -495,19 +493,22 @@ export default async function ParentDashboardPage({
                 <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50">
                   <div>
                     <span className="font-bold text-slate-800 block">
-                      {latestInvoice.items[0]?.description || (isAr ? "اشتراك شهري" : "Monthly subscription")}
+                      {latestInvoice.items[0]?.description || pd.monthlySubscriptionDefault}
                     </span>
                     <span className="text-[11px] text-slate-500">#{latestInvoice.invoiceNumber}</span>
                   </div>
                   <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-bold text-[10px]">
-                    {isAr
-                      ? `${latestInvoice.status === "PAID" ? "مدفوعة" : latestInvoice.status} (${billingService.formatPrice(latestInvoice.totalMinorUnits, latestInvoice.currency)})`
-                      : `${latestInvoice.status === "PAID" ? "Paid" : latestInvoice.status} (${billingService.formatPrice(latestInvoice.totalMinorUnits, latestInvoice.currency)})`}
+                    {pd.invoiceStatusLine
+                      .replace("{status}", latestInvoice.status === "PAID" ? pd.paidStatus : latestInvoice.status)
+                      .replace(
+                        "{price}",
+                        billingService.formatPrice(latestInvoice.totalMinorUnits, latestInvoice.currency)
+                      )}
                   </span>
                 </div>
               ) : (
                 <div className="p-3 rounded-xl bg-slate-50 text-center text-slate-500">
-                  {isAr ? "لا توجد فواتير بعد" : "No invoices yet"}
+                  {pd.noInvoicesYet}
                 </div>
               )}
               {latestInvoice && (
@@ -515,7 +516,7 @@ export default async function ParentDashboardPage({
                   href={`/${locale}/parent/billing`}
                   className="block text-center text-brand-600 font-bold hover:underline pt-1"
                 >
-                  {isAr ? "عرض كل الفواتير" : "View all invoices"}
+                  {pd.viewAllInvoices}
                 </Link>
               )}
             </div>

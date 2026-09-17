@@ -19,6 +19,16 @@ import {
 import { gamificationService } from "@/server/services/GamificationService";
 import { schedulingService } from "@/server/services/SchedulingService";
 import { requireStudentProfile } from "@/lib/auth/currentUser";
+import { getDictionary } from "@/lib/localization";
+
+// profile.levelTitleAr/En and badge.titleAr/titleEn are seeded, DB-backed
+// content that (like Program/CurriculumModule) currently only exists in
+// Arabic/English -- a separate, larger follow-up from the UI-chrome fix
+// below. Non-Arabic locales fall back to the English content value, same
+// as the established convention elsewhere in the app.
+const INTL_LOCALE: Record<string, string> = {
+  ar: "ar", en: "en-US", nl: "nl-NL", tr: "tr-TR", it: "it-IT", es: "es-ES",
+};
 
 export default async function StudentDashboardPage({
   params,
@@ -27,6 +37,8 @@ export default async function StudentDashboardPage({
 }) {
   const { locale } = await params;
   const isAr = locale === "ar";
+  const dict = getDictionary(locale);
+  const sd = dict.studentDashboard;
   const { profile: studentProfile } = await requireStudentProfile(locale);
   const studentId = studentProfile.id;
 
@@ -41,28 +53,22 @@ export default async function StudentDashboardPage({
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <span className="px-3 py-1 rounded-full bg-white/20 text-xs font-bold uppercase tracking-wider backdrop-blur-md">
-                {isAr ? `المستوى ${profile.level}: ${profile.levelTitleAr}` : `Level ${profile.level}: ${profile.levelTitleEn}`}
+                {`${sd.levelPrefix} ${profile.level}: ${isAr ? profile.levelTitleAr : profile.levelTitleEn}`}
               </span>
               <Link
                 href={`/${locale}/student/placement`}
                 className="px-3 py-1 rounded-full bg-amber-400 text-slate-900 text-xs font-bold hover:bg-amber-300 transition-colors"
               >
-                {isAr ? "اختبار تحديد المستوى 🎯" : "Placement Assessment 🎯"}
+                {sd.placementAssessmentCta}
               </Link>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold">
-              {isAr
-                ? `مرحباً بك يا بطل، ${studentProfile.firstName}! 🌟`
-                : `Welcome back Champion, ${studentProfile.firstName}! 🌟`}
+              {sd.welcomeChampion.replace("{name}", studentProfile.firstName)}
             </h1>
             <p className="text-sm text-purple-100 max-w-lg">
               {nextSession
-                ? isAr
-                  ? `لديك حصة تفاعلية مباشرة قادمة مع الأستاذ ${nextSession.teacherFirstName} ${nextSession.teacherLastName}.`
-                  : `You have an upcoming interactive live session with ${nextSession.teacherFirstName} ${nextSession.teacherLastName}.`
-                : isAr
-                  ? "لا توجد حصة مباشرة مجدولة حالياً."
-                  : "No live session is scheduled right now."}
+                ? sd.nextSessionWith.replace("{teacher}", `${nextSession.teacherFirstName} ${nextSession.teacherLastName}`)
+                : sd.noLiveSessionScheduled}
             </p>
           </div>
 
@@ -73,7 +79,7 @@ export default async function StudentDashboardPage({
                 <Flame className="w-6 h-6 fill-amber-300" />
                 <span>{profile.streakDays}</span>
               </div>
-              <span className="text-[11px] text-purple-200 font-semibold">{isAr ? "أيام متتالية" : "Day Streak"}</span>
+              <span className="text-[11px] text-purple-200 font-semibold">{sd.dayStreak}</span>
             </div>
             <div className="w-px h-8 bg-white/20" />
             <div className="text-center">
@@ -81,7 +87,7 @@ export default async function StudentDashboardPage({
                 <Sparkles className="w-6 h-6" />
                 <span>{profile.totalXp}</span>
               </div>
-              <span className="text-[11px] text-purple-200 font-semibold">{isAr ? "نقطة XP" : "Total XP"}</span>
+              <span className="text-[11px] text-purple-200 font-semibold">{sd.totalXp}</span>
             </div>
             <div className="w-px h-8 bg-white/20" />
             <div className="text-center">
@@ -89,7 +95,7 @@ export default async function StudentDashboardPage({
                 <Award className="w-6 h-6" />
                 <span>{profile.unlockedBadges.length}</span>
               </div>
-              <span className="text-[11px] text-purple-200 font-semibold">{isAr ? "أوسمة شرف" : "Honor Badges"}</span>
+              <span className="text-[11px] text-purple-200 font-semibold">{sd.honorBadges}</span>
             </div>
           </div>
         </div>
@@ -97,7 +103,7 @@ export default async function StudentDashboardPage({
         {/* Level Progression Bar */}
         <div className="bg-black/20 p-4 rounded-2xl backdrop-blur-sm space-y-2">
           <div className="flex items-center justify-between text-xs font-bold text-purple-100">
-            <span>{isAr ? `التقدم نحو المستوى القادم (${profile.nextLevelXp} XP)` : `Progress to Next Level (${profile.nextLevelXp} XP)`}</span>
+            <span>{sd.progressToNextLevel.replace("{xp}", String(profile.nextLevelXp))}</span>
             <span>{profile.progressToNextLevelPercentage}%</span>
           </div>
           <div className="w-full h-2.5 bg-white/20 rounded-full overflow-hidden">
@@ -119,8 +125,8 @@ export default async function StudentDashboardPage({
             <Compass className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="text-xs font-bold text-slate-900 leading-tight">{isAr ? "خريطة المسار" : "Quest Map"}</h3>
-            <span className="text-[10px] text-slate-500 block mt-0.5">{isAr ? "مغامرة النجوم" : "Star Journey"}</span>
+            <h3 className="text-xs font-bold text-slate-900 leading-tight">{sd.questMapTitle}</h3>
+            <span className="text-[10px] text-slate-500 block mt-0.5">{sd.starJourney}</span>
           </div>
         </Link>
 
@@ -132,8 +138,8 @@ export default async function StudentDashboardPage({
             <Layers className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="text-xs font-bold text-slate-900 leading-tight">{isAr ? "استوديو المفردات" : "Vocabulary SRS"}</h3>
-            <span className="text-[10px] text-slate-500 block mt-0.5">{isAr ? "تكرار ذكي (+15 XP)" : "Smart SRS (+15 XP)"}</span>
+            <h3 className="text-xs font-bold text-slate-900 leading-tight">{sd.vocabularySrs}</h3>
+            <span className="text-[10px] text-slate-500 block mt-0.5">{sd.smartSrsXp}</span>
           </div>
         </Link>
 
@@ -145,8 +151,8 @@ export default async function StudentDashboardPage({
             <BookOpen className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="text-xs font-bold text-slate-900 leading-tight">{isAr ? "قصص وقيم مصورة" : "Storybook"}</h3>
-            <span className="text-[10px] text-slate-500 block mt-0.5">{isAr ? "استماع (+35 XP)" : "Listen (+35 XP)"}</span>
+            <h3 className="text-xs font-bold text-slate-900 leading-tight">{sd.storybook}</h3>
+            <span className="text-[10px] text-slate-500 block mt-0.5">{sd.listenXp}</span>
           </div>
         </Link>
 
@@ -158,8 +164,8 @@ export default async function StudentDashboardPage({
             <Mic className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="text-xs font-bold text-slate-900 leading-tight">{isAr ? "مخارج الحروف" : "Voice Studio"}</h3>
-            <span className="text-[10px] text-slate-500 block mt-0.5">{isAr ? "مطابقة (+20 XP)" : "Waveform (+20 XP)"}</span>
+            <h3 className="text-xs font-bold text-slate-900 leading-tight">{sd.voiceStudio}</h3>
+            <span className="text-[10px] text-slate-500 block mt-0.5">{sd.waveformXp}</span>
           </div>
         </Link>
 
@@ -171,8 +177,8 @@ export default async function StudentDashboardPage({
             <Sparkles className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="text-xs font-bold text-slate-900 leading-tight">{isAr ? "استوديو القرآن" : "Quran Studio"}</h3>
-            <span className="text-[10px] text-slate-500 block mt-0.5">{isAr ? "تجويد (+25 XP)" : "Tajweed (+25 XP)"}</span>
+            <h3 className="text-xs font-bold text-slate-900 leading-tight">{sd.quranStudio}</h3>
+            <span className="text-[10px] text-slate-500 block mt-0.5">{sd.tajweedXp}</span>
           </div>
         </Link>
 
@@ -184,8 +190,8 @@ export default async function StudentDashboardPage({
             <Gamepad2 className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="text-xs font-bold text-slate-900 leading-tight">{isAr ? "ألعاب الحروف" : "Phonics Arcade"}</h3>
-            <span className="text-[10px] text-slate-500 block mt-0.5">{isAr ? "أنشطة (+25 XP)" : "Arcade (+25 XP)"}</span>
+            <h3 className="text-xs font-bold text-slate-900 leading-tight">{sd.phonicsArcade}</h3>
+            <span className="text-[10px] text-slate-500 block mt-0.5">{sd.arcadeXp}</span>
           </div>
         </Link>
 
@@ -197,8 +203,8 @@ export default async function StudentDashboardPage({
             <Trophy className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="text-xs font-bold text-slate-900 leading-tight">{isAr ? "لوحة الصدارة" : "Leaderboard"}</h3>
-            <span className="text-[10px] text-slate-500 block mt-0.5">{isAr ? "منافسة ودية" : "Top Champions"}</span>
+            <h3 className="text-xs font-bold text-slate-900 leading-tight">{sd.leaderboard}</h3>
+            <span className="text-[10px] text-slate-500 block mt-0.5">{sd.topChampions}</span>
           </div>
         </Link>
 
@@ -210,8 +216,8 @@ export default async function StudentDashboardPage({
             <GraduationCap className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="text-xs font-bold text-slate-900 leading-tight">{isAr ? "شهادات التخرج" : "Certificates"}</h3>
-            <span className="text-[10px] text-slate-500 block mt-0.5">{isAr ? "معتمدة وموثقة" : "Accredited"}</span>
+            <h3 className="text-xs font-bold text-slate-900 leading-tight">{sd.certificatesTitle}</h3>
+            <span className="text-[10px] text-slate-500 block mt-0.5">{sd.accredited}</span>
           </div>
         </Link>
 
@@ -223,8 +229,8 @@ export default async function StudentDashboardPage({
             <Sparkles className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="text-xs font-bold text-slate-900 leading-tight">{isAr ? "تحديد المستوى" : "Placement"}</h3>
-            <span className="text-[10px] text-slate-500 block mt-0.5">{isAr ? "7 أسئلة (+50 XP)" : "7 Qs (+50 XP)"}</span>
+            <h3 className="text-xs font-bold text-slate-900 leading-tight">{sd.placementTitle}</h3>
+            <span className="text-[10px] text-slate-500 block mt-0.5">{sd.sevenQsXp}</span>
           </div>
         </Link>
 
@@ -236,8 +242,8 @@ export default async function StudentDashboardPage({
             <Bot className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="text-xs font-bold text-slate-900 leading-tight">{isAr ? "المرشد فصيح" : "Faseeh Tutor"}</h3>
-            <span className="text-[10px] text-slate-500 block mt-0.5">{isAr ? "محادثة (+10 XP)" : "Chat (+10 XP)"}</span>
+            <h3 className="text-xs font-bold text-slate-900 leading-tight">{sd.faseehTutor}</h3>
+            <span className="text-[10px] text-slate-500 block mt-0.5">{sd.chatXp}</span>
           </div>
         </Link>
       </div>
@@ -251,10 +257,10 @@ export default async function StudentDashboardPage({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-sm font-bold text-slate-800">
                 <Video className="w-5 h-5 text-brand-600" />
-                <span>{isAr ? "الحصة القادمة المباشرة" : "Upcoming Live Class"}</span>
+                <span>{sd.upcomingLiveClass}</span>
               </div>
               <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 font-bold border border-emerald-200">
-                {isAr ? "مؤكدة اليوم" : "Confirmed Today"}
+                {sd.confirmedToday}
               </span>
             </div>
 
@@ -266,7 +272,7 @@ export default async function StudentDashboardPage({
                     <span className="flex items-center gap-1">
                       <Clock className="w-3.5 h-3.5 text-slate-400" />
                       <span>
-                        {nextSession.startTimeUtc.toLocaleString(isAr ? "ar" : "en-US", {
+                        {nextSession.startTimeUtc.toLocaleString(INTL_LOCALE[locale] || "en-US", {
                           weekday: "short",
                           hour: "2-digit",
                           minute: "2-digit",
@@ -274,9 +280,7 @@ export default async function StudentDashboardPage({
                       </span>
                     </span>
                     <span>
-                      {isAr
-                        ? `مع الأستاذ: ${nextSession.teacherFirstName} ${nextSession.teacherLastName}`
-                        : `Teacher: ${nextSession.teacherFirstName} ${nextSession.teacherLastName}`}
+                      {sd.teacherPrefix.replace("{teacher}", `${nextSession.teacherFirstName} ${nextSession.teacherLastName}`)}
                     </span>
                   </div>
                 </div>
@@ -286,14 +290,12 @@ export default async function StudentDashboardPage({
                   className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl gradient-brand text-white font-bold text-sm shadow-md hover:opacity-95 transition-all text-center"
                 >
                   <Video className="w-4 h-4" />
-                  <span>{isAr ? "دخول الفصل الافتراضي والسبورة" : "Join Virtual Classroom & Board"}</span>
+                  <span>{sd.joinVirtualClassroom}</span>
                 </Link>
               </div>
             ) : (
               <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200/80 text-center text-sm text-slate-500">
-                {isAr
-                  ? "لا توجد حصة مباشرة مجدولة قريباً. سيظهر زر الانضمام هنا فور جدولة حصتك القادمة."
-                  : "No upcoming live class is scheduled yet. The join button will appear here once your next session is set."}
+                {sd.noUpcomingLiveClass}
               </div>
             )}
           </div>
@@ -303,26 +305,26 @@ export default async function StudentDashboardPage({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-sm font-bold text-slate-800">
                 <FileCheck className="w-5 h-5 text-purple-600" />
-                <span>{isAr ? "واجباتي المنزلية والتسجيلات الصوتية" : "My Homework & Audio Submissions"}</span>
+                <span>{sd.myHomeworkAudio}</span>
               </div>
-              <span className="text-xs text-slate-500 font-medium">{isAr ? "مهمة نشطة" : "Active Task"}</span>
+              <span className="text-xs text-slate-500 font-medium">{sd.activeTask}</span>
             </div>
 
             <div className="space-y-3">
               <div className="p-4 rounded-2xl border border-slate-200 flex items-center justify-between gap-4">
                 <div className="space-y-1">
                   <h4 className="text-sm font-bold text-slate-800">
-                    {isAr ? "تسجيل صوتي: قراءة سورة الإخلاص مع تطبيق أحكام القلقلة" : "Voice Recording: Surah Al-Ikhlas with applied Qalqalah"}
+                    {sd.voiceRecordingTask}
                   </h4>
                   <p className="text-xs text-slate-500">
-                    {isAr ? "الدرجة الممنوحة: 100/100 (تم التقييم بنجاح)" : "Grade Awarded: 100/100 (Graded successfully)"}
+                    {sd.gradeAwarded}
                   </p>
                 </div>
                 <Link
                   href={`/${locale}/student/homework/hw-1`}
                   className="px-4 py-2 text-xs font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-xl transition-colors"
                 >
-                  {isAr ? "عرض التقييم والملاحظات" : "View Rubric & Feedback"}
+                  {sd.viewRubricFeedback}
                 </Link>
               </div>
             </div>
@@ -335,10 +337,10 @@ export default async function StudentDashboardPage({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-sm font-bold text-slate-800">
                 <Award className="w-5 h-5 text-amber-500" />
-                <span>{isAr ? "أوسمة الإنجاز الخاصة بي" : "My Achievement Badges"}</span>
+                <span>{sd.myAchievementBadges}</span>
               </div>
               <span className="text-xs font-bold text-slate-400">
-                {isAr ? `${profile.unlockedBadges.length} من ${profile.allBadges.length}` : `${profile.unlockedBadges.length} of ${profile.allBadges.length}`}
+                {sd.badgeCountOf.replace("{unlocked}", String(profile.unlockedBadges.length)).replace("{total}", String(profile.allBadges.length))}
               </span>
             </div>
 
@@ -369,7 +371,7 @@ export default async function StudentDashboardPage({
                       {isAr ? badge.titleAr : badge.titleEn}
                     </span>
                     <span className="text-[10px] text-slate-500 block">
-                      {isUnlocked ? (isAr ? "تم الفتح ✓" : "Unlocked ✓") : (isAr ? "مغلق" : "Locked")}
+                      {isUnlocked ? sd.badgeUnlocked : sd.badgeLocked}
                     </span>
                   </div>
                 );

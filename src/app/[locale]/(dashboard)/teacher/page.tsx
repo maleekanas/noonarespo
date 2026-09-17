@@ -9,6 +9,7 @@ import {
   Bot,
   GraduationCap,
 } from "lucide-react";
+import { getDictionary } from "@/lib/localization";
 
 export default async function TeacherDashboardPage({
   params,
@@ -16,7 +17,8 @@ export default async function TeacherDashboardPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const isAr = locale === "ar";
+  const dict = getDictionary(locale);
+  const td = dict.teacherDashboard;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
@@ -24,32 +26,30 @@ export default async function TeacherDashboardPage({
       <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-6">
         <div className="space-y-1">
           <span className="text-xs font-bold text-emerald-600 uppercase tracking-wider">
-            {isAr ? "بوابة المعلم المعتمد" : "Certified Teacher Portal"}
+            {td.portalBadge}
           </span>
           <h1 className="text-2xl font-extrabold text-slate-900">
-            {isAr ? "أهلاً بك، الأستاذ أحمد المنصوري 👨‍🏫" : "Welcome, Ustadh Ahmed 👨‍🏫"}
+            {td.welcomeHeading}
           </h1>
           <p className="text-xs text-slate-500">
-            {isAr
-              ? "تخصص: القراءة والطلاقة اللغوية والقرآن الكريم والتجويد"
-              : "Specialization: Reading, Spoken Fluency & Quranic Tajweed"}
+            {td.specialization}
           </p>
         </div>
 
         <div className="flex items-center gap-6 text-center">
           <div>
             <span className="text-2xl font-extrabold text-slate-900 block">18</span>
-            <span className="text-[11px] text-slate-500 font-medium">{isAr ? "حصة هذا الأسبوع" : "Classes this week"}</span>
+            <span className="text-[11px] text-slate-500 font-medium">{td.classesThisWeek}</span>
           </div>
           <div className="w-px h-8 bg-slate-200" />
           <div>
             <span className="text-2xl font-extrabold text-brand-600 block">99.2%</span>
-            <span className="text-[11px] text-slate-500 font-medium">{isAr ? "نسبة حضور الطلاب" : "Attendance rate"}</span>
+            <span className="text-[11px] text-slate-500 font-medium">{td.attendanceRateLabel}</span>
           </div>
           <div className="w-px h-8 bg-slate-200" />
           <div>
             <span className="text-2xl font-extrabold text-amber-500 block">4.95 ★</span>
-            <span className="text-[11px] text-slate-500 font-medium">{isAr ? "تقييم أولياء الأمور" : "Parent rating"}</span>
+            <span className="text-[11px] text-slate-500 font-medium">{td.parentRatingLabel}</span>
           </div>
         </div>
       </div>
@@ -64,8 +64,8 @@ export default async function TeacherDashboardPage({
             <Users className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-xs font-bold text-slate-900">{isAr ? "فصولي وقوائم الطلاب" : "My Classes"}</h3>
-            <span className="text-[11px] text-slate-500">{isAr ? "رصد الحضور المباشر" : "Rosters & Attendance"}</span>
+            <h3 className="text-xs font-bold text-slate-900">{td.myClasses}</h3>
+            <span className="text-[11px] text-slate-500">{td.rostersAttendance}</span>
           </div>
         </Link>
 
@@ -77,8 +77,8 @@ export default async function TeacherDashboardPage({
             <GraduationCap className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-xs font-bold text-slate-900">{isAr ? "دفتر التقييم الحي" : "Live Gradebook"}</h3>
-            <span className="text-[11px] text-slate-500">{isAr ? "سرعة القراءة ونجوم التفاعل" : "WPM & Star Rubrics"}</span>
+            <h3 className="text-xs font-bold text-slate-900">{td.liveGradebook}</h3>
+            <span className="text-[11px] text-slate-500">{td.wpmStarRubrics}</span>
           </div>
         </Link>
 
@@ -90,8 +90,8 @@ export default async function TeacherDashboardPage({
             <FileCheck className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-xs font-bold text-slate-900">{isAr ? "تصحيح الواجبات" : "Grading"}</h3>
-            <span className="text-[11px] text-slate-500">{isAr ? "سماع التسجيلات والتقييم" : "Voice Submissions"}</span>
+            <h3 className="text-xs font-bold text-slate-900">{td.grading}</h3>
+            <span className="text-[11px] text-slate-500">{td.voiceSubmissionsLabel}</span>
           </div>
         </Link>
 
@@ -103,8 +103,8 @@ export default async function TeacherDashboardPage({
             <MessageSquare className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-xs font-bold text-slate-900">{isAr ? "رسائل أولياء الأمور" : "Parent Messages"}</h3>
-            <span className="text-[11px] text-slate-500">{isAr ? "استشارات تربوية مباشرة" : "Advisory Chat"}</span>
+            <h3 className="text-xs font-bold text-slate-900">{td.parentMessages}</h3>
+            <span className="text-[11px] text-slate-500">{td.advisoryChat}</span>
           </div>
         </Link>
 
@@ -116,8 +116,8 @@ export default async function TeacherDashboardPage({
             <Video className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-xs font-bold text-slate-900">{isAr ? "اللقاءات الفردية (15 د)" : "1-on-1 Video"}</h3>
-            <span className="text-[11px] text-slate-500">{isAr ? "تأكيد المواعيد والغرف" : "Room Schedules"}</span>
+            <h3 className="text-xs font-bold text-slate-900">{td.oneOnOneVideo}</h3>
+            <span className="text-[11px] text-slate-500">{td.roomSchedules}</span>
           </div>
         </Link>
 
@@ -129,8 +129,8 @@ export default async function TeacherDashboardPage({
             <Bot className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-xs font-bold text-slate-900">{isAr ? "المساعد التربوي (AI)" : "AI Assistant"}</h3>
-            <span className="text-[11px] text-slate-500">{isAr ? "توليد خطط الدروس والأنشطة" : "Lesson Generator"}</span>
+            <h3 className="text-xs font-bold text-slate-900">{td.aiAssistant}</h3>
+            <span className="text-[11px] text-slate-500">{td.lessonGenerator}</span>
           </div>
         </Link>
       </div>
@@ -143,9 +143,9 @@ export default async function TeacherDashboardPage({
             <div className="flex items-center justify-between">
               <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
                 <Calendar className="w-5 h-5 text-brand-600" />
-                <span>{isAr ? "جدول حصص اليوم المباشرة" : "Today's Live Classes"}</span>
+                <span>{td.todaysLiveClasses}</span>
               </h3>
-              <span className="text-xs text-slate-500 font-semibold">{isAr ? "حصة اليوم نشطة" : "Active Today"}</span>
+              <span className="text-xs text-slate-500 font-semibold">{td.activeToday}</span>
             </div>
 
             <div className="space-y-3">
@@ -154,16 +154,14 @@ export default async function TeacherDashboardPage({
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <span className="px-2 py-0.5 rounded-md bg-brand-100 text-brand-800 font-bold text-[10px]">
-                      {isAr ? "04:00 م - 04:45 م" : "04:00 PM - 04:45 PM"}
+                      {td.sessionTimeSlot}
                     </span>
                     <span className="text-xs font-bold text-slate-800">
-                      {isAr ? "فصل النجوم (المستوى A1 - القراءة والطلاقة)" : "Stars Cohort (Level A1 - Reading & Fluency)"}
+                      {td.starsCohortLabel}
                     </span>
                   </div>
                   <p className="text-xs text-slate-500">
-                    {isAr
-                      ? "الدرس الرابع: نطق الحروف المفخمة والمرققة (سعة 6 طلاب)"
-                      : "Lesson 4: Articulation of Emphatic & Light Letters (6 students max)"}
+                    {td.lesson4Desc}
                   </p>
                 </div>
 
@@ -172,7 +170,7 @@ export default async function TeacherDashboardPage({
                     href={`/${locale}/teacher/classes/class-reading-a1-cohort1`}
                     className="px-4 py-2 text-xs font-bold rounded-xl gradient-brand text-white shadow-sm hover:opacity-95 transition-all text-center"
                   >
-                    {isAr ? "دخول الفصل ورصد الحضور" : "Join Session & Mark Attendance"}
+                    {td.joinSessionMarkAttendance}
                   </Link>
                 </div>
               </div>
@@ -186,27 +184,27 @@ export default async function TeacherDashboardPage({
             <div className="flex items-center justify-between">
               <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
                 <FileCheck className="w-4 h-4 text-purple-600" />
-                <span>{isAr ? "قائمة تصحيح الواجبات" : "Grading Queue"}</span>
+                <span>{td.gradingQueue}</span>
               </h3>
               <span className="text-xs px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 font-bold">
-                {isAr ? "1 بانتظار التقييم" : "1 Pending"}
+                {td.pendingCount}
               </span>
             </div>
 
             <div className="space-y-3 text-xs">
               <div className="p-3 rounded-xl border border-slate-200 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-slate-900">{isAr ? "زيد طارق" : "Zayd Tariq"}</span>
-                  <span className="text-[11px] text-slate-400">{isAr ? "اليوم" : "Today"}</span>
+                  <span className="font-bold text-slate-900">{td.studentNameZayd}</span>
+                  <span className="text-[11px] text-slate-400">{td.todayLabel}</span>
                 </div>
                 <p className="text-slate-500 text-[11px]">
-                  {isAr ? "تسجيل صوتي: قراءة سورة الإخلاص مع أحكام القلقلة" : "Voice submission: Surah Al-Ikhlas Qalqalah rules"}
+                  {td.voiceSubmissionDesc}
                 </p>
                 <Link
                   href={`/${locale}/teacher/assignments`}
                   className="w-full py-2 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-800 font-bold text-[11px] transition-colors text-center block"
                 >
-                  {isAr ? "فتح مكتب التصحيح" : "Open Grading Rubric"}
+                  {td.openGradingRubric}
                 </Link>
               </div>
             </div>
