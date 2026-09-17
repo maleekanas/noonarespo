@@ -12,6 +12,7 @@ import {
   PrintablePacket,
   PrintableCategory,
 } from "@/server/repositories/PrintablesRepository";
+import { getDictionary } from "@/lib/localization";
 
 interface ParentPrintablesClientProps {
   initialPrintables: PrintablePacket[];
@@ -23,32 +24,18 @@ export function ParentPrintablesClient({
   locale,
 }: ParentPrintablesClientProps) {
   const isAr = locale === "ar";
+  const dict = getDictionary(locale);
+  const pp = dict.parentPrintablesClient;
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
   const [activePreviewPacket, setActivePreviewPacket] =
     useState<PrintablePacket | null>(null);
 
   const categories = [
-    { id: "ALL", labelAr: "جميع الأوراق والملفات 📄", labelEn: "All Packets 📄" },
-    {
-      id: "HANDWRITING_TRACING",
-      labelAr: "كراسات خط النسخ ✍️",
-      labelEn: "Handwriting Tracing ✍️",
-    },
-    {
-      id: "COLORING_HARAKAT",
-      labelAr: "تلوين وأنشطة الحركات 🎨",
-      labelEn: "Coloring & Vowels 🎨",
-    },
-    {
-      id: "PROPHETIC_COMICS",
-      labelAr: "قصص الأنبياء الورقية 🕊️",
-      labelEn: "Prophetic Comics 🕊️",
-    },
-    {
-      id: "VOCABULARY_FLASHCARDS",
-      labelAr: "ملصقات الأذكار والبطاقات 🌟",
-      labelEn: "Adhkar & Flashcards 🌟",
-    },
+    { id: "ALL", label: pp.categoryAllLabel },
+    { id: "HANDWRITING_TRACING", label: pp.categoryHandwritingLabel },
+    { id: "COLORING_HARAKAT", label: pp.categoryColoringLabel },
+    { id: "PROPHETIC_COMICS", label: pp.categoryPropheticLabel },
+    { id: "VOCABULARY_FLASHCARDS", label: pp.categoryVocabularyLabel },
   ];
 
   const filteredPrintables =
@@ -77,7 +64,7 @@ export function ParentPrintablesClient({
                 : "bg-white text-slate-700 hover:bg-slate-100 border border-slate-200"
             }`}
           >
-            <span>{isAr ? cat.labelAr : cat.labelEn}</span>
+            <span>{cat.label}</span>
           </button>
         ))}
       </div>
@@ -101,7 +88,7 @@ export function ParentPrintablesClient({
                 </div>
 
                 <div className="absolute bottom-3 left-3 bg-slate-900/80 backdrop-blur text-white px-2 py-0.5 rounded-md text-[10px] font-bold">
-                  {packet.paperFormat === "A4_PORTRAIT" ? "A4 Portrait (عمودي)" : "A4 Landscape (أفقي)"}
+                  {packet.paperFormat === "A4_PORTRAIT" ? pp.paperFormatPortraitLabel : pp.paperFormatLandscapeLabel}
                 </div>
               </div>
 
@@ -109,10 +96,10 @@ export function ParentPrintablesClient({
               <div className="p-5">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-xs font-bold text-brand-700 bg-brand-50 px-2 py-0.5 rounded-md">
-                    {packet.pageCount} {isAr ? "صفحات جاهزة للطباعة" : "A4 Pages"}
+                    {packet.pageCount} {pp.printReadyPagesLabel}
                   </span>
                   <span className="text-xs font-medium text-slate-500">
-                    {isAr ? "الفئة:" : "Target:"} {packet.targetAgeGroup}
+                    {pp.targetLabel} {packet.targetAgeGroup}
                   </span>
                 </div>
 
@@ -130,7 +117,7 @@ export function ParentPrintablesClient({
                 <div className="flex items-center gap-2 text-xs text-emerald-800 bg-emerald-50 border border-emerald-100 p-2 rounded-xl">
                   <QrCode className="w-4 h-4 text-emerald-600 shrink-0" />
                   <span className="text-[11px] font-medium leading-tight">
-                    {isAr ? "مزودة برمز QR للاستماع الصوتي المباشر" : "Embedded with audio QR verification link"}
+                    {pp.qrEmbeddedHint}
                   </span>
                 </div>
               </div>
@@ -144,7 +131,7 @@ export function ParentPrintablesClient({
                 className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors"
               >
                 <Eye className="w-3.5 h-3.5 text-slate-600" />
-                <span>{isAr ? "معاينة الورقة 🔍" : "Preview Sheet 🔍"}</span>
+                <span>{pp.previewButton}</span>
               </button>
 
               <button
@@ -156,7 +143,7 @@ export function ParentPrintablesClient({
                 className="flex-1 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-md shadow-brand-100 transition-colors"
               >
                 <Printer className="w-3.5 h-3.5" />
-                <span>{isAr ? "طباعة فورية 🖨️" : "Print (A4) 🖨️"}</span>
+                <span>{pp.printButton}</span>
               </button>
             </div>
           </div>
@@ -176,7 +163,7 @@ export function ParentPrintablesClient({
                     {activePreviewPacket.titleAr}
                   </h3>
                   <p className="text-xs text-slate-400">
-                    {isAr ? "ورقة تدريب منزلية عالية الدقة مجهزة لمقاس A4" : "High-resolution A4 home learning printable"}
+                    {pp.modalSubtitle}
                   </p>
                 </div>
               </div>
@@ -188,7 +175,7 @@ export function ParentPrintablesClient({
                   className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 shadow-sm transition-colors"
                 >
                   <Printer className="w-4 h-4" />
-                  <span>{isAr ? "طباعة الآن (A4)" : "Print Now (A4)"}</span>
+                  <span>{pp.printNowButton}</span>
                 </button>
                 <button
                   type="button"
@@ -210,15 +197,19 @@ export function ParentPrintablesClient({
                 <div className="border-b-2 border-slate-900 pb-4 flex items-center justify-between">
                   <div className="text-right">
                     <div className="text-xs font-bold text-slate-500">
-                      أكاديمية براعم العربية للغات والقرآن
+                      {pp.worksheetTaglineLabel}
                     </div>
                     <div className="text-base font-black text-slate-900">
-                      Kids Arabic Academy • كراسة التعلم المنزلي
+                      Kids Arabic Academy • {pp.homeLearningBookletLabel}
                     </div>
                   </div>
                   <div className="text-3xl">🌟</div>
                   <div className="text-left text-xs font-medium text-slate-600">
-                    <div>الصفحة: 1 من {activePreviewPacket.pageCount}</div>
+                    <div>
+                      {pp.pageOfTemplate
+                        .replace("{current}", "1")
+                        .replace("{total}", String(activePreviewPacket.pageCount))}
+                    </div>
                     <div className="font-mono text-[11px] text-slate-500">FORMAT: A4</div>
                   </div>
                 </div>
@@ -226,11 +217,11 @@ export function ParentPrintablesClient({
                 {/* Student Info Fields for Pen Practice */}
                 <div className="grid grid-cols-2 gap-4 bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs font-bold">
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-600">اسْمُ الطَّالِبِ:</span>
+                    <span className="text-slate-600">{pp.studentNameLabel}</span>
                     <span className="flex-1 border-b border-dotted border-slate-400 h-4" />
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-600">التَّارِيخُ:</span>
+                    <span className="text-slate-600">{pp.dateLabel}</span>
                     <span className="flex-1 border-b border-dotted border-slate-400 h-4" />
                   </div>
                 </div>
@@ -313,13 +304,13 @@ export function ParentPrintablesClient({
                         {activePreviewPacket.qrCodeLabelAr}
                       </div>
                       <div className="text-[11px] text-emerald-800 font-medium">
-                        وجّه كاميرا الهاتف أو الجهاز اللوحي لمطابقة الصوت والاستماع إلى المعلم
+                        {pp.qrScanInstructions}
                       </div>
                     </div>
                   </div>
 
                   <div className="text-right text-xs font-bold text-slate-500">
-                    <div>درجة الإتقان:</div>
+                    <div>{pp.masteryLevelLabel}</div>
                     <div className="text-amber-500 text-base">⭐⭐⭐⭐⭐</div>
                   </div>
                 </div>

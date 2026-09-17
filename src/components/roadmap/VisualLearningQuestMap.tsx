@@ -18,6 +18,7 @@ import {
   QuestNode,
   MilestoneChest,
 } from "@/server/repositories/RoadmapRepository";
+import { getDictionary } from "@/lib/localization";
 
 interface VisualLearningQuestMapProps {
   progress: StudentQuestProgress;
@@ -35,6 +36,8 @@ export function VisualLearningQuestMap({
   onClaimChest,
 }: VisualLearningQuestMapProps) {
   const isAr = locale === "ar";
+  const dict = getDictionary(locale);
+  const qm = dict.visualLearningQuestMap;
   const [activeChestModal, setActiveChestModal] = useState<MilestoneChest | null>(null);
   const [chestClaimed, setChestClaimed] = useState<boolean>(false);
   const [claimResult, setClaimResult] = useState<{
@@ -44,54 +47,46 @@ export function VisualLearningQuestMap({
   } | null>(null);
   const [isClaiming, setIsClaiming] = useState<boolean>(false);
 
-  // Group nodes by stage
+  // Group nodes by stage. Names/descriptions are dictionary driven (see
+  // "visualLearningQuestMap" namespace) since they're UI copy defined in
+  // this component, not per-student repository content.
   const stages = [
     {
       id: "stage-oasis",
-      nameAr: "المرحلة الأولى: واحة الحروف والأصوات 🌴",
-      nameEn: "Stage 1: Oasis of Letters & Sounds 🌴",
-      descriptionAr: "إتقان رسم الحروف ومواضعها وأصوات الحركات الثلاث",
-      descriptionEn: "Master letter shapes, positions, and short vowels",
+      name: qm.stageOasisName,
+      description: qm.stageOasisDesc,
       bgGradient: "from-emerald-500/10 via-teal-500/5 to-transparent",
       borderColor: "border-emerald-200",
       accentColor: "text-emerald-700",
     },
     {
       id: "stage-dunes",
-      nameAr: "المرحلة الثانية: كثبان الأصوات والكلمات 🏜️",
-      nameEn: "Stage 2: Dunes of Phonics & Words 🏜️",
-      descriptionAr: "مخارج الحروف المفخمة، تركيب الكلمات، والأزواج المتباينة",
-      descriptionEn: "Emphatic phonemes, word scramble building, and minimal pairs",
+      name: qm.stageDunesName,
+      description: qm.stageDunesDesc,
       bgGradient: "from-amber-500/10 via-orange-500/5 to-transparent",
       borderColor: "border-amber-200",
       accentColor: "text-amber-700",
     },
     {
       id: "stage-river",
-      nameAr: "المرحلة الثالثة: نهر القصص والقيم النبوية 🌊",
-      nameEn: "Stage 3: River of Stories & Values 🌊",
-      descriptionAr: "قراءة قصص مصورة مشكولة مع استيعاب الدروس والعبر",
-      descriptionEn: "Vocalized illustrated storybooks and moral comprehension",
+      name: qm.stageRiverName,
+      description: qm.stageRiverDesc,
       bgGradient: "from-sky-500/10 via-blue-500/5 to-transparent",
       borderColor: "border-sky-200",
       accentColor: "text-sky-700",
     },
     {
       id: "stage-citadel",
-      nameAr: "المرحلة الرابعة: قلعة التلاوة والتجويد 🏰",
-      nameEn: "Stage 4: Citadel of Quran & Tajweed 🏰",
-      descriptionAr: "أحكام التجويد الملونة بالرسم العثماني وتسجيل التلاوة",
-      descriptionEn: "Color-coded Tajweed in Uthmani script and audio recordings",
+      name: qm.stageCitadelName,
+      description: qm.stageCitadelDesc,
       bgGradient: "from-purple-500/10 via-indigo-500/5 to-transparent",
       borderColor: "border-purple-200",
       accentColor: "text-purple-700",
     },
     {
       id: "stage-palace",
-      nameAr: "المرحلة الخامسة: قصر الفصاحة والبيان 👑",
-      nameEn: "Stage 5: Palace of Arabic Fluency 👑",
-      descriptionAr: "المحادثة الحية مع الذكاء الاصطناعي وبلوغ الطلاقة التعبيرية",
-      descriptionEn: "Live interactive dialogue with Faseeh AI to reach B1 fluency",
+      name: qm.stagePalaceName,
+      description: qm.stagePalaceDesc,
       bgGradient: "from-rose-500/10 via-pink-500/5 to-transparent",
       borderColor: "border-rose-200",
       accentColor: "text-rose-700",
@@ -122,15 +117,13 @@ export function VisualLearningQuestMap({
           <div>
             <div className="flex items-center gap-2 bg-white/20 backdrop-blur px-3 py-1 rounded-full text-xs font-bold w-fit mb-3">
               <Compass className="w-4 h-4 text-amber-300" />
-              <span>{isAr ? "خريطة المغامرة اللغوية الكبرى" : "The Arabic Odyssey Quest Map"}</span>
+              <span>{qm.questMapBadge}</span>
             </div>
             <h2 className="text-2xl md:text-3xl font-black mb-1">
-              {isAr ? "رحلة الفصاحة: من الحرف إلى الطلاقة" : "Journey to Arabic Fluency"}
+              {qm.journeyHeading}
             </h2>
             <p className="text-xs md:text-sm text-indigo-100 max-w-xl">
-              {isAr
-                ? "أكمل المحطات بالترتيب، احصد النجوم الثلاث في كل تحدٍ، وافتح صناديق الكنز للحصول على أوسمة الشرف ونقاط XP!"
-                : "Complete adventure milestones sequentially, earn 3 stars on every challenge, and unlock treasure chests!"}
+              {qm.journeySubtitle}
             </p>
           </div>
 
@@ -142,7 +135,7 @@ export function VisualLearningQuestMap({
                 <span>{progress.totalStars}</span>
               </div>
               <span className="text-[11px] text-indigo-200 font-bold block mt-0.5">
-                {isAr ? "نجمة ذهبية" : "Stars Earned"}
+                {qm.starsEarnedLabel}
               </span>
             </div>
 
@@ -151,7 +144,7 @@ export function VisualLearningQuestMap({
                 {progress.pathCompletionPercentage}%
               </div>
               <span className="text-[11px] text-indigo-200 font-bold block mt-0.5">
-                {isAr ? "إنجاز المسار" : "Path Progress"}
+                {qm.pathProgressLabel}
               </span>
             </div>
           </div>
@@ -161,9 +154,9 @@ export function VisualLearningQuestMap({
         <div className="mt-6 pt-6 border-t border-white/15">
           <div className="flex items-center justify-between text-xs text-indigo-200 font-bold mb-2">
             <span>
-              {isAr
-                ? `المحطات المنجزة: ${progress.completedNodesCount} من ${progress.nodes.length}`
-                : `Milestones Cleared: ${progress.completedNodesCount} of ${progress.nodes.length}`}
+              {qm.milestonesClearedTemplate
+                .replace("{completed}", String(progress.completedNodesCount))
+                .replace("{total}", String(progress.nodes.length))}
             </span>
             <span>{progress.pathCompletionPercentage}%</span>
           </div>
@@ -180,7 +173,7 @@ export function VisualLearningQuestMap({
       <div className="bg-white rounded-3xl border border-slate-200 p-5 shadow-sm">
         <h3 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
           <Gift className="w-4 h-4 text-brand-600" />
-          <span>{isAr ? "صناديق كنوز الإنجاز الكبرى" : "Milestone Treasure Chests"}</span>
+          <span>{qm.treasureChestsHeading}</span>
         </h3>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -205,8 +198,8 @@ export function VisualLearningQuestMap({
                 </div>
                 <div className="text-[11px] text-slate-500 font-medium">
                   {chest.isUnlocked
-                    ? (isAr ? "✨ مفتوح! انقر للاستلام" : "✨ Unlocked! Click to claim")
-                    : (isAr ? `🔒 يتطلب ${chest.requiredStars} نجوم` : `🔒 Requires ${chest.requiredStars} stars`)}
+                    ? qm.chestUnlockedHint
+                    : qm.chestLockedHintTemplate.replace("{stars}", String(chest.requiredStars))}
                 </div>
               </div>
               <div className="text-2xl shrink-0">
@@ -232,14 +225,14 @@ export function VisualLearningQuestMap({
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200/60 pb-4">
                 <div>
                   <h3 className="text-lg font-black text-slate-900">
-                    {isAr ? stage.nameAr : stage.nameEn}
+                    {stage.name}
                   </h3>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    {isAr ? stage.descriptionAr : stage.descriptionEn}
+                    {stage.description}
                   </p>
                 </div>
                 <span className="text-xs font-bold text-slate-600 bg-white px-3 py-1 rounded-full border border-slate-200 shadow-2xs w-fit">
-                  {stageNodes.filter((n) => n.status === "COMPLETED").length} / {stageNodes.length} {isAr ? "محطات" : "Nodes"}
+                  {stageNodes.filter((n) => n.status === "COMPLETED").length} / {stageNodes.length} {qm.nodesLabel}
                 </span>
               </div>
 
@@ -317,7 +310,7 @@ export function VisualLearningQuestMap({
                             className="w-full py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition-colors"
                           >
                             <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                            <span>{isAr ? "مكتملة (إعادة التحدي)" : "Completed (Replay)"}</span>
+                            <span>{qm.completedReplayButton}</span>
                           </Link>
                         ) : isActive ? (
                           <Link
@@ -325,12 +318,12 @@ export function VisualLearningQuestMap({
                             className="w-full py-3 bg-brand-600 hover:bg-brand-700 text-white font-black text-xs rounded-xl flex items-center justify-center gap-2 shadow-md shadow-brand-100 transition-colors animate-pulse"
                           >
                             <Play className="w-4 h-4 fill-white" />
-                            <span>{isAr ? "ابدأ التحدي الآن 🚀" : "Start Milestone 🚀"}</span>
+                            <span>{qm.startMilestoneButton}</span>
                           </Link>
                         ) : (
                           <div className="w-full py-2.5 bg-slate-200/80 text-slate-500 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 cursor-not-allowed">
                             <Lock className="w-3.5 h-3.5" />
-                            <span>{isAr ? "مقفل حالياً" : "Locked Node"}</span>
+                            <span>{qm.lockedNodeLabel}</span>
                           </div>
                         )}
                       </div>
@@ -364,9 +357,9 @@ export function VisualLearningQuestMap({
                 {isAr ? activeChestModal.titleAr : activeChestModal.titleEn}
               </h3>
               <p className="text-xs text-slate-500 mt-1">
-                {isAr
-                  ? `وسام: ${activeChestModal.badgeNameAr} • مكافأة +${activeChestModal.xpBonus} XP`
-                  : `Reward: +${activeChestModal.xpBonus} XP bonus`}
+                {qm.rewardBadgeTemplate
+                  .replace("{badge}", activeChestModal.badgeNameAr)
+                  .replace("{xp}", String(activeChestModal.xpBonus))}
               </p>
             </div>
 
@@ -374,10 +367,10 @@ export function VisualLearningQuestMap({
               <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 text-center space-y-1">
                 <div className="flex items-center justify-center gap-1 text-emerald-800 font-black text-sm">
                   <Sparkles className="w-4 h-4 text-emerald-600" />
-                  <span>{isAr ? "تم استلام الكنز بنجاح!" : "Treasure Claimed!"}</span>
+                  <span>{qm.treasureClaimedHeading}</span>
                 </div>
                 <div className="text-xs text-emerald-700">
-                  +{claimResult.xpBonusAwarded} XP {isAr ? "أضيفت لرصيدك الإجمالي" : "added to total XP"}
+                  +{claimResult.xpBonusAwarded} XP {qm.addedToXpLabel}
                 </div>
               </div>
             ) : (
@@ -394,8 +387,8 @@ export function VisualLearningQuestMap({
                 <Trophy className="w-4 h-4" />
                 <span>
                   {activeChestModal.isUnlocked
-                    ? (isAr ? "افتح الصندوق واستلم المكافأة 💎" : "Open Chest & Collect Reward 💎")
-                    : (isAr ? `اجمع ${activeChestModal.requiredStars} نجوم لفتحه` : `Need ${activeChestModal.requiredStars} stars to open`)}
+                    ? qm.openChestButton
+                    : qm.needStarsToOpenTemplate.replace("{stars}", String(activeChestModal.requiredStars))}
                 </span>
               </button>
             )}

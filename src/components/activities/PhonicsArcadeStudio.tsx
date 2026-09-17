@@ -11,9 +11,11 @@ import {
   Gamepad2,
   ArrowLeft,
 } from "lucide-react";
+import { getDictionary } from "@/lib/localization";
 
 interface PhonicsArcadeStudioProps {
   studentName: string;
+  locale: string;
   onCompleteActivity: () => Promise<void>;
 }
 
@@ -28,6 +30,12 @@ interface PhonicsLetter {
   sukunExample: string;
 }
 
+// The letters, harakat, word-building and memory-match content below are the
+// actual Arabic reading/phonics material being taught -- like the story
+// reader's Arabic page text, this stays Arabic for every locale regardless
+// of UI language, since that's the subject matter itself. Only the studio
+// chrome around it (tabs, buttons, instructions, feedback) is dictionary
+// driven below.
 const LETTERS: PhonicsLetter[] = [
   { char: "أ", nameAr: "أَلِف", fathaExample: "أَسَد (Asad)", dammaExample: "أُمِّي (Ummi)", kasraExample: "إِبْرِيق (Ibreeq)", sukunExample: "فَأْر (Fa'r)" },
   { char: "ب", nameAr: "بَاء", fathaExample: "بَطَّة (Battah)", dammaExample: "بُرْتُقَال (Burtuqal)", kasraExample: "بِنْت (Bint)", sukunExample: "حَبْل (Habl)" },
@@ -120,8 +128,11 @@ const INITIAL_MEMORY_CARDS: MemoryCard[] = [
 
 export function PhonicsArcadeStudio({
   studentName,
+  locale,
   onCompleteActivity,
 }: PhonicsArcadeStudioProps) {
+  const dict = getDictionary(locale);
+  const pa = dict.phonicsArcadeStudio;
   const [activeTab, setActiveTab] = useState<TabType>("PHONICS");
   const [isSubmittingXp, setIsSubmittingXp] = useState(false);
   const [xpAwardedNotification, setXpAwardedNotification] = useState(false);
@@ -265,12 +276,14 @@ export function PhonicsArcadeStudio({
           <div className="flex items-center gap-3">
             <Trophy className="w-6 h-6 fill-slate-950" />
             <div>
-              <p className="text-sm font-black">أحسنت يا {studentName || "بطل"}! 🎉 تم تسجيل إنجازك بنجاح</p>
-              <p className="text-xs font-semibold">أضيف إلى حسابك +30 XP في سجل الأنشطة والمهارات</p>
+              <p className="text-sm font-black">
+                {pa.toastCongratsTemplate.replace("{name}", studentName || pa.defaultStudentFallback)}
+              </p>
+              <p className="text-xs font-semibold">{pa.toastXpAddedLabel}</p>
             </div>
           </div>
           <span className="text-xs bg-slate-950 text-white px-3 py-1 rounded-full">
-            المستوى مكتمل ✓
+            {pa.toastLevelCompleteBadge}
           </span>
         </div>
       )}
@@ -288,7 +301,7 @@ export function PhonicsArcadeStudio({
             }`}
           >
             <Volume2 className="w-3.5 h-3.5" />
-            <span>لوحة أصوات الحروف والحركات</span>
+            <span>{pa.phonicsTabLabel}</span>
           </button>
 
           <button
@@ -301,7 +314,7 @@ export function PhonicsArcadeStudio({
             }`}
           >
             <Sparkles className="w-3.5 h-3.5" />
-            <span>مختبر تركيب الكلمات</span>
+            <span>{pa.builderTabLabel}</span>
           </button>
 
           <button
@@ -314,7 +327,7 @@ export function PhonicsArcadeStudio({
             }`}
           >
             <Gamepad2 className="w-3.5 h-3.5" />
-            <span>تحدي الذاكرة والمطابقة</span>
+            <span>{pa.memoryTabLabel}</span>
           </button>
         </div>
 
@@ -325,7 +338,7 @@ export function PhonicsArcadeStudio({
           className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-900 font-extrabold text-xs shadow-sm transition-all disabled:opacity-50"
         >
           <Zap className="w-3.5 h-3.5 fill-slate-900" />
-          <span>{isSubmittingXp ? "جارِ التسجيل..." : "تسجيل إنجاز (+30 XP)"}</span>
+          <span>{isSubmittingXp ? pa.claimingLabel : pa.claimXpButton}</span>
         </button>
       </div>
 
@@ -348,19 +361,19 @@ export function PhonicsArcadeStudio({
                 </span>
                 <span className="text-[11px] font-bold text-slate-500 mt-1 flex items-center gap-1">
                   <Volume2 className="w-3 h-3 text-brand-600" />
-                  <span>انقر للسماع</span>
+                  <span>{pa.tapToListenHint}</span>
                 </span>
               </div>
 
               <div className="space-y-1.5">
                 <span className="px-3 py-1 rounded-full text-xs font-bold bg-brand-100 text-brand-800 inline-block">
-                  حرف {selectedLetter.nameAr} ({selectedLetter.char})
+                  {pa.letterBadgeTemplate.replace("{name}", selectedLetter.nameAr).replace("{char}", selectedLetter.char)}
                 </span>
                 <h3 className="text-xl font-extrabold text-slate-900">
-                  الحركة: {selectedHaraka.nameAr} ({selectedHaraka.soundLabel})
+                  {pa.harakaLabelTemplate.replace("{name}", selectedHaraka.nameAr).replace("{sound}", selectedHaraka.soundLabel)}
                 </h3>
                 <p className="text-xs text-slate-500">
-                  مثال مصور في كلمة:{" "}
+                  {pa.exampleWordLabel}{" "}
                   <span className="font-bold text-slate-900 font-serif text-sm">
                     {currentExample}
                   </span>
@@ -370,7 +383,7 @@ export function PhonicsArcadeStudio({
 
             {/* 4 Harakat Selector */}
             <div className="space-y-2">
-              <span className="text-xs font-bold text-slate-600 block">اختر الحركة الإعرابية:</span>
+              <span className="text-xs font-bold text-slate-600 block">{pa.chooseHarakaLabel}</span>
               <div className="grid grid-cols-2 gap-2">
                 {HARAKAT.map((h) => (
                   <button
@@ -400,7 +413,7 @@ export function PhonicsArcadeStudio({
           {/* Letter Selector Grid */}
           <div className="space-y-3">
             <span className="text-xs font-bold text-slate-700 block">
-              اختر حرفاً من الحروف العربية الأساسية:
+              {pa.chooseLetterLabel}
             </span>
             <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-12 gap-2.5">
               {LETTERS.map((letter) => {
@@ -434,10 +447,12 @@ export function PhonicsArcadeStudio({
           <div className="flex items-center justify-between pb-4 border-b border-slate-100">
             <div>
               <span className="text-xs font-bold text-purple-600 uppercase tracking-wider">
-                التحدي {currentWordIdx + 1} من {WORD_CHALLENGES.length}
+                {pa.challengeCounterTemplate
+                  .replace("{current}", String(currentWordIdx + 1))
+                  .replace("{total}", String(WORD_CHALLENGES.length))}
               </span>
               <h2 className="text-lg font-bold text-slate-900 mt-0.5">
-                ركّب حروف الكلمة بالترتيب الصحيح!
+                {pa.builderHeading}
               </h2>
             </div>
 
@@ -446,7 +461,7 @@ export function PhonicsArcadeStudio({
                 type="button"
                 onClick={handleResetWordBuilder}
                 className="p-2 rounded-xl text-slate-500 hover:bg-slate-100"
-                title="إعادة المحاولة"
+                title={pa.resetTooltip}
               >
                 <RotateCcw className="w-4 h-4" />
               </button>
@@ -455,7 +470,7 @@ export function PhonicsArcadeStudio({
                 onClick={handleNextWordChallenge}
                 className="px-3.5 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 text-xs font-bold flex items-center gap-1"
               >
-                <span>الكلمة التالية</span>
+                <span>{pa.nextWordButton}</span>
                 <ArrowLeft className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -467,7 +482,7 @@ export function PhonicsArcadeStudio({
 
             <div className="space-y-1">
               <p className="text-xs text-slate-500">
-                المعنى بالإنجليزية: {currentChallenge.meaningEn}
+                {pa.meaningLabelTemplate.replace("{meaning}", currentChallenge.meaningEn)}
               </p>
               <div className="flex items-center justify-center gap-3">
                 {currentChallenge.correctLetters.map((_, i) => (
@@ -489,13 +504,13 @@ export function PhonicsArcadeStudio({
             {builderStatus === "SUCCESS" && (
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold animate-bounce">
                 <CheckCircle2 className="w-4 h-4" />
-                <span>ما شاء الله! تركيب صحيح: {currentChallenge.wordFull} (+10 XP)</span>
+                <span>{pa.builderSuccessTemplate.replace("{word}", currentChallenge.wordFull)}</span>
               </div>
             )}
 
             {builderStatus === "TRY_AGAIN" && (
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-rose-100 text-rose-800 text-xs font-bold">
-                <span>حاول مرة أخرى يا بطل! اضغط إعادة المحاولة ↺</span>
+                <span>{pa.builderTryAgainLabel}</span>
               </div>
             )}
           </div>
@@ -503,7 +518,7 @@ export function PhonicsArcadeStudio({
           {/* Scrambled Letter Tiles */}
           <div className="space-y-3">
             <span className="text-xs font-bold text-slate-700 block">
-              اضغط على الحروف لتركيبها في الخانات:
+              {pa.tapLettersHint}
             </span>
             <div className="flex items-center justify-center gap-3">
               {currentChallenge.scrambledLetters.map((letter, idx) => (
@@ -527,22 +542,22 @@ export function PhonicsArcadeStudio({
           <div className="flex items-center justify-between pb-4 border-b border-slate-100">
             <div>
               <span className="text-xs font-bold text-emerald-600 uppercase tracking-wider">
-                تحدي الذاكرة والمطابقة
+                {pa.memoryHeadingLabel}
               </span>
               <h2 className="text-lg font-bold text-slate-900 mt-0.5">
-                اقلب البطاقات وطابق الكلمة العربية مع صورتها
+                {pa.memorySubheading}
               </h2>
             </div>
 
             <div className="flex items-center gap-3">
               <span className="text-xs font-bold text-slate-600">
-                المطابقات: {memoryMatchesCount} / 3
+                {pa.matchesCounterTemplate.replace("{count}", String(memoryMatchesCount))}
               </span>
               <button
                 type="button"
                 onClick={handleResetMemory}
                 className="p-2 rounded-xl text-slate-500 hover:bg-slate-100"
-                title="إعادة اللعبة"
+                title={pa.resetGameTooltip}
               >
                 <RotateCcw className="w-4 h-4" />
               </button>
@@ -587,14 +602,14 @@ export function PhonicsArcadeStudio({
             <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-center space-y-2 max-w-lg mx-auto animate-in zoom-in-95 duration-200">
               <div className="flex items-center justify-center gap-2 text-emerald-700 font-extrabold text-sm">
                 <Trophy className="w-5 h-5" />
-                <span>رائع جداً! أتممت مطابقة جميع البطاقات بنجاح</span>
+                <span>{pa.memoryCompleteLabel}</span>
               </div>
               <button
                 type="button"
                 onClick={handleClaimXp}
                 className="px-4 py-2 rounded-xl gradient-brand text-white font-bold text-xs shadow-xs hover:opacity-95"
               >
-                تسجيل إنجاز الذاكرة (+30 XP)
+                {pa.recordMemoryXpButton}
               </button>
             </div>
           )}

@@ -5,6 +5,7 @@ import {
   PronunciationAttempt,
 } from "../repositories/PronunciationRepository";
 import { gamificationService } from "./GamificationService";
+import { getDictionary } from "@/lib/localization";
 
 export interface PronunciationEvaluationResult {
   phonemeId: string;
@@ -16,8 +17,7 @@ export interface PronunciationEvaluationResult {
   isPassed: boolean;
   xpAwarded: number;
   newTotalXp: number;
-  feedbackAr: string;
-  feedbackEn: string;
+  feedback: string;
   makhrajAdviceAr: string;
 }
 
@@ -39,6 +39,7 @@ export class PronunciationService {
     phonemeId: string;
     audioDurationMs?: number;
     userWaveformSamples?: number[];
+    locale?: string;
   }): Promise<PronunciationEvaluationResult> {
     const phoneme = await pronunciationRepository.getPhonemeById(params.phonemeId);
     if (!phoneme) {
@@ -68,13 +69,25 @@ export class PronunciationService {
       newTotalXp = profile.totalXp;
     }
 
+    const locale = params.locale || "ar";
+    const isAr = locale === "ar";
+    const dict = getDictionary(locale);
+    const pws = dict.pronunciationWaveformStudio;
+    const letterName = isAr ? phoneme.letterNameAr : phoneme.letterNameEn;
+
+    const feedback = isPassed
+      ? pws.feedbackPassedTemplate
+          .replace("{letterName}", letterName)
+          .replace("{letter}", phoneme.letter)
+          .replace("{score}", String(scorePercentage))
+      : pws.feedbackFailedTemplate;
+
+    // Kept Arabic for the internal attempt-history record (not surfaced as
+    // localized UI chrome, and this repository field predates the 6-language
+    // rollout) -- see makhrajAdviceAr below for the same scope boundary.
     const feedbackAr = isPassed
       ? `نطق رائع ومتقن لحرف (${phoneme.letter})! حققت نسبة تطابق صوتي ${scorePercentage}% مع مخارج الحروف الصحيحة.`
       : `محاولة جيدة! استمع مرة أخرى إلى المعلم وحاول ضبط موضع اللسان لتحقيق دقة أعلى.`;
-
-    const feedbackEn = isPassed
-      ? `Superb pronunciation of '${phoneme.letterNameEn}' (${phoneme.letter})! Acoustic match reached ${scorePercentage}%.`
-      : `Good attempt! Listen to the teacher's model once more and adjust your tongue position.`;
 
     const attempt: PronunciationAttempt = {
       id: `attempt-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
@@ -100,8 +113,7 @@ export class PronunciationService {
       isPassed,
       xpAwarded,
       newTotalXp,
-      feedbackAr,
-      feedbackEn,
+      feedback,
       makhrajAdviceAr: phoneme.makhrajAr,
     };
   }

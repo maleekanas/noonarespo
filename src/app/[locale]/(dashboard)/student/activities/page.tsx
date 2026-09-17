@@ -5,6 +5,7 @@ import { gamificationService } from "@/server/services/GamificationService";
 import { Flame, Sparkles } from "lucide-react";
 import { PhonicsArcadeStudio } from "@/components/activities/PhonicsArcadeStudio";
 import { requireStudentProfile } from "@/lib/auth/currentUser";
+import { getDictionary } from "@/lib/localization";
 
 export default async function StudentActivitiesPage({
   params,
@@ -12,6 +13,8 @@ export default async function StudentActivitiesPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
+  const dict = getDictionary(locale);
+  const sa = dict.studentActivities;
   const { profile: studentProfile } = await requireStudentProfile(locale);
   const studentId = studentProfile.id;
 
@@ -29,27 +32,27 @@ export default async function StudentActivitiesPage({
         <div>
           <div className="flex items-center gap-2 text-xs font-bold text-brand-600 mb-1">
             <Link href={`/${locale}/student`} className="hover:underline">
-              بوابة الطالب
+              {sa.breadcrumbStudentPortal}
             </Link>
             <span>/</span>
-            <span>الأنشطة التفاعلية</span>
+            <span>{sa.breadcrumbActivities}</span>
           </div>
           <h1 className="text-2xl font-extrabold text-slate-900">
-            ألعاب وأنشطة التعلم الذكي 🎮
+            {sa.pageHeading}
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            استكشف أصوات الحروف مع الحركات الإعرابية، وركب الكلمات العربية، ومارس التحديات لكسب +30 XP!
+            {sa.pageSubtitle}
           </p>
         </div>
 
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-orange-50 text-orange-600 border border-orange-200 text-xs font-bold">
             <Flame className="w-4 h-4 fill-orange-500" />
-            <span>شعلة الحماس نشطة (5 أيام)</span>
+            <span>{sa.streakActiveBadge}</span>
           </div>
           <div className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-purple-50 text-purple-700 border border-purple-200 text-xs font-bold">
             <Sparkles className="w-4 h-4 text-purple-600" />
-            <span>مستوى 2: مستكشف الحروف</span>
+            <span>{sa.levelBadge}</span>
           </div>
         </div>
       </div>
@@ -57,6 +60,7 @@ export default async function StudentActivitiesPage({
       {/* Interactive Arcade Studio Component */}
       <PhonicsArcadeStudio
         studentName="زيد طارق"
+        locale={locale}
         onCompleteActivity={handleCompleteActivity}
       />
     </div>

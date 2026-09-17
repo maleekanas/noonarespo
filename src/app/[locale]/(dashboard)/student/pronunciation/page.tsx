@@ -33,6 +33,7 @@ export default async function PronunciationStudioPage({
       phonemeId: params.phonemeId,
       audioDurationMs: params.audioDurationMs,
       userWaveformSamples: params.userWaveformSamples,
+      locale,
     });
 
     return {
@@ -42,8 +43,7 @@ export default async function PronunciationStudioPage({
       isPassed: result.isPassed,
       xpAwarded: result.xpAwarded,
       newTotalXp: result.newTotalXp,
-      feedbackAr: result.feedbackAr,
-      feedbackEn: result.feedbackEn,
+      feedback: result.feedback,
     };
   }
 

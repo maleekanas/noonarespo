@@ -148,7 +148,7 @@ describe("Phase 11: Voice Pronunciation & Audio Waveform Studio Architecture", (
     assert.ok(result.scorePercentage >= 70, "Score should pass 70% threshold");
     assert.strictEqual(result.isPassed, true);
     assert.strictEqual(result.xpAwarded, 20);
-    assert.ok(result.feedbackAr.length > 10);
+    assert.ok(result.feedback.length > 10);
     assert.ok(result.makhrajAdviceAr.length > 10);
 
     // Verify practice history was recorded

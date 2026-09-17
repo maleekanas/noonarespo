@@ -4,6 +4,7 @@ import {
   StudentSrsOverview,
 } from "../repositories/VocabularyRepository";
 import { gamificationService } from "./GamificationService";
+import { getDictionary } from "@/lib/localization";
 
 export interface SrsSessionResult {
   studentId: string;
@@ -12,8 +13,7 @@ export interface SrsSessionResult {
   xpAwarded: number;
   newTotalXp: number;
   streakDays: number;
-  feedbackAr: string;
-  feedbackEn: string;
+  feedback: string;
 }
 
 export class VocabularyService {
@@ -41,6 +41,7 @@ export class VocabularyService {
     studentId: string;
     totalCards: number;
     againCount: number;
+    locale?: string;
   }): Promise<SrsSessionResult> {
     const total = params.totalCards || 1;
     const correctCount = Math.max(0, total - params.againCount);
@@ -55,8 +56,10 @@ export class VocabularyService {
 
     const overview = await vocabularyRepository.getStudentSrsOverview(params.studentId);
 
-    const feedbackAr = `أحسنت يا بطل! أتممت مراجعة ${total} بطاقة بنسبة استرجاع ${accuracyPercentage}%. واصل التدريب يومياً لتثبيت المفردات!`;
-    const feedbackEn = `Great job! You reviewed ${total} flashcards with ${accuracyPercentage}% recall. Keep your streak going!`;
+    const dict = getDictionary(params.locale || "ar");
+    const feedback = dict.vocabularySrsStudio.feedbackTemplate
+      .replace("{total}", String(total))
+      .replace("{accuracy}", String(accuracyPercentage));
 
     return {
       studentId: params.studentId,
@@ -65,8 +68,7 @@ export class VocabularyService {
       xpAwarded,
       newTotalXp,
       streakDays: overview.reviewStreakDays,
-      feedbackAr,
-      feedbackEn,
+      feedback,
     };
   }
 

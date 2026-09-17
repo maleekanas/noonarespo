@@ -14,6 +14,7 @@ import {
   WifiOff,
 } from "lucide-react";
 import type { Channel } from "pusher-js";
+import { getDictionary } from "@/lib/localization";
 
 interface Point {
   x: number; // normalized 0..1 (fraction of canvas width) -- NOT raw pixels,
@@ -64,8 +65,9 @@ export function InteractiveWhiteboard({
   const flushTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const remoteStrokeLastPointRef = useRef<Map<string, Point>>(new Map());
 
-  const isAr = locale === "ar";
   const isLive = Boolean(sessionId && realtimeConfigured);
+  const dict = getDictionary(locale);
+  const iw = dict.interactiveWhiteboard;
 
   const colorPalette = [
     { name: "Indigo", value: "#4F46E5" },
@@ -309,7 +311,7 @@ export function InteractiveWhiteboard({
             }`}
           >
             <Pen className="w-3.5 h-3.5" />
-            <span>{isAr ? "القلم" : "Pen"}</span>
+            <span>{iw.penLabel}</span>
           </button>
 
           <button
@@ -322,7 +324,7 @@ export function InteractiveWhiteboard({
             }`}
           >
             <Eraser className="w-3.5 h-3.5" />
-            <span>{isAr ? "الممحاة" : "Eraser"}</span>
+            <span>{iw.eraserLabel}</span>
           </button>
 
           {/* Stroke Width Selector */}
@@ -378,26 +380,10 @@ export function InteractiveWhiteboard({
               className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold ${
                 isLive ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-slate-100 text-slate-500 border border-slate-200"
               }`}
-              title={
-                isLive
-                  ? isAr
-                    ? "السبورة متزامنة مباشرة مع جميع المشاركين"
-                    : "Whiteboard is live-synced with everyone in class"
-                  : isAr
-                    ? "المزامنة الفورية غير مفعّلة بعد -- الرسم يظهر لك فقط"
-                    : "Live sync isn't connected yet -- drawing is only visible to you"
-              }
+              title={isLive ? iw.liveTooltip : iw.soloTooltip}
             >
               {isLive ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
-              <span>
-                {isLive
-                  ? isAr
-                    ? "مباشر مع الفصل"
-                    : "Live with class"
-                  : isAr
-                    ? "وضع فردي"
-                    : "Solo mode"}
-              </span>
+              <span>{isLive ? iw.liveWithClassLabel : iw.soloModeLabel}</span>
             </span>
           )}
 
@@ -410,30 +396,30 @@ export function InteractiveWhiteboard({
                 ? "bg-purple-50 text-purple-700 border-purple-200"
                 : "bg-white text-slate-600 border-slate-200 hover:bg-slate-100"
             }`}
-            title={isAr ? "إظهار/إخفاء أسطر كراسة الخط العربي" : "Toggle Arabic Calligraphy Notebook Ruling"}
+            title={iw.ruledLinesTooltip}
           >
             {showCalligraphyGuide ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-            <span>{isAr ? "مسطرة كراسة الخط" : "Ruled Lines"}</span>
+            <span>{iw.ruledLinesLabel}</span>
           </button>
 
           <button
             type="button"
             onClick={handleClear}
             className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-white hover:bg-rose-50 text-rose-600 border border-slate-200 rounded-xl font-medium transition-colors"
-            title={isAr ? "مسح السبورة" : "Clear"}
+            title={iw.clearTooltip}
           >
             <RotateCcw className="w-3.5 h-3.5" />
-            <span>{isAr ? "مسح" : "Clear"}</span>
+            <span>{iw.clearLabel}</span>
           </button>
 
           <button
             type="button"
             onClick={downloadCanvas}
             className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-semibold shadow-xs transition-colors"
-            title={isAr ? "تنزيل الرسمة" : "Save"}
+            title={iw.saveTooltip}
           >
             <Download className="w-3.5 h-3.5" />
-            <span>{isAr ? "حفظ" : "Save"}</span>
+            <span>{iw.saveLabel}</span>
           </button>
         </div>
       </div>
@@ -473,11 +459,7 @@ export function InteractiveWhiteboard({
 
       {/* Footer Info */}
       <div className="p-2.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-[11px] text-slate-500 px-4">
-        <span>
-          {isAr
-            ? "✍️ سبورة خط تفاعلية: تدرب على كتابة الحروف العربية على السطر بدقة"
-            : "✍️ Interactive Calligraphy Board: Practice Arabic letter penmanship on ruled lines"}
-        </span>
+        <span>{iw.footerDescription}</span>
         <span className="font-mono text-[10px] text-slate-400">Canvas 2D • Touch-Ready</span>
       </div>
     </div>

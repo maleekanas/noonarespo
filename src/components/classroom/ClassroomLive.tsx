@@ -20,6 +20,7 @@ import {
   isRealtimeBrowserConfigured,
   type PresenceChannel,
 } from "@/lib/integrations/realtime/pusherBrowserClient";
+import { getDictionary } from "@/lib/localization";
 
 interface RosterEntry {
   studentId: string;
@@ -77,6 +78,8 @@ export function ClassroomLive({
 }: ClassroomLiveProps) {
   const isAr = locale === "ar";
   const isLive = realtimeConfigured && isRealtimeBrowserConfigured();
+  const dict = getDictionary(locale);
+  const cl = dict.classroomLive;
 
   const [channel, setChannel] = useState<PresenceChannel | null>(null);
   const [onlineIds, setOnlineIds] = useState<Set<string>>(new Set());
@@ -126,13 +129,11 @@ export function ClassroomLive({
         pushToast(`${evt.emoji} ${evt.participantName}`);
       } else if (evt.type === "star-awarded") {
         if (evt.studentId === viewerParticipantId) {
-          pushToast(isAr ? "⭐ حصلت على نجمة تشجيعية! (+15 XP)" : "⭐ You earned a participation star! (+15 XP)");
+          pushToast(cl.starEarnedByYouToast);
         } else {
           const student = roster.find((r) => r.studentId === evt.studentId);
           pushToast(
-            `⭐ ${student ? `${student.firstName} ${student.lastName}` : (isAr ? "طالب" : "A student")} ${
-              isAr ? "حصل على نجمة" : "earned a star"
-            }`
+            `⭐ ${student ? `${student.firstName} ${student.lastName}` : cl.aStudentLabel} ${cl.starEarnedByOtherSuffix}`
           );
         }
       }
@@ -180,7 +181,7 @@ export function ClassroomLive({
     try {
       const result = await onAwardStar(studentId);
       if (result.ok) {
-        pushToast(isAr ? `تم إرسال ⭐ إلى ${name}` : `Sent ⭐ to ${name}`);
+        pushToast(cl.sentStarTemplate.replace("{name}", name));
       } else {
         pushToast(result.message);
       }
@@ -201,9 +202,9 @@ export function ClassroomLive({
     function tick() {
       const now = Date.now();
       if (now < start) {
-        setClockLabel(isAr ? `تبدأ خلال ${formatClock((start - now) / 1000)}` : `Starts in ${formatClock((start - now) / 1000)}`);
+        setClockLabel(cl.startsInTemplate.replace("{time}", formatClock((start - now) / 1000)));
       } else if (now > end) {
-        setClockLabel(isAr ? "انتهت الحصة" : "Session ended");
+        setClockLabel(cl.sessionEndedLabel);
       } else {
         setClockLabel(`${formatClock((now - start) / 1000)} / ${formatClock(totalSeconds)}`);
       }
@@ -212,7 +213,8 @@ export function ClassroomLive({
     tick();
     const interval = setInterval(tick, 1000);
     return () => clearInterval(interval);
-  }, [startTimeUtc, endTimeUtc, isAr]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [startTimeUtc, endTimeUtc]);
 
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col">
@@ -224,7 +226,7 @@ export function ClassroomLive({
             className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white px-3 py-1.5 bg-slate-800 rounded-xl transition-colors"
           >
             <ArrowRight className={`w-3.5 h-3.5 ${isAr ? "" : "rotate-180"}`} />
-            <span>{isAr ? "مغادرة الفصل" : "Exit Classroom"}</span>
+            <span>{cl.exitClassroomLabel}</span>
           </Link>
 
           <div className="h-4 w-px bg-slate-700" />
@@ -235,7 +237,7 @@ export function ClassroomLive({
               <h1 className="font-bold text-sm sm:text-base text-white">{classGroupName}</h1>
             </div>
             <div className="text-[11px] text-slate-400">
-              {isAr ? `المعلم: ${teacherName}` : `Teacher: ${teacherName}`}
+              {cl.teacherLabelTemplate.replace("{name}", teacherName)}
             </div>
           </div>
         </div>
@@ -252,22 +254,14 @@ export function ClassroomLive({
                 ? "bg-emerald-950/60 text-emerald-300 border-emerald-800"
                 : "bg-slate-800 text-slate-400 border-slate-700"
             }`}
-            title={
-              isLive
-                ? isAr
-                  ? "متزامن مباشرة مع الفصل"
-                  : "Live-synced with the class"
-                : isAr
-                  ? "المزامنة الفورية غير متصلة"
-                  : "Live sync isn't connected"
-            }
+            title={isLive ? cl.liveSyncedTooltip : cl.notLiveSyncedTooltip}
           >
             {isLive ? <Wifi className="w-3.5 h-3.5" /> : <WifiOff className="w-3.5 h-3.5" />}
           </span>
 
           <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-950/80 text-blue-300 border border-blue-800 rounded-lg text-xs font-semibold">
             <ShieldCheck className="w-3.5 h-3.5 text-blue-400" />
-            <span className="hidden md:inline">{isAr ? "فصل آمن وخاضع للإشراف" : "COPPA Supervised"}</span>
+            <span className="hidden md:inline">{cl.coppaSupervisedLabel}</span>
           </span>
         </div>
       </header>
@@ -291,9 +285,9 @@ export function ClassroomLive({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-xs font-bold text-slate-300">
               <span className="px-2 py-0.5 bg-indigo-600 text-white rounded-md text-[10px]">
-                {isAr ? "السبورة الرقمية التفاعلية" : "Interactive Whiteboard"}
+                {cl.interactiveWhiteboardBadge}
               </span>
-              <span>{isAr ? "كتابة الحروف وتمرين الخط" : "Calligraphy & Lesson Canvas"}</span>
+              <span>{cl.calligraphyLessonLabel}</span>
             </div>
 
             {meetingUrl && (
@@ -304,7 +298,7 @@ export function ClassroomLive({
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl shadow-sm transition-colors"
               >
                 <Video className="w-3.5 h-3.5" />
-                <span>{isAr ? "الانضمام إلى مكالمة الفيديو المباشرة" : "Join Live Video Call"}</span>
+                <span>{cl.joinLiveVideoLabel}</span>
               </a>
             )}
           </div>
@@ -327,7 +321,7 @@ export function ClassroomLive({
                   type="button"
                   onClick={toggleHand}
                   disabled={!isLive}
-                  title={!isLive ? (isAr ? "المزامنة الفورية غير متصلة" : "Live sync isn't connected") : undefined}
+                  title={!isLive ? cl.notLiveSyncedTooltip : undefined}
                   className={`inline-flex items-center gap-1.5 px-3 py-2 font-bold text-xs rounded-xl shadow-sm transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
                     myHandRaised
                       ? "bg-amber-400 text-slate-950"
@@ -335,22 +329,14 @@ export function ClassroomLive({
                   }`}
                 >
                   <Hand className="w-4 h-4" />
-                  <span>
-                    {myHandRaised
-                      ? isAr
-                        ? "اليد مرفوعة ✋ (اضغط للخفض)"
-                        : "Hand Raised ✋ (tap to lower)"
-                      : isAr
-                        ? "رفع اليد للمشاركة ✋"
-                        : "Raise Hand ✋"}
-                  </span>
+                  <span>{myHandRaised ? cl.handRaisedLabel : cl.raiseHandLabel}</span>
                 </button>
               )}
 
               {viewerRole === "TEACHER" && raisedHands.size > 0 && (
                 <div className="flex items-center gap-1.5 flex-wrap">
                   <span className="text-[11px] text-amber-300 font-semibold">
-                    {isAr ? "أيدٍ مرفوعة:" : "Hands raised:"}
+                    {cl.handsRaisedLabel}
                   </span>
                   {Array.from(raisedHands.entries()).map(([participantId, name]) => (
                     <span
@@ -365,14 +351,14 @@ export function ClassroomLive({
             </div>
 
             <div className="flex items-center gap-2 text-xs">
-              <span className="text-slate-400 text-[11px]">{isAr ? "تفاعل سريع:" : "Quick Reactions:"}</span>
+              <span className="text-slate-400 text-[11px]">{cl.quickReactionsLabel}</span>
               {REACTIONS.map((emoji) => (
                 <button
                   key={emoji}
                   type="button"
                   disabled={!isLive}
                   onClick={() => sendSignal({ type: "reaction", emoji })}
-                  title={!isLive ? (isAr ? "المزامنة الفورية غير متصلة" : "Live sync isn't connected") : undefined}
+                  title={!isLive ? cl.notLiveSyncedTooltip : undefined}
                   className="px-2 py-1 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-200 text-sm transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                 >
                   {emoji}
@@ -389,12 +375,12 @@ export function ClassroomLive({
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
                 <Video className="w-3.5 h-3.5 text-indigo-400" />
-                {isAr ? "المعلم" : "Teacher"}
+                {cl.teacherCardLabel}
               </span>
               <span
                 className={`w-2 h-2 rounded-full ${isLive && onlineIds.has(teacherId) ? "bg-emerald-500" : "bg-slate-600"}`}
                 aria-hidden="true"
-                title={isLive ? (onlineIds.has(teacherId) ? (isAr ? "متصل" : "Online") : (isAr ? "غير متصل" : "Offline")) : undefined}
+                title={isLive ? (onlineIds.has(teacherId) ? cl.onlineLabel : cl.offlineLabel) : undefined}
               />
             </div>
 
@@ -404,9 +390,7 @@ export function ClassroomLive({
               </div>
               <div className="text-xs font-bold text-white">{teacherName}</div>
               <div className="text-[10px] text-slate-400 mt-1 px-2">
-                {isAr
-                  ? "الصوت والفيديو المباشر عبر رابط الاجتماع أعلاه"
-                  : "Live audio & video happens on the call link above"}
+                {cl.teacherLiveNote}
               </div>
             </div>
           </div>
@@ -416,17 +400,17 @@ export function ClassroomLive({
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
                 <Users className="w-3.5 h-3.5 text-blue-400" />
-                {isAr ? `الطلاب المسجلون (${roster.length})` : `Enrolled Students (${roster.length})`}
+                {cl.enrolledStudentsTemplate.replace("{count}", String(roster.length))}
               </span>
               {isLive && (
-                <span className="text-[10px] text-emerald-400">{isAr ? "متصل الآن" : "online now"}</span>
+                <span className="text-[10px] text-emerald-400">{cl.onlineNowLabel}</span>
               )}
             </div>
 
             <div className="space-y-2">
               {roster.length === 0 && (
                 <p className="text-[11px] text-slate-500 py-2">
-                  {isAr ? "لا يوجد طلاب مسجلون في هذا الفصل بعد." : "No students enrolled in this class yet."}
+                  {cl.noStudentsEnrolledLabel}
                 </p>
               )}
               {roster.map((s) => {
@@ -441,11 +425,11 @@ export function ClassroomLive({
                     <div className="flex items-center gap-2">
                       <span
                         className={`w-2 h-2 rounded-full shrink-0 ${online ? "bg-emerald-500" : "bg-slate-700"}`}
-                        title={isLive ? (online ? (isAr ? "متصل" : "Online") : (isAr ? "غير متصل" : "Offline")) : undefined}
+                        title={isLive ? (online ? cl.onlineLabel : cl.offlineLabel) : undefined}
                       />
                       <span className={isSelf ? "font-bold text-brand-400" : "text-slate-300"}>
                         {s.firstName} {s.lastName}
-                        {isSelf ? ` (${isAr ? "أنت" : "You"})` : ""}
+                        {isSelf ? ` (${cl.youSuffixLabel})` : ""}
                       </span>
                     </div>
 
@@ -460,7 +444,7 @@ export function ClassroomLive({
                           type="button"
                           disabled={awarding === s.studentId}
                           onClick={() => handleAwardStar(s.studentId, `${s.firstName} ${s.lastName}`)}
-                          title={isAr ? "منح نجمة تشجيعية (+15 XP)" : "Award participation star (+15 XP)"}
+                          title={cl.awardStarTooltip}
                           className="p-1 rounded-lg bg-amber-950/40 hover:bg-amber-900/60 text-amber-400 border border-amber-900/60 transition-colors disabled:opacity-40"
                         >
                           <Star className="w-3 h-3" />
@@ -478,24 +462,20 @@ export function ClassroomLive({
             <div className="bg-gradient-to-br from-purple-950 to-indigo-950 border border-purple-800/80 rounded-2xl p-4 text-center space-y-1.5">
               <div className="flex items-center justify-center gap-1.5 text-amber-400 text-xs font-bold">
                 <Star className="w-4 h-4 fill-amber-400" />
-                <span>{isAr ? "تحفيز المشاركة الفورية" : "Participation Rewards"}</span>
+                <span>{cl.participationRewardsHeading}</span>
               </div>
               <p className="text-[11px] text-purple-200">
-                {isAr
-                  ? "قد يمنحك المعلم نجمة تشجيعية فورية (+15 XP) على المشاركة الجيدة."
-                  : "Your teacher can award you a live participation star (+15 XP) for great engagement."}
+                {cl.participationRewardsStudentText}
               </p>
             </div>
           ) : (
             <div className="bg-gradient-to-br from-purple-950 to-indigo-950 border border-purple-800/80 rounded-2xl p-4 text-center space-y-1.5">
               <div className="flex items-center justify-center gap-1.5 text-amber-400 text-xs font-bold">
                 <Sparkles className="w-4 h-4" />
-                <span>{isAr ? "منح النجوم" : "Awarding Stars"}</span>
+                <span>{cl.awardingStarsHeading}</span>
               </div>
               <p className="text-[11px] text-purple-200">
-                {isAr
-                  ? "اضغط أيقونة النجمة بجانب اسم الطالب في القائمة لمنحه +15 XP فوراً."
-                  : "Tap the star icon next to a student's name above to award them +15 XP instantly."}
+                {cl.awardingStarsTeacherText}
               </p>
             </div>
           )}

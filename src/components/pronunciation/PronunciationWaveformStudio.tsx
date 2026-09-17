@@ -19,6 +19,7 @@ import {
   MinimalPair,
   PhonemeSampleWord,
 } from "@/server/repositories/PronunciationRepository";
+import { getDictionary } from "@/lib/localization";
 
 interface PronunciationStudioProps {
   phonemes: PhonemeItem[];
@@ -35,8 +36,7 @@ interface PronunciationStudioProps {
     isPassed: boolean;
     xpAwarded: number;
     newTotalXp: number;
-    feedbackAr: string;
-    feedbackEn: string;
+    feedback: string;
   }>;
 }
 
@@ -47,6 +47,8 @@ export function PronunciationWaveformStudio({
   onEvaluate,
 }: PronunciationStudioProps) {
   const isAr = locale === "ar";
+  const dict = getDictionary(locale);
+  const pws = dict.pronunciationWaveformStudio;
   const [activeTab, setActiveTab] = useState<"PHONEMES" | "MINIMAL_PAIRS">("PHONEMES");
   const [selectedPhonemeId, setSelectedPhonemeId] = useState<string>(
     phonemes[0]?.id || "phoneme-dhad"
@@ -70,8 +72,7 @@ export function PronunciationWaveformStudio({
     isPassed: boolean;
     xpAwarded: number;
     newTotalXp: number;
-    feedbackAr: string;
-    feedbackEn: string;
+    feedback: string;
   } | null>(null);
 
   // Simulated Waveform Data (0-100 values)
@@ -187,7 +188,7 @@ export function PronunciationWaveformStudio({
           }`}
         >
           <Activity className="w-4 h-4" />
-          <span>{isAr ? "مخارج الحروف والمطابقة الصوتية" : "Makharij & Waveform Studio"}</span>
+          <span>{pws.phonemesTabLabel}</span>
         </button>
 
         <button
@@ -200,7 +201,7 @@ export function PronunciationWaveformStudio({
           }`}
         >
           <Zap className="w-4 h-4" />
-          <span>{isAr ? "الأزواج المتشابهة (المعنى والصوت)" : "Minimal Sound Pairs"}</span>
+          <span>{pws.minimalPairsTabLabel}</span>
         </button>
       </div>
 
@@ -211,7 +212,7 @@ export function PronunciationWaveformStudio({
             <div className="bg-white rounded-3xl border border-slate-200 p-5 shadow-sm">
               <h3 className="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
                 <Bookmark className="w-4 h-4 text-brand-600" />
-                <span>{isAr ? "اختر الحرف الصوتي المستهدف" : "Select Target Phoneme"}</span>
+                <span>{pws.selectPhonemeHeading}</span>
               </h3>
 
               <div className="grid grid-cols-3 gap-3">
@@ -240,8 +241,8 @@ export function PronunciationWaveformStudio({
                         }`}
                       >
                         {item.difficulty === "CHALLENGING"
-                          ? (isAr ? "حرف مائز" : "Special")
-                          : (isAr ? "مفخم" : "Heavy")}
+                          ? pws.difficultySpecialBadge
+                          : pws.difficultyHeavyBadge}
                       </span>
                     </button>
                   );
@@ -253,7 +254,7 @@ export function PronunciationWaveformStudio({
             <div className="bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200 rounded-3xl p-5 shadow-sm">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-xs font-bold text-emerald-800 uppercase tracking-wider bg-emerald-100 px-2.5 py-1 rounded-full">
-                  {isAr ? "مخرج الحرف في الفم" : "Makhraj (Articulation Point)"}
+                  {pws.makhrajCardLabel}
                 </span>
                 <button
                   type="button"
@@ -261,7 +262,7 @@ export function PronunciationWaveformStudio({
                   className="text-xs text-emerald-700 hover:text-emerald-900 font-bold flex items-center gap-1"
                 >
                   <HelpCircle className="w-4 h-4" />
-                  <span>{showMakhrajTips ? (isAr ? "إخفاء" : "Hide") : (isAr ? "تفاصيل" : "Details")}</span>
+                  <span>{showMakhrajTips ? pws.hideLabel : pws.detailsLabel}</span>
                 </button>
               </div>
 
@@ -272,7 +273,7 @@ export function PronunciationWaveformStudio({
 
               <div className="space-y-2">
                 <div className="text-xs font-bold text-emerald-900 mb-1">
-                  {isAr ? "نصائح الإتقان الذهبية:" : "Pro Articulation Tips:"}
+                  {pws.tipsHeading}
                 </div>
                 {(isAr ? activePhoneme.tipsAr : activePhoneme.tipsEn).map((tip, idx) => (
                   <div key={idx} className="flex items-start gap-2 text-xs text-emerald-800">
@@ -296,12 +297,12 @@ export function PronunciationWaveformStudio({
                   </div>
                   <div>
                     <h2 className="text-2xl font-black text-slate-900">
-                      {isAr ? `حرف الـ${activePhoneme.letterNameAr}` : `Letter ${activePhoneme.letterNameEn} (${activePhoneme.letter})`}
+                      {pws.letterTitleTemplate
+                        .replace("{name}", isAr ? activePhoneme.letterNameAr : activePhoneme.letterNameEn)
+                        .replace("{letter}", activePhoneme.letter)}
                     </h2>
                     <p className="text-xs text-slate-500 mt-0.5">
-                      {isAr
-                        ? "استمع للنموذج الصوتي النموذجي ثم سجل صوتك للمطابقة"
-                        : "Listen to the native teacher model then record to test your pitch match"}
+                      {pws.studioSubtitle}
                     </p>
                   </div>
                 </div>
@@ -317,14 +318,14 @@ export function PronunciationWaveformStudio({
                   }`}
                 >
                   <Volume2 className="w-5 h-5 text-amber-300" />
-                  <span>{isTeacherPlaying ? (isAr ? "جارِ الاستماع..." : "Playing Model...") : (isAr ? "استمع لصوت المعلم 🔊" : "Listen to Model 🔊")}</span>
+                  <span>{isTeacherPlaying ? pws.playingModelLabel : pws.listenToModelButton}</span>
                 </button>
               </div>
 
               {/* Sample Words with Harakat */}
               <div className="py-6 border-b border-slate-100">
                 <div className="text-xs font-bold text-slate-500 mb-3 flex items-center gap-2">
-                  <span>{isAr ? "تدرب على الحرف بالحركات المختلفة:" : "Practice with Arabic Vowels (Harakat):"}</span>
+                  <span>{pws.practiceVowelsHeading}</span>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {activePhoneme.sampleWords.map((wordItem, idx) => {
@@ -359,7 +360,7 @@ export function PronunciationWaveformStudio({
                   <div className="flex items-center justify-between mb-3 text-xs">
                     <div className="flex items-center gap-2 font-bold text-amber-400">
                       <Volume2 className="w-4 h-4" />
-                      <span>{isAr ? "الموجة الصوتية للنموذج (المعلم):" : "Reference Teacher Waveform:"}</span>
+                      <span>{pws.referenceWaveformLabel}</span>
                     </div>
                     <span className="text-slate-400 font-mono">44.1 kHz • Clean Voice</span>
                   </div>
@@ -384,17 +385,17 @@ export function PronunciationWaveformStudio({
                   <div className="flex items-center justify-between mb-3 text-xs">
                     <div className="flex items-center gap-2 font-bold text-rose-400">
                       <Mic className="w-4 h-4" />
-                      <span>{isAr ? "موجتك الصوتية (الطالب):" : "Your Voice Waveform:"}</span>
+                      <span>{pws.yourWaveformLabel}</span>
                     </div>
                     <div className="font-mono text-slate-400">
                       {isRecording ? (
                         <span className="text-rose-400 font-bold animate-pulse">
-                          ● {isAr ? "جارِ التسجيل..." : "Recording..."} {recordingSeconds}s
+                          ● {pws.recordingLabel} {recordingSeconds}s
                         </span>
                       ) : studentWaveform.length > 0 ? (
-                        <span className="text-emerald-400 font-bold">✓ {isAr ? "تم الالتقاط" : "Captured"}</span>
+                        <span className="text-emerald-400 font-bold">✓ {pws.capturedLabel}</span>
                       ) : (
-                        <span>{isAr ? "بانتظار التسجيل" : "Awaiting input"}</span>
+                        <span>{pws.awaitingInputLabel}</span>
                       )}
                     </div>
                   </div>
@@ -412,7 +413,7 @@ export function PronunciationWaveformStudio({
                       ))
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-xs text-slate-500 italic">
-                        {isAr ? "اضغط على زر التسجيل وتحدث بصوت واضح" : "Click 'Start Recording' and speak clearly"}
+                        {pws.recordPromptPlaceholder}
                       </div>
                     )}
                   </div>
@@ -434,12 +435,12 @@ export function PronunciationWaveformStudio({
                   {isRecording ? (
                     <>
                       <MicOff className="w-5 h-5" />
-                      <span>{isAr ? "إيقاف التسجيل والتحليل ⏹️" : "Stop & Analyze Audio ⏹️"}</span>
+                      <span>{pws.stopAnalyzeButton}</span>
                     </>
                   ) : (
                     <>
                       <Mic className="w-5 h-5" />
-                      <span>{isAr ? "ابدأ تسجيل نطقك 🎙️" : "Start Voice Recording 🎙️"}</span>
+                      <span>{pws.startRecordingButton}</span>
                     </>
                   )}
                 </button>
@@ -454,7 +455,7 @@ export function PronunciationWaveformStudio({
                     className="py-4 px-5 rounded-2xl border border-slate-200 text-slate-700 hover:bg-slate-100 font-bold text-sm flex items-center justify-center gap-2 transition-colors"
                   >
                     <RotateCcw className="w-4 h-4" />
-                    <span>{isAr ? "إعادة المحاولة" : "Reset"}</span>
+                    <span>{pws.resetButton}</span>
                   </button>
                 )}
               </div>
@@ -463,7 +464,7 @@ export function PronunciationWaveformStudio({
               {isAnalyzing && (
                 <div className="mt-6 p-4 bg-brand-50 border border-brand-200 rounded-2xl flex items-center justify-center gap-3 text-brand-800 font-bold animate-pulse text-sm">
                   <Activity className="w-5 h-5 animate-spin" />
-                  <span>{isAr ? "جارِ تحليل الترددات ومطابقة مخارج الحروف..." : "Analyzing frequencies and phonetic alignment..."}</span>
+                  <span>{pws.analyzingLabel}</span>
                 </div>
               )}
 
@@ -478,14 +479,14 @@ export function PronunciationWaveformStudio({
                       <div>
                         <div className="flex items-center gap-2">
                           <h4 className="text-xl font-black text-slate-900">
-                            {isAr ? "نتيجة تقييم النطق" : "Pronunciation Assessment"}
+                            {pws.assessmentHeading}
                           </h4>
                           <span className="bg-emerald-100 text-emerald-800 text-xs font-black px-2.5 py-0.5 rounded-full">
-                            {evaluationResult.scorePercentage}% {isAr ? "مطابقة" : "Match"}
+                            {evaluationResult.scorePercentage}% {pws.matchLabel}
                           </span>
                         </div>
                         <p className="text-xs md:text-sm text-emerald-900 mt-1 font-medium">
-                          {isAr ? evaluationResult.feedbackAr : evaluationResult.feedbackEn}
+                          {evaluationResult.feedback}
                         </p>
                       </div>
                     </div>
@@ -493,7 +494,7 @@ export function PronunciationWaveformStudio({
                     {/* XP Awarded badge */}
                     <div className="flex items-center gap-2 bg-amber-100 border border-amber-300 px-4 py-2 rounded-2xl text-amber-900 font-black text-sm shrink-0">
                       <Sparkles className="w-4 h-4 text-amber-600" />
-                      <span>+{evaluationResult.xpAwarded} XP {isAr ? "مكتسبة!" : "Earned!"}</span>
+                      <span>+{evaluationResult.xpAwarded} XP {pws.earnedLabel}</span>
                     </div>
                   </div>
 
@@ -501,7 +502,7 @@ export function PronunciationWaveformStudio({
                   <div className="grid grid-cols-2 gap-4 mt-5 pt-5 border-t border-emerald-200/60">
                     <div className="bg-white/80 backdrop-blur rounded-2xl p-3 border border-emerald-100">
                       <div className="text-xs text-slate-500 font-bold mb-1">
-                        {isAr ? "وضوح الصوت ومخارج الهواء:" : "Acoustic Clarity:"}
+                        {pws.clarityLabel}
                       </div>
                       <div className="flex items-center gap-2">
                         <div className="flex-1 bg-slate-100 h-2.5 rounded-full overflow-hidden">
@@ -518,7 +519,7 @@ export function PronunciationWaveformStudio({
 
                     <div className="bg-white/80 backdrop-blur rounded-2xl p-3 border border-emerald-100">
                       <div className="text-xs text-slate-500 font-bold mb-1">
-                        {isAr ? "دقة النغمة والرنين (Pitch):" : "Pitch Resonance Match:"}
+                        {pws.pitchLabel}
                       </div>
                       <div className="flex items-center gap-2">
                         <div className="flex-1 bg-slate-100 h-2.5 rounded-full overflow-hidden">
@@ -541,7 +542,7 @@ export function PronunciationWaveformStudio({
                       onClick={handleNextPhoneme}
                       className="px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs rounded-xl shadow-md flex items-center gap-1.5 transition-colors"
                     >
-                      <span>{isAr ? "الانتقال للحرف التالي ➡️" : "Next Letter ➡️"}</span>
+                      <span>{pws.nextLetterButton}</span>
                     </button>
                   </div>
                 </div>
@@ -556,12 +557,10 @@ export function PronunciationWaveformStudio({
         <div className="space-y-6">
           <div className="bg-gradient-to-r from-brand-50 via-sky-50 to-indigo-50 border border-brand-200 rounded-3xl p-6">
             <h3 className="text-lg font-black text-brand-950 mb-1">
-              {isAr ? "الأزواج اللغوية المتشابهة: كيف يغير الحرف معنى الكلمة؟" : "Minimal Sound Pairs: How One Letter Changes Meaning"}
+              {pws.minimalPairsHeading}
             </h3>
             <p className="text-xs md:text-sm text-brand-800 leading-relaxed">
-              {isAr
-                ? "في اللغة العربية، استبدال حرف مرقق بآخر مفخم قد يغير معنى الكلمة بالكامل (مثل: سَيْف ⚔️ وصَيْف ☀️، أَوْ كَلْب 🐕 وقَلْب ❤️). استمع وتدرب على التمييز بينهما."
-                : "In Arabic, confusing a light phoneme with an emphatic one completely changes the meaning (e.g. Sayf 'sword' vs Sayf 'summer', Kalb 'dog' vs Qalb 'heart'). Listen and master the difference."}
+              {pws.minimalPairsSubtitle}
             </p>
           </div>
 
@@ -574,7 +573,7 @@ export function PronunciationWaveformStudio({
                 <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
                   <div className="flex items-center gap-2">
                     <span className="text-2xl font-black text-brand-600">{pair.phonemeA}</span>
-                    <span className="text-xs font-bold text-slate-400">مُقَابِل</span>
+                    <span className="text-xs font-bold text-slate-400">{pws.vsLabel}</span>
                     <span className="text-2xl font-black text-rose-600">{pair.phonemeB}</span>
                   </div>
                   <span className="text-xs bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full font-bold">
@@ -595,7 +594,7 @@ export function PronunciationWaveformStudio({
                       className="w-full py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors"
                     >
                       <Volume2 className="w-3.5 h-3.5" />
-                      <span>{isAr ? "استمع" : "Listen"}</span>
+                      <span>{pws.listenButton}</span>
                     </button>
                   </div>
 
@@ -610,7 +609,7 @@ export function PronunciationWaveformStudio({
                       className="w-full py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors"
                     >
                       <Volume2 className="w-3.5 h-3.5" />
-                      <span>{isAr ? "استمع" : "Listen"}</span>
+                      <span>{pws.listenButton}</span>
                     </button>
                   </div>
                 </div>
@@ -618,7 +617,7 @@ export function PronunciationWaveformStudio({
                 {/* Linguistic Explanation */}
                 <div className="bg-slate-50 p-3.5 rounded-2xl text-xs text-slate-700 leading-relaxed border border-slate-100">
                   <span className="font-bold text-slate-900 block mb-0.5">
-                    {isAr ? "الفارق الصوتي الدقيق:" : "Phonetic Distinction:"}
+                    {pws.distinctionLabel}
                   </span>
                   {isAr ? pair.distinctionExplanationAr : pair.distinctionExplanationEn}
                 </div>

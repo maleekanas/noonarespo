@@ -42,6 +42,7 @@ export default async function StudentFlashcardsPage({
       studentId,
       totalCards: params.totalCards,
       againCount: params.againCount,
+      locale,
     });
   }
 

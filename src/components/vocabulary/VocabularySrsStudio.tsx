@@ -14,6 +14,7 @@ import {
   StudentSrsOverview,
 } from "@/server/repositories/VocabularyRepository";
 import { SrsSessionResult } from "@/server/services/VocabularyService";
+import { getDictionary } from "@/lib/localization";
 
 interface VocabularySrsStudioProps {
   initialCards: VocabularyFlashcard[];
@@ -37,6 +38,8 @@ export function VocabularySrsStudio({
   onCompleteSession,
 }: VocabularySrsStudioProps) {
   const isAr = locale === "ar";
+  const dict = getDictionary(locale);
+  const vs = dict.vocabularySrsStudio;
   const [cards] = useState<VocabularyFlashcard[]>(initialCards);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [isFlipped, setIsFlipped] = useState<boolean>(false);
@@ -123,10 +126,10 @@ export function VocabularySrsStudio({
           </div>
           <div>
             <div className="text-xs text-slate-500 font-bold">
-              {isAr ? "شعلة الحماس" : "Review Streak"}
+              {vs.reviewStreakLabel}
             </div>
             <div className="text-base font-black text-slate-900">
-              {overview.reviewStreakDays} {isAr ? "أيام" : "days"}
+              {overview.reviewStreakDays} {vs.daysUnit}
             </div>
           </div>
         </div>
@@ -137,10 +140,10 @@ export function VocabularySrsStudio({
           </div>
           <div>
             <div className="text-xs text-slate-500 font-bold">
-              {isAr ? "متقنة تماماً" : "Mastered (SRS)"}
+              {vs.masteredLabel}
             </div>
             <div className="text-base font-black text-slate-900">
-              {overview.totalCardsMastered} {isAr ? "بطاقات" : "cards"}
+              {overview.totalCardsMastered} {vs.cardsUnit}
             </div>
           </div>
         </div>
@@ -151,10 +154,10 @@ export function VocabularySrsStudio({
           </div>
           <div>
             <div className="text-xs text-slate-500 font-bold">
-              {isAr ? "قيد التثبيت" : "Learning"}
+              {vs.learningLabel}
             </div>
             <div className="text-base font-black text-slate-900">
-              {overview.totalCardsLearning} {isAr ? "بطاقات" : "cards"}
+              {overview.totalCardsLearning} {vs.cardsUnit}
             </div>
           </div>
         </div>
@@ -165,7 +168,7 @@ export function VocabularySrsStudio({
           </div>
           <div>
             <div className="text-xs text-slate-500 font-bold">
-              {isAr ? "نسبة الاسترجاع" : "Retention Rate"}
+              {vs.retentionRateLabel}
             </div>
             <div className="text-base font-black text-slate-900">
               {overview.retentionRatePercentage}%
@@ -179,9 +182,9 @@ export function VocabularySrsStudio({
           {/* Progress Bar & Counter */}
           <div className="flex items-center justify-between text-xs text-slate-500 font-bold px-1">
             <span>
-              {isAr
-                ? `البطاقة ${currentIndex + 1} من ${cards.length}`
-                : `Card ${currentIndex + 1} of ${cards.length}`}
+              {vs.cardCounterTemplate
+                .replace("{current}", String(currentIndex + 1))
+                .replace("{total}", String(cards.length))}
             </span>
             <span>{progressPercent}%</span>
           </div>
@@ -227,7 +230,7 @@ export function VocabularySrsStudio({
                       ? "bg-white/10 hover:bg-white/20 text-white"
                       : "bg-slate-100 hover:bg-slate-200 text-slate-700"
                   } ${isPlayingAudio ? "ring-2 ring-amber-400 animate-pulse" : ""}`}
-                  title={isAr ? "استمع للنطق الصوتي" : "Play pronunciation"}
+                  title={vs.playPronunciationTooltip}
                 >
                   <Volume2 className="w-5 h-5 text-amber-400" />
                 </button>
@@ -241,7 +244,7 @@ export function VocabularySrsStudio({
 
                   {currentCard.rootLetters && (
                     <div className="text-xs font-mono font-bold text-slate-400">
-                      {isAr ? `جذر الكلمة: [ ${currentCard.rootLetters} ]` : `Root: [ ${currentCard.rootLetters} ]`}
+                      {vs.rootLabelTemplate.replace("{root}", currentCard.rootLetters)}
                     </div>
                   )}
 
@@ -281,9 +284,7 @@ export function VocabularySrsStudio({
               <div className="text-center pt-4 border-t border-slate-100/20 text-xs text-slate-400 font-medium flex items-center justify-center gap-1.5">
                 <RotateCw className="w-3.5 h-3.5" />
                 <span>
-                  {!isFlipped
-                    ? (isAr ? "انقر على البطاقة لإظهار المعنى والمثال" : "Click card to reveal meaning & example")
-                    : (isAr ? "انقر للعودة للوجه الأول" : "Click to flip back")}
+                  {!isFlipped ? vs.flipHintFront : vs.flipHintBack}
                 </span>
               </div>
             </div>
@@ -298,7 +299,7 @@ export function VocabularySrsStudio({
               className="w-full sm:flex-1 py-3 px-4 rounded-2xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs flex items-center justify-center gap-2 border border-rose-200 transition-colors"
             >
               <RotateCcw className="w-4 h-4 text-rose-600" />
-              <span>{isAr ? "لم أتذكرها (إعادة) 🔄" : "Again (Reset) 🔄"}</span>
+              <span>{vs.gradeAgainButton}</span>
             </button>
 
             <button
@@ -308,7 +309,7 @@ export function VocabularySrsStudio({
               className="w-full sm:flex-1 py-3 px-4 rounded-2xl bg-sky-50 hover:bg-sky-100 text-sky-700 font-bold text-xs flex items-center justify-center gap-2 border border-sky-200 transition-colors"
             >
               <CheckCircle2 className="w-4 h-4 text-sky-600" />
-              <span>{isAr ? "تذكرتها (جيد) 👍" : "Good (Advance) 👍"}</span>
+              <span>{vs.gradeGoodButton}</span>
             </button>
 
             <button
@@ -318,7 +319,7 @@ export function VocabularySrsStudio({
               className="w-full sm:flex-1 py-3 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md shadow-emerald-100 transition-colors"
             >
               <Sparkles className="w-4 h-4 text-amber-300" />
-              <span>{isAr ? "أعرفها بسهولة (سهل) 🌟" : "Easy (Master) 🌟"}</span>
+              <span>{vs.gradeEasyButton}</span>
             </button>
           </div>
         </div>
@@ -333,10 +334,10 @@ export function VocabularySrsStudio({
 
           <div>
             <h3 className="text-2xl font-black text-slate-900 mb-1">
-              {isAr ? "اكتملت جلسة التكرار المتباعد بنجاح! 🎉" : "SRS Study Session Cleared! 🎉"}
+              {vs.completionHeading}
             </h3>
             <p className="text-xs md:text-sm text-slate-600 max-w-md mx-auto">
-              {isAr ? sessionResult.feedbackAr : sessionResult.feedbackEn}
+              {sessionResult.feedback}
             </p>
           </div>
 
@@ -344,7 +345,7 @@ export function VocabularySrsStudio({
           <div className="grid grid-cols-2 gap-4 max-w-sm mx-auto">
             <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
               <div className="text-xs text-amber-800 font-bold mb-0.5">
-                {isAr ? "النقاط المكتسبة" : "XP Earned"}
+                {vs.xpEarnedLabel}
               </div>
               <div className="text-2xl font-black text-amber-900 flex items-center justify-center gap-1">
                 <Sparkles className="w-5 h-5 text-amber-500" />
@@ -354,7 +355,7 @@ export function VocabularySrsStudio({
 
             <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4">
               <div className="text-xs text-emerald-800 font-bold mb-0.5">
-                {isAr ? "دقة التذكر" : "Recall Accuracy"}
+                {vs.recallAccuracyLabel}
               </div>
               <div className="text-2xl font-black text-emerald-900">
                 {sessionResult.accuracyPercentage}%
@@ -368,14 +369,14 @@ export function VocabularySrsStudio({
               onClick={handleResetSession}
               className="py-3 px-6 bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs rounded-xl shadow-md transition-colors"
             >
-              <span>{isAr ? "مراجعة جولة أخرى 🔄" : "Practice Another Round 🔄"}</span>
+              <span>{vs.practiceAnotherButton}</span>
             </button>
 
             <a
               href={`/${locale}/student/roadmap`}
               className="py-3 px-6 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-colors"
             >
-              <span>{isAr ? "العودة إلى خريطة المسار 🗺️" : "Back to Quest Map 🗺️"}</span>
+              <span>{vs.backToQuestMapButton}</span>
             </a>
           </div>
         </div>

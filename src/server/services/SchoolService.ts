@@ -5,6 +5,7 @@ import {
   RosterStudentInput,
   OnboardedStudentAccount,
 } from "../repositories/SchoolRepository";
+import { getDictionary } from "@/lib/localization";
 
 export interface InstitutionalOverviewKPIs {
   totalPartners: number;
@@ -56,11 +57,11 @@ export class SchoolService {
     schoolId: string;
     students: RosterStudentInput[];
     ageGroup: AgeGroup;
+    locale?: string;
   }): Promise<{
     school: PartnerSchool;
     createdAccounts: OnboardedStudentAccount[];
-    messageAr: string;
-    messageEn: string;
+    feedback: string;
   }> {
     const { school, createdAccounts } = await schoolRepository.onboardRoster(
       params.schoolId,
@@ -68,11 +69,19 @@ export class SchoolService {
       params.ageGroup
     );
 
+    const locale = params.locale || "ar";
+    const isAr = locale === "ar";
+    const dict = getDictionary(locale);
+    const schoolName = isAr ? school.nameAr : school.nameEn;
+    const feedback = dict.schoolManagementClient.onboardFeedbackTemplate
+      .replace("{count}", String(createdAccounts.length))
+      .replace("{schoolName}", schoolName)
+      .replace("{seats}", String(school.licenseSeatsTotal - school.licenseSeatsUsed));
+
     return {
       school,
       createdAccounts,
-      messageAr: `تم إنشاء ${createdAccounts.length} حساب طالب حقيقي بنجاح في ${school.nameAr}. المقاعد المتبقية: ${school.licenseSeatsTotal - school.licenseSeatsUsed}`,
-      messageEn: `${createdAccounts.length} real student accounts were created in ${school.nameEn}. Remaining seats: ${school.licenseSeatsTotal - school.licenseSeatsUsed}`,
+      feedback,
     };
   }
 

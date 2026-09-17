@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { PartnerSchool, OnboardedStudentAccount } from "@/server/repositories/SchoolRepository";
 import { InstitutionalOverviewKPIs } from "@/server/services/SchoolService";
+import { getDictionary } from "@/lib/localization";
 
 type AgeGroup = "AGE_4_6" | "AGE_7_10" | "AGE_11_13" | "AGE_14_16";
 
@@ -28,8 +29,7 @@ interface SchoolManagementClientProps {
     ageGroup: AgeGroup;
   }) => Promise<{
     createdAccounts: OnboardedStudentAccount[];
-    messageAr: string;
-    messageEn: string;
+    feedback: string;
   }>;
 }
 
@@ -68,7 +68,8 @@ export function SchoolManagementClient({
   locale,
   onOnboardBatch,
 }: SchoolManagementClientProps) {
-  const isAr = locale === "ar";
+  const dict = getDictionary(locale);
+  const sm = dict.schoolManagementClient;
   const [schools, setSchools] = useState<PartnerSchool[]>(initialSchools);
   const [selectedSchool, setSelectedSchool] = useState<PartnerSchool | null>(null);
   const [rosterText, setRosterText] = useState<string>("");
@@ -122,7 +123,7 @@ export function SchoolManagementClient({
       );
 
       setCreatedAccounts(res.createdAccounts);
-      setFeedbackMessage(isAr ? res.messageAr : res.messageEn);
+      setFeedbackMessage(res.feedback);
       setRosterText("");
     } catch (err: unknown) {
       setErrorMessage(err instanceof Error ? err.message : "Error onboarding roster");
@@ -149,10 +150,10 @@ export function SchoolManagementClient({
           </div>
           <div>
             <div className="text-xs text-slate-500 font-bold">
-              {isAr ? "المؤسسات الشريكة" : "Partner Institutions"}
+              {sm.partnerInstitutionsLabel}
             </div>
             <div className="text-2xl font-black text-slate-900">
-              {kpis.totalPartners} {isAr ? "مؤسسات" : "schools"}
+              {kpis.totalPartners} {sm.schoolsUnitLabel}
             </div>
           </div>
         </div>
@@ -163,10 +164,10 @@ export function SchoolManagementClient({
           </div>
           <div>
             <div className="text-xs text-slate-500 font-bold">
-              {isAr ? "المقاعد المرخصة (B2B)" : "Licensed Seats"}
+              {sm.licensedSeatsLabel}
             </div>
             <div className="text-2xl font-black text-slate-900">
-              {kpis.totalSeatsLicensed} {isAr ? "مقعد" : "seats"}
+              {kpis.totalSeatsLicensed} {sm.seatsUnitLabel}
             </div>
           </div>
         </div>
@@ -177,10 +178,10 @@ export function SchoolManagementClient({
           </div>
           <div>
             <div className="text-xs text-slate-500 font-bold">
-              {isAr ? "الطلاب المسجلون (حسابات حقيقية)" : "Enrolled Students (real accounts)"}
+              {sm.enrolledStudentsLabel}
             </div>
             <div className="text-2xl font-black text-slate-900">
-              {kpis.totalEnrolledStudents} {isAr ? "طالب" : "students"}
+              {kpis.totalEnrolledStudents} {sm.studentsUnitLabel}
             </div>
           </div>
         </div>
@@ -191,7 +192,7 @@ export function SchoolManagementClient({
           </div>
           <div>
             <div className="text-xs text-slate-500 font-bold">
-              {isAr ? "نسبة استغلال التراخيص" : "Seat Utilization"}
+              {sm.seatUtilizationLabel}
             </div>
             <div className="text-2xl font-black text-slate-900">
               {kpis.overallUtilizationPercentage}%
@@ -205,18 +206,16 @@ export function SchoolManagementClient({
         <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h3 className="text-lg font-black text-slate-900">
-              {isAr ? "سجل المدارس الإسلامية والمراكز الشريكة" : "Institutional Partners Directory"}
+              {sm.directoryHeading}
             </h3>
             <p className="text-xs text-slate-500 mt-0.5">
-              {isAr
-                ? "إدارة تراخيص الفصول الجماعية والمقاعد المخصصة للمدارس والمراكز الدولية"
-                : "Manage B2B institutional cohort licenses and allocated seats globally"}
+              {sm.directorySubtitle}
             </p>
           </div>
 
           <div className="flex items-center gap-2">
             <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-xl">
-              ● {kpis.totalInstitutionalClasses} {isAr ? "فصول جماعية نشطة" : "Active Cohort Classes"}
+              ● {kpis.totalInstitutionalClasses} {sm.activeCohortClassesLabel}
             </span>
           </div>
         </div>
@@ -225,12 +224,12 @@ export function SchoolManagementClient({
           <table className="w-full text-right text-xs">
             <thead className="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
               <tr>
-                <th className="p-4">{isAr ? "المؤسسة" : "Institution"}</th>
-                <th className="p-4">{isAr ? "الدولة / المدينة" : "Location"}</th>
-                <th className="p-4">{isAr ? "النوع" : "Type"}</th>
-                <th className="p-4">{isAr ? "استغلال المقاعد" : "Seat Capacity"}</th>
-                <th className="p-4">{isAr ? "المسار الأكاديمي" : "Curriculum Track"}</th>
-                <th className="p-4 text-center">{isAr ? "إجراءات" : "Actions"}</th>
+                <th className="p-4">{sm.tableInstitutionHeader}</th>
+                <th className="p-4">{sm.tableLocationHeader}</th>
+                <th className="p-4">{sm.tableTypeHeader}</th>
+                <th className="p-4">{sm.tableSeatCapacityHeader}</th>
+                <th className="p-4">{sm.tableCurriculumTrackHeader}</th>
+                <th className="p-4 text-center">{sm.tableActionsHeader}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -256,17 +255,17 @@ export function SchoolManagementClient({
                     <td className="p-4">
                       <span className="bg-slate-100 text-slate-700 px-2.5 py-1 rounded-lg font-bold">
                         {school.type === "ISLAMIC_SCHOOL"
-                          ? (isAr ? "مدرسة إسلامية" : "Islamic School")
+                          ? sm.schoolTypeIslamicSchool
                           : school.type === "COMMUNITY_CENTER"
-                          ? (isAr ? "مركز مجتمعي" : "Community Center")
-                          : (isAr ? "تعاونية منزلية" : "Homeschool Co-op")}
+                          ? sm.schoolTypeCommunityCenter
+                          : sm.schoolTypeHomeschoolCoop}
                       </span>
                     </td>
 
                     <td className="p-4 min-w-[180px]">
                       <div className="flex items-center justify-between text-[11px] font-bold text-slate-700 mb-1">
                         <span>
-                          {school.licenseSeatsUsed} / {school.licenseSeatsTotal} {isAr ? "مقعد" : "seats"}
+                          {school.licenseSeatsUsed} / {school.licenseSeatsTotal} {sm.seatsUnitLabel}
                         </span>
                         <span>{usedPercent}%</span>
                       </div>
@@ -298,7 +297,7 @@ export function SchoolManagementClient({
                         className="py-2 px-3 bg-brand-50 hover:bg-brand-100 text-brand-700 rounded-xl font-bold text-xs inline-flex items-center gap-1.5 transition-colors"
                       >
                         <Upload className="w-3.5 h-3.5" />
-                        <span>{isAr ? "استيراد دفعة طلاب" : "Onboard Roster"}</span>
+                        <span>{sm.onboardRosterButton}</span>
                       </button>
                     </td>
                   </tr>
@@ -317,7 +316,7 @@ export function SchoolManagementClient({
               <div className="flex items-center gap-2">
                 <FileSpreadsheet className="w-5 h-5 text-brand-600" />
                 <h3 className="text-base font-black text-slate-900">
-                  {isAr ? "استيراد دفعة طلاب (CSV أو لصق أسماء)" : "Batch Roster Onboarding (CSV or paste)"}
+                  {sm.batchModalHeading}
                 </h3>
               </div>
               <button
@@ -332,9 +331,9 @@ export function SchoolManagementClient({
             <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 text-xs space-y-1">
               <div className="font-bold text-slate-900">{selectedSchool.nameAr}</div>
               <div className="text-slate-500">
-                {isAr ? "المقاعد المتاحة في الترخيص:" : "Available license seats:"}{" "}
+                {sm.availableLicenseSeatsLabel}{" "}
                 <span className="font-bold text-emerald-700">
-                  {selectedSchool.licenseSeatsTotal - selectedSchool.licenseSeatsUsed} {isAr ? "مقعد" : "seats"}
+                  {selectedSchool.licenseSeatsTotal - selectedSchool.licenseSeatsUsed} {sm.seatsUnitLabel}
                 </span>
               </div>
             </div>
@@ -350,11 +349,7 @@ export function SchoolManagementClient({
 
                 <div className="flex items-center gap-2 text-xs font-bold text-slate-700">
                   <KeyRound className="w-4 h-4 text-amber-600" />
-                  <span>
-                    {isAr
-                      ? "بيانات الدخول المولّدة -- انسخها الآن، لن تظهر مجدداً"
-                      : "Generated logins -- copy these now, they won't be shown again"}
-                  </span>
+                  <span>{sm.generatedLoginsNote}</span>
                 </div>
 
                 <div className="max-h-52 overflow-y-auto rounded-xl border border-slate-200 divide-y divide-slate-100 text-[11px] font-mono">
@@ -373,7 +368,7 @@ export function SchoolManagementClient({
                   className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2"
                 >
                   <Download className="w-4 h-4" />
-                  <span>{isAr ? "تنزيل كملف CSV" : "Download as CSV"}</span>
+                  <span>{sm.downloadCsvButton}</span>
                 </button>
 
                 <button
@@ -381,14 +376,14 @@ export function SchoolManagementClient({
                   onClick={closeModal}
                   className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl"
                 >
-                  {isAr ? "إغلاق" : "Done"}
+                  {sm.doneButton}
                 </button>
               </div>
             ) : (
               <form onSubmit={handleBatchSubmit} className="space-y-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">
-                    {isAr ? "الفئة العمرية لهذه الدفعة:" : "Age band for this batch:"}
+                    {sm.ageGroupLabel}
                   </label>
                   <select
                     value={ageGroup}
@@ -405,7 +400,7 @@ export function SchoolManagementClient({
                 <div>
                   <div className="flex items-center justify-between mb-1">
                     <label className="block text-xs font-bold text-slate-700">
-                      {isAr ? "قائمة الطلاب (اسم لكل سطر، أو اسم,بريد إلكتروني):" : "Student roster (one per line: Name, or Name,email):"}
+                      {sm.studentRosterLabel}
                     </label>
                     <button
                       type="button"
@@ -413,7 +408,7 @@ export function SchoolManagementClient({
                       className="text-[11px] font-bold text-brand-700 hover:underline inline-flex items-center gap-1"
                     >
                       <Upload className="w-3 h-3" />
-                      {isAr ? "رفع CSV" : "Upload CSV"}
+                      {sm.uploadCsvButton}
                     </button>
                     <input
                       ref={fileInputRef}
@@ -432,11 +427,11 @@ export function SchoolManagementClient({
                     required
                   />
                   <div className="text-[11px] text-slate-500 mt-1">
-                    {parsedRoster.length} {isAr ? "طالب سيتم تسجيلهم" : "student(s) will be onboarded"}
+                    {parsedRoster.length} {sm.studentsWillBeOnboardedSuffix}
                     {parsedRoster.length > selectedSchool.licenseSeatsTotal - selectedSchool.licenseSeatsUsed && (
                       <span className="text-rose-600 font-bold">
                         {" "}
-                        -- {isAr ? "يتجاوز المقاعد المتاحة" : "exceeds available seats"}
+                        -- {sm.exceedsAvailableSeatsLabel}
                       </span>
                     )}
                   </div>
@@ -459,14 +454,14 @@ export function SchoolManagementClient({
                     className="flex-1 py-3 bg-brand-600 hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-xs rounded-xl shadow-md transition-colors flex items-center justify-center gap-1.5"
                   >
                     <Upload className="w-4 h-4" />
-                    <span>{isSubmitting ? (isAr ? "جارِ إنشاء الحسابات..." : "Creating accounts...") : (isAr ? "تأكيد تسجيل الدفعة 🚀" : "Confirm Batch Onboard 🚀")}</span>
+                    <span>{isSubmitting ? sm.creatingAccountsLabel : sm.confirmBatchOnboardButton}</span>
                   </button>
                   <button
                     type="button"
                     onClick={closeModal}
                     className="py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl"
                   >
-                    {isAr ? "إلغاء" : "Cancel"}
+                    {sm.cancelButton}
                   </button>
                 </div>
               </form>
