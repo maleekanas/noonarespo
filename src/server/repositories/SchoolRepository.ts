@@ -160,7 +160,14 @@ class SchoolRepository {
           firstName: firstName || "Admin",
           lastName,
           scope: RoleType.SCHOOL_ADMIN,
-          schoolId,
+          // Same reason as onboardRoster's partnerSchool.connect below:
+          // Prisma's generated "checked" input type rejects mixing a raw
+          // scalar FK (schoolId) with a nested relation create (user.create)
+          // in the same call -- both relations have to use the nested
+          // object form, so this links the school via `connect` instead.
+          partnerSchool: {
+            connect: { id: schoolId },
+          },
           user: {
             create: {
               email,
