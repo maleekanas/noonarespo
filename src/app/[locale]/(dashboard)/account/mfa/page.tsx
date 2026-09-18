@@ -38,7 +38,7 @@ export default async function MfaSetupPage({ params, searchParams }: {
     if (!secret || !verifyTotp(secret, code)) redirect(`/${locale}/account/mfa?error=invalid`);
     const recovery = generateRecoveryCodes();
     await prisma.user.update({ where: { id: current.id }, data: {
-      mfaEnabled: true, mfaSecretEncrypted: encryptMfaSecret(secret), mfaRecoveryHashes: JSON.stringify(recovery.hashes),
+      mfaEnabled: true, mfaSecretEncrypted: encryptMfaSecret(secret), mfaRecoveryHashes: JSON.stringify(recovery.hashes), mfaLastUsedStep: null,
     }});
     (await cookies()).set(FLASH, Buffer.from(recovery.plain.join(",")).toString("base64url"), {
       httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "strict", path: `/${locale}/account/mfa`, maxAge: 300,
@@ -56,7 +56,7 @@ export default async function MfaSetupPage({ params, searchParams }: {
     if (!currentUser.mfaSecretEncrypted || !verifyTotp(decryptMfaSecret(currentUser.mfaSecretEncrypted), code)) {
       redirect(`/${locale}/account/mfa?error=invalid`);
     }
-    await prisma.user.update({ where: { id: current.id }, data: { mfaEnabled: false, mfaSecretEncrypted: null, mfaRecoveryHashes: null } });
+    await prisma.user.update({ where: { id: current.id }, data: { mfaEnabled: false, mfaSecretEncrypted: null, mfaRecoveryHashes: null, mfaLastUsedStep: null } });
     redirect(`/${locale}/account/mfa?disabled=success`);
   }
 
