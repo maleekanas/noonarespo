@@ -109,4 +109,6 @@ export const RATE_LIMITS = {
   // session guessing the real current password, not credential stuffing.
   ACCOUNT_CHANGE_PASSWORD_PER_USER: { max: 10, windowSeconds: 60 * 60 },
   ACCOUNT_CHANGE_EMAIL_PER_USER: { max: 5, windowSeconds: 60 * 60 },
+  MFA_CHALLENGE_PER_IP: { max: 12, windowSeconds: 15 * 60 },
+  MFA_SETUP_PER_USER: { max: 8, windowSeconds: 60 * 60 },
 } as const;
