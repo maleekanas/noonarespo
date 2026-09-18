@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/database/prisma";
 import { requireSession } from "@/lib/auth/currentUser";
 import { decryptMfaSecret, encryptMfaSecret, generateRecoveryCodes, generateTotpSecret, otpauthUri, verifyTotp } from "@/lib/auth/mfa";
@@ -31,6 +32,9 @@ export default async function MfaSetupPage({ params, searchParams }: {
     if (!limit.allowed) redirect(`/${locale}/account/mfa?error=ratelimited`);
     const secret = formData.get("secret")?.toString() || "";
     const code = formData.get("code")?.toString().trim() || "";
+    const password = formData.get("password")?.toString() || "";
+    const freshUser = await prisma.user.findUnique({ where: { id: current.id } });
+    if (!freshUser || !(await bcrypt.compare(password, freshUser.passwordHash))) redirect(`/${locale}/account/mfa?error=reauth`);
     if (!secret || !verifyTotp(secret, code)) redirect(`/${locale}/account/mfa?error=invalid`);
     const recovery = generateRecoveryCodes();
     await prisma.user.update({ where: { id: current.id }, data: {
@@ -47,7 +51,9 @@ export default async function MfaSetupPage({ params, searchParams }: {
     const current = await requireSession(locale);
     const currentUser = await prisma.user.findUnique({ where: { id: current.id } });
     const code = formData.get("code")?.toString().trim().toUpperCase() || "";
-    if (!currentUser?.mfaSecretEncrypted || !verifyTotp(decryptMfaSecret(currentUser.mfaSecretEncrypted), code)) {
+    const password = formData.get("password")?.toString() || "";
+    if (!currentUser || !(await bcrypt.compare(password, currentUser.passwordHash))) redirect(`/${locale}/account/mfa?error=reauth`);
+    if (!currentUser.mfaSecretEncrypted || !verifyTotp(decryptMfaSecret(currentUser.mfaSecretEncrypted), code)) {
       redirect(`/${locale}/account/mfa?error=invalid`);
     }
     await prisma.user.update({ where: { id: current.id }, data: { mfaEnabled: false, mfaSecretEncrypted: null, mfaRecoveryHashes: null } });
@@ -73,12 +79,14 @@ export default async function MfaSetupPage({ params, searchParams }: {
       <code className="block break-all bg-slate-50 border rounded-xl p-3">{pendingSecret}</code>
       <details className="text-xs text-slate-500"><summary>Authenticator provisioning URI</summary><code className="block break-all mt-2">{provisioning}</code></details>
       <input type="hidden" name="secret" value={pendingSecret} />
+      <input name="password" type="password" required autoComplete="current-password" placeholder="Current password" className="w-full px-4 py-3 rounded-xl border border-slate-200" />
       <input name="code" required inputMode="numeric" autoComplete="one-time-code" placeholder="6-digit code" className="w-full px-4 py-3 rounded-xl border border-slate-200" />
       <button className="px-5 py-3 rounded-xl text-white font-bold gradient-brand">Verify and enable</button>
     </form>}
     {user.mfaEnabled && recoveryCodes.length === 0 && <form action={disable} className="bg-white rounded-3xl border border-slate-200 p-6 space-y-4">
       <h2 className="font-bold text-emerald-700">MFA is enabled</h2>
-      <p className="text-sm text-slate-600">To disable it, confirm a current authenticator code.</p>
+      <p className="text-sm text-slate-600">To disable it, confirm your current password and authenticator code.</p>
+      <input name="password" type="password" required autoComplete="current-password" placeholder="Current password" className="w-full px-4 py-3 rounded-xl border border-slate-200" />
       <input name="code" required inputMode="numeric" autoComplete="one-time-code" placeholder="6-digit code" className="w-full px-4 py-3 rounded-xl border border-slate-200" />
       <button className="px-5 py-3 rounded-xl font-bold bg-slate-900 text-white">Disable MFA</button>
     </form>}
