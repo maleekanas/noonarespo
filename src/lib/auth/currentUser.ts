@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { RoleType } from "@prisma/client";
+import { RoleType, UserStatus } from "@prisma/client";
 import { getSession, type SessionUser } from "./session";
 import { prisma } from "@/lib/database/prisma";
 
@@ -42,6 +42,25 @@ export async function requireParentProfile(locale: string) {
   }
 
   return { session, profile };
+}
+
+/**
+ * Subscription checkout must re-check the persisted account status rather
+ * than relying only on the signed session cookie. This prevents a stale
+ * session from bypassing email verification or a later account suspension.
+ */
+export async function requireVerifiedParentProfile(locale: string) {
+  const result = await requireParentProfile(locale);
+  const user = await prisma.user.findUnique({
+    where: { id: result.session.id },
+    select: { status: true },
+  });
+
+  if (!user || user.status !== UserStatus.ACTIVE) {
+    redirect(`/${locale}/login`);
+  }
+
+  return result;
 }
 
 export async function requireStudentProfile(locale: string) {

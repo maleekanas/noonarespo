@@ -12,7 +12,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { DirectionalIcon } from "@/components/shared/DirectionalIcon";
-import { requireParentProfile } from "@/lib/auth/currentUser";
+import { requireVerifiedParentProfile } from "@/lib/auth/currentUser";
 
 // A 1-day free trial: TRIAL_DAYS days of full-price-plan card authorization
 // with no charge, auto-converting to that plan's normal price unless
@@ -31,8 +31,7 @@ export default async function ParentCheckoutPage({
 }) {
   const { locale } = await params;
   const { planId: planIdParam, coupon: couponParam, cancelled, trial } = await searchParams;
-  const { session, profile } = await requireParentProfile(locale);
-  const parentId = profile.id;
+  await requireVerifiedParentProfile(locale);
   const isTrialCheckout = trial === "1";
 
   const allPlans = await billingService.getAllPlans();
@@ -48,13 +47,14 @@ export default async function ParentCheckoutPage({
 
   async function handleCheckout(formData: FormData) {
     "use server";
+    const verifiedParent = await requireVerifiedParentProfile(locale);
     const planId = formData.get("planId")?.toString() || selectedPlan.id;
     const couponCode = formData.get("couponCode")?.toString() || "";
     const trialParam = formData.get("trial")?.toString() || "";
 
     const { url } = await createStripeCheckoutSession({
-      parentId,
-      parentEmail: session.email,
+      parentId: verifiedParent.profile.id,
+      parentEmail: verifiedParent.session.email,
       planId,
       couponCode: couponCode || undefined,
       locale,

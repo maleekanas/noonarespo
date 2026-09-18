@@ -118,6 +118,15 @@ export async function createStripeCheckoutSession(params: {
   trialDays?: number;
 }): Promise<{ url: string }> {
   const stripe = getStripeClient();
+  const parent = await prisma.parentProfile.findUnique({
+    where: { id: params.parentId },
+    select: { user: { select: { status: true } }, stripeCustomerId: true },
+  });
+
+  if (!parent || parent.user.status !== "ACTIVE") {
+    throw new Error("EMAIL_VERIFICATION_REQUIRED");
+  }
+
   const calculation = await billingService.calculateCheckoutPrice(params.planId, params.couponCode);
   const { plan } = calculation;
 
@@ -132,15 +141,10 @@ export async function createStripeCheckoutSession(params: {
   // file (from a prior checkout/renewal), instead of letting Stripe create a
   // brand new implicit Customer every time -- otherwise the Billing Portal
   // and cancellation flow have no single customer to operate on.
-  const existingParent = await prisma.parentProfile.findUnique({
-    where: { id: params.parentId },
-    select: { stripeCustomerId: true },
-  });
-
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
-    ...(existingParent?.stripeCustomerId
-      ? { customer: existingParent.stripeCustomerId }
+    ...(parent.stripeCustomerId
+      ? { customer: parent.stripeCustomerId }
       : { customer_email: params.parentEmail }),
     line_items: [
       {
