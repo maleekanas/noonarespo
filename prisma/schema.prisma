@@ -38,6 +38,7 @@ model User {
   mfaEnabled       Boolean      @default(false)
   mfaSecretEncrypted String?
   mfaRecoveryHashes  String?      // JSON array of HMAC-SHA256 recovery-code hashes; raw codes are never persisted
+  mfaLastUsedStep     Int?         // Last accepted 30-second TOTP step; prevents same-code replay within its validity window
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
 
