@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { RoleType } from "@prisma/client";
 import { prisma } from "@/lib/database/prisma";
 import { createSession } from "@/lib/auth/session";
-import { clearMfaChallenge, consumeMfaChallenge, decryptMfaSecret, hashRecoveryCode, verifyTotp } from "@/lib/auth/mfa";
+import { clearMfaChallenge, consumeMfaChallenge, decryptMfaSecret, hashRecoveryCode, verifyTotpStep } from "@/lib/auth/mfa";
 import { checkRateLimit, getClientIp, RATE_LIMITS } from "@/lib/security/rateLimit";
 
 export default async function MfaChallengePage({ params, searchParams }: {
@@ -32,7 +32,18 @@ export default async function MfaChallengePage({ params, searchParams }: {
       redirect(`/${locale}/login`);
     }
 
-    let accepted = verifyTotp(decryptMfaSecret(user.mfaSecretEncrypted), code);
+    let accepted = false;
+    const totpStep = verifyTotpStep(decryptMfaSecret(user.mfaSecretEncrypted), code);
+    if (totpStep !== null) {
+      const claimed = await prisma.user.updateMany({
+        where: {
+          id: user.id,
+          OR: [{ mfaLastUsedStep: null }, { mfaLastUsedStep: { lt: totpStep } }],
+        },
+        data: { mfaLastUsedStep: totpStep },
+      });
+      accepted = claimed.count === 1;
+    }
     if (!accepted && user.mfaRecoveryHashes) {
       const hashes = JSON.parse(user.mfaRecoveryHashes) as string[];
       const candidate = hashRecoveryCode(code);
