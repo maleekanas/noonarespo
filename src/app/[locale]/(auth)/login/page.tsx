@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
 import { getDictionary } from "@/lib/localization";
 import { createSession } from "@/lib/auth/session";
+import { createMfaChallenge } from "@/lib/auth/mfa";
 import { prisma } from "@/lib/database/prisma";
 import { checkRateLimit, getClientIp, RATE_LIMITS } from "@/lib/security/rateLimit";
 import { RoleType } from "@prisma/client";
@@ -68,6 +69,13 @@ export default async function LoginPage({
     }
 
     const role: RoleType = user.userRoles[0]?.role.name ?? RoleType.PARENT;
+
+    // Password is only factor one. Never mint an authenticated session for
+    // an MFA-enabled account until the second factor has been verified.
+    if (user.mfaEnabled) {
+      await createMfaChallenge(user.id);
+      redirect(`/${locale}/mfa`);
+    }
     const name =
       (user.teacherProfile && `${user.teacherProfile.firstName} ${user.teacherProfile.lastName}`) ||
       (user.studentProfile && `${user.studentProfile.firstName} ${user.studentProfile.lastName}`) ||
