@@ -96,6 +96,12 @@ export async function requireAdminSession(locale: string): Promise<SessionUser> 
   if (!ADMIN_ROLES.includes(session.role)) {
     redirect(`/${locale}/login`);
   }
+  // Privileged platform-wide roles must use MFA. Check the database rather
+  // than trusting the signed session so disabling MFA takes effect immediately.
+  const user = await prisma.user.findUnique({ where: { id: session.id }, select: { mfaEnabled: true } });
+  if (!user?.mfaEnabled) {
+    redirect(`/${locale}/account/mfa`);
+  }
   return session;
 }
 
