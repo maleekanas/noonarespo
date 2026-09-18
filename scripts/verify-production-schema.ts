@@ -13,10 +13,10 @@ async function main() {
   const columns = await prisma.$queryRaw<Array<{ column_name: string }>>`
     SELECT column_name FROM information_schema.columns
     WHERE table_schema = 'public' AND table_name = 'users'
-      AND column_name IN ('mfaEnabled','mfaSecretEncrypted','mfaRecoveryHashes')
+      AND column_name IN ('mfaEnabled','mfaSecretEncrypted','mfaRecoveryHashes','mfaLastUsedStep')
   `;
   const foundColumns = new Set(columns.map((row) => row.column_name));
-  const requiredColumns = ["mfaEnabled", "mfaSecretEncrypted", "mfaRecoveryHashes"];
+  const requiredColumns = ["mfaEnabled", "mfaSecretEncrypted", "mfaRecoveryHashes", "mfaLastUsedStep"];
   const missingColumns = requiredColumns.filter((name) => !foundColumns.has(name));
 
   if (missingTables.length || missingColumns.length) {
