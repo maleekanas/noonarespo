@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { generateTotp, verifyTotp, generateTotpSecret, encryptMfaSecret, decryptMfaSecret, generateRecoveryCodes, hashRecoveryCode } from "../../src/lib/auth/mfa";
+import { generateTotp, verifyTotp, verifyTotpStep, generateTotpSecret, encryptMfaSecret, decryptMfaSecret, generateRecoveryCodes, hashRecoveryCode } from "../../src/lib/auth/mfa";
 
 process.env.SESSION_SECRET = process.env.SESSION_SECRET || "test-only-session-secret-that-is-longer-than-32-characters";
 
@@ -33,4 +33,13 @@ test("recovery codes are stored only as hashes", () => {
   assert.equal(hashes.length, 8);
   assert.equal(hashes[0], hashRecoveryCode(plain[0]));
   assert.notEqual(hashes[0], plain[0]);
+});
+
+
+test("TOTP verification exposes a stable step for single-use replay protection", () => {
+  const secret = generateTotpSecret();
+  const now = 1_700_000_000_000;
+  const code = generateTotp(secret, now);
+  const step = verifyTotpStep(secret, code, now);
+  assert.equal(step, Math.floor(now / 1000 / 30));
 });
