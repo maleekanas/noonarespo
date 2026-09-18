@@ -20,9 +20,9 @@ const SESSION_COOKIE_NAME = "kaa_session_token";
  */
 function getSessionSecret(): string {
   const secret = process.env.SESSION_SECRET;
-  if (!secret || secret.length < 16) {
+  if (!secret || secret.length < 32) {
     throw new Error(
-      "SESSION_SECRET is not set (or shorter than 16 characters). Set a strong random value in the deployment environment before serving traffic."
+      "SESSION_SECRET is not set (or shorter than 32 characters). Set a strong random value in the deployment environment before serving traffic."
     );
   }
   return secret;
@@ -66,8 +66,9 @@ export async function getSession(): Promise<SessionUser | null> {
     if (!verify(payload, signature)) {
       return null;
     }
-    const decoded = JSON.parse(Buffer.from(payload, "base64url").toString("utf-8"));
-    return decoded as SessionUser;
+    const decoded = JSON.parse(Buffer.from(payload, "base64url").toString("utf-8")) as { user: SessionUser; expiresAt: number };
+    if (!decoded?.user || !decoded.expiresAt || decoded.expiresAt <= Date.now()) return null;
+    return decoded.user;
   } catch {
     return null;
   }
@@ -78,14 +79,15 @@ export async function getSession(): Promise<SessionUser | null> {
  */
 export async function createSession(user: SessionUser): Promise<void> {
   const cookieStore = await cookies();
-  const payload = Buffer.from(JSON.stringify(user)).toString("base64url");
+  const expiresAt = Date.now() + 60 * 60 * 24 * 7 * 1000;
+  const payload = Buffer.from(JSON.stringify({ user, expiresAt })).toString("base64url");
   const signature = sign(payload);
   const token = `${payload}.${signature}`;
 
   cookieStore.set(SESSION_COOKIE_NAME, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    sameSite: "strict",
     path: "/",
     maxAge: 60 * 60 * 24 * 7, // 7 days
   });
