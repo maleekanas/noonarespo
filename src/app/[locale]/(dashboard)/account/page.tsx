@@ -290,6 +290,13 @@ export default async function AccountSettingsPage({
         <p className="text-[11px] text-slate-400">{dict.account.passwordChangeSignsOutNotice}</p>
       </form>
 
+      {/* Two-factor authentication */}
+      <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-3">
+        <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2"><KeyRound className="w-4 h-4 text-brand-600" /><span>Two-factor authentication</span></h2>
+        <p className="text-xs text-slate-500">Add an authenticator app and recovery codes for stronger account protection. MFA is mandatory for platform-wide admin roles.</p>
+        <Link href={`/${locale}/account/mfa`} className="inline-flex py-2.5 px-5 rounded-xl text-sm font-bold text-white gradient-brand">Manage MFA</Link>
+      </div>
+
       {/* Sign Out */}
       <form action={handleSignOut} className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
         <button
