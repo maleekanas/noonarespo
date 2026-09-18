@@ -121,9 +121,14 @@ export async function requireSchoolAdminSession(
     redirect(`/${locale}/login`);
   }
 
-  const profile = await prisma.administratorProfile.findUnique({
-    where: { userId: session.id },
-  });
+  const [profile, user] = await Promise.all([
+    prisma.administratorProfile.findUnique({ where: { userId: session.id } }),
+    prisma.user.findUnique({ where: { id: session.id }, select: { mfaEnabled: true } }),
+  ]);
+
+  if (!user?.mfaEnabled) {
+    redirect(`/${locale}/account/mfa`);
+  }
 
   if (!profile || !profile.schoolId) {
     // A SCHOOL_ADMIN account with no school assigned is a data problem
