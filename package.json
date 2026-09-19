@@ -12,7 +12,10 @@
     "postinstall": "prisma generate",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
-    "db:seed": "tsx prisma/seed.ts"
+    "db:seed": "tsx prisma/seed.ts",
+    "test:e2e": "npx --yes @playwright/test@1.55.0 test",
+    "test:e2e:smoke": "npx --yes @playwright/test@1.55.0 test tests/e2e/public-smoke.spec.ts",
+    "db:verify-production-schema": "tsx scripts/verify-production-schema.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.3.1",
