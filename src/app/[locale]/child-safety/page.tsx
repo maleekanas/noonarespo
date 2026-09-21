@@ -127,10 +127,10 @@ export default async function ChildSafetyPolicyPage({
             </p>
           </div>
           <a
-            href="mailto:safety@kidsarabicacademy.com"
+            href="mailto:safety@arabickidsacademy.com"
             className="shrink-0 px-6 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm rounded-2xl shadow-md transition-colors"
           >
-            safety@kidsarabicacademy.com
+            safety@arabickidsacademy.com
           </a>
         </div>
       </section>

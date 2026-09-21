@@ -103,10 +103,10 @@ export default async function ContactPage({
                     {isRtl ? "البريد الإلكتروني" : "Email Support"}
                   </div>
                   <a
-                    href="mailto:support@kidsarabicacademy.com"
+                    href="mailto:support@arabickidsacademy.com"
                     className="text-sm font-bold text-slate-800 hover:text-brand-600"
                   >
-                    support@kidsarabicacademy.com
+                    support@arabickidsacademy.com
                   </a>
                   <p className="text-xs text-slate-500 mt-0.5">
                     {isRtl ? "متوسط الرد: أقل من ساعتين" : "Average response: under 2 hours"}

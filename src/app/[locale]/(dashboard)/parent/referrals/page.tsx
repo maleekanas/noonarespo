@@ -29,7 +29,7 @@ export default async function ParentReferralsPage({
   const stats = referralService.getReferralStats(profile.id);
   const referrals = referralService.getReferralsForParent(profile.id);
 
-  const referralLink = `https://kidsarabicacademy.com/${locale}/register?ref=${referralCode}`;
+  const referralLink = `https://arabickidsacademy.com/${locale}/register?ref=${referralCode}`;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
