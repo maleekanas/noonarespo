@@ -953,6 +953,66 @@ class AcademicRepository {
       return assignment;
     }
   }
+
+  async updateClassGroup(
+    id: string,
+    data: {
+      name?: string;
+      capacityMax?: number;
+      courseLevelId?: string;
+      classType?: ClassType;
+      schoolId?: string | null;
+    }
+  ): Promise<DomainClassGroup | null> {
+    try {
+      return await prisma.classGroup.update({
+        where: { id },
+        data: {
+          name: data.name,
+          capacityMax: data.capacityMax,
+          courseLevelId: data.courseLevelId,
+          classType: data.classType,
+          schoolId: data.schoolId,
+        },
+      });
+    } catch {
+      const existing = this.fallbackClassGroups.get(id);
+      if (!existing) return null;
+      const updated: DomainClassGroup = {
+        ...existing,
+        ...data,
+      };
+      this.fallbackClassGroups.set(id, updated);
+      return updated;
+    }
+  }
+
+  async deleteClassGroup(id: string): Promise<boolean> {
+    try {
+      await prisma.classGroup.delete({ where: { id } });
+      return true;
+    } catch {
+      return this.fallbackClassGroups.delete(id);
+    }
+  }
+
+  async unenrollStudent(studentId: string, classGroupId: string): Promise<boolean> {
+    try {
+      await prisma.classEnrollment.updateMany({
+        where: { studentId, classGroupId },
+        data: { status: EnrollmentStatus.DROPPED },
+      });
+      return true;
+    } catch {
+      for (const [id, enr] of this.fallbackEnrollments.entries()) {
+        if (enr.studentId === studentId && enr.classGroupId === classGroupId) {
+          enr.status = EnrollmentStatus.DROPPED;
+          this.fallbackEnrollments.set(id, enr);
+        }
+      }
+      return true;
+    }
+  }
 }
 
 export const academicRepository = new AcademicRepository();

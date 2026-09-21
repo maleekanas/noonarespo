@@ -5,11 +5,14 @@
  */
 
 export interface CrmLead {
+  id: string;
   name: string;
   email: string;
   phone?: string;
   type: "CONTACT_INQUIRY" | "ENROLLMENT_INQUIRY" | "TEACHER_APPLICATION" | "NEWSLETTER";
   source: string;
+  status: "NEW" | "IN_PROGRESS" | "RESOLVED";
+  notes?: string;
   metadata?: Record<string, any>;
   createdAt: Date;
 }
@@ -17,20 +20,25 @@ export interface CrmLead {
 // In-memory store for development & QA inspection
 const capturedLeads: CrmLead[] = [
   {
+    id: "lead-1",
     name: "Dr. Tariq Abdulrahman",
     email: "parent.tariq@example.com",
     phone: "+44 7123 456789",
     type: "ENROLLMENT_INQUIRY",
     source: "Website Header Placement CTA",
+    status: "NEW",
     metadata: { childName: "Zayd", childAge: "8", currentLevel: "A1" },
     createdAt: new Date(Date.now() - 86400000 * 2),
   },
   {
+    id: "lead-2",
     name: "Ustadha Fatima Al-Zahra",
     email: "teacher.fatima@example.com",
     phone: "+971 50 1234567",
     type: "TEACHER_APPLICATION",
     source: "Careers Portal",
+    status: "IN_PROGRESS",
+    notes: "تمت مراجعة الإجازة المرفقة ومطابقتها",
     metadata: { experienceYears: 9, certifications: "Naskh & Hafs Ijazah" },
     createdAt: new Date(Date.now() - 86400000 * 5),
   },
@@ -136,11 +144,13 @@ export class CrmService {
     locale: string;
   }): Promise<CrmLead> {
     const lead: CrmLead = {
+      id: `lead-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
       name: params.name,
       email: params.email,
       phone: params.phone,
       type: "CONTACT_INQUIRY",
       source: `Contact Page (${params.locale})`,
+      status: "NEW",
       metadata: { topic: params.topic, message: params.message },
       createdAt: new Date(),
     };
@@ -167,11 +177,13 @@ export class CrmService {
     locale: string;
   }): Promise<CrmLead> {
     const lead: CrmLead = {
+      id: `lead-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
       name: params.parentName,
       email: params.email,
       phone: params.phone,
       type: "ENROLLMENT_INQUIRY",
       source: `Enrollment Inquiry Page (${params.locale})`,
+      status: "NEW",
       metadata: {
         childName: params.childName,
         childAge: params.childAge,
@@ -204,11 +216,13 @@ export class CrmService {
     locale: string;
   }): Promise<CrmLead> {
     const lead: CrmLead = {
+      id: `lead-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
       name: params.fullName,
       email: params.email,
       phone: params.phone,
       type: "TEACHER_APPLICATION",
       source: `Teach With Us Page (${params.locale})`,
+      status: "NEW",
       metadata: {
         experienceYears: params.experienceYears,
         qualifications: params.qualifications,
@@ -231,6 +245,20 @@ export class CrmService {
 
   getLeadsByType(type: CrmLead["type"]): CrmLead[] {
     return capturedLeads.filter((l) => l.type === type);
+  }
+
+  updateLeadStatus(
+    leadId: string,
+    status: "NEW" | "IN_PROGRESS" | "RESOLVED",
+    notes?: string
+  ): boolean {
+    const lead = capturedLeads.find((l) => l.id === leadId);
+    if (!lead) return false;
+    lead.status = status;
+    if (notes) {
+      lead.notes = notes;
+    }
+    return true;
   }
 }
 

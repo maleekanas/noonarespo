@@ -1430,6 +1430,33 @@ class CurriculumLessonRepository {
   async getLessonById(id: string): Promise<CurriculumLesson | null> {
     return this.lessons.get(id) || null;
   }
+
+  // Mutations
+  async createLesson(data: Omit<CurriculumLesson, "id">): Promise<CurriculumLesson> {
+    const id = `lesson-custom-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const lesson: CurriculumLesson = {
+      id,
+      ...data,
+    };
+    this.lessons.set(id, lesson);
+    return lesson;
+  }
+
+  async updateLesson(id: string, data: Partial<CurriculumLesson>): Promise<CurriculumLesson | null> {
+    const existing = this.lessons.get(id);
+    if (!existing) return null;
+    const updated: CurriculumLesson = {
+      ...existing,
+      ...data,
+      id: existing.id, // Immutable ID
+    };
+    this.lessons.set(id, updated);
+    return updated;
+  }
+
+  async deleteLesson(id: string): Promise<boolean> {
+    return this.lessons.delete(id);
+  }
 }
 
 export const curriculumLessonRepository = new CurriculumLessonRepository();

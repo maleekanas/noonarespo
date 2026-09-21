@@ -85,6 +85,29 @@ export class AssignmentService {
   async getLatestFeedbackForStudent(studentId: string) {
     return await assignmentRepository.getLatestFeedbackForStudent(studentId);
   }
+
+  /**
+   * Updates an existing assignment.
+   */
+  async updateAssignment(
+    id: string,
+    params: {
+      titleAr?: string;
+      titleEn?: string;
+      instructions?: string;
+      voicePromptUrl?: string;
+      dueDateUtc?: Date;
+    }
+  ): Promise<DomainAssignment | null> {
+    return await assignmentRepository.updateAssignment(id, params);
+  }
+
+  /**
+   * Deletes an assignment.
+   */
+  async deleteAssignment(id: string): Promise<boolean> {
+    return await assignmentRepository.deleteAssignment(id);
+  }
 }
 
 export const assignmentService = new AssignmentService();

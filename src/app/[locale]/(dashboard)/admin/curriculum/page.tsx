@@ -112,6 +112,61 @@ export default async function AdminCurriculumPage({
     revalidatePath(`/${locale}/admin/audit-logs`);
   }
 
+  async function handleAddLesson(formData: FormData) {
+    "use server";
+    const titleAr = formData.get("titleAr")?.toString().trim() || "";
+    const titleEn = formData.get("titleEn")?.toString().trim() || titleAr;
+    const descriptionAr = formData.get("descriptionAr")?.toString().trim() || "";
+    const descriptionEn = formData.get("descriptionEn")?.toString().trim() || descriptionAr;
+    const programId = formData.get("programId")?.toString() || selectedSlug;
+    const ageGroup = (formData.get("ageGroup")?.toString() || selectedAgeGroup) as AgeGroup;
+    const courseLevelCode = formData.get("courseLevelCode")?.toString() || "A1";
+    const durationMinutes = parseInt(formData.get("durationMinutes")?.toString() || "40", 10);
+    const homeworkTitleAr = formData.get("homeworkTitleAr")?.toString().trim() || "واجب تطبيقي منزلي";
+    const homeworkTitleEn = formData.get("homeworkTitleEn")?.toString().trim() || "Practical Homework";
+    const vocabStr = formData.get("targetVocabulary")?.toString() || "";
+    const targetVocabulary = vocabStr.split(",").map((v) => v.trim()).filter(Boolean);
+
+    if (!titleAr) return;
+
+    await administrationService.addLesson(
+      {
+        ageGroup,
+        programId,
+        programTitleAr: "البرنامج المعتمد",
+        programTitleEn: "Accredited Program",
+        courseLevelCode,
+        lessonNumber: 81,
+        titleAr,
+        titleEn,
+        descriptionAr,
+        descriptionEn,
+        objectivesAr: ["إتقان المهارة المستهدفة بالدرس", "الممارسة العملية والتطبيق الفردي"],
+        objectivesEn: ["Master the targeted lesson skill", "Hands-on practice & individual application"],
+        targetVocabulary: targetVocabulary.length > 0 ? targetVocabulary : ["مُفْرَدَةٌ", "كَلِمَةٌ", "جُمْلَةٌ"],
+        durationMinutes,
+        interactiveTools: ["WHITEBOARD", "AUDIO_RECORDER"],
+        homeworkTitleAr,
+        homeworkTitleEn,
+      },
+      adminSession
+    );
+
+    revalidatePath(`/${locale}/admin/curriculum`);
+    revalidatePath(`/${locale}/admin/audit-logs`);
+  }
+
+  async function handleDeleteLesson(formData: FormData) {
+    "use server";
+    const lessonId = formData.get("lessonId")?.toString();
+    if (!lessonId) return;
+
+    await administrationService.deleteLesson(lessonId, adminSession);
+
+    revalidatePath(`/${locale}/admin/curriculum`);
+    revalidatePath(`/${locale}/admin/audit-logs`);
+  }
+
   const ageGroupCards = [
     {
       group: AgeGroup.AGE_4_6,
@@ -206,6 +261,93 @@ export default async function AdminCurriculumPage({
         })}
       </div>
 
+      {/* Add New Lesson Form Section */}
+      <details className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden group">
+        <summary className="p-6 cursor-pointer flex items-center justify-between font-extrabold text-slate-900 text-base select-none hover:bg-slate-50 transition-colors">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-purple-50 text-purple-700 flex items-center justify-center">
+              <BookOpen className="w-5 h-5" />
+            </div>
+            <div>
+              <span>إضافة درس منهجي جديد للمنهج الأكاديمي</span>
+              <p className="text-xs text-slate-500 font-normal mt-0.5">
+                تحديد عنوان الدرس، الوصف، المفردات المستهدفة، والأدوات التفاعلية المصاحبة
+              </p>
+            </div>
+          </div>
+          <span className="px-3 py-1.5 rounded-xl gradient-brand text-white text-xs font-bold shadow-sm">
+            + إضافة درس
+          </span>
+        </summary>
+
+        <form action={handleAddLesson} className="p-6 pt-0 border-t border-slate-100 space-y-4 text-xs mt-4">
+          <input type="hidden" name="programId" value={selectedSlug} />
+          <input type="hidden" name="ageGroup" value={selectedAgeGroup} />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">عنوان الدرس (بالعربية)</label>
+              <input
+                name="titleAr"
+                required
+                placeholder="مثال: مخارج حرفي الضاد والظاء"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-brand-500"
+              />
+            </div>
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">عنوان الدرس (بالإنجليزية)</label>
+              <input
+                name="titleEn"
+                placeholder="Articulation of Dhad & Dhaa"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-brand-500"
+              />
+            </div>
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">مدة الدرس (دقائق)</label>
+              <input
+                name="durationMinutes"
+                type="number"
+                defaultValue={40}
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-brand-500"
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="block font-bold text-slate-700 mb-1">الوصف والهدف التعليمي</label>
+              <input
+                name="descriptionAr"
+                required
+                placeholder="شرح موجز لأهداف الدرس والمهارة المكتسبة..."
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-brand-500"
+              />
+            </div>
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">المفردات المستهدفة (مفصولة بفاصلة)</label>
+              <input
+                name="targetVocabulary"
+                placeholder="ضَوْءٌ, ظِلٌّ, فَضِيلَةٌ"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-brand-500 font-mono"
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="block font-bold text-slate-700 mb-1">عنوان الواجب المنزلي المصاحب</label>
+              <input
+                name="homeworkTitleAr"
+                defaultValue="تسجيل صوتي وتمرين تطبيقي للدرس"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-brand-500"
+              />
+            </div>
+          </div>
+
+          <div className="pt-2 flex justify-end">
+            <button
+              type="submit"
+              className="px-6 py-2.5 rounded-xl gradient-brand text-white font-bold text-xs shadow-md transition-all"
+            >
+              حفظ ونشر الدرس الجديد ✓
+            </button>
+          </div>
+        </form>
+      </details>
+
       {/* Detailed Lesson Explorer Section */}
       <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
@@ -280,6 +422,19 @@ export default async function AdminCurriculumPage({
                     <span className="truncate">{lesson.homeworkTitleAr}</span>
                   </div>
                 )}
+
+                <div className="flex justify-end pt-1">
+                  <form action={handleDeleteLesson}>
+                    <input type="hidden" name="lessonId" value={lesson.id} />
+                    <button
+                      type="submit"
+                      className="text-[11px] text-slate-400 hover:text-rose-600 transition-colors font-bold flex items-center gap-1"
+                      title="حذف هذا الدرس من المنهج"
+                    >
+                      <span>حذف الدرس ✕</span>
+                    </button>
+                  </form>
+                </div>
               </div>
             </div>
           ))}

@@ -260,6 +260,45 @@ class SchedulingRepository {
       return session;
     }
   }
+
+  async rescheduleSession(
+    id: string,
+    startTimeUtc: Date,
+    endTimeUtc: Date
+  ): Promise<DomainClassSession | null> {
+    try {
+      return await prisma.classSession.update({
+        where: { id },
+        data: {
+          startTimeUtc,
+          endTimeUtc,
+          status: SessionStatus.SCHEDULED,
+        },
+      });
+    } catch {
+      const session = this.fallbackSessions.get(id);
+      if (!session) return null;
+      session.startTimeUtc = startTimeUtc;
+      session.endTimeUtc = endTimeUtc;
+      session.status = SessionStatus.SCHEDULED;
+      this.fallbackSessions.set(id, session);
+      return session;
+    }
+  }
+
+  async cancelSession(id: string): Promise<boolean> {
+    const updated = await this.updateSessionStatus(id, SessionStatus.CANCELLED);
+    return Boolean(updated);
+  }
+
+  async deleteSession(id: string): Promise<boolean> {
+    try {
+      await prisma.classSession.delete({ where: { id } });
+      return true;
+    } catch {
+      return this.fallbackSessions.delete(id);
+    }
+  }
 }
 
 export const schedulingRepository = new SchedulingRepository();

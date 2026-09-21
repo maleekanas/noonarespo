@@ -1,5 +1,6 @@
 import React from "react";
 import Link from "next/link";
+import { revalidatePath } from "next/cache";
 import { requireSupportAgentSession } from "@/lib/auth/currentUser";
 import { crmService } from "@/server/services/CrmService";
 import { userRepository } from "@/server/repositories/UserRepository";
@@ -32,6 +33,18 @@ export default async function SupportAgentDashboardPage({
   const { q } = await searchParams;
   const isRtl = isRtlLocale(locale);
   const session = await requireSupportAgentSession(locale);
+
+  async function handleUpdateLeadStatus(formData: FormData) {
+    "use server";
+    const leadId = formData.get("leadId")?.toString();
+    const status = formData.get("status")?.toString() as "NEW" | "IN_PROGRESS" | "RESOLVED";
+    const notes = formData.get("notes")?.toString();
+
+    if (!leadId || !status) return;
+
+    crmService.updateLeadStatus(leadId, status, notes);
+    revalidatePath(`/${locale}/support`);
+  }
 
   // Diagnostic data
   const [allStudents, allTeachers, leads, sessions] = await Promise.all([
@@ -235,13 +248,14 @@ export default async function SupportAgentDashboardPage({
                 <th className="px-6 py-4">{isRtl ? "الاسم" : "Contact Name"}</th>
                 <th className="px-6 py-4">{isRtl ? "البريد / الهاتف" : "Email & Phone"}</th>
                 <th className="px-6 py-4">{isRtl ? "نوع الطلب" : "Inquiry Type"}</th>
-                <th className="px-6 py-4">{isRtl ? "المصدر" : "Source"}</th>
-                <th className="px-6 py-4">{isRtl ? "التاريخ" : "Received At"}</th>
+                <th className="px-6 py-4">{isRtl ? "الحالة والملاحظات" : "Status & Notes"}</th>
+                <th className="px-6 py-4">{isRtl ? "المصدر والتاريخ" : "Source & Date"}</th>
+                <th className="px-6 py-4">{isRtl ? "الإجراء" : "Action"}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {leads.map((l, idx) => (
-                <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
+              {leads.map((l) => (
+                <tr key={l.id} className="hover:bg-slate-50/50 transition-colors">
                   <td className="px-6 py-4 font-bold text-slate-800">{l.name}</td>
                   <td className="px-6 py-4">
                     <div className="text-slate-800">{l.email}</div>
@@ -252,9 +266,77 @@ export default async function SupportAgentDashboardPage({
                       {l.type.replace(/_/g, " ")}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-xs text-slate-500">{l.source}</td>
-                  <td className="px-6 py-4 text-xs text-slate-400">
-                    {new Date(l.createdAt).toLocaleDateString()}
+                  <td className="px-6 py-4">
+                    <div className="space-y-1">
+                      <span
+                        className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
+                          l.status === "RESOLVED"
+                            ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                            : l.status === "IN_PROGRESS"
+                            ? "bg-blue-50 text-blue-700 border border-blue-200"
+                            : "bg-amber-50 text-amber-700 border border-amber-200"
+                        }`}
+                      >
+                        {l.status === "RESOLVED"
+                          ? isRtl ? "مكتمل ومغلق ✓" : "Resolved"
+                          : l.status === "IN_PROGRESS"
+                          ? isRtl ? "قيد المتابعة ⏳" : "In Progress"
+                          : isRtl ? "جديد ✉" : "New"}
+                      </span>
+                      {l.notes && (
+                        <p className="text-xs text-slate-500 max-w-xs truncate" title={l.notes}>
+                          {l.notes}
+                        </p>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-xs text-slate-500">
+                    <div>{l.source}</div>
+                    <div className="text-slate-400 mt-0.5">{new Date(l.createdAt).toLocaleDateString()}</div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <details className="group relative">
+                      <summary className="cursor-pointer text-xs font-bold text-slate-600 hover:text-brand-600 select-none bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 transition-colors">
+                        {isRtl ? "تحديث ✎" : "Update"}
+                      </summary>
+                      <form
+                        action={handleUpdateLeadStatus}
+                        className="absolute right-0 rtl:right-auto rtl:left-0 mt-2 w-64 bg-white p-3 rounded-2xl shadow-xl border border-slate-200 z-20 space-y-2.5 text-xs text-right"
+                      >
+                        <input type="hidden" name="leadId" value={l.id} />
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-600 mb-1">
+                            {isRtl ? "تغيير الحالة" : "Status"}
+                          </label>
+                          <select
+                            name="status"
+                            defaultValue={l.status}
+                            className="w-full p-1.5 rounded-lg border border-slate-200 text-xs bg-white"
+                          >
+                            <option value="NEW">{isRtl ? "جديد" : "New"}</option>
+                            <option value="IN_PROGRESS">{isRtl ? "قيد المتابعة" : "In Progress"}</option>
+                            <option value="RESOLVED">{isRtl ? "تم الحل / مكتمل" : "Resolved"}</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-600 mb-1">
+                            {isRtl ? "ملاحظات المتابعة" : "Notes"}
+                          </label>
+                          <input
+                            name="notes"
+                            defaultValue={l.notes || ""}
+                            placeholder={isRtl ? "تم التواصل مع ولي الأمر..." : "Follow-up note..."}
+                            className="w-full p-1.5 rounded-lg border border-slate-200 text-xs"
+                          />
+                        </div>
+                        <button
+                          type="submit"
+                          className="w-full py-1.5 rounded-lg gradient-brand text-white font-bold text-xs shadow-sm hover:opacity-95"
+                        >
+                          {isRtl ? "حفظ التحديث" : "Save Update"}
+                        </button>
+                      </form>
+                    </details>
                   </td>
                 </tr>
               ))}

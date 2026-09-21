@@ -12,7 +12,8 @@ import {
   curriculumLessonRepository,
   CurriculumLesson,
 } from "../repositories/CurriculumLessonRepository";
-import { UserStatus, RoleType, EmploymentType, AgeGroup } from "@prisma/client";
+import { userRepository } from "../repositories/UserRepository";
+import { UserStatus, RoleType, EmploymentType, AgeGroup, RelationshipType } from "@prisma/client";
 import { SessionUser } from "@/lib/auth/session";
 
 export interface SchoolAnalyticsOverview {
@@ -37,12 +38,16 @@ export class AdministrationService {
     ipAddress?: string;
     diffSummary?: string;
   }): Promise<AuditLogEntry> {
+    const actorId = params.actor?.id || "admin-system";
+    const actorEmail = params.actor?.email || "admin@kidsarabicacademy.internal";
+    const actorRole = params.actor?.role || RoleType.SUPER_ADMIN;
+
     return administrationRepository.addAuditLog({
       category: params.category,
       action: params.action,
-      actorId: params.actor.id,
-      actorEmail: params.actor.email,
-      actorRole: params.actor.role,
+      actorId,
+      actorEmail,
+      actorRole,
       targetEntityId: params.targetEntityId,
       targetEntityType: params.targetEntityType,
       ipAddress: params.ipAddress || "127.0.0.1",
@@ -85,9 +90,103 @@ export class AdministrationService {
     });
   }
 
+  async addStudent(
+    data: {
+      firstName: string;
+      lastName: string;
+      dateOfBirth: Date;
+      ageGroup: AgeGroup;
+      guardianName: string;
+      guardianPhone: string;
+      notesInternal?: string;
+    },
+    actor: SessionUser
+  ): Promise<any> {
+    const parentId = `parent-admin-${Date.now()}`;
+    const student = await userRepository.createChildWithParentLink(parentId, {
+      firstName: data.firstName,
+      lastName: data.lastName,
+      dateOfBirth: data.dateOfBirth,
+      ageGroup: data.ageGroup,
+      relationshipType: RelationshipType.FATHER,
+      notesInternal: data.notesInternal,
+    });
+
+    await this.recordAuditLog({
+      category: "USER_MANAGEMENT",
+      action: "STUDENT_REGISTERED_ADMIN",
+      actor,
+      targetEntityId: student.id,
+      targetEntityType: "StudentProfile",
+      diffSummary: `تسجيل طالب جديد [${data.firstName} ${data.lastName}] عبر لوحة الإدارة العامة`,
+    });
+
+    return student;
+  }
+
+  async updateStudent(
+    studentId: string,
+    data: {
+      firstName?: string;
+      lastName?: string;
+      dateOfBirth?: Date;
+      ageGroup?: AgeGroup;
+      notesInternal?: string;
+    },
+    actor: SessionUser
+  ): Promise<any> {
+    const updated = await userRepository.updateStudentProfile(studentId, data);
+
+    await this.recordAuditLog({
+      category: "USER_MANAGEMENT",
+      action: "STUDENT_PROFILE_MODIFIED",
+      actor,
+      targetEntityId: studentId,
+      targetEntityType: "StudentProfile",
+      diffSummary: `تعديل بيانات ملف الطالب [${studentId}] من قبل الإدارة`,
+    });
+
+    return updated;
+  }
+
+  async archiveStudent(studentId: string, reason: string, actor: SessionUser): Promise<void> {
+    await this.setStudentStatus(studentId, UserStatus.ARCHIVED, reason, actor);
+  }
+
   // --- Teacher Governance ---
   async getAllTeachers(): Promise<TeacherAdminRecord[]> {
     return administrationRepository.getAllTeachersAdmin();
+  }
+
+  async addTeacher(
+    data: {
+      email: string;
+      firstName: string;
+      lastName: string;
+      qualifications: string;
+      experienceYears: number;
+      hourlyRateMinorUnits: number;
+      employmentType: EmploymentType;
+      isCertified: boolean;
+    },
+    actor: SessionUser
+  ): Promise<any> {
+    const teacher = await userRepository.createTeacherProfile(data);
+
+    await this.recordAuditLog({
+      category: "USER_MANAGEMENT",
+      action: "TEACHER_ONBOARDED_ADMIN",
+      actor,
+      targetEntityId: teacher.id,
+      targetEntityType: "TeacherProfile",
+      diffSummary: `إضافة واعتماد معلم جديد [${data.firstName} ${data.lastName}] بأجر ساعة $${(data.hourlyRateMinorUnits / 100).toFixed(2)}`,
+    });
+
+    return teacher;
+  }
+
+  async archiveTeacher(teacherId: string, actor: SessionUser): Promise<void> {
+    await this.toggleTeacherStatus(teacherId, false, actor);
   }
 
   async updateTeacherHourlyRate(
@@ -168,6 +267,63 @@ export class AdministrationService {
 
   async getLessonsCountByAgeGroup(): Promise<Record<AgeGroup, number>> {
     return curriculumLessonRepository.getLessonsCountByAgeGroup();
+  }
+
+  async addLesson(
+    data: Omit<CurriculumLesson, "id">,
+    actor: SessionUser
+  ): Promise<CurriculumLesson> {
+    const created = await curriculumLessonRepository.createLesson(data);
+
+    await this.recordAuditLog({
+      category: "ACADEMIC",
+      action: "CURRICULUM_LESSON_CREATED",
+      actor,
+      targetEntityId: created.id,
+      targetEntityType: "CurriculumLesson",
+      diffSummary: `إضافة درس جديد [${created.titleAr}] للمسار [${created.programId}] والفئة [${created.ageGroup}]`,
+    });
+
+    return created;
+  }
+
+  async updateLesson(
+    id: string,
+    data: Partial<CurriculumLesson>,
+    actor: SessionUser
+  ): Promise<CurriculumLesson | null> {
+    const updated = await curriculumLessonRepository.updateLesson(id, data);
+
+    if (updated) {
+      await this.recordAuditLog({
+        category: "ACADEMIC",
+        action: "CURRICULUM_LESSON_MODIFIED",
+        actor,
+        targetEntityId: id,
+        targetEntityType: "CurriculumLesson",
+        diffSummary: `تعديل محتوى الدرس الأكاديمي [${updated.titleAr}]`,
+      });
+    }
+
+    return updated;
+  }
+
+  async deleteLesson(id: string, actor: SessionUser): Promise<boolean> {
+    const lesson = await curriculumLessonRepository.getLessonById(id);
+    const deleted = await curriculumLessonRepository.deleteLesson(id);
+
+    if (deleted) {
+      await this.recordAuditLog({
+        category: "ACADEMIC",
+        action: "CURRICULUM_LESSON_DELETED",
+        actor,
+        targetEntityId: id,
+        targetEntityType: "CurriculumLesson",
+        diffSummary: `حذف الدرس الأكاديمي [${lesson?.titleAr || id}] من المنهج`,
+      });
+    }
+
+    return deleted;
   }
 
   async addCurriculumModule(

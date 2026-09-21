@@ -93,6 +93,43 @@ export default async function SchoolAdminDashboardPage({
     revalidatePath(`/${locale}/school-admin`);
   }
 
+  async function handleUpdateClass(formData: FormData) {
+    "use server";
+    const { schoolId: scopedSchoolId } = await requireSchoolAdminSession(locale);
+    const classGroupId = formData.get("classGroupId")?.toString();
+    const name = formData.get("name")?.toString();
+    const capacityMaxStr = formData.get("capacityMax")?.toString();
+
+    if (!classGroupId) return;
+
+    const cg = await academicRepository.getClassGroupById(classGroupId);
+    if (!cg || cg.schoolId !== scopedSchoolId) {
+      throw new Error("UNAUTHORIZED_CLASS_ACCESS");
+    }
+
+    await academicService.updateClassGroup(classGroupId, {
+      name: name?.trim() || undefined,
+      capacityMax: capacityMaxStr ? parseInt(capacityMaxStr, 10) : undefined,
+    });
+
+    revalidatePath(`/${locale}/school-admin`);
+  }
+
+  async function handleDeleteClass(formData: FormData) {
+    "use server";
+    const { schoolId: scopedSchoolId } = await requireSchoolAdminSession(locale);
+    const classGroupId = formData.get("classGroupId")?.toString();
+    if (!classGroupId) return;
+
+    const cg = await academicRepository.getClassGroupById(classGroupId);
+    if (!cg || cg.schoolId !== scopedSchoolId) {
+      throw new Error("UNAUTHORIZED_CLASS_ACCESS");
+    }
+
+    await academicService.deleteClassGroup(classGroupId);
+    revalidatePath(`/${locale}/school-admin`);
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm flex items-start justify-between gap-4">
@@ -171,9 +208,69 @@ export default async function SchoolAdminDashboardPage({
                 return (
                   <div
                     key={cg.id}
-                    className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-2"
+                    className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-4"
                   >
-                    <h3 className="text-base font-bold text-slate-900">{cg.name}</h3>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div>
+                        <h3 className="text-base font-bold text-slate-900">{cg.name}</h3>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          نوع الفصل: {cg.classType === "GROUP" ? "جماعي" : "خاص فردي"}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        {/* Edit Class Details */}
+                        <details className="group relative">
+                          <summary className="cursor-pointer text-xs font-bold text-slate-600 hover:text-brand-600 select-none bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200 hover:bg-slate-100 transition-colors">
+                            تعديل الفصل ✎
+                          </summary>
+                          <form
+                            action={handleUpdateClass}
+                            className="absolute left-0 mt-2 w-72 bg-white p-4 rounded-2xl shadow-xl border border-slate-200 z-20 space-y-3 text-xs"
+                          >
+                            <input type="hidden" name="classGroupId" value={cg.id} />
+                            <div>
+                              <label className="block font-bold text-slate-700 mb-1">اسم الفصل</label>
+                              <input
+                                name="name"
+                                defaultValue={cg.name}
+                                className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs"
+                              />
+                            </div>
+                            <div>
+                              <label className="block font-bold text-slate-700 mb-1">السعة القصوى</label>
+                              <input
+                                name="capacityMax"
+                                type="number"
+                                min={1}
+                                max={15}
+                                defaultValue={cg.capacityMax}
+                                className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs"
+                              />
+                            </div>
+                            <button
+                              type="submit"
+                              className="w-full py-1.5 rounded-lg bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs"
+                            >
+                              حفظ التعديلات
+                            </button>
+                          </form>
+                        </details>
+
+                        {/* Delete Class */}
+                        <form action={handleDeleteClass}>
+                          <input type="hidden" name="classGroupId" value={cg.id} />
+                          <button
+                            type="submit"
+                            className="text-xs font-bold text-rose-500 hover:text-rose-700 hover:bg-rose-50 px-3 py-1.5 rounded-xl border border-rose-100 transition-colors"
+                            title="حذف الفصل نهائياً"
+                          >
+                            حذف ✕
+                          </button>
+                        </form>
+                      </div>
+                    </div>
+
                     <div className="space-y-1.5 w-64 max-w-full">
                       <div className="flex items-center justify-between text-[11px] text-slate-500 font-semibold">
                         <span>إشغال المقاعد:</span>

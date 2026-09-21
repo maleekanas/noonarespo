@@ -244,6 +244,58 @@ class CommunicationRepository {
     return mem;
   }
 
+  async cancelMeetingRequest(meetingId: string, reason?: string): Promise<DomainMeetingRequest> {
+    try {
+      const existing = await prisma.meetingRequest.findUnique({ where: { id: meetingId } });
+      if (existing) {
+        const row = await prisma.meetingRequest.update({
+          where: { id: meetingId },
+          data: {
+            status: "CANCELLED",
+            notes: reason ? `${existing.notes || ""} [سبب الإلغاء: ${reason}]` : existing.notes,
+          },
+        });
+        return this.toMeetingRequest(row);
+      }
+    } catch {
+      // offline fallback
+    }
+    const mem = IN_MEMORY_MEETINGS.get(meetingId);
+    if (!mem) {
+      throw new Error(`MEETING_NOT_FOUND: Meeting ${meetingId} does not exist`);
+    }
+    mem.status = "CANCELLED";
+    if (reason) {
+      mem.notes = `${mem.notes || ""} [سبب الإلغاء: ${reason}]`;
+    }
+    return mem;
+  }
+
+  async rescheduleMeetingRequest(meetingId: string, newTimeUtc: Date): Promise<DomainMeetingRequest> {
+    try {
+      const existing = await prisma.meetingRequest.findUnique({ where: { id: meetingId } });
+      if (existing) {
+        const row = await prisma.meetingRequest.update({
+          where: { id: meetingId },
+          data: {
+            requestedTimeUtc: newTimeUtc,
+            status: "PENDING",
+          },
+        });
+        return this.toMeetingRequest(row);
+      }
+    } catch {
+      // offline fallback
+    }
+    const mem = IN_MEMORY_MEETINGS.get(meetingId);
+    if (!mem) {
+      throw new Error(`MEETING_NOT_FOUND: Meeting ${meetingId} does not exist`);
+    }
+    mem.requestedTimeUtc = newTimeUtc;
+    mem.status = "PENDING";
+    return mem;
+  }
+
   // --- Notifications ---
   async addNotification(data: {
     userId: string;

@@ -70,6 +70,7 @@ export interface StudentAdminRecord {
   guardianConsentGivenAt: Date | null;
   coppaGdprCompliant: boolean;
   enrolledClassesCount: number;
+  notesInternal?: string | null;
 }
 
 export interface TeacherAdminRecord {

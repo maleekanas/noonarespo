@@ -173,6 +173,43 @@ export class SchedulingService {
       endTimeUtc: next.endTimeUtc,
     };
   }
+
+  /**
+   * Reschedules an existing session with conflict detection.
+   */
+  async rescheduleSession(params: {
+    sessionId: string;
+    newStartTimeUtc: Date;
+    durationMinutes: number;
+  }): Promise<DomainClassSession | null> {
+    const session = await schedulingRepository.getSessionById(params.sessionId);
+    if (!session) {
+      throw new Error(`SESSION_NOT_FOUND: Session ${params.sessionId} does not exist`);
+    }
+
+    const newEndTimeUtc = new Date(
+      params.newStartTimeUtc.getTime() + params.durationMinutes * 60 * 1000
+    );
+
+    const conflict = await this.checkTeacherConflict(
+      session.teacherId,
+      params.newStartTimeUtc,
+      newEndTimeUtc,
+      session.id
+    );
+    if (conflict.hasConflict) {
+      throw new Error(`SCHEDULE_CONFLICT: ${conflict.reason}`);
+    }
+
+    return schedulingRepository.rescheduleSession(params.sessionId, params.newStartTimeUtc, newEndTimeUtc);
+  }
+
+  /**
+   * Cancels an existing session.
+   */
+  async cancelSession(sessionId: string): Promise<boolean> {
+    return schedulingRepository.cancelSession(sessionId);
+  }
 }
 
 export const schedulingService = new SchedulingService();

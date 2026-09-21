@@ -303,16 +303,32 @@ class AssignmentRepository {
     voicePromptUrl?: string;
     dueDateUtc: Date;
   }): Promise<DomainAssignment> {
-    return prisma.assignment.create({
-      data: {
+    try {
+      return await prisma.assignment.create({
+        data: {
+          classGroupId: data.classGroupId,
+          titleAr: data.titleAr,
+          titleEn: data.titleEn,
+          instructions: data.instructions,
+          voicePromptUrl: data.voicePromptUrl,
+          dueDateUtc: data.dueDateUtc,
+        },
+      });
+    } catch {
+      const id = `assignment-${Date.now()}`;
+      const assignment: DomainAssignment = {
+        id,
         classGroupId: data.classGroupId,
         titleAr: data.titleAr,
         titleEn: data.titleEn,
         instructions: data.instructions,
-        voicePromptUrl: data.voicePromptUrl,
+        voicePromptUrl: data.voicePromptUrl ?? null,
         dueDateUtc: data.dueDateUtc,
-      },
-    });
+        createdAt: new Date(),
+      };
+      this.fallbackAssignments.set(id, assignment);
+      return assignment;
+    }
   }
 
   async submitAssignment(data: {
@@ -366,6 +382,48 @@ class AssignmentRepository {
         internalTeacherNotes: data.internalTeacherNotes,
       },
     });
+  }
+
+  async updateAssignment(
+    id: string,
+    data: {
+      titleAr?: string;
+      titleEn?: string;
+      instructions?: string;
+      voicePromptUrl?: string;
+      dueDateUtc?: Date;
+    }
+  ): Promise<DomainAssignment | null> {
+    try {
+      return await prisma.assignment.update({
+        where: { id },
+        data: {
+          titleAr: data.titleAr,
+          titleEn: data.titleEn,
+          instructions: data.instructions,
+          voicePromptUrl: data.voicePromptUrl,
+          dueDateUtc: data.dueDateUtc,
+        },
+      });
+    } catch {
+      const existing = this.fallbackAssignments.get(id);
+      if (!existing) return null;
+      const updated: DomainAssignment = {
+        ...existing,
+        ...data,
+      };
+      this.fallbackAssignments.set(id, updated);
+      return updated;
+    }
+  }
+
+  async deleteAssignment(id: string): Promise<boolean> {
+    try {
+      await prisma.assignment.delete({ where: { id } });
+      return true;
+    } catch {
+      return this.fallbackAssignments.delete(id);
+    }
   }
 }
 

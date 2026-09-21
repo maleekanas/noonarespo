@@ -88,6 +88,38 @@ export default async function TeacherAssignmentsPage({
     revalidatePath(`/${locale}/student`);
   }
 
+  // Server Action: Update Assignment
+  async function handleUpdateAssignment(formData: FormData) {
+    "use server";
+    const assignmentId = formData.get("assignmentId")?.toString();
+    const titleAr = formData.get("titleAr")?.toString().trim();
+    const instructions = formData.get("instructions")?.toString().trim();
+    const dueDateStr = formData.get("dueDate")?.toString();
+
+    if (!assignmentId) return;
+
+    await assignmentService.updateAssignment(assignmentId, {
+      titleAr: titleAr || undefined,
+      instructions: instructions || undefined,
+      dueDateUtc: dueDateStr ? new Date(dueDateStr) : undefined,
+    });
+
+    revalidatePath(`/${locale}/teacher/assignments`);
+    revalidatePath(`/${locale}/student`);
+  }
+
+  // Server Action: Delete Assignment
+  async function handleDeleteAssignment(formData: FormData) {
+    "use server";
+    const assignmentId = formData.get("assignmentId")?.toString();
+    if (!assignmentId) return;
+
+    await assignmentService.deleteAssignment(assignmentId);
+
+    revalidatePath(`/${locale}/teacher/assignments`);
+    revalidatePath(`/${locale}/student`);
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       {/* Header */}
@@ -289,6 +321,55 @@ export default async function TeacherAssignmentsPage({
               نشر الواجب لجميع طلاب الفصل
             </button>
           </form>
+        </div>
+
+        {/* Existing Assignments for this class */}
+        <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-4">
+          <h3 className="text-base font-bold text-slate-900">واجبات هذا الفصل ({assignments.length})</h3>
+          <div className="space-y-3">
+            {assignments.map((a) => (
+              <div key={a.id} className="p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-2 text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-slate-800">{a.titleAr}</span>
+                  <form action={handleDeleteAssignment}>
+                    <input type="hidden" name="assignmentId" value={a.id} />
+                    <button
+                      type="submit"
+                      className="text-slate-400 hover:text-rose-600 transition-colors font-bold text-[11px]"
+                      title="حذف الواجب"
+                    >
+                      حذف ✕
+                    </button>
+                  </form>
+                </div>
+                <details className="group">
+                  <summary className="cursor-pointer text-slate-500 hover:text-brand-600 font-bold text-[11px] select-none">
+                    تعديل العنوان والتعليمات ✎
+                  </summary>
+                  <form action={handleUpdateAssignment} className="space-y-2 pt-2">
+                    <input type="hidden" name="assignmentId" value={a.id} />
+                    <input
+                      name="titleAr"
+                      defaultValue={a.titleAr}
+                      className="w-full p-2 rounded-lg border border-slate-200 text-xs bg-white"
+                    />
+                    <textarea
+                      name="instructions"
+                      defaultValue={a.instructions}
+                      rows={2}
+                      className="w-full p-2 rounded-lg border border-slate-200 text-xs bg-white"
+                    />
+                    <button
+                      type="submit"
+                      className="w-full py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs"
+                    >
+                      حفظ التعديل
+                    </button>
+                  </form>
+                </details>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>

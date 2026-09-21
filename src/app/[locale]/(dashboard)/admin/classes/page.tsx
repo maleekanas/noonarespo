@@ -11,6 +11,8 @@ import {
   PlusCircle,
   Calendar,
   Building2,
+  Edit,
+  Trash2,
 } from "lucide-react";
 
 export default async function AdminClassesPage({
@@ -53,6 +55,38 @@ export default async function AdminClassesPage({
 
     revalidatePath(`/${locale}/admin/classes`);
     revalidatePath(`/${locale}/admin/schools`);
+    revalidatePath(`/${locale}/school-admin`);
+    revalidatePath(`/${locale}/parent/enroll`);
+  }
+
+  async function handleUpdateClass(formData: FormData) {
+    "use server";
+    await requireAdminSession(locale);
+    const classId = formData.get("classId")?.toString();
+    const name = formData.get("name")?.toString().trim();
+    const capacityStr = formData.get("capacityMax")?.toString();
+
+    if (!classId) return;
+
+    await academicService.updateClassGroup(classId, {
+      name: name || undefined,
+      capacityMax: capacityStr ? parseInt(capacityStr, 10) : undefined,
+    });
+
+    revalidatePath(`/${locale}/admin/classes`);
+    revalidatePath(`/${locale}/school-admin`);
+    revalidatePath(`/${locale}/parent/enroll`);
+  }
+
+  async function handleDeleteClass(formData: FormData) {
+    "use server";
+    await requireAdminSession(locale);
+    const classId = formData.get("classId")?.toString();
+    if (!classId) return;
+
+    await academicService.deleteClassGroup(classId);
+
+    revalidatePath(`/${locale}/admin/classes`);
     revalidatePath(`/${locale}/school-admin`);
     revalidatePath(`/${locale}/parent/enroll`);
   }
@@ -135,14 +169,65 @@ export default async function AdminClassesPage({
                         />
                       </div>
                     </div>
+
+                    {/* Edit Class Dropdown */}
+                    <details className="text-xs group pt-2">
+                      <summary className="cursor-pointer text-slate-500 hover:text-brand-600 font-bold flex items-center gap-1 select-none">
+                        <Edit className="w-3.5 h-3.5" />
+                        <span>تعديل الفصل والسعة</span>
+                      </summary>
+
+                      <form action={handleUpdateClass} className="p-3 bg-slate-50 rounded-xl space-y-2 mt-2 border border-slate-100">
+                        <input type="hidden" name="classId" value={cg.id} />
+                        <div>
+                          <label className="block text-[11px] font-bold text-slate-600 mb-0.5">اسم الفصل</label>
+                          <input
+                            name="name"
+                            defaultValue={cg.name}
+                            className="w-full p-2 rounded-lg border border-slate-200 text-xs bg-white"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-bold text-slate-600 mb-0.5">السعة القصوى</label>
+                          <input
+                            name="capacityMax"
+                            type="number"
+                            min={1}
+                            max={10}
+                            defaultValue={cg.capacityMax}
+                            className="w-full p-2 rounded-lg border border-slate-200 text-xs bg-white"
+                          />
+                        </div>
+                        <button
+                          type="submit"
+                          className="w-full py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs"
+                        >
+                          تحديث الفصل 💾
+                        </button>
+                      </form>
+                    </details>
                   </div>
 
-                  <Link
-                    href={`/${locale}/teacher/classes/${cg.id}`}
-                    className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs text-center transition-colors"
-                  >
-                    عرض القائمة والحضور
-                  </Link>
+                  <div className="flex flex-col sm:items-end gap-2">
+                    <Link
+                      href={`/${locale}/teacher/classes/${cg.id}`}
+                      className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs text-center transition-colors"
+                    >
+                      عرض القائمة والحضور
+                    </Link>
+
+                    <form action={handleDeleteClass}>
+                      <input type="hidden" name="classId" value={cg.id} />
+                      <button
+                        type="submit"
+                        className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors flex items-center gap-1 text-[11px] font-bold"
+                        title="حذف الفصل الدراسي"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>حذف الفصل</span>
+                      </button>
+                    </form>
+                  </div>
                 </div>
               );
             })}
