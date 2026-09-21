@@ -81,12 +81,12 @@ export default async function ContactPage({
                     {isRtl ? "واتساب المباشر" : "WhatsApp Concierge"}
                   </div>
                   <a
-                    href="https://wa.me/447123456789"
+                    href="https://wa.me/31685663010"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-sm font-bold text-brand-600 hover:underline"
                   >
-                    +44 7123 456 789
+                    +31 6856 630 10
                   </a>
                   <p className="text-xs text-slate-500 mt-0.5">
                     {isRtl ? "رد فوري خلال ساعات العمل" : "Instant replies during academy hours"}
