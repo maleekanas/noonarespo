@@ -8,7 +8,11 @@ import {
 } from "../repositories/AdministrationRepository";
 import { academicRepository } from "../repositories/AcademicRepository";
 import { attendanceRepository } from "../repositories/AttendanceRepository";
-import { UserStatus, RoleType, EmploymentType } from "@prisma/client";
+import {
+  curriculumLessonRepository,
+  CurriculumLesson,
+} from "../repositories/CurriculumLessonRepository";
+import { UserStatus, RoleType, EmploymentType, AgeGroup } from "@prisma/client";
 import { SessionUser } from "@/lib/auth/session";
 
 export interface SchoolAnalyticsOverview {
@@ -148,6 +152,22 @@ export class AdministrationService {
       return administrationRepository.getCurriculumModulesByProgram(programId);
     }
     return administrationRepository.getAllCurriculumModules();
+  }
+
+  async getAllLessons(): Promise<CurriculumLesson[]> {
+    return curriculumLessonRepository.getAllLessons();
+  }
+
+  async getLessonsByAgeGroup(ageGroup: AgeGroup): Promise<CurriculumLesson[]> {
+    return curriculumLessonRepository.getLessonsByAgeGroup(ageGroup);
+  }
+
+  async getLessonsByProgram(programId: string): Promise<CurriculumLesson[]> {
+    return curriculumLessonRepository.getLessonsByProgram(programId);
+  }
+
+  async getLessonsCountByAgeGroup(): Promise<Record<AgeGroup, number>> {
+    return curriculumLessonRepository.getLessonsCountByAgeGroup();
   }
 
   async addCurriculumModule(

@@ -21,13 +21,45 @@ class AssignmentRepository {
 
   private seedFallbackAssignments() {
     const hwList: DomainAssignment[] = [
+      // AGE_4_6 (Sprouts) Homework
+      {
+        id: "hw-sprouts-1",
+        classGroupId: "class-foundations-pre-a1-sprouts",
+        titleAr: "تسجيل صوتي: نطق أصوات الحروف بحركة الفتحة (أ، ب، ت، ث)",
+        titleEn: "Voice Recording: Letter Sounds with Fatha (Alif to Thaa)",
+        instructions: "استمع إلى أنشودة الحروف ثم سجل نطقك الجميل لأصوات الحروف الأربعة بصوت واضح ومرح.",
+        voicePromptUrl: "https://audio.arabickidsacademy.com/prompts/sprouts-letters-model.mp3",
+        dueDateUtc: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
+        createdAt: new Date(),
+      },
+      {
+        id: "hw-sprouts-2",
+        classGroupId: "class-foundations-pre-a1-sprouts",
+        titleAr: "نشاط التلوين والتتبع: كراسة تتبع حرف الألف والباء",
+        titleEn: "Coloring & Tracing Activity: Alif & Baa Ruled Sheet",
+        instructions: "اطبع ورقة التتبع ولون الحيوانات اللطيفة (الأسد والبطة) وتتبع الحروف باتجاه الأسهم.",
+        dueDateUtc: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+        createdAt: new Date(),
+      },
+      {
+        id: "hw-sprouts-3",
+        classGroupId: "class-listening-pre-a1-sprouts",
+        titleAr: "الاستماع والمطابقة: أصوات الحيوانات في المزرعة",
+        titleEn: "Listen & Match: Farm Animal Sounds & Names in Arabic",
+        instructions: "استمع إلى المقطع الصوتي وطابق صوت كل حيوان مع اسمه العربي في ورقة العمل.",
+        voicePromptUrl: "https://audio.arabickidsacademy.com/prompts/farm-animals.mp3",
+        dueDateUtc: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
+        createdAt: new Date(),
+      },
+
+      // AGE_7_10 (Explorers) Homework
       {
         id: "hw-1",
         classGroupId: "class-reading-a1-cohort1",
         titleAr: "تسجيل صوتي: قراءة سورة الإخلاص مع أحكام القلقلة",
         titleEn: "Voice Recording: Surah Al-Ikhlas with Qalqalah Rules",
         instructions: "استمع إلى المقطع النموذجي بصوت المعلم، ثم سجّل قراءتك المتقنة بصوت واضح ورفعه للمراجعة.",
-        voicePromptUrl: "https://audio.kidsarabicacademy.internal/prompts/surah-ikhlas-model.mp3",
+        voicePromptUrl: "https://audio.arabickidsacademy.com/prompts/surah-ikhlas-model.mp3",
         dueDateUtc: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
         createdAt: new Date(),
       },
@@ -74,6 +106,65 @@ class AssignmentRepository {
         titleEn: "Five Pillars of Islam & Daily Filial Kindness Reflection",
         instructions: "اكتب عملاً طيباً قمت به اليوم لإدخال السرور على قلب والديك واذكر ركناً من أركان الإسلام.",
         dueDateUtc: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+        createdAt: new Date(),
+      },
+
+      // AGE_11_13 (Pioneers) Homework
+      {
+        id: "hw-pioneers-1",
+        classGroupId: "class-reading-b1-cohort1",
+        titleAr: "تحليل أدبي: استخراج الأفكار الرئيسة والعبر في قصة يوسف عليه السلام",
+        titleEn: "Literary Analysis: Main Themes & Lessons in Prophet Yusuf Narrative",
+        instructions: "اقرأ قصة يوسف في المكتبة الرقمية واكتب ملخصاً تحليلياً من 100 كلمة يبرز قيمة العفو عند المقدرة.",
+        dueDateUtc: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000),
+        createdAt: new Date(),
+      },
+      {
+        id: "hw-pioneers-2",
+        classGroupId: "class-writing-b1-cohort1",
+        titleAr: "التعبير الإنشائي: كتابة قصة خيالية قصيرة موظفاً أدوات الربط",
+        titleEn: "Creative Writing: Short Fiction Utilizing Transitional Connectors",
+        instructions: "ألف قصة من 8 أسطر تحوي مقدمة وعقدة وخاتمة مع استخدام (بينما، فجأة، ثم، أخيراً) وعلامات الترقيم.",
+        dueDateUtc: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
+        createdAt: new Date(),
+      },
+      {
+        id: "hw-pioneers-3",
+        classGroupId: "class-quran-b1-cohort1",
+        titleAr: "تلاوة وتجويد: أحكام الميم الساكنة في سورة الأعلى وسورة الغاشية",
+        titleEn: "Tajweed Recitation: Meem Sakinah Rules in Surah Al-A'la & Al-Ghashiyah",
+        instructions: "سجل تلاوتك في مختبر القرآن مع تطبيق الإخفاء والإدغام الشفوي وضبط الغنة حركتين.",
+        voicePromptUrl: "https://audio.arabickidsacademy.com/prompts/meem-sakinah-model.mp3",
+        dueDateUtc: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+        createdAt: new Date(),
+      },
+
+      // AGE_14_16 (Scholars) Homework
+      {
+        id: "hw-scholars-1",
+        classGroupId: "class-reading-b2-cohort1",
+        titleAr: "التحليل البلاغي والنقدي: التشبيه والاستعارة في خطبة طارق بن زياد",
+        titleEn: "Rhetorical & Critical Analysis: Simile & Metaphor in Tariq ibn Ziyad's Speech",
+        instructions: "حلل 3 صور بيانية في الخطبة التاريخية مبيناً أثرها في إقناع الجيش واستنهاض الهمم.",
+        dueDateUtc: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
+        createdAt: new Date(),
+      },
+      {
+        id: "hw-scholars-2",
+        classGroupId: "class-writing-b2-cohort1",
+        titleAr: "كتابة مقالة حجاجية: دور اللغة العربية في الهوية الحضارية المعاصرة",
+        titleEn: "Argumentative Essay: The Role of Arabic in Contemporary Cultural Identity",
+        instructions: "اكتب مقالة أكاديمية من 250 كلمة تشتمل على أطروحة وأدلة تاريخية وعقلية ودحض للاعتراضات.",
+        dueDateUtc: new Date(Date.now() + 6 * 24 * 60 * 60 * 1000),
+        createdAt: new Date(),
+      },
+      {
+        id: "hw-scholars-3",
+        classGroupId: "class-speaking-b2-cohort1",
+        titleAr: "تسجيل مناظرة مرئية أو صوتية: التكنولوجيا واللغة بين الإثراء والتحدي",
+        titleEn: "Speech/Debate Submission: Technology & Language - Enrichment vs Challenges",
+        instructions: "سجل خطاباً إقناعياً مدته 3 دقائق باللغة الفصحى الرصينة مدعماً بحجج منطقية وإحصاءات.",
+        dueDateUtc: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000),
         createdAt: new Date(),
       },
     ];

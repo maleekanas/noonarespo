@@ -440,6 +440,10 @@ export default async function ProgramsCatalogPage({
               </div>
               <div className="flex items-center gap-1.5">
                 <CheckCircle2 className="w-4 h-4 text-emerald-300" />
+                <span>{isAr ? "+75 درساً لكل فئة عمرية (320+ درساً معتمداً)" : "75+ Lessons / Age Group (320+ Total)"}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4 text-emerald-300" />
                 <span>{pc.liveSessionsBadge}</span>
               </div>
               <div className="flex items-center gap-1.5">
