@@ -199,9 +199,10 @@ export function PricingCalculator({ locale, isRtl = false }: PricingCalculatorPr
       nameAr: "الخطة الفردية",
       subtitleEn: "Ideal for one child dedicated to mastering Arabic and Tajweed.",
       subtitleAr: "مثالية لطفل واحد يسعى لإتقان العربية والتجويد بخطى واثقة.",
-      baseUsdMonthly: 79,
-      badgeEn: "Most Popular",
-      badgeAr: "الأكثر طلباً",
+      baseUsdMonthly: 51.35,
+      originalUsdMonthly: 79,
+      badgeEn: "Most Popular • 35% OFF",
+      badgeAr: "الأكثر طلباً • خصم 35%",
       popular: true,
       featuresEn: [
         "2 Live Small-Group Classes per week (Max 6 students)",
@@ -226,9 +227,10 @@ export function PricingCalculator({ locale, isRtl = false }: PricingCalculatorPr
       nameAr: "باقة العائلة",
       subtitleEn: "Designed for families with 2 to 3 children learning together.",
       subtitleAr: "مصممة للعائلات التي لديها طفلان إلى 3 أطفال يتعلمون معاً.",
-      baseUsdMonthly: 149,
-      badgeEn: "Best Value",
-      badgeAr: "أفضل قيمة",
+      baseUsdMonthly: 96.85,
+      originalUsdMonthly: 149,
+      badgeEn: "Best Value • 35% OFF",
+      badgeAr: "أفضل قيمة • خصم 35%",
       popular: false,
       featuresEn: [
         "Up to 3 Children Student Profiles included",
@@ -253,9 +255,10 @@ export function PricingCalculator({ locale, isRtl = false }: PricingCalculatorPr
       nameAr: "التعليم الفردي الخاص (1 على 1)",
       subtitleEn: "Maximum acceleration with dedicated 1-on-1 private mentorship.",
       subtitleAr: "أقصى درجات التركيز والتطور عبر حصص فردية خاصة تماماً.",
-      baseUsdMonthly: 199,
-      badgeEn: "VIP Acceleration",
-      badgeAr: "تعليم خاص مكثف",
+      baseUsdMonthly: 129.35,
+      originalUsdMonthly: 199,
+      badgeEn: "VIP Acceleration • 35% OFF",
+      badgeAr: "تعليم خاص مكثف • خصم 35%",
       popular: false,
       featuresEn: [
         "100% Dedicated One-on-One Live Lessons",
@@ -421,12 +424,20 @@ export function PricingCalculator({ locale, isRtl = false }: PricingCalculatorPr
                 {isRtl ? plan.subtitleAr : plan.subtitleEn}
               </p>
 
-              <div className="flex items-baseline gap-2 mb-6">
+              <div className="flex items-baseline flex-wrap gap-2 mb-6">
+                {plan.originalUsdMonthly && (
+                  <span className="text-xl sm:text-2xl font-bold text-slate-400 line-through">
+                    {formatPrice(plan.originalUsdMonthly)}
+                  </span>
+                )}
                 <span className="text-4xl sm:text-5xl font-extrabold text-slate-900">
                   {formatPrice(plan.baseUsdMonthly)}
                 </span>
                 <span className="text-slate-500 text-sm font-medium">
                   {isRtl ? "/ شهرياً" : "/ month"}
+                </span>
+                <span className="text-xs font-extrabold text-emerald-700 bg-emerald-100 border border-emerald-300 px-2 py-0.5 rounded-full">
+                  -35%
                 </span>
               </div>
 

@@ -128,9 +128,9 @@ export class DataExportService {
         {
           invoiceNumber: "INV-2026-001",
           parentId: "parent-1",
-          subtotalMinorUnits: 7900,
+          subtotalMinorUnits: 5135,
           taxMinorUnits: 0,
-          totalMinorUnits: 7900,
+          totalMinorUnits: 5135,
           currency: "USD",
           status: "PAID",
           payments: [{ provider: "STRIPE" }],
@@ -274,9 +274,9 @@ export class DataExportService {
         {
           invoiceNumber: "INV-2026-001",
           parentId: "parent-1",
-          subtotalMinorUnits: 7900,
+          subtotalMinorUnits: 5135,
           taxMinorUnits: 0,
-          totalMinorUnits: 7900,
+          totalMinorUnits: 5135,
           currency: "USD",
           status: "PAID",
           payments: [{ provider: "STRIPE" }],

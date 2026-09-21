@@ -28,9 +28,10 @@ export default async function PricingPage({
       nameAr: "الخطة الفردية",
       subtitleEn: "Ideal for one child dedicated to mastering Arabic and Tajweed.",
       subtitleAr: "مثالية لطفل واحد يسعى لإتقان العربية والتجويد بخطى واثقة.",
-      priceMonthly: 79,
-      badgeEn: "Most Popular",
-      badgeAr: "الأكثر طلباً",
+      priceMonthly: 51.35,
+      originalPriceMonthly: 79,
+      badgeEn: "Most Popular • 35% OFF",
+      badgeAr: "الأكثر طلباً • خصم 35%",
       popular: true,
       featuresEn: [
         "2 Live Small-Group Classes per week (Max 6 students)",
@@ -55,9 +56,10 @@ export default async function PricingPage({
       nameAr: "باقة العائلة",
       subtitleEn: "Designed for families with 2 to 3 children learning together.",
       subtitleAr: "مصممة للعائلات التي لديها طفلان إلى 3 أطفال يتعلمون معاً.",
-      priceMonthly: 149,
-      badgeEn: "Best Value",
-      badgeAr: "أفضل قيمة",
+      priceMonthly: 96.85,
+      originalPriceMonthly: 149,
+      badgeEn: "Best Value • 35% OFF",
+      badgeAr: "أفضل قيمة • خصم 35%",
       popular: false,
       featuresEn: [
         "Up to 3 Children Student Profiles included",
@@ -82,9 +84,10 @@ export default async function PricingPage({
       nameAr: "التعليم الفردي الخاص (1 على 1)",
       subtitleEn: "Maximum acceleration with dedicated 1-on-1 private mentorship.",
       subtitleAr: "أقصى درجات التركيز والتطور عبر حصص فردية خاصة تماماً.",
-      priceMonthly: 199,
-      badgeEn: "VIP Acceleration",
-      badgeAr: "تعليم خاص مكثف",
+      priceMonthly: 129.35,
+      originalPriceMonthly: 199,
+      badgeEn: "VIP Acceleration • 35% OFF",
+      badgeAr: "تعليم خاص مكثف • خصم 35%",
       popular: false,
       featuresEn: [
         "100% Dedicated One-on-One Live Lessons",
@@ -114,7 +117,7 @@ export default async function PricingPage({
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand-500/10 border border-brand-400/20 text-brand-300 text-xs sm:text-sm font-semibold mb-6">
             <Sparkles className="w-4 h-4 text-brand-400" />
-            <span>{isRtl ? "شفافية كاملة بدون أي رسوم خفية" : "Simple, Transparent Pricing • 1-Day Free Trial"}</span>
+            <span>{isRtl ? "خصم خاص 35% على كافة الباقات • تجربة مجانية ليوم واحد" : "Special 35% Discount Applied to All Plans • 1-Day Free Trial"}</span>
           </div>
           <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight max-w-3xl mx-auto leading-tight">
             {isRtl ? "استثمر في هوية طفلك وفصاحته" : "Invest in Your Child's Faith, Language & Future"}
@@ -161,12 +164,20 @@ export default async function PricingPage({
                   {isRtl ? plan.subtitleAr : plan.subtitleEn}
                 </p>
 
-                <div className="flex items-baseline gap-2 mb-6">
+                <div className="flex items-baseline flex-wrap gap-2 mb-6">
+                  {plan.originalPriceMonthly && (
+                    <span className="text-xl sm:text-2xl font-bold text-slate-400 line-through">
+                      ${plan.originalPriceMonthly}
+                    </span>
+                  )}
                   <span className="text-4xl sm:text-5xl font-extrabold text-slate-900">
                     ${plan.priceMonthly}
                   </span>
                   <span className="text-slate-500 text-sm font-medium">
                     {isRtl ? "/ شهرياً" : "/ month"}
+                  </span>
+                  <span className="text-xs font-extrabold text-emerald-700 bg-emerald-100 border border-emerald-300 px-2 py-0.5 rounded-full">
+                    -35%
                   </span>
                 </div>
 

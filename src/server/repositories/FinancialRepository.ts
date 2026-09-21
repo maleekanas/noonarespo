@@ -42,7 +42,7 @@ class InMemoryFinancialRepository {
   }
 
   private seedDefaults() {
-    // Subscription Plans in integer minor units
+    // Subscription Plans in integer minor units (reduced by 35%)
     const plansCatalog: SubscriptionPlan[] = [
       {
         id: "plan-starter",
@@ -50,7 +50,7 @@ class InMemoryFinancialRepository {
         nameAr: "مسار البراعم الفردي",
         nameEn: "Starter Explorer Track",
         descriptionAr: "حصة أسبوعية واحدة في فصل جماعي مصغر مع متابعة الواجبات",
-        priceMinorUnits: 4900, // $49.00
+        priceMinorUnits: 3185, // $31.85 (was $49.00 - 35% off)
         currency: "USD",
         billingInterval: "MONTHLY",
         maxChildren: 1,
@@ -68,7 +68,7 @@ class InMemoryFinancialRepository {
         nameAr: "فصل النجوم الجماعي الموصى به",
         nameEn: "Standard Small-Group Cohort",
         descriptionAr: "حصتان أسبوعياً مباشرة في فصل مصغر لا يتجاوز 6 طلاب",
-        priceMinorUnits: 8900, // $89.00
+        priceMinorUnits: 5785, // $57.85 (was $89.00 - 35% off)
         currency: "USD",
         billingInterval: "MONTHLY",
         maxChildren: 1,
@@ -88,7 +88,7 @@ class InMemoryFinancialRepository {
         nameAr: "باقة العائلة المتميزة",
         nameEn: "Family Premium Plan",
         descriptionAr: "تغطية شاملة لما يصل إلى 3 أطفال مع فصول جماعية واستشارات",
-        priceMinorUnits: 14900, // $149.00
+        priceMinorUnits: 9685, // $96.85 (was $149.00 - 35% off)
         currency: "USD",
         billingInterval: "MONTHLY",
         maxChildren: 3,
@@ -107,7 +107,7 @@ class InMemoryFinancialRepository {
         nameAr: "الدروس الخاصة المباشرة (1 على 1)",
         nameEn: "Private 1-on-1 Tutoring",
         descriptionAr: "تعليم فردي مكثف مخصص بالكامل لاحتياجات طفلك وسرعة تعلمه",
-        priceMinorUnits: 22000, // $220.00
+        priceMinorUnits: 14300, // $143.00 (was $220.00 - 35% off)
         currency: "USD",
         billingInterval: "MONTHLY",
         maxChildren: 1,
