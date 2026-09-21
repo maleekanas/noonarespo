@@ -194,7 +194,7 @@ export default async function ContactPage({
                     type="tel"
                     name="phone"
                     required
-                    placeholder="+44 7123 456789"
+                    placeholder={isRtl ? "+966 50 123 4567" : "+31 6 12345678"}
                     className="w-full px-4 py-3 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                   />
                 </div>
