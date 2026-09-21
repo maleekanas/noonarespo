@@ -7,6 +7,7 @@ import { administrationRepository } from "../../src/server/repositories/Administ
 import { assignmentRepository } from "../../src/server/repositories/AssignmentRepository";
 import { storyRepository } from "../../src/server/repositories/StoryRepository";
 import { printablesRepository } from "../../src/server/repositories/PrintablesRepository";
+import { academicRepository } from "../../src/server/repositories/AcademicRepository";
 
 describe("Curriculum Architecture & 75+ Lessons Per Age Group Verification", () => {
   const ageGroups = [
@@ -157,4 +158,64 @@ describe("Curriculum Architecture & 75+ Lessons Per Age Group Verification", () 
       assert.ok(packet.items.length >= 1, `Printable ${packet.id} must have items`);
     }
   });
+
+  test("AcademicRepository must have courses, levels, and active micro-cohort classes for all 7 programs across all 4 age groups", async () => {
+    const allPrograms = await academicRepository.getAllPrograms();
+    assert.strictEqual(allPrograms.length, 7, "All 7 accredited programs must exist");
+
+    const allClasses = await academicRepository.getAllClassGroups();
+    assert.ok(allClasses.length >= 28, `Expected at least 28 active class groups, found ${allClasses.length}`);
+
+    for (const prog of allPrograms) {
+      const courses = await academicRepository.getCoursesByProgramId(prog.id);
+      assert.ok(courses.length >= 4, `Program ${prog.id} must have at least 4 courses covering all age groups, found ${courses.length}`);
+
+      const levels: any[] = [];
+      for (const course of courses) {
+        const courseLevels = await academicRepository.getLevelsByCourseId(course.id);
+        levels.push(...courseLevels);
+      }
+
+      // Check all 4 age groups are covered by levels in this program
+      const ageGroupsInProgram = new Set(levels.map((l) => l.targetAge));
+      for (const ageGroup of ageGroups) {
+        assert.ok(
+          ageGroupsInProgram.has(ageGroup),
+          `Program ${prog.id} must have a course level for age group ${ageGroup}`
+        );
+      }
+
+      // Check active class groups exist for all 4 age groups in this program
+      const programLevelIds = new Set(levels.map((l) => l.id));
+      const programClasses = allClasses.filter((c) => programLevelIds.has(c.courseLevelId));
+      assert.ok(
+        programClasses.length >= 4,
+        `Program ${prog.id} must have at least 4 active micro-cohort classes, found ${programClasses.length}`
+      );
+
+      const classAgeGroups = new Set(
+        programClasses.map((c) => {
+          const lvl = levels.find((l) => l.id === c.courseLevelId);
+          return lvl?.targetAge;
+        })
+      );
+
+      for (const ageGroup of ageGroups) {
+        assert.ok(
+          classAgeGroups.has(ageGroup),
+          `Program ${prog.id} must have an active class group for age group ${ageGroup}`
+        );
+      }
+
+      // Verify micro-cohort capacity constraint (max 6 students)
+      for (const cg of programClasses) {
+        assert.ok(
+          cg.capacityMax <= 6,
+          `Class ${cg.id} capacityMax must be <= 6 for micro-cohorts, found ${cg.capacityMax}`
+        );
+        assert.strictEqual(cg.isActive, true, `Class ${cg.id} must be active`);
+      }
+    }
+  });
 });
+

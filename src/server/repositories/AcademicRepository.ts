@@ -51,6 +51,25 @@ class AcademicRepository {
   private fallbackClassGroups: Map<string, DomainClassGroup> = new Map();
   private fallbackEnrollments: Map<string, DomainClassEnrollment> = new Map();
   private fallbackTeacherAssignments: Map<string, DomainTeacherAssignment> = new Map();
+  private isDbAvailable: boolean = true;
+  private lastDbFailureTime: number = 0;
+  private readonly DB_RETRY_INTERVAL_MS = 60000;
+
+  private canQueryDb(): boolean {
+    if (!this.isDbAvailable) {
+      if (Date.now() - this.lastDbFailureTime > this.DB_RETRY_INTERVAL_MS) {
+        this.isDbAvailable = true;
+        return true;
+      }
+      return false;
+    }
+    return true;
+  }
+
+  private handleDbError() {
+    this.isDbAvailable = false;
+    this.lastDbFailureTime = Date.now();
+  }
 
   constructor() {
     this.seedFallbackCatalog();
@@ -128,9 +147,9 @@ class AcademicRepository {
       this.fallbackPrograms.set(prog.id, prog);
     }
 
-    // 2. Accredited Courses (2 per program)
+    // 2. Accredited Courses (4 age-group tracks per program = 28 courses)
     const courses: DomainCourse[] = [
-      // Program 1: Foundations
+      // Program 1: Foundations (prog-foundations)
       {
         id: "course-foundations-sprouts",
         programId: "prog-foundations",
@@ -142,118 +161,230 @@ class AcademicRepository {
       {
         id: "course-foundations-sound",
         programId: "prog-foundations",
-        titleAr: "الأصوات والتراكيب التأسيسية",
-        titleEn: "Foundational Phonemes & Word Building",
+        titleAr: "الأصوات والتراكيب التأسيسية (7-10 سنوات)",
+        titleEn: "Foundational Phonemes & Word Building (Ages 7-10)",
         descriptionAr: "إتقان أشكال الحروف في مواضعها المختلفة والحركات القصيرة والطويلة",
         descriptionEn: "Mastery of letter forms in all positions and short vowel diacritics",
       },
+      {
+        id: "course-foundations-navigators",
+        programId: "prog-foundations",
+        titleAr: "تأصيل قواعد الإملاء وبناء الكلمة (11-13 سنة)",
+        titleEn: "Orthography Foundations & Word Construction (Ages 11-13)",
+        descriptionAr: "إتقان رسم الهمزات وقواعد الإملاء الصعبة وتحليل بنية الكلمة الصرفية",
+        descriptionEn: "Mastery of hamza orthography, complex spelling conventions, and morphological roots",
+      },
+      {
+        id: "course-foundations-scholars",
+        programId: "prog-foundations",
+        titleAr: "فقه اللغة وأسرار البناء النحوي والصرفي (14-16 سنة)",
+        titleEn: "Arabic Philology & Morpho-Syntax (Ages 14-16)",
+        descriptionAr: "دراسة معمقة لأصول النحو العربي وفقه المعاجم والمصادر وبناء التراكيب البلاغية",
+        descriptionEn: "Advanced study of syntactic architecture, classical lexicography, and rhetorical structures",
+      },
 
-      // Program 2: Reading
+      // Program 2: Reading (prog-reading)
+      {
+        id: "course-reading-sprouts",
+        programId: "prog-reading",
+        titleAr: "القراءة المبكرة والوعي الصوتي للبراعم (4-6 سنوات)",
+        titleEn: "Early Reading & Phonemic Awareness for Sprouts (Ages 4-6)",
+        descriptionAr: "التهجئة التفاعلية، ربط الصوت بالرمز، وقراءة الكلمات البسيطة المصورة",
+        descriptionEn: "Interactive blending, phoneme-grapheme mapping, and reading simple sight words",
+      },
       {
         id: "course-reading-explorers",
         programId: "prog-reading",
-        titleAr: "القراءة والطلاقة للمستكشفين",
-        titleEn: "Reading Fluency for Junior Explorers",
+        titleAr: "القراءة والطلاقة للمستكشفين (7-10 سنوات)",
+        titleEn: "Reading Fluency for Junior Explorers (Ages 7-10)",
         descriptionAr: "منهج تفاعلي يركز على الطلاقة القرائية وقراءة القصص الهادفة",
         descriptionEn: "Interactive curriculum focusing on reading speed, phonics, and comprehension",
       },
       {
         id: "course-reading-analytical",
         programId: "prog-reading",
-        titleAr: "القراءة التحليلية والتذوق الأدبي",
-        titleEn: "Analytical Reading & Literature Appreciation",
+        titleAr: "القراءة التحليلية والتذوق الأدبي (11-13 سنة)",
+        titleEn: "Analytical Reading & Literature Appreciation (Ages 11-13)",
         descriptionAr: "قراءة نصوص متقدمة واستنتاج المعاني وتذوق البلاغة العربية",
         descriptionEn: "Advanced text analysis, contextual comprehension, and literary appreciation",
       },
+      {
+        id: "course-reading-scholars",
+        programId: "prog-reading",
+        titleAr: "روائع الأدب العربي والتحليل النقدي (14-16 سنة)",
+        titleEn: "Arabic Literary Masterpieces & Critical Analysis (Ages 14-16)",
+        descriptionAr: "القراءة النقدية لنصوص من عيون الأدب العربي القديم والمعاصر واستيعاب السياق الحضاري",
+        descriptionEn: "Critical and analytical reading of classical and contemporary Arabic masterpieces",
+      },
 
-      // Program 3: Writing
+      // Program 3: Writing (prog-writing)
+      {
+        id: "course-writing-sprouts",
+        programId: "prog-writing",
+        titleAr: "ما قبل الكتابة والتهيئة العضلية للبراعم (4-6 سنوات)",
+        titleEn: "Pre-Writing & Fine Motor Readiness for Sprouts (Ages 4-6)",
+        descriptionAr: "تنمية التآزر البصري الحركي، مسك القلم السليم، وتتبع مسارات الحروف المنقطة",
+        descriptionEn: "Visual-motor integration, proper pencil grip, and dotted letter path tracing",
+      },
       {
         id: "course-writing-naskh",
         programId: "prog-writing",
-        titleAr: "جماليات الخط العربي وقواعد النسخ",
-        titleEn: "Naskh Calligraphy & Handwriting Aesthetics",
+        titleAr: "جماليات الخط العربي وقواعد النسخ (7-10 سنوات)",
+        titleEn: "Naskh Calligraphy & Handwriting Aesthetics (Ages 7-10)",
         descriptionAr: "تحسين الخط العربي، ضبط حركة القلم على السطر، ومحاكاة النماذج الأصيلة",
         descriptionEn: "Arabic penmanship mastery, baseline alignment, and authentic Naskh script",
       },
       {
         id: "course-writing-creative",
         programId: "prog-writing",
-        titleAr: "التعبير الكتابي وتأليف النصوص",
-        titleEn: "Creative Writing & Sentence Composition",
-        descriptionAr: "بناء الجمل المتناسقة، توظيف علامات الترقيم، وتأليف القصص المصورة",
-        descriptionEn: "Sentence synthesis, paragraph cohesion, punctuation, and creative storytelling",
+        titleAr: "التعبير الإنشائي والقصصي للرواد (11-13 سنة)",
+        titleEn: "Narrative Composition & Mini-Essays (Ages 11-13)",
+        descriptionAr: "بناء الجمل المتناسقة، توظيف علامات الترقيم، وتأليف القصص والمقالات المصغرة",
+        descriptionEn: "Sentence synthesis, paragraph cohesion, punctuation, and narrative essay writing",
+      },
+      {
+        id: "course-writing-scholars",
+        programId: "prog-writing",
+        titleAr: "خط الرقعة والديواني والمقالة الفكرية (14-16 سنة)",
+        titleEn: "Ruq'ah, Diwani Calligraphy & Argumentative Essays (Ages 14-16)",
+        descriptionAr: "إتقان خطي الرقعة والديواني، وصياغة مقالات فكرية ونقدية متماسكة ذات حجج وبراهين",
+        descriptionEn: "Mastering Ruq'ah and Diwani scripts alongside argumentative and critical essays",
       },
 
-      // Program 4: Speaking
+      // Program 4: Speaking (prog-speaking)
+      {
+        id: "course-speaking-sprouts",
+        programId: "prog-speaking",
+        titleAr: "التعبير الشفهي والمحادثة باللعب للبراعم (4-6 سنوات)",
+        titleEn: "Oral Expression & Playful Dialogue for Sprouts (Ages 4-6)",
+        descriptionAr: "التحدث عن الصور، التعبير عن الذات باللغة الفصحى، وبناء الثقة في التحدث",
+        descriptionEn: "Picture storytelling, expressing needs and feelings in simple Standard Arabic",
+      },
       {
         id: "course-speaking-junior",
         programId: "prog-speaking",
-        titleAr: "المتحدث الفصيح الصغير",
-        titleEn: "The Eloquent Young Speaker",
+        titleAr: "المتحدث الفصيح الصغير (7-10 سنوات)",
+        titleEn: "The Eloquent Young Speaker (Ages 7-10)",
         descriptionAr: "فصول حوارية تفاعلية لتنمية مهارات التحدث والتعبير عن النفس بطلاقة",
         descriptionEn: "Interactive conversational sessions to build confidence and natural spoken fluency",
       },
       {
         id: "course-speaking-dialogue",
         programId: "prog-speaking",
-        titleAr: "المحادثة الحياتية والفصاحة التلقائية",
-        titleEn: "Daily Conversation & Spontaneous Eloquence",
-        descriptionAr: "مواقف حياتية تحاكي الواقع باللغة العربية الفصحى مع المرشد الذكي فصيح",
-        descriptionEn: "Real-world conversational scenarios in Standard Arabic with the AI tutor Faseeh",
+        titleAr: "فنون الخطابة والعرض والإلقاء (11-13 سنة)",
+        titleEn: "Public Speaking, Presentations & Debates (Ages 11-13)",
+        descriptionAr: "مواقف حياتية وحوارات تفاعلية ومناظرات مصغرة تعزز الحجة والبيان",
+        descriptionEn: "Real-world conversational scenarios, structured presentations, and classroom debates",
+      },
+      {
+        id: "course-speaking-scholars",
+        programId: "prog-speaking",
+        titleAr: "المناظرات الفكرية والبلاغة والارتجال (14-16 سنة)",
+        titleEn: "Intellectual Debates, Rhetoric & Impromptu Speaking (Ages 14-16)",
+        descriptionAr: "تدريب متقدم على فن المناظرة، الإقناع المنطقي، والخطابة الارتجالية الفصيحة",
+        descriptionEn: "Advanced training in debate logic, persuasive rhetoric, and impromptu classical oratory",
       },
 
-      // Program 5: Listening
+      // Program 5: Listening (prog-listening)
       {
         id: "course-listening-phonemes",
         programId: "prog-listening",
-        titleAr: "أذن واعية وأصوات ممتعة",
-        titleEn: "Attentive Ear & Auditory Discovery",
+        titleAr: "أذن واعية وأصوات ممتعة للبراعم (4-6 سنوات)",
+        titleEn: "Attentive Ear & Auditory Discovery (Ages 4-6)",
         descriptionAr: "تنمية حاسة الاستماع والتمييز الصوتي بين الحروف المتشابهة ومخارجها",
         descriptionEn: "Auditory discrimination, minimal pairs phoneme practice, and listening agility",
       },
       {
         id: "course-listening-comprehension",
         programId: "prog-listening",
-        titleAr: "الاستماع النشط وفهم الحكايات المسموعة",
-        titleEn: "Active Auditory Comprehension & Story Listening",
+        titleAr: "الاستماع النشط وفهم الحكايات المسموعة (7-10 سنوات)",
+        titleEn: "Active Auditory Comprehension & Story Listening (Ages 7-10)",
         descriptionAr: "الاستماع للقصص التراثية واستخلاص الأفكار الرئيسة والتفاصيل الدقيقة",
         descriptionEn: "Listening to Arabic folklore and classic stories with comprehension checkpoints",
       },
+      {
+        id: "course-listening-navigators",
+        programId: "prog-listening",
+        titleAr: "الاستماع النقدي وتحليل الحوارات الإذاعية (11-13 سنة)",
+        titleEn: "Critical Listening & Audio Analysis (Ages 11-13)",
+        descriptionAr: "تحليل النبر والتنغيم واستخلاص الدلالات الضمنية في المواد الصوتية المعقدة",
+        descriptionEn: "Analyzing intonation, subtext, and implied meanings in complex audio discussions",
+      },
+      {
+        id: "course-listening-scholars",
+        programId: "prog-listening",
+        titleAr: "فقه السماع وتحليل المحاضرات الفكرية (14-16 سنة)",
+        titleEn: "Academic Discourse & Classical Listening (Ages 14-16)",
+        descriptionAr: "استيعاب المحاضرات الأكاديمية والندوات والمناظرات واستخلاص الحجج العقلية",
+        descriptionEn: "Comprehending academic lectures and seminars, evaluating rational arguments",
+      },
 
-      // Program 6: Quran & Tajweed
+      // Program 6: Quran & Tajweed (prog-quran)
+      {
+        id: "course-quran-sprouts",
+        programId: "prog-quran",
+        titleAr: "براعم القرآن وحفظ قصار السور بالترديد (4-6 سنوات)",
+        titleEn: "Quran Sprouts & Short Surah Chanting (Ages 4-6)",
+        descriptionAr: "التلقين الصوتي الشفهي من سورة الفاتحة إلى سورة الناس مع تصحيح المخارج",
+        descriptionEn: "Oral repetition of short surahs (Al-Fatiha to An-Nas) with phoneme precision",
+      },
       {
         id: "course-quran-juz-amma",
         programId: "prog-quran",
-        titleAr: "نور البيان وتلاوة جزء عم",
-        titleEn: "Noor Al-Bayan & Juz Amma Recitation",
+        titleAr: "نور البيان وتلاوة جزء عم (7-10 سنوات)",
+        titleEn: "Noor Al-Bayan & Juz Amma Recitation (Ages 7-10)",
         descriptionAr: "تلاوة وحفظ جزء عم مع أحكام التجويد الأساسية ومخارج الحروف السليمة",
         descriptionEn: "Quranic recitation of Juz Amma with foundational Tajweed rules and correct Makharij",
       },
       {
         id: "course-quran-tajweed",
         programId: "prog-quran",
-        titleAr: "التجويد المصور وحلقات التثبيت",
-        titleEn: "Visual Applied Tajweed & Memorization Mastery",
-        descriptionAr: "تطبيق قواعد التجويد الملونة (النون الساكنة، المدود، القلقلة) وتثبيت الحفظ",
-        descriptionEn: "Applied color-coded Tajweed (Noon Sakinah, Madd, Qalqalah) with retention tracking",
+        titleAr: "تجويد جزء تبارك والإتقان الصوتي (11-13 سنة)",
+        titleEn: "Juz Tabarak & Applied Tajweed Mastery (Ages 11-13)",
+        descriptionAr: "تطبيق قواعد التجويد الملونة (النون الساكنة، المدود، القلقلة) وتثبيت جزء تبارك",
+        descriptionEn: "Applied color-coded Tajweed (Noon Sakinah, Madd, Qalqalah) and Juz Tabarak",
+      },
+      {
+        id: "course-quran-scholars",
+        programId: "prog-quran",
+        titleAr: "تأصيل علم التجويد والمقامات والوقف والابتداء (14-16 سنة)",
+        titleEn: "Advanced Tajweed Acoustics & Waqf Mastery (Ages 14-16)",
+        descriptionAr: "دراسة متن الجزرية وأحكام الوقف والابتداء المتقدمة ومخارج وصفات الحروف التفصيلية",
+        descriptionEn: "Study of classical Tajweed texts (Al-Jazariyyah), detailed phonological acoustics, and waqf",
       },
 
-      // Program 7: Islamic Studies
+      // Program 7: Islamic Studies (prog-islamic)
+      {
+        id: "course-islamic-sprouts",
+        programId: "prog-islamic",
+        titleAr: "براعم الإيمان والآداب المصورة (4-6 سنوات)",
+        titleEn: "Sprouts of Faith & Illustrated Manners (Ages 4-6)",
+        descriptionAr: "أذكار الصباح والمساء المصورة، آداب الطعام والنوم، وغرس محبة الله ورسوله",
+        descriptionEn: "Illustrated morning and evening adhkar, daily manners, and loving Allah and His Prophet",
+      },
       {
         id: "course-islamic-akhlaq",
         programId: "prog-islamic",
-        titleAr: "أخلاق المسلم الصغير وقصص الأنبياء",
-        titleEn: "Young Muslim Ethics & Prophetic Stories",
+        titleAr: "أخلاق المسلم الصغير وقصص الأنبياء (7-10 سنوات)",
+        titleEn: "Young Muslim Ethics & Prophetic Stories (Ages 7-10)",
         descriptionAr: "غرس القيم والآداب الإسلامية (الصدق، بر الوالدين، الأمانة) وقصص الرسل المصورة",
         descriptionEn: "Islamic morals (honesty, filial piety, trustworthiness) and illustrated prophetic stories",
       },
       {
         id: "course-islamic-seerah",
         programId: "prog-islamic",
-        titleAr: "السيرة النبوية والقيم المعاصرة",
-        titleEn: "Prophetic Biography, Values & Modern Character",
-        descriptionAr: "محطات سيرة الحبيب المصطفى ﷺ وتطبيق تعاليمها في الحياة اليومية المعاصرة",
-        descriptionEn: "Milestones of the Prophet's ﷺ life and practical contemporary application",
+        titleAr: "السيرة النبوية وأعلام الحضارة الإسلامية (11-13 سنة)",
+        titleEn: "Prophetic Biography & Islamic Civilization Heroes (Ages 11-13)",
+        descriptionAr: "محطات سيرة الحبيب المصطفى ﷺ وتاريخ أعلام الحضارة والاكتشافات العلمية",
+        descriptionEn: "Milestones of the Prophet's ﷺ life and historic Muslim scholars and scientific discoveries",
+      },
+      {
+        id: "course-islamic-scholars",
+        programId: "prog-islamic",
+        titleAr: "الفكر الإسلامي المعاصر وقضايا الهوية والأخلاق (14-16 سنة)",
+        titleEn: "Contemporary Islamic Thought, Identity & Ethics (Ages 14-16)",
+        descriptionAr: "ترسيخ الهوية الإسلامية، مناقشة القضايا الفكرية المعاصرة، وفلسفة الأخلاق",
+        descriptionEn: "Consolidating Islamic worldview, navigating contemporary ethical issues and intellectual challenges",
       },
     ];
 
@@ -261,9 +392,9 @@ class AcademicRepository {
       this.fallbackCourses.set(course.id, course);
     }
 
-    // 3. Course Levels
+    // 3. Course Levels (4 age-group levels per program = 28 levels)
     const levels: DomainCourseLevel[] = [
-      // Foundations Levels
+      // 1. Foundations Levels
       {
         id: "level-pre-a1-sprouts",
         courseId: "course-foundations-sprouts",
@@ -280,8 +411,32 @@ class AcademicRepository {
         titleEn: "Level A1 - Letter Connections & Short Vowels",
         targetAge: AgeGroup.AGE_7_10,
       },
+      {
+        id: "level-b1-foundations",
+        courseId: "course-foundations-navigators",
+        levelCode: "B1",
+        titleAr: "المستوى المتوسط - قواعد الإملاء ورسم الهمزات",
+        titleEn: "Level B1 - Orthography & Hamza Rules",
+        targetAge: AgeGroup.AGE_11_13,
+      },
+      {
+        id: "level-b2-foundations",
+        courseId: "course-foundations-scholars",
+        levelCode: "B2",
+        titleAr: "المستوى المتقدم - النحو التطبيقي وفقه اللغة",
+        titleEn: "Level B2 - Applied Syntax & Classical Lexicography",
+        targetAge: AgeGroup.AGE_14_16,
+      },
 
-      // Reading Levels
+      // 2. Reading Levels
+      {
+        id: "level-pre-a1-reading",
+        courseId: "course-reading-sprouts",
+        levelCode: "PRE_A1",
+        titleAr: "المستوى التمهيدي - التهجئة المبكرة والوعي الصوتي",
+        titleEn: "Pre-A1 - Early Blending & Sight Words",
+        targetAge: AgeGroup.AGE_4_6,
+      },
       {
         id: "level-a1-reading",
         courseId: "course-reading-explorers",
@@ -306,8 +461,24 @@ class AcademicRepository {
         titleEn: "Level B1 - Analytical Reading & Advanced Comprehension",
         targetAge: AgeGroup.AGE_11_13,
       },
+      {
+        id: "level-b2-reading",
+        courseId: "course-reading-scholars",
+        levelCode: "B2",
+        titleAr: "المستوى الرابع (B2) - عيون الأدب العربي والتحليل النقدي",
+        titleEn: "Level B2 - Classical Poetry & Literary Critique",
+        targetAge: AgeGroup.AGE_14_16,
+      },
 
-      // Writing Levels
+      // 3. Writing Levels
+      {
+        id: "level-pre-a1-writing",
+        courseId: "course-writing-sprouts",
+        levelCode: "PRE_A1",
+        titleAr: "المستوى التمهيدي - مسك القلم وتتبع المسارات",
+        titleEn: "Pre-A1 - Pen Control & Letter Tracing",
+        targetAge: AgeGroup.AGE_4_6,
+      },
       {
         id: "level-a1-writing",
         courseId: "course-writing-naskh",
@@ -324,8 +495,32 @@ class AcademicRepository {
         titleEn: "Level A2 - Sentence Construction & Punctuation",
         targetAge: AgeGroup.AGE_7_10,
       },
+      {
+        id: "level-b1-writing",
+        courseId: "course-writing-creative",
+        levelCode: "B1",
+        titleAr: "المستوى الثالث (B1) - التعبير الإنشائي والقصصي",
+        titleEn: "Level B1 - Creative Writing & Essay Synthesis",
+        targetAge: AgeGroup.AGE_11_13,
+      },
+      {
+        id: "level-b2-writing",
+        courseId: "course-writing-scholars",
+        levelCode: "B2",
+        titleAr: "المستوى الرابع (B2) - خط الرقعة والديواني والمقالة الفكرية",
+        titleEn: "Level B2 - Advanced Scripts & Rhetorical Writing",
+        targetAge: AgeGroup.AGE_14_16,
+      },
 
-      // Speaking Levels
+      // 4. Speaking Levels
+      {
+        id: "level-pre-a1-speaking",
+        courseId: "course-speaking-sprouts",
+        levelCode: "PRE_A1",
+        titleAr: "المستوى التمهيدي - التعبير الشفهي باللعب والصور",
+        titleEn: "Pre-A1 - Picture Talking & Self-Expression",
+        targetAge: AgeGroup.AGE_4_6,
+      },
       {
         id: "level-a1-speaking",
         courseId: "course-speaking-junior",
@@ -342,8 +537,24 @@ class AcademicRepository {
         titleEn: "Level A2 - Situational Dialogues & Public Presentation",
         targetAge: AgeGroup.AGE_7_10,
       },
+      {
+        id: "level-b1-speaking",
+        courseId: "course-speaking-dialogue",
+        levelCode: "B1",
+        titleAr: "المستوى الثالث (B1) - الإلقاء وفنون التقديم والمناظرة",
+        titleEn: "Level B1 - Eloquent Presentation & Reasoned Dialogue",
+        targetAge: AgeGroup.AGE_11_13,
+      },
+      {
+        id: "level-b2-speaking",
+        courseId: "course-speaking-scholars",
+        levelCode: "B2",
+        titleAr: "المستوى الرابع (B2) - المناظرات الفكرية والبلاغة والارتجال",
+        titleEn: "Level B2 - Persuasive Oratory & Dialectical Debates",
+        targetAge: AgeGroup.AGE_14_16,
+      },
 
-      // Listening Levels
+      // 5. Listening Levels
       {
         id: "level-pre-a1-listening",
         courseId: "course-listening-phonemes",
@@ -360,8 +571,32 @@ class AcademicRepository {
         titleEn: "Level A1 - Audio Story Following & Direct Instruction",
         targetAge: AgeGroup.AGE_7_10,
       },
+      {
+        id: "level-b1-listening",
+        courseId: "course-listening-navigators",
+        levelCode: "B1",
+        titleAr: "المستوى الثالث (B1) - الاستماع النقدي وتحليل الحوارات",
+        titleEn: "Level B1 - Critical Audio Comprehension & Intonation",
+        targetAge: AgeGroup.AGE_11_13,
+      },
+      {
+        id: "level-b2-listening",
+        courseId: "course-listening-scholars",
+        levelCode: "B2",
+        titleAr: "المستوى الرابع (B2) - فقه السماع وتحليل المحاضرات الأكاديمية",
+        titleEn: "Level B2 - Academic Discourse & Dialectical Listening",
+        targetAge: AgeGroup.AGE_14_16,
+      },
 
-      // Quran Levels
+      // 6. Quran Levels
+      {
+        id: "level-pre-a1-quran",
+        courseId: "course-quran-sprouts",
+        levelCode: "PRE_A1",
+        titleAr: "المستوى التمهيدي - حفظ قصار السور بالترديد والتلقين",
+        titleEn: "Pre-A1 - Oral Repetition: Short Surahs & Makharij",
+        targetAge: AgeGroup.AGE_4_6,
+      },
       {
         id: "level-a1-quran",
         courseId: "course-quran-juz-amma",
@@ -378,8 +613,32 @@ class AcademicRepository {
         titleEn: "Level A2 - Noon Sakinah, Tanween & Madd",
         targetAge: AgeGroup.AGE_7_10,
       },
+      {
+        id: "level-b1-quran",
+        courseId: "course-quran-tajweed",
+        levelCode: "B1",
+        titleAr: "المستوى الثالث (B1) - أحكام الميم وتثبيت جزء تبارك",
+        titleEn: "Level B1 - Meem Sakinah, Madd & Juz Tabarak",
+        targetAge: AgeGroup.AGE_11_13,
+      },
+      {
+        id: "level-b2-quran",
+        courseId: "course-quran-scholars",
+        levelCode: "B2",
+        titleAr: "المستوى الرابع (B2) - تأصيل علم التجويد والوقف والابتداء",
+        titleEn: "Level B2 - Advanced Tajweed Acoustics & Memorization",
+        targetAge: AgeGroup.AGE_14_16,
+      },
 
-      // Islamic Studies Levels
+      // 7. Islamic Studies Levels
+      {
+        id: "level-pre-a1-islamic",
+        courseId: "course-islamic-sprouts",
+        levelCode: "PRE_A1",
+        titleAr: "المستوى التمهيدي - أذكار الطفل المسلم والآداب المصورة",
+        titleEn: "Pre-A1 - Morning Adhkar, Kindness & Cleanliness",
+        targetAge: AgeGroup.AGE_4_6,
+      },
       {
         id: "level-a1-islamic",
         courseId: "course-islamic-akhlaq",
@@ -396,32 +655,31 @@ class AcademicRepository {
         titleEn: "Level A2 - Pillars of Faith & Resolute Prophets",
         targetAge: AgeGroup.AGE_7_10,
       },
+      {
+        id: "level-b1-islamic",
+        courseId: "course-islamic-seerah",
+        levelCode: "B1",
+        titleAr: "المستوى الثالث (B1) - العقيدة وسير أولي العزم والعلماء",
+        titleEn: "Level B1 - Sound Creed, Resolute Prophets & Scholars",
+        targetAge: AgeGroup.AGE_11_13,
+      },
+      {
+        id: "level-b2-islamic",
+        courseId: "course-islamic-scholars",
+        levelCode: "B2",
+        titleAr: "المستوى الرابع (B2) - الفكر الإسلامي المعاصر وقضايا الهوية",
+        titleEn: "Level B2 - Applied Islamic Ethics & Worldview",
+        targetAge: AgeGroup.AGE_14_16,
+      },
     ];
 
     for (const lvl of levels) {
       this.fallbackLevels.set(lvl.id, lvl);
     }
 
-    // 4. Active Micro-Cohorts (2 per program, capped at max 6)
+    // 4. Active Micro-Cohorts across All 7 Programs & All 4 Age Groups (capped at max 6)
     const classGroups: DomainClassGroup[] = [
-      {
-        id: "class-reading-a1-cohort1",
-        courseLevelId: "level-a1-reading",
-        name: "فصل النجوم (A1 - القراءة والطلاقة)",
-        classType: ClassType.GROUP,
-        capacityMax: 6,
-        isActive: true,
-        createdAt: new Date(),
-      },
-      {
-        id: "class-reading-a2-cohort1",
-        courseLevelId: "level-a2-reading",
-        name: "فصل فرسان القراءة (A2 - القصص والطلاقة)",
-        classType: ClassType.GROUP,
-        capacityMax: 6,
-        isActive: true,
-        createdAt: new Date(),
-      },
+      // --- Foundations Cohorts ---
       {
         id: "class-sprouts-cohort1",
         courseLevelId: "level-pre-a1-sprouts",
@@ -434,7 +692,83 @@ class AcademicRepository {
       {
         id: "class-foundations-a1-cohort1",
         courseLevelId: "level-a1-foundations",
-        name: "فصل السنابل الخضراء (A1 - وصل الحروف)",
+        name: "فصل السنابل الخضراء (A1 - وصل الحروف 7-10 سنوات)",
+        classType: ClassType.GROUP,
+        capacityMax: 6,
+        isActive: true,
+        createdAt: new Date(),
+      },
+      {
+        id: "class-foundations-b1-cohort1",
+        courseLevelId: "level-b1-foundations",
+        name: "فصل رواد الإملاء (B1 - قواعد الكتابة 11-13 سنة)",
+        classType: ClassType.GROUP,
+        capacityMax: 6,
+        isActive: true,
+        createdAt: new Date(),
+      },
+      {
+        id: "class-foundations-b2-cohort1",
+        courseLevelId: "level-b2-foundations",
+        name: "فصل فرسان اللغة (B2 - النحو المعمق 14-16 سنة)",
+        classType: ClassType.GROUP,
+        capacityMax: 6,
+        isActive: true,
+        createdAt: new Date(),
+      },
+
+      // --- Reading Cohorts ---
+      {
+        id: "class-reading-pre-a1-cohort1",
+        courseLevelId: "level-pre-a1-reading",
+        name: "فصل عصافير الجنة (Pre-A1 - التهجئة المبكرة 4-6 سنوات)",
+        classType: ClassType.GROUP,
+        capacityMax: 6,
+        isActive: true,
+        createdAt: new Date(),
+      },
+      {
+        id: "class-reading-a1-cohort1",
+        courseLevelId: "level-a1-reading",
+        name: "فصل النجوم (A1 - القراءة والطلاقة 7-10 سنوات)",
+        classType: ClassType.GROUP,
+        capacityMax: 6,
+        isActive: true,
+        createdAt: new Date(),
+      },
+      {
+        id: "class-reading-a2-cohort1",
+        courseLevelId: "level-a2-reading",
+        name: "فصل فرسان القراءة (A2 - القصص والطلاقة 7-10 سنوات)",
+        classType: ClassType.GROUP,
+        capacityMax: 6,
+        isActive: true,
+        createdAt: new Date(),
+      },
+      {
+        id: "class-reading-b1-cohort1",
+        courseLevelId: "level-b1-reading",
+        name: "فصل نقاد الأدب (B1 - القراءة التحليلية 11-13 سنة)",
+        classType: ClassType.GROUP,
+        capacityMax: 6,
+        isActive: true,
+        createdAt: new Date(),
+      },
+      {
+        id: "class-reading-b2-cohort1",
+        courseLevelId: "level-b2-reading",
+        name: "فصل رواد البلاغة (B2 - عيون الأدب العربي 14-16 سنة)",
+        classType: ClassType.GROUP,
+        capacityMax: 6,
+        isActive: true,
+        createdAt: new Date(),
+      },
+
+      // --- Writing Cohorts ---
+      {
+        id: "class-writing-pre-a1-cohort1",
+        courseLevelId: "level-pre-a1-writing",
+        name: "فصل أقلام البراعم (Pre-A1 - تتبع مسارات الحروف 4-6 سنوات)",
         classType: ClassType.GROUP,
         capacityMax: 6,
         isActive: true,
@@ -443,7 +777,7 @@ class AcademicRepository {
       {
         id: "class-writing-a1-cohort1",
         courseLevelId: "level-a1-writing",
-        name: "فصل خطاطي المستقبل (A1 - تحسين الخط العربي)",
+        name: "فصل خطاطي المستقبل (A1 - تحسين الخط العربي 7-10 سنوات)",
         classType: ClassType.GROUP,
         capacityMax: 6,
         isActive: true,
@@ -452,7 +786,36 @@ class AcademicRepository {
       {
         id: "class-writing-a2-cohort1",
         courseLevelId: "level-a2-writing",
-        name: "فصل البيان والإنشاء (A2 - التعبير الكتابي)",
+        name: "فصل البيان والإنشاء (A2 - التعبير الكتابي 7-10 سنوات)",
+        classType: ClassType.GROUP,
+        capacityMax: 6,
+        isActive: true,
+        createdAt: new Date(),
+      },
+      {
+        id: "class-writing-b1-cohort1",
+        courseLevelId: "level-b1-writing",
+        name: "فصل فرسان القلم (B1 - الإنشاء والقصة 11-13 سنة)",
+        classType: ClassType.GROUP,
+        capacityMax: 6,
+        isActive: true,
+        createdAt: new Date(),
+      },
+      {
+        id: "class-writing-b2-cohort1",
+        courseLevelId: "level-b2-writing",
+        name: "فصل الأدباء الشباب (B2 - المقالة الفكرية والخطوط 14-16 سنة)",
+        classType: ClassType.GROUP,
+        capacityMax: 6,
+        isActive: true,
+        createdAt: new Date(),
+      },
+
+      // --- Speaking Cohorts ---
+      {
+        id: "class-speaking-pre-a1-cohort1",
+        courseLevelId: "level-pre-a1-speaking",
+        name: "فصل البلابل المغردة (Pre-A1 - المحادثة باللعب 4-6 سنوات)",
         classType: ClassType.GROUP,
         capacityMax: 6,
         isActive: true,
@@ -461,7 +824,7 @@ class AcademicRepository {
       {
         id: "class-speaking-a1-cohort1",
         courseLevelId: "level-a1-speaking",
-        name: "فصل الفصحاء الصغار (A1 - المحادثة اليومية)",
+        name: "فصل الفصحاء الصغار (A1 - المحادثة اليومية 7-10 سنوات)",
         classType: ClassType.GROUP,
         capacityMax: 6,
         isActive: true,
@@ -470,16 +833,36 @@ class AcademicRepository {
       {
         id: "class-speaking-a2-cohort1",
         courseLevelId: "level-a2-speaking",
-        name: "فصل منابر الخطابة (A2 - الإلقاء والحوار التفاعلي)",
+        name: "فصل منابر الخطابة (A2 - الإلقاء والحوار 7-10 سنوات)",
         classType: ClassType.GROUP,
         capacityMax: 6,
         isActive: true,
         createdAt: new Date(),
       },
       {
+        id: "class-speaking-b1-cohort1",
+        courseLevelId: "level-b1-speaking",
+        name: "فصل خطباء الغد (B1 - المناظرة والإلقاء 11-13 سنة)",
+        classType: ClassType.GROUP,
+        capacityMax: 6,
+        isActive: true,
+        createdAt: new Date(),
+      },
+      {
+        id: "class-speaking-b2-cohort1",
+        courseLevelId: "level-b2-speaking",
+        name: "فصل منتدى الفرسان (B2 - المناظرات الفكرية 14-16 سنة)",
+        classType: ClassType.GROUP,
+        capacityMax: 6,
+        isActive: true,
+        createdAt: new Date(),
+      },
+
+      // --- Listening Cohorts ---
+      {
         id: "class-listening-pre-a1-cohort1",
         courseLevelId: "level-pre-a1-listening",
-        name: "فصل المستمع الذكي (Pre-A1 - تمييز الأصوات)",
+        name: "فصل المستمع الذكي (Pre-A1 - تمييز الأصوات 4-6 سنوات)",
         classType: ClassType.GROUP,
         capacityMax: 6,
         isActive: true,
@@ -488,7 +871,36 @@ class AcademicRepository {
       {
         id: "class-listening-a1-cohort1",
         courseLevelId: "level-a1-listening",
-        name: "فصل الاستيعاب والتحليل الصوتي (A1 - الاستماع النشط)",
+        name: "فصل الاستيعاب والتحليل الصوتي (A1 - الاستماع النشط 7-10 سنوات)",
+        classType: ClassType.GROUP,
+        capacityMax: 6,
+        isActive: true,
+        createdAt: new Date(),
+      },
+      {
+        id: "class-listening-b1-cohort1",
+        courseLevelId: "level-b1-listening",
+        name: "فصل الأذن الناقدة (B1 - تحليل المحتوى الصوتي 11-13 سنة)",
+        classType: ClassType.GROUP,
+        capacityMax: 6,
+        isActive: true,
+        createdAt: new Date(),
+      },
+      {
+        id: "class-listening-b2-cohort1",
+        courseLevelId: "level-b2-listening",
+        name: "فصل مجالس السماع (B2 - تحليل المحاضرات الأكاديمية 14-16 سنة)",
+        classType: ClassType.GROUP,
+        capacityMax: 6,
+        isActive: true,
+        createdAt: new Date(),
+      },
+
+      // --- Quran & Tajweed Cohorts ---
+      {
+        id: "class-quran-pre-a1-cohort1",
+        courseLevelId: "level-pre-a1-quran",
+        name: "حلقة براعم النور (Pre-A1 - قصار السور بالترديد 4-6 سنوات)",
         classType: ClassType.GROUP,
         capacityMax: 6,
         isActive: true,
@@ -497,7 +909,7 @@ class AcademicRepository {
       {
         id: "class-quran-a1-cohort1",
         courseLevelId: "level-a1-quran",
-        name: "حلقة الفردوس (A1 - حفظ وتجويد قصار السور)",
+        name: "حلقة الفردوس (A1 - حفظ وتجويد قصار السور 7-10 سنوات)",
         classType: ClassType.GROUP,
         capacityMax: 6,
         isActive: true,
@@ -506,7 +918,36 @@ class AcademicRepository {
       {
         id: "class-quran-a2-cohort1",
         courseLevelId: "level-a2-quran",
-        name: "حلقة الماهر بالقرآن (A2 - تلاوة وأحكام متقدمة)",
+        name: "حلقة الماهر بالقرآن (A2 - تلاوة وأحكام متقدمة 7-10 سنوات)",
+        classType: ClassType.GROUP,
+        capacityMax: 6,
+        isActive: true,
+        createdAt: new Date(),
+      },
+      {
+        id: "class-quran-b1-cohort1",
+        courseLevelId: "level-b1-quran",
+        name: "حلقة حفاظ الرواد (B1 - جزء تبارك والتجويد 11-13 سنة)",
+        classType: ClassType.GROUP,
+        capacityMax: 6,
+        isActive: true,
+        createdAt: new Date(),
+      },
+      {
+        id: "class-quran-b2-cohort1",
+        courseLevelId: "level-b2-quran",
+        name: "حلقة الإتقان والإجازة (B2 - علم التجويد والوقف 14-16 سنة)",
+        classType: ClassType.GROUP,
+        capacityMax: 6,
+        isActive: true,
+        createdAt: new Date(),
+      },
+
+      // --- Islamic Studies Cohorts ---
+      {
+        id: "class-islamic-pre-a1-cohort1",
+        courseLevelId: "level-pre-a1-islamic",
+        name: "فصل زهور الإيمان (Pre-A1 - الآداب المصورة 4-6 سنوات)",
         classType: ClassType.GROUP,
         capacityMax: 6,
         isActive: true,
@@ -515,7 +956,7 @@ class AcademicRepository {
       {
         id: "class-islamic-a1-cohort1",
         courseLevelId: "level-a1-islamic",
-        name: "فصل رواد الأخلاق والقيم (A1 - القيم النبوية)",
+        name: "فصل رواد الأخلاق والقيم (A1 - القيم النبوية 7-10 سنوات)",
         classType: ClassType.GROUP,
         capacityMax: 6,
         isActive: true,
@@ -524,7 +965,25 @@ class AcademicRepository {
       {
         id: "class-islamic-a2-cohort1",
         courseLevelId: "level-a2-islamic",
-        name: "فصل بناة الحضارة الإسلامية (A2 - السيرة النبوية)",
+        name: "فصل بناة الحضارة الإسلامية (A2 - السيرة النبوية 7-10 سنوات)",
+        classType: ClassType.GROUP,
+        capacityMax: 6,
+        isActive: true,
+        createdAt: new Date(),
+      },
+      {
+        id: "class-islamic-b1-cohort1",
+        courseLevelId: "level-b1-islamic",
+        name: "فصل قادة الغد (B1 - العقيدة وتاريخ الحضارة 11-13 سنة)",
+        classType: ClassType.GROUP,
+        capacityMax: 6,
+        isActive: true,
+        createdAt: new Date(),
+      },
+      {
+        id: "class-islamic-b2-cohort1",
+        courseLevelId: "level-b2-islamic",
+        name: "فصل علماء المستقبل (B2 - الفكر الإسلامي والهوية 14-16 سنة)",
         classType: ClassType.GROUP,
         capacityMax: 6,
         isActive: true,
@@ -710,51 +1169,61 @@ class AcademicRepository {
   // --- Queries ---
 
   async getAllPrograms(): Promise<DomainProgram[]> {
-    try {
-      const rows = await prisma.program.findMany({ orderBy: { titleAr: "asc" } });
-      if (rows && rows.length > 0) return rows;
-    } catch {
-      // offline / DB error fallback
+    if (this.canQueryDb()) {
+      try {
+        const rows = await prisma.program.findMany({ orderBy: { titleAr: "asc" } });
+        if (rows && rows.length > 0) return rows;
+      } catch {
+        this.handleDbError();
+      }
     }
     return Array.from(this.fallbackPrograms.values());
   }
 
   async getProgramById(id: string): Promise<DomainProgram | null> {
-    try {
-      const row = await prisma.program.findUnique({ where: { id } });
-      if (row) return row;
-    } catch {
-      // offline / DB error fallback
+    if (this.canQueryDb()) {
+      try {
+        const row = await prisma.program.findUnique({ where: { id } });
+        if (row) return row;
+      } catch {
+        this.handleDbError();
+      }
     }
     return this.fallbackPrograms.get(id) || Array.from(this.fallbackPrograms.values()).find((p) => p.type === id) || null;
   }
 
   async getAllCourses(): Promise<DomainCourse[]> {
-    try {
-      const rows = await prisma.course.findMany();
-      if (rows && rows.length > 0) return rows;
-    } catch {
-      // offline / DB error fallback
+    if (this.canQueryDb()) {
+      try {
+        const rows = await prisma.course.findMany();
+        if (rows && rows.length > 0) return rows;
+      } catch {
+        this.handleDbError();
+      }
     }
     return Array.from(this.fallbackCourses.values());
   }
 
   async getCourseById(id: string): Promise<DomainCourse | null> {
-    try {
-      const row = await prisma.course.findUnique({ where: { id } });
-      if (row) return row;
-    } catch {
-      // offline / DB error fallback
+    if (this.canQueryDb()) {
+      try {
+        const row = await prisma.course.findUnique({ where: { id } });
+        if (row) return row;
+      } catch {
+        this.handleDbError();
+      }
     }
     return this.fallbackCourses.get(id) || null;
   }
 
   async getCoursesByProgramId(programId: string): Promise<DomainCourse[]> {
-    try {
-      const rows = await prisma.course.findMany({ where: { programId } });
-      if (rows && rows.length > 0) return rows;
-    } catch {
-      // offline / DB error fallback
+    if (this.canQueryDb()) {
+      try {
+        const rows = await prisma.course.findMany({ where: { programId } });
+        if (rows && rows.length > 0) return rows;
+      } catch {
+        this.handleDbError();
+      }
     }
     // Check fallback by exact programId or by slug/type matching
     const matchingFallback = Array.from(this.fallbackCourses.values()).filter(
@@ -771,72 +1240,86 @@ class AcademicRepository {
   }
 
   async getAllLevels(): Promise<DomainCourseLevel[]> {
-    try {
-      const rows = await prisma.courseLevel.findMany();
-      if (rows && rows.length > 0) return rows;
-    } catch {
-      // offline / DB error fallback
+    if (this.canQueryDb()) {
+      try {
+        const rows = await prisma.courseLevel.findMany();
+        if (rows && rows.length > 0) return rows;
+      } catch {
+        this.handleDbError();
+      }
     }
     return Array.from(this.fallbackLevels.values());
   }
 
   async getLevelById(id: string): Promise<DomainCourseLevel | null> {
-    try {
-      const row = await prisma.courseLevel.findUnique({ where: { id } });
-      if (row) return row;
-    } catch {
-      // offline / DB error fallback
+    if (this.canQueryDb()) {
+      try {
+        const row = await prisma.courseLevel.findUnique({ where: { id } });
+        if (row) return row;
+      } catch {
+        this.handleDbError();
+      }
     }
     return this.fallbackLevels.get(id) || null;
   }
 
   async getLevelsByCourseId(courseId: string): Promise<DomainCourseLevel[]> {
-    try {
-      const rows = await prisma.courseLevel.findMany({ where: { courseId } });
-      if (rows && rows.length > 0) return rows;
-    } catch {
-      // offline / DB error fallback
+    if (this.canQueryDb()) {
+      try {
+        const rows = await prisma.courseLevel.findMany({ where: { courseId } });
+        if (rows && rows.length > 0) return rows;
+      } catch {
+        this.handleDbError();
+      }
     }
     return Array.from(this.fallbackLevels.values()).filter((l) => l.courseId === courseId);
   }
 
   async getAllClassGroups(): Promise<DomainClassGroup[]> {
-    try {
-      const rows = await prisma.classGroup.findMany();
-      if (rows && rows.length > 0) return rows;
-    } catch {
-      // offline / DB error fallback
+    if (this.canQueryDb()) {
+      try {
+        const rows = await prisma.classGroup.findMany();
+        if (rows && rows.length > 0) return rows;
+      } catch {
+        this.handleDbError();
+      }
     }
     return Array.from(this.fallbackClassGroups.values());
   }
 
   async getClassGroupById(id: string): Promise<DomainClassGroup | null> {
-    try {
-      const row = await prisma.classGroup.findUnique({ where: { id } });
-      if (row) return row;
-    } catch {
-      // offline / DB error fallback
+    if (this.canQueryDb()) {
+      try {
+        const row = await prisma.classGroup.findUnique({ where: { id } });
+        if (row) return row;
+      } catch {
+        this.handleDbError();
+      }
     }
     return this.fallbackClassGroups.get(id) || null;
   }
 
   async getClassGroupsBySchoolId(schoolId: string): Promise<DomainClassGroup[]> {
-    try {
-      return await prisma.classGroup.findMany({ where: { schoolId }, orderBy: { createdAt: "desc" } });
-    } catch {
-      // offline / DB error fallback
+    if (this.canQueryDb()) {
+      try {
+        return await prisma.classGroup.findMany({ where: { schoolId }, orderBy: { createdAt: "desc" } });
+      } catch {
+        this.handleDbError();
+      }
     }
     return Array.from(this.fallbackClassGroups.values()).filter((cg) => cg.schoolId === schoolId);
   }
 
   async getEnrollmentsByClassGroupId(classGroupId: string): Promise<DomainClassEnrollment[]> {
-    try {
-      const rows = await prisma.classEnrollment.findMany({
-        where: { classGroupId, status: EnrollmentStatus.ACTIVE },
-      });
-      if (rows && rows.length > 0) return rows;
-    } catch {
-      // offline / DB error fallback
+    if (this.canQueryDb()) {
+      try {
+        const rows = await prisma.classEnrollment.findMany({
+          where: { classGroupId, status: EnrollmentStatus.ACTIVE },
+        });
+        if (rows && rows.length > 0) return rows;
+      } catch {
+        this.handleDbError();
+      }
     }
     return Array.from(this.fallbackEnrollments.values()).filter(
       (e) => e.classGroupId === classGroupId && e.status === EnrollmentStatus.ACTIVE
@@ -844,31 +1327,37 @@ class AcademicRepository {
   }
 
   async getEnrollmentsByStudentId(studentId: string): Promise<DomainClassEnrollment[]> {
-    try {
-      const rows = await prisma.classEnrollment.findMany({ where: { studentId } });
-      if (rows && rows.length > 0) return rows;
-    } catch {
-      // offline / DB error fallback
+    if (this.canQueryDb()) {
+      try {
+        const rows = await prisma.classEnrollment.findMany({ where: { studentId } });
+        if (rows && rows.length > 0) return rows;
+      } catch {
+        this.handleDbError();
+      }
     }
     return Array.from(this.fallbackEnrollments.values()).filter((e) => e.studentId === studentId);
   }
 
   async getTeacherAssignmentsByClassGroupId(classGroupId: string): Promise<DomainTeacherAssignment[]> {
-    try {
-      const rows = await prisma.teacherAssignment.findMany({ where: { classGroupId } });
-      if (rows && rows.length > 0) return rows;
-    } catch {
-      // offline / DB error fallback
+    if (this.canQueryDb()) {
+      try {
+        const rows = await prisma.teacherAssignment.findMany({ where: { classGroupId } });
+        if (rows && rows.length > 0) return rows;
+      } catch {
+        this.handleDbError();
+      }
     }
     return Array.from(this.fallbackTeacherAssignments.values()).filter((ta) => ta.classGroupId === classGroupId);
   }
 
   async getTeacherAssignmentsByTeacherId(teacherId: string): Promise<DomainTeacherAssignment[]> {
-    try {
-      const rows = await prisma.teacherAssignment.findMany({ where: { teacherId } });
-      if (rows && rows.length > 0) return rows;
-    } catch {
-      // offline / DB error fallback
+    if (this.canQueryDb()) {
+      try {
+        const rows = await prisma.teacherAssignment.findMany({ where: { teacherId } });
+        if (rows && rows.length > 0) return rows;
+      } catch {
+        this.handleDbError();
+      }
     }
     return Array.from(this.fallbackTeacherAssignments.values()).filter((ta) => ta.teacherId === teacherId);
   }
