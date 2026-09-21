@@ -100,8 +100,8 @@ export class ZoomMeetingAdapter implements MeetingAdapter {
     return {
       sessionId: params.sessionId,
       topic: params.classGroupName,
-      joinUrlStudent: `https://zoom.sandbox.kidsarabicacademy.internal/j/${meetingNumber}?pwd=${pwd}&role=student`,
-      hostUrlTeacher: `https://zoom.sandbox.kidsarabicacademy.internal/s/${meetingNumber}?pwd=${pwd}&role=host`,
+      joinUrlStudent: `https://zoom.sandbox.arabickidsacademy.internal/j/${meetingNumber}?pwd=${pwd}&role=student`,
+      hostUrlTeacher: `https://zoom.sandbox.arabickidsacademy.internal/s/${meetingNumber}?pwd=${pwd}&role=host`,
       provider: "ZOOM",
       createdAt: new Date(),
       isMock: true,

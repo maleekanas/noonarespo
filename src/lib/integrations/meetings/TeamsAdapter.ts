@@ -101,8 +101,8 @@ export class TeamsMeetingAdapter implements MeetingAdapter {
     return {
       sessionId: params.sessionId,
       topic: params.classGroupName,
-      joinUrlStudent: `https://teams.sandbox.kidsarabicacademy.internal/l/meetup-join/${threadId}/student`,
-      hostUrlTeacher: `https://teams.sandbox.kidsarabicacademy.internal/l/meetup-join/${threadId}/host`,
+      joinUrlStudent: `https://teams.sandbox.arabickidsacademy.internal/l/meetup-join/${threadId}/student`,
+      hostUrlTeacher: `https://teams.sandbox.arabickidsacademy.internal/l/meetup-join/${threadId}/host`,
       provider: "TEAMS",
       createdAt: new Date(),
       isMock: true,

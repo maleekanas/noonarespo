@@ -145,8 +145,8 @@ export class GoogleMeetAdapter implements MeetingAdapter {
     return {
       sessionId: params.sessionId,
       topic: params.classGroupName,
-      joinUrlStudent: `https://meet.sandbox.kidsarabicacademy.internal/${spaceCode}?role=student`,
-      hostUrlTeacher: `https://meet.sandbox.kidsarabicacademy.internal/${spaceCode}?role=teacher`,
+      joinUrlStudent: `https://meet.sandbox.arabickidsacademy.internal/${spaceCode}?role=student`,
+      hostUrlTeacher: `https://meet.sandbox.arabickidsacademy.internal/${spaceCode}?role=teacher`,
       provider: "MEET",
       createdAt: new Date(),
       isMock: true,

@@ -96,8 +96,8 @@ export class WebexMeetingAdapter implements MeetingAdapter {
     return {
       sessionId: params.sessionId,
       topic: params.classGroupName,
-      joinUrlStudent: `https://webex.sandbox.kidsarabicacademy.internal/meet/${meetingKey}?role=student`,
-      hostUrlTeacher: `https://webex.sandbox.kidsarabicacademy.internal/meet/${meetingKey}?role=host`,
+      joinUrlStudent: `https://webex.sandbox.arabickidsacademy.internal/meet/${meetingKey}?role=student`,
+      hostUrlTeacher: `https://webex.sandbox.arabickidsacademy.internal/meet/${meetingKey}?role=host`,
       provider: "WEBEX",
       createdAt: new Date(),
       isMock: true,
