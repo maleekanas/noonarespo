@@ -30,10 +30,6 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   output: "standalone",
   reactStrictMode: true,
-  experimental: {
-    // Optimize server actions and package imports
-    optimizePackageImports: ["lucide-react"],
-  },
   async headers() {
     return [
       {

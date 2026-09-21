@@ -2,19 +2,15 @@
 
 import React, { useState } from "react";
 import {
-  Layers,
   Sparkles,
   Cpu,
-  Palette,
   Compass,
   Lightbulb,
-  CheckCircle2,
   Atom,
   Binary,
   Shapes,
   Music,
   Calculator,
-  ChevronRight,
   TrendingUp,
   BrainCircuit,
   Zap,
@@ -280,7 +276,7 @@ export function HolisticLearningFramework({
                 }`}
               >
                 <span>هرم بلوم</span>
-                <span className="text-[10px] font-normal opacity-90">Bloom's Taxonomy</span>
+                <span className="text-[10px] font-normal opacity-90">Bloom&apos;s Taxonomy</span>
               </button>
 
               <button

@@ -128,7 +128,7 @@ export default async function ProgramsCatalogPage({
   // (courses/levels) -- mixing the two previously meant every program page
   // silently fell back to Foundations' metadata and always showed "0"
   // curriculum modules, regardless of which program tab was open.
-  let allPrograms: any[] = [];
+  let allPrograms: Awaited<ReturnType<typeof academicRepository.getAllPrograms>> = [];
   try {
     allPrograms = await academicRepository.getAllPrograms();
   } catch (err) {
@@ -146,8 +146,8 @@ export default async function ProgramsCatalogPage({
     allProgramsWithSlug.find((p) => p.slug === selectedSlug) || allProgramsWithSlug[0];
 
   // Fetch courses, levels, and curriculum modules for the selected program
-  let courses: any[] = [];
-  let modules: any[] = [];
+  let courses: Awaited<ReturnType<typeof academicRepository.getCoursesByProgramId>> = [];
+  let modules: Awaited<ReturnType<typeof administrationService.getCurriculumModules>> = [];
   try {
     if (currentProgram?.id) {
       courses = await academicRepository.getCoursesByProgramId(currentProgram.id);
@@ -170,7 +170,7 @@ export default async function ProgramsCatalogPage({
   const levelIds = new Set(levels.map((l) => l.id));
 
   // Get active class groups matching these levels
-  let allClasses: any[] = [];
+  let allClasses: Awaited<ReturnType<typeof academicRepository.getAllClassGroups>> = [];
   try {
     allClasses = await academicRepository.getAllClassGroups();
   } catch (err) {
