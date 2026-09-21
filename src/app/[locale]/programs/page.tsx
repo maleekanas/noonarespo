@@ -87,6 +87,7 @@ import {
   Gamepad2,
   Mic,
 } from "lucide-react";
+import { HolisticLearningFramework } from "@/components/curriculum/HolisticLearningFramework";
 
 export default async function ProgramsCatalogPage({
   params,
@@ -533,6 +534,9 @@ export default async function ProgramsCatalogPage({
             ))}
           </div>
         </div>
+
+        {/* Holistic Learning Framework: Bloom, BIDE & STEAM */}
+        <HolisticLearningFramework locale={locale} isRtl={isRtl} />
 
         {/* Section 2: Integrated Interactive Studios */}
         <div className="bg-white rounded-3xl p-8 border border-slate-200/90 shadow-sm space-y-6">

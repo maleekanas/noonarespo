@@ -19,6 +19,7 @@ import {
   CheckCircle2,
   Flame,
 } from "lucide-react";
+import { HolisticLearningFramework } from "@/components/curriculum/HolisticLearningFramework";
 
 export default async function HomePage({
   params,
@@ -225,6 +226,9 @@ export default async function HomePage({
           })}
         </div>
       </section>
+
+      {/* Holistic Learning Framework: Bloom, BIDE & STEAM */}
+      <HolisticLearningFramework locale={locale} isRtl={isRtl} />
 
       {/* Age Groups Section */}
       <section id="age-groups" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 scroll-mt-28">

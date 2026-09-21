@@ -270,7 +270,7 @@ export class AdministrationService {
   }
 
   async addLesson(
-    data: Omit<CurriculumLesson, "id">,
+    data: Parameters<typeof curriculumLessonRepository.createLesson>[0],
     actor: SessionUser
   ): Promise<CurriculumLesson> {
     const created = await curriculumLessonRepository.createLesson(data);
@@ -281,7 +281,7 @@ export class AdministrationService {
       actor,
       targetEntityId: created.id,
       targetEntityType: "CurriculumLesson",
-      diffSummary: `إضافة درس جديد [${created.titleAr}] للمسار [${created.programId}] والفئة [${created.ageGroup}]`,
+      diffSummary: `إضافة درس جديد [${created.titleAr}] للمسار [${created.programId}] والفئة [${created.ageGroup}] - Bloom: [${created.bloomStage}], STEAM: [${created.steamDomain}]`,
     });
 
     return created;

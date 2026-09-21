@@ -126,6 +126,10 @@ export default async function AdminCurriculumPage({
     const homeworkTitleEn = formData.get("homeworkTitleEn")?.toString().trim() || "Practical Homework";
     const vocabStr = formData.get("targetVocabulary")?.toString() || "";
     const targetVocabulary = vocabStr.split(",").map((v) => v.trim()).filter(Boolean);
+    const bloomStage = (formData.get("bloomStage")?.toString() || "REMEMBER") as any;
+    const steamDomain = (formData.get("steamDomain")?.toString() || "TECHNOLOGY") as any;
+    const steamConnectionAr = formData.get("steamConnectionAr")?.toString().trim() || "";
+    const steamConnectionEn = formData.get("steamConnectionEn")?.toString().trim() || "";
 
     if (!titleAr) return;
 
@@ -148,6 +152,10 @@ export default async function AdminCurriculumPage({
         interactiveTools: ["WHITEBOARD", "AUDIO_RECORDER"],
         homeworkTitleAr,
         homeworkTitleEn,
+        bloomStage,
+        steamDomain,
+        steamConnectionAr,
+        steamConnectionEn,
       },
       adminSession
     );
@@ -335,6 +343,44 @@ export default async function AdminCurriculumPage({
                 className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-brand-500"
               />
             </div>
+
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">مرحلة هرم بلوم المعرفي (Bloom)</label>
+              <select
+                name="bloomStage"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-brand-500 bg-white"
+              >
+                <option value="REMEMBER">تذكّر (Remember)</option>
+                <option value="UNDERSTAND">فهم (Understand)</option>
+                <option value="APPLY">تطبيق (Apply)</option>
+                <option value="ANALYZE">تحليل (Analyze)</option>
+                <option value="EVALUATE">تقييم (Evaluate)</option>
+                <option value="CREATE">ابتكار (Create)</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">مجال تكامل STEAM</label>
+              <select
+                name="steamDomain"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-brand-500 bg-white"
+              >
+                <option value="TECHNOLOGY">تكنولوجيا (Technology)</option>
+                <option value="SCIENCE">علوم (Science)</option>
+                <option value="ENGINEERING">هندسة (Engineering)</option>
+                <option value="ARTS">فنون (Arts)</option>
+                <option value="MATHS">رياضيات (Maths)</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">رابط مفهوم STEAM بالدرس</label>
+              <input
+                name="steamConnectionAr"
+                placeholder="مثال: تحليل الترددات الصوتية للحروف..."
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-brand-500"
+              />
+            </div>
           </div>
 
           <div className="pt-2 flex justify-end">
@@ -359,7 +405,7 @@ export default async function AdminCurriculumPage({
               </h2>
             </div>
             <p className="text-xs text-slate-500 mt-1">
-              جميع الدروس مجهزة بأدوات الغرفة التفاعلية (اللوح الذكي، مختبر التجويد، مسجل الصوت) وواجبات منزلية مصاحبة
+              جميع الدروس مجهزة بهرم بلوم المعرفي، أبعاد BIDE، ومنهجية STEAM التفاعلية وأدوات الغرفة الافتراضية
             </p>
           </div>
 
@@ -395,6 +441,24 @@ export default async function AdminCurriculumPage({
                 <p className="text-[11px] text-slate-500 leading-relaxed line-clamp-2">
                   {lesson.descriptionAr}
                 </p>
+
+                {/* Holistic Learning Badges: Bloom, BIDE, STEAM */}
+                <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                  <span className="px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    بلوم: {lesson.bloomStage}
+                  </span>
+                  <span className="px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-amber-50 text-amber-700 border border-amber-200">
+                    BIDE: {lesson.bidePillars.join(" • ")}
+                  </span>
+                  <span className="px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-blue-50 text-blue-700 border border-blue-200">
+                    STEAM: {lesson.steamDomain}
+                  </span>
+                </div>
+                {lesson.steamConnectionAr && (
+                  <p className="text-[10px] text-slate-500 bg-blue-50/50 p-1.5 rounded-lg border border-blue-100 leading-relaxed">
+                    🔬 <span className="font-bold">رابط STEAM:</span> {lesson.steamConnectionAr}
+                  </p>
+                )}
               </div>
 
               {/* Interactive Tools Badges */}

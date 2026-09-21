@@ -8,6 +8,26 @@ export type InteractiveClassroomTool =
   | "WORD_SCRAMBLER"
   | "FLASHCARDS";
 
+// Bloom's Taxonomy 6 Cognitive Stages
+export type BloomStage =
+  | "REMEMBER"
+  | "UNDERSTAND"
+  | "APPLY"
+  | "ANALYZE"
+  | "EVALUATE"
+  | "CREATE";
+
+// BIDE Model Dimensions
+export type BidePillar = "BROAD" | "INSPIRING" | "DEEP" | "EFFICIENT";
+
+// STEAM Methodology Domains
+export type SteamDomain =
+  | "SCIENCE"
+  | "TECHNOLOGY"
+  | "ENGINEERING"
+  | "ARTS"
+  | "MATHS";
+
 export interface CurriculumLesson {
   id: string;
   ageGroup: AgeGroup;
@@ -29,6 +49,12 @@ export interface CurriculumLesson {
   homeworkTitleEn: string;
   libraryStoryId?: string;
   printableId?: string;
+  // Holistic Learning Framework (Bloom, BIDE, STEAM)
+  bloomStage: BloomStage;
+  bidePillars: BidePillar[];
+  steamDomain: SteamDomain;
+  steamConnectionAr: string;
+  steamConnectionEn: string;
 }
 
 interface ProgramTemplate {
@@ -52,6 +78,11 @@ interface ProgramTemplate {
       storyId?: string;
       libraryStoryId?: string;
       printableId?: string;
+      bloomStage?: BloomStage;
+      bidePillars?: BidePillar[];
+      steamDomain?: SteamDomain;
+      steamConnectionAr?: string;
+      steamConnectionEn?: string;
     }[]
   >;
 }
@@ -1265,16 +1296,132 @@ const PROGRAM_TEMPLATES: ProgramTemplate[] = [
   },
 ];
 
-// Helper to expand catalog into 80 lessons per age group across the 7 programs
-class CurriculumLessonRepository {
+export function resolveHolisticLearningAttributes(
+  ageGroup: AgeGroup,
+  programId: string,
+  lessonNumber: number,
+  overrides?: {
+    bloomStage?: BloomStage;
+    bidePillars?: BidePillar[];
+    steamDomain?: SteamDomain;
+    steamConnectionAr?: string;
+    steamConnectionEn?: string;
+  }
+): {
+  bloomStage: BloomStage;
+  bidePillars: BidePillar[];
+  steamDomain: SteamDomain;
+  steamConnectionAr: string;
+  steamConnectionEn: string;
+} {
+  // 1. Bloom's Taxonomy Cognitive Progression per Age Group
+  let bloomStage: BloomStage = "REMEMBER";
+  if (overrides?.bloomStage) {
+    bloomStage = overrides.bloomStage;
+  } else if (ageGroup === AgeGroup.AGE_4_6) {
+    bloomStage = lessonNumber % 2 === 1 ? "REMEMBER" : "UNDERSTAND";
+  } else if (ageGroup === AgeGroup.AGE_7_10) {
+    const cycle = lessonNumber % 3;
+    bloomStage = cycle === 1 ? "UNDERSTAND" : cycle === 2 ? "APPLY" : "ANALYZE";
+  } else if (ageGroup === AgeGroup.AGE_11_13) {
+    const cycle = lessonNumber % 3;
+    bloomStage = cycle === 1 ? "APPLY" : cycle === 2 ? "ANALYZE" : "EVALUATE";
+  } else {
+    // Scholars (AGE_14_16)
+    const cycle = lessonNumber % 3;
+    bloomStage = cycle === 1 ? "ANALYZE" : cycle === 2 ? "EVALUATE" : "CREATE";
+  }
+
+  // 2. BIDE Model Dimensions
+  let bidePillars: BidePillar[] = overrides?.bidePillars || ["BROAD", "EFFICIENT"];
+  if (!overrides?.bidePillars) {
+    switch (programId) {
+      case "prog-foundations":
+        bidePillars = ["DEEP", "EFFICIENT"];
+        break;
+      case "prog-reading":
+        bidePillars = ["BROAD", "INSPIRING"];
+        break;
+      case "prog-writing":
+        bidePillars = ["DEEP", "INSPIRING"];
+        break;
+      case "prog-speaking":
+        bidePillars = ["BROAD", "EFFICIENT"];
+        break;
+      case "prog-listening":
+        bidePillars = ["BROAD", "EFFICIENT"];
+        break;
+      case "prog-quran":
+        bidePillars = ["INSPIRING", "DEEP"];
+        break;
+      case "prog-islamic":
+        bidePillars = ["BROAD", "INSPIRING"];
+        break;
+      default:
+        bidePillars = ["BROAD", "EFFICIENT"];
+    }
+  }
+
+  // 3. STEAM Domain and Contextual Bridge
+  let steamDomain: SteamDomain = overrides?.steamDomain || "TECHNOLOGY";
+  let steamConnectionAr = overrides?.steamConnectionAr || "";
+  let steamConnectionEn = overrides?.steamConnectionEn || "";
+
+  if (!overrides?.steamDomain) {
+    switch (programId) {
+      case "prog-foundations":
+        steamDomain = "ENGINEERING";
+        steamConnectionAr = "الهندسة الخطية لحركات الحروف والمحاذاة المتقنة على السطر وفق النسب المعيارية.";
+        steamConnectionEn = "Calligraphic structural geometry and baseline alignment according to standard proportions.";
+        break;
+      case "prog-reading":
+        steamDomain = "SCIENCE";
+        steamConnectionAr = "استكشاف الطبيعة والظواهر العلمية عبر نصوص القراءة المستهدفة وتوسيع المدارك العلمية.";
+        steamConnectionEn = "Exploring nature and scientific phenomena through targeted reading comprehension.";
+        break;
+      case "prog-writing":
+        steamDomain = "ARTS";
+        steamConnectionAr = "تطبيقات الفنون التشكيلية والخط العربي وتناسق الكتلة والفراغ في الكتابة.";
+        steamConnectionEn = "Visual arts applications, Arabic calligraphy penmanship, and typographic balance.";
+        break;
+      case "prog-speaking":
+        steamDomain = "TECHNOLOGY";
+        steamConnectionAr = "توظيف تقنيات تحليل الصوت الرقمي ومخارج الحروف التفاعلية لضبط النطق والطلاقة.";
+        steamConnectionEn = "Utilizing digital speech synthesis and acoustic analysis tools to master phonetic fluency.";
+        break;
+      case "prog-listening":
+        steamDomain = "SCIENCE";
+        steamConnectionAr = "علم الأصوات السمعية والتمييز بين الترددات الصوتية للحروف المتقاربة في المخارج.";
+        steamConnectionEn = "Auditory acoustics and frequency discrimination of phonetically adjacent Arabic consonants.";
+        break;
+      case "prog-quran":
+        steamDomain = "ARTS";
+        steamConnectionAr = "علم المقامات الصوتية وتناغم المدود وموسيقى التلاوة المتزنة بأحكام التجويد.";
+        steamConnectionEn = "Acoustic vocal harmony, elongation ratios, and melodious Quranic recitation science.";
+        break;
+      case "prog-islamic":
+        steamDomain = "MATHS";
+        steamConnectionAr = "الرياضيات والحساب الفلكي للمواقيت والتقويم الهجري والهندسة الزخرفية الإسلامية.";
+        steamConnectionEn = "Mathematical astronomical calculations for lunar calendars and Islamic geometric tessellations.";
+        break;
+    }
+  }
+
+  return {
+    bloomStage,
+    bidePillars,
+    steamDomain,
+    steamConnectionAr,
+    steamConnectionEn,
+  };
+}
+
+// In-memory catalog of lessons across all 7 programs and 4 age groups
+export class CurriculumLessonRepository {
   private lessons: Map<string, CurriculumLesson> = new Map();
 
   constructor() {
-    this.seedLessons();
-  }
-
-  private seedLessons() {
-    const ageGroups: AgeGroup[] = [
+    const ageGroups = [
       AgeGroup.AGE_4_6,
       AgeGroup.AGE_7_10,
       AgeGroup.AGE_11_13,
@@ -1297,6 +1444,14 @@ class CurriculumLessonRepository {
         const lessons = tmpl.lessonsPerAgeGroup[ageGroup] || [];
         lessons.forEach((l, idx) => {
           const lessonId = `les-${tmpl.programId}-${ageGroup.toLowerCase()}-${idx + 1}`;
+          const holistic = resolveHolisticLearningAttributes(ageGroup, tmpl.programId, idx + 1, {
+            bloomStage: l.bloomStage,
+            bidePillars: l.bidePillars,
+            steamDomain: l.steamDomain,
+            steamConnectionAr: l.steamConnectionAr,
+            steamConnectionEn: l.steamConnectionEn,
+          });
+
           this.lessons.set(lessonId, {
             id: lessonId,
             ageGroup,
@@ -1318,6 +1473,11 @@ class CurriculumLessonRepository {
             homeworkTitleEn: l.hwEn,
             libraryStoryId: l.storyId || l.libraryStoryId,
             printableId: l.printableId,
+            bloomStage: holistic.bloomStage,
+            bidePillars: holistic.bidePillars,
+            steamDomain: holistic.steamDomain,
+            steamConnectionAr: holistic.steamConnectionAr,
+            steamConnectionEn: holistic.steamConnectionEn,
           });
         });
       }
@@ -1365,6 +1525,8 @@ class CurriculumLessonRepository {
             "prog-islamic": ["WHITEBOARD", "FLASHCARDS"],
           };
 
+          const holistic = resolveHolisticLearningAttributes(ageGroup, prog.id, lessonNum);
+
           this.lessons.set(lessonId, {
             id: lessonId,
             ageGroup,
@@ -1375,16 +1537,16 @@ class CurriculumLessonRepository {
             lessonNumber: lessonNum,
             titleAr: `${prog.titleAr}: الوحدة التطبيقية (${lessonNum}) لـ${ageNameAr}`,
             titleEn: `${prog.titleEn}: Applied Unit (${lessonNum}) for ${ageNameEn}`,
-            descriptionAr: `درس تطبيقي تفاعلي يعزز مهارات ${prog.titleAr} بالربط مع اللوح الذكي والأنشطة الصوتية.`,
-            descriptionEn: `Interactive applied lesson reinforcing ${prog.titleEn} competencies linked with smart whiteboard and audio studios.`,
+            descriptionAr: `درس تطبيقي تفاعلي يعزز مهارات ${prog.titleAr} بالربط مع اللوح الذكي والأنشطة الصوتية ومنهجية STEAM.`,
+            descriptionEn: `Interactive applied lesson reinforcing ${prog.titleEn} competencies linked with smart whiteboard, audio studios, and STEAM integration.`,
             objectivesAr: [
-              `إتقان المهارة المستهدفة في ${prog.titleAr}`,
-              "المشاركة التفاعلية عبر اللوح الرقمي والأنشطة الصوتية",
+              `إتقان المهارة المستهدفة في ${prog.titleAr} وفق مستوى [${holistic.bloomStage}]`,
+              "المشاركة التفاعلية عبر اللوح الرقمي والأنشطة الصوتية ومنهجية STEAM",
               "حل التمارين والواجب المنزلي بنجاح",
             ],
             objectivesEn: [
-              `Master core target skill in ${prog.titleEn}`,
-              "Interactive participation via whiteboard and audio studio",
+              `Master core target skill in ${prog.titleEn} aligned with [${holistic.bloomStage}]`,
+              "Interactive participation via whiteboard, audio studio, and STEAM methodology",
               "Successfully complete homework exercise",
             ],
             targetVocabulary: [`مُفْرَدَةٌ_${lessonNum}_أ`, `مُفْرَدَةٌ_${lessonNum}_ب`, `مُفْرَدَةٌ_${lessonNum}_ج`],
@@ -1393,6 +1555,11 @@ class CurriculumLessonRepository {
             homeworkTitleAr: `واجب تطبيقي للدرس (${lessonNum}): تسجيل وممارسة تفاعلية`,
             homeworkTitleEn: `Homework assignment for Lesson (${lessonNum}): Recording & Interactive Practice`,
             printableId: ageGroup === AgeGroup.AGE_4_6 ? "printable-letters-tracing-1" : "printable-heavy-letters",
+            bloomStage: holistic.bloomStage,
+            bidePillars: holistic.bidePillars,
+            steamDomain: holistic.steamDomain,
+            steamConnectionAr: holistic.steamConnectionAr,
+            steamConnectionEn: holistic.steamConnectionEn,
           });
         }
       }
@@ -1410,6 +1577,14 @@ class CurriculumLessonRepository {
 
   async getLessonsByProgram(programId: string): Promise<CurriculumLesson[]> {
     return Array.from(this.lessons.values()).filter((l) => l.programId === programId);
+  }
+
+  async getLessonsByBloomStage(bloomStage: BloomStage): Promise<CurriculumLesson[]> {
+    return Array.from(this.lessons.values()).filter((l) => l.bloomStage === bloomStage);
+  }
+
+  async getLessonsBySteamDomain(steamDomain: SteamDomain): Promise<CurriculumLesson[]> {
+    return Array.from(this.lessons.values()).filter((l) => l.steamDomain === steamDomain);
   }
 
   async getLessonsCountByAgeGroup(): Promise<Record<AgeGroup, number>> {
@@ -1432,11 +1607,47 @@ class CurriculumLessonRepository {
   }
 
   // Mutations
-  async createLesson(data: Omit<CurriculumLesson, "id">): Promise<CurriculumLesson> {
+  async createLesson(data: Partial<CurriculumLesson> & Omit<CurriculumLesson, "id" | "bloomStage" | "bidePillars" | "steamDomain" | "steamConnectionAr" | "steamConnectionEn">): Promise<CurriculumLesson> {
     const id = `lesson-custom-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const holistic = resolveHolisticLearningAttributes(
+      data.ageGroup,
+      data.programId,
+      data.lessonNumber || 1,
+      {
+        bloomStage: data.bloomStage,
+        bidePillars: data.bidePillars,
+        steamDomain: data.steamDomain,
+        steamConnectionAr: data.steamConnectionAr,
+        steamConnectionEn: data.steamConnectionEn,
+      }
+    );
+
     const lesson: CurriculumLesson = {
       id,
-      ...data,
+      ageGroup: data.ageGroup,
+      programId: data.programId,
+      programTitleAr: data.programTitleAr,
+      programTitleEn: data.programTitleEn,
+      courseLevelCode: data.courseLevelCode,
+      lessonNumber: data.lessonNumber,
+      titleAr: data.titleAr,
+      titleEn: data.titleEn,
+      descriptionAr: data.descriptionAr,
+      descriptionEn: data.descriptionEn,
+      objectivesAr: data.objectivesAr,
+      objectivesEn: data.objectivesEn,
+      targetVocabulary: data.targetVocabulary,
+      durationMinutes: data.durationMinutes,
+      interactiveTools: data.interactiveTools,
+      homeworkTitleAr: data.homeworkTitleAr,
+      homeworkTitleEn: data.homeworkTitleEn,
+      libraryStoryId: data.libraryStoryId,
+      printableId: data.printableId,
+      bloomStage: holistic.bloomStage,
+      bidePillars: holistic.bidePillars,
+      steamDomain: holistic.steamDomain,
+      steamConnectionAr: holistic.steamConnectionAr,
+      steamConnectionEn: holistic.steamConnectionEn,
     };
     this.lessons.set(id, lesson);
     return lesson;
