@@ -127,7 +127,14 @@ export default async function ProgramsCatalogPage({
   // (courses/levels) -- mixing the two previously meant every program page
   // silently fell back to Foundations' metadata and always showed "0"
   // curriculum modules, regardless of which program tab was open.
-  const allPrograms = await academicRepository.getAllPrograms();
+  let allPrograms: any[] = [];
+  try {
+    allPrograms = await academicRepository.getAllPrograms();
+  } catch (err) {
+    console.error("Failed to load programs:", err);
+    allPrograms = [];
+  }
+
   const allProgramsWithSlug = allPrograms.map((p) => ({ ...p, slug: getProgramSlug(p.type) }));
   const selectedSlug =
     programParam && allProgramsWithSlug.some((p) => p.slug === programParam)
@@ -138,19 +145,36 @@ export default async function ProgramsCatalogPage({
     allProgramsWithSlug.find((p) => p.slug === selectedSlug) || allProgramsWithSlug[0];
 
   // Fetch courses, levels, and curriculum modules for the selected program
-  const courses = await academicRepository.getCoursesByProgramId(currentProgram.id);
-  const modules = await administrationService.getCurriculumModules(selectedSlug);
+  let courses: any[] = [];
+  let modules: any[] = [];
+  try {
+    if (currentProgram?.id) {
+      courses = await academicRepository.getCoursesByProgramId(currentProgram.id);
+    }
+    modules = await administrationService.getCurriculumModules(selectedSlug);
+  } catch (err) {
+    console.error("Failed to load courses or modules:", err);
+  }
 
   // Collect levels across courses
   const levels = [];
-  for (const course of courses) {
-    const courseLevels = await academicRepository.getLevelsByCourseId(course.id);
-    levels.push(...courseLevels);
+  try {
+    for (const course of courses) {
+      const courseLevels = await academicRepository.getLevelsByCourseId(course.id);
+      levels.push(...courseLevels);
+    }
+  } catch (err) {
+    console.error("Failed to load levels:", err);
   }
   const levelIds = new Set(levels.map((l) => l.id));
 
   // Get active class groups matching these levels
-  const allClasses = await academicRepository.getAllClassGroups();
+  let allClasses: any[] = [];
+  try {
+    allClasses = await academicRepository.getAllClassGroups();
+  } catch (err) {
+    console.error("Failed to load class groups:", err);
+  }
   const programClasses = allClasses.filter((cg) => levelIds.has(cg.courseLevelId));
 
   // Program-specific metadata & studio tool integrations
