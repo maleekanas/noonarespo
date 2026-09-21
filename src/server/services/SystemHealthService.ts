@@ -246,7 +246,7 @@ export class SystemHealthService {
       status: overallStatus,
       timestamp: new Date().toISOString(),
       version: "0.1.0",
-      platform: "Arabic Kids Academy",
+      platform: "Kids Arabic Academy",
       totalLatencyMs: Date.now() - overallStart,
       subsystems,
       telemetry: this.getRuntimeTelemetry(),

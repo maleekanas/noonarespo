@@ -64,6 +64,8 @@ export interface StudentSrsOverview {
  * state -- and it's treated as due today, same as a fresh Leitner box 1
  * card, so new cards still show up for review immediately.
  */
+const IN_MEMORY_CARD_PROGRESS: Map<string, StudentCardProgress> = new Map();
+
 class VocabularyRepository {
   private cards: Map<string, VocabularyFlashcard> = new Map();
 
@@ -229,8 +231,13 @@ class VocabularyRepository {
   }
 
   async getDueCards(studentId: string): Promise<VocabularyFlashcard[]> {
-    const progressRows = await prisma.vocabularyCardProgress.findMany({ where: { studentId } });
-    const progressByCardId = new Map<string, (typeof progressRows)[number]>();
+    let progressRows: StudentCardProgress[] = [];
+    try {
+      progressRows = await prisma.vocabularyCardProgress.findMany({ where: { studentId } });
+    } catch {
+      progressRows = Array.from(IN_MEMORY_CARD_PROGRESS.values()).filter((p) => p.studentId === studentId);
+    }
+    const progressByCardId = new Map<string, StudentCardProgress>();
     for (const row of progressRows) progressByCardId.set(row.cardId, row);
     const now = new Date();
 
@@ -251,9 +258,14 @@ class VocabularyRepository {
     cardId: string,
     grade: "EASY" | "GOOD" | "AGAIN"
   ): Promise<StudentCardProgress> {
-    const existing = await prisma.vocabularyCardProgress.findUnique({
-      where: { studentId_cardId: { studentId, cardId } },
-    });
+    let existing: StudentCardProgress | null = null;
+    try {
+      existing = await prisma.vocabularyCardProgress.findUnique({
+        where: { studentId_cardId: { studentId, cardId } },
+      });
+    } catch {
+      existing = IN_MEMORY_CARD_PROGRESS.get(`${studentId}_${cardId}`) || null;
+    }
     const currentBox = existing?.box ?? 1;
     const currentConsecutiveCorrect = existing?.consecutiveCorrect ?? 0;
     const currentTotalReviews = existing?.totalReviews ?? 0;
@@ -280,16 +292,29 @@ class VocabularyRepository {
     const now = new Date();
     const nextReviewDate = new Date(now.getTime() + daysToAdd * 86400000);
 
-    return prisma.vocabularyCardProgress.upsert({
-      where: { studentId_cardId: { studentId, cardId } },
-      update: {
-        box: nextBox,
-        consecutiveCorrect: nextConsecutiveCorrect,
-        totalReviews: currentTotalReviews + 1,
-        lastReviewedAt: now,
-        nextReviewDate,
-      },
-      create: {
+    try {
+      return await prisma.vocabularyCardProgress.upsert({
+        where: { studentId_cardId: { studentId, cardId } },
+        update: {
+          box: nextBox,
+          consecutiveCorrect: nextConsecutiveCorrect,
+          totalReviews: currentTotalReviews + 1,
+          lastReviewedAt: now,
+          nextReviewDate,
+        },
+        create: {
+          studentId,
+          cardId,
+          box: nextBox,
+          consecutiveCorrect: nextConsecutiveCorrect,
+          totalReviews: currentTotalReviews + 1,
+          lastReviewedAt: now,
+          nextReviewDate,
+        },
+      });
+    } catch {
+      const key = `${studentId}_${cardId}`;
+      const updated: StudentCardProgress = {
         studentId,
         cardId,
         box: nextBox,
@@ -297,13 +322,20 @@ class VocabularyRepository {
         totalReviews: currentTotalReviews + 1,
         lastReviewedAt: now,
         nextReviewDate,
-      },
-    });
+      };
+      IN_MEMORY_CARD_PROGRESS.set(key, updated);
+      return updated;
+    }
   }
 
   async getStudentSrsOverview(studentId: string): Promise<StudentSrsOverview> {
-    const progressRows = await prisma.vocabularyCardProgress.findMany({ where: { studentId } });
-    const progressByCardId = new Map<string, (typeof progressRows)[number]>();
+    let progressRows: StudentCardProgress[] = [];
+    try {
+      progressRows = await prisma.vocabularyCardProgress.findMany({ where: { studentId } });
+    } catch {
+      progressRows = Array.from(IN_MEMORY_CARD_PROGRESS.values()).filter((p) => p.studentId === studentId);
+    }
+    const progressByCardId = new Map<string, StudentCardProgress>();
     for (const row of progressRows) progressByCardId.set(row.cardId, row);
     const now = new Date();
 

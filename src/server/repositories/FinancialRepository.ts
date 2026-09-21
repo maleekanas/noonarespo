@@ -68,7 +68,7 @@ class InMemoryFinancialRepository {
         nameAr: "فصل النجوم الجماعي الموصى به",
         nameEn: "Standard Small-Group Cohort",
         descriptionAr: "حصتان أسبوعياً مباشرة في فصل مصغر لا يتجاوز 6 طلاب",
-        priceMinorUnits: 4450, // $44.50 -- 50% off the previous $89.00, per founder request 2026-09-16
+        priceMinorUnits: 8900, // $89.00
         currency: "USD",
         billingInterval: "MONTHLY",
         maxChildren: 1,
@@ -88,7 +88,7 @@ class InMemoryFinancialRepository {
         nameAr: "باقة العائلة المتميزة",
         nameEn: "Family Premium Plan",
         descriptionAr: "تغطية شاملة لما يصل إلى 3 أطفال مع فصول جماعية واستشارات",
-        priceMinorUnits: 7450, // $74.50 -- 50% off the previous $149.00, per founder request 2026-09-16
+        priceMinorUnits: 14900, // $149.00
         currency: "USD",
         billingInterval: "MONTHLY",
         maxChildren: 3,
@@ -107,7 +107,7 @@ class InMemoryFinancialRepository {
         nameAr: "الدروس الخاصة المباشرة (1 على 1)",
         nameEn: "Private 1-on-1 Tutoring",
         descriptionAr: "تعليم فردي مكثف مخصص بالكامل لاحتياجات طفلك وسرعة تعلمه",
-        priceMinorUnits: 11000, // $110.00 -- 50% off the previous $220.00, per founder request 2026-09-16
+        priceMinorUnits: 22000, // $220.00
         currency: "USD",
         billingInterval: "MONTHLY",
         maxChildren: 1,

@@ -18,6 +18,7 @@ import {
   Clock,
   BookOpen,
 } from "lucide-react";
+import { InteractivePlacementCalculator } from "@/components/marketing/InteractivePlacementCalculator";
 
 export default async function HowItWorksPage({
   params,
@@ -177,6 +178,11 @@ export default async function HowItWorksPage({
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Live Interactive Placement Diagnostic */}
+        <div className="mt-16">
+          <InteractivePlacementCalculator locale={locale} isRtl={isRtl} />
         </div>
       </section>
 

@@ -1,7 +1,7 @@
 import { MetadataRoute } from "next";
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.arabickidsacademy.com";
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://arabickidsacademy.com";
 
   return {
     rules: {
@@ -13,6 +13,7 @@ export default function robots(): MetadataRoute.Robots {
         "/*/student/",
         "/*/teacher/",
         "/*/parent/",
+        "/*/support/",
       ],
     },
     sitemap: `${baseUrl}/sitemap.xml`,

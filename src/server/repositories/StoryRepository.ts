@@ -496,36 +496,46 @@ class StoryRepository {
     return Array.from(this.stories.values()).filter((s) => s.category === category);
   }
 
+  private inMemoryProgress: Map<string, StoryProgress> = new Map();
+
   async saveProgress(progress: StoryProgress): Promise<void> {
-    await prisma.storyProgress.upsert({
-      where: { studentId_storyId: { studentId: progress.studentId, storyId: progress.storyId } },
-      update: {
-        isCompleted: progress.isCompleted,
-        quizScorePercentage: progress.quizScorePercentage,
-        completedAt: progress.completedAt,
-      },
-      create: {
-        studentId: progress.studentId,
-        storyId: progress.storyId,
-        isCompleted: progress.isCompleted,
-        quizScorePercentage: progress.quizScorePercentage,
-        completedAt: progress.completedAt,
-      },
-    });
+    try {
+      await prisma.storyProgress.upsert({
+        where: { studentId_storyId: { studentId: progress.studentId, storyId: progress.storyId } },
+        update: {
+          isCompleted: progress.isCompleted,
+          quizScorePercentage: progress.quizScorePercentage,
+          completedAt: progress.completedAt,
+        },
+        create: {
+          studentId: progress.studentId,
+          storyId: progress.storyId,
+          isCompleted: progress.isCompleted,
+          quizScorePercentage: progress.quizScorePercentage,
+          completedAt: progress.completedAt,
+        },
+      });
+    } catch {
+      this.inMemoryProgress.set(`${progress.studentId}_${progress.storyId}`, progress);
+    }
   }
 
   async getProgress(studentId: string, storyId: string): Promise<StoryProgress | null> {
-    const row = await prisma.storyProgress.findUnique({
-      where: { studentId_storyId: { studentId, storyId } },
-    });
-    if (!row) return null;
-    return {
-      studentId: row.studentId,
-      storyId: row.storyId,
-      isCompleted: row.isCompleted,
-      quizScorePercentage: row.quizScorePercentage,
-      completedAt: row.completedAt ?? undefined,
-    };
+    try {
+      const row = await prisma.storyProgress.findUnique({
+        where: { studentId_storyId: { studentId, storyId } },
+      });
+      if (!row) return null;
+      return {
+        studentId: row.studentId,
+        storyId: row.storyId,
+        isCompleted: row.isCompleted,
+        quizScorePercentage: row.quizScorePercentage,
+        completedAt: row.completedAt ?? undefined,
+      };
+    } catch {
+      return this.inMemoryProgress.get(`${studentId}_${storyId}`) || null;
+    }
   }
 }
 

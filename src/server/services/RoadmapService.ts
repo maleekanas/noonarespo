@@ -47,11 +47,17 @@ export class RoadmapService {
     // a no-op for every other node, and a no-op if one was already issued.
     await certificateService.issueRoadmapCompletionCertificateIfEligible(params.studentId);
 
+    const completedNode = updatedProgress.nodes.find((n) => n.id === params.nodeId) ?? {
+      ...node,
+      status: "COMPLETED" as const,
+      starsEarned: params.starsEarned,
+    };
+
     return {
       updatedProgress,
       xpAwarded,
       newTotalXp,
-      completedNode: node,
+      completedNode,
     };
   }
 

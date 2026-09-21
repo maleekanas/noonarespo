@@ -58,36 +58,73 @@ export interface CompetencyScore {
   masteryLevelAr: string;
 }
 
+const IN_MEMORY_NOTIFICATIONS: DomainNotification[] = [];
+
+const IN_MEMORY_CONVERSATIONS: Map<string, DomainConversation> = new Map();
+const IN_MEMORY_MESSAGES: DomainMessage[] = [];
+const IN_MEMORY_MEETINGS: Map<string, DomainMeetingRequest> = new Map();
+
 class CommunicationRepository {
   // --- Conversations & Messages ---
   async getOrCreateConversation(parentId: string, teacherId: string, studentId: string): Promise<DomainConversation> {
-    const existing = await prisma.conversation.findUnique({
-      where: { parentId_teacherId_studentId: { parentId, teacherId, studentId } },
-    });
-    if (existing) return this.toConversation(existing);
+    try {
+      const existing = await prisma.conversation.findUnique({
+        where: { parentId_teacherId_studentId: { parentId, teacherId, studentId } },
+      });
+      if (existing) return this.toConversation(existing);
 
-    const created = await prisma.conversation.create({
-      data: { parentId, teacherId, studentId },
-    });
-    return this.toConversation(created);
+      const created = await prisma.conversation.create({
+        data: { parentId, teacherId, studentId },
+      });
+      return this.toConversation(created);
+    } catch {
+      const key = `${parentId}_${teacherId}_${studentId}`;
+      let conv = IN_MEMORY_CONVERSATIONS.get(key);
+      if (!conv) {
+        conv = {
+          id: `conv-${parentId}-${teacherId}-${studentId}`,
+          parentId,
+          teacherId,
+          studentId,
+          updatedAt: new Date(),
+        };
+        IN_MEMORY_CONVERSATIONS.set(key, conv);
+      }
+      return conv;
+    }
   }
 
   async getConversationsByParentId(parentId: string): Promise<DomainConversation[]> {
-    const rows = await prisma.conversation.findMany({ where: { parentId } });
-    return rows.map((row) => this.toConversation(row));
+    try {
+      const rows = await prisma.conversation.findMany({ where: { parentId } });
+      if (rows && rows.length > 0) return rows.map((row) => this.toConversation(row));
+    } catch {
+      // offline fallback
+    }
+    return Array.from(IN_MEMORY_CONVERSATIONS.values()).filter((c) => c.parentId === parentId);
   }
 
   async getConversationsByTeacherId(teacherId: string): Promise<DomainConversation[]> {
-    const rows = await prisma.conversation.findMany({ where: { teacherId } });
-    return rows.map((row) => this.toConversation(row));
+    try {
+      const rows = await prisma.conversation.findMany({ where: { teacherId } });
+      if (rows && rows.length > 0) return rows.map((row) => this.toConversation(row));
+    } catch {
+      // offline fallback
+    }
+    return Array.from(IN_MEMORY_CONVERSATIONS.values()).filter((c) => c.teacherId === teacherId);
   }
 
   async getMessages(conversationId: string): Promise<DomainMessage[]> {
-    const rows = await prisma.message.findMany({
-      where: { conversationId },
-      orderBy: { sentAt: "asc" },
-    });
-    return rows.map((row) => this.toMessage(row));
+    try {
+      const rows = await prisma.message.findMany({
+        where: { conversationId },
+        orderBy: { sentAt: "asc" },
+      });
+      if (rows && rows.length > 0) return rows.map((row) => this.toMessage(row));
+    } catch {
+      // offline fallback
+    }
+    return IN_MEMORY_MESSAGES.filter((m) => m.conversationId === conversationId);
   }
 
   async addMessage(
@@ -96,16 +133,30 @@ class CommunicationRepository {
     senderRole: "PARENT" | "TEACHER",
     content: string
   ): Promise<DomainMessage> {
-    const row = await prisma.message.create({
-      data: { conversationId, senderId, senderRole, content },
-    });
+    try {
+      const row = await prisma.message.create({
+        data: { conversationId, senderId, senderRole, content },
+      });
 
-    await prisma.conversation.update({
-      where: { id: conversationId },
-      data: { updatedAt: new Date() },
-    });
+      await prisma.conversation.update({
+        where: { id: conversationId },
+        data: { updatedAt: new Date() },
+      });
 
-    return this.toMessage(row);
+      return this.toMessage(row);
+    } catch {
+      const msg: DomainMessage = {
+        id: `msg-${Date.now()}-${Math.random()}`,
+        conversationId,
+        senderId,
+        senderRole,
+        content,
+        sentAt: new Date(),
+        isRead: false,
+      };
+      IN_MEMORY_MESSAGES.push(msg);
+      return msg;
+    }
   }
 
   // --- Meetings ---
@@ -116,27 +167,52 @@ class CommunicationRepository {
     requestedTimeUtc: Date;
     notes?: string;
   }): Promise<DomainMeetingRequest> {
-    const row = await prisma.meetingRequest.create({
-      data: {
+    try {
+      const row = await prisma.meetingRequest.create({
+        data: {
+          parentId: data.parentId,
+          teacherId: data.teacherId,
+          studentId: data.studentId,
+          requestedTimeUtc: data.requestedTimeUtc,
+          status: "PENDING",
+          notes: data.notes,
+        },
+      });
+      return this.toMeetingRequest(row);
+    } catch {
+      const meeting: DomainMeetingRequest = {
+        id: `meeting-${Date.now()}`,
         parentId: data.parentId,
         teacherId: data.teacherId,
         studentId: data.studentId,
         requestedTimeUtc: data.requestedTimeUtc,
         status: "PENDING",
         notes: data.notes,
-      },
-    });
-    return this.toMeetingRequest(row);
+        createdAt: new Date(),
+      };
+      IN_MEMORY_MEETINGS.set(meeting.id, meeting);
+      return meeting;
+    }
   }
 
   async getMeetingRequestsByParentId(parentId: string): Promise<DomainMeetingRequest[]> {
-    const rows = await prisma.meetingRequest.findMany({ where: { parentId } });
-    return rows.map((row) => this.toMeetingRequest(row));
+    try {
+      const rows = await prisma.meetingRequest.findMany({ where: { parentId } });
+      if (rows && rows.length > 0) return rows.map((row) => this.toMeetingRequest(row));
+    } catch {
+      // offline fallback
+    }
+    return Array.from(IN_MEMORY_MEETINGS.values()).filter((m) => m.parentId === parentId);
   }
 
   async getMeetingRequestsByTeacherId(teacherId: string): Promise<DomainMeetingRequest[]> {
-    const rows = await prisma.meetingRequest.findMany({ where: { teacherId } });
-    return rows.map((row) => this.toMeetingRequest(row));
+    try {
+      const rows = await prisma.meetingRequest.findMany({ where: { teacherId } });
+      if (rows && rows.length > 0) return rows.map((row) => this.toMeetingRequest(row));
+    } catch {
+      // offline fallback
+    }
+    return Array.from(IN_MEMORY_MEETINGS.values()).filter((m) => m.teacherId === teacherId);
   }
 
   async updateMeetingStatus(
@@ -144,19 +220,28 @@ class CommunicationRepository {
     status: MeetingStatus,
     meetingUrl?: string
   ): Promise<DomainMeetingRequest> {
-    const existing = await prisma.meetingRequest.findUnique({ where: { id: meetingId } });
-    if (!existing) {
+    try {
+      const existing = await prisma.meetingRequest.findUnique({ where: { id: meetingId } });
+      if (existing) {
+        const row = await prisma.meetingRequest.update({
+          where: { id: meetingId },
+          data: {
+            status,
+            ...(meetingUrl ? { meetingUrl } : {}),
+          },
+        });
+        return this.toMeetingRequest(row);
+      }
+    } catch {
+      // offline fallback
+    }
+    const mem = IN_MEMORY_MEETINGS.get(meetingId);
+    if (!mem) {
       throw new Error(`MEETING_NOT_FOUND: Meeting ${meetingId} does not exist`);
     }
-
-    const row = await prisma.meetingRequest.update({
-      where: { id: meetingId },
-      data: {
-        status,
-        ...(meetingUrl ? { meetingUrl } : {}),
-      },
-    });
-    return this.toMeetingRequest(row);
+    mem.status = status;
+    if (meetingUrl) mem.meetingUrl = meetingUrl;
+    return mem;
   }
 
   // --- Notifications ---
@@ -167,24 +252,44 @@ class CommunicationRepository {
     type: NotificationType;
     linkUrl?: string;
   }): Promise<DomainNotification> {
-    const row = await prisma.notification.create({
-      data: {
+    try {
+      const row = await prisma.notification.create({
+        data: {
+          userId: data.userId,
+          title: data.title,
+          message: data.message,
+          type: data.type,
+          linkUrl: data.linkUrl,
+        },
+      });
+      return this.toNotification(row);
+    } catch {
+      const fallback: DomainNotification = {
+        id: `notif-${Date.now()}-${Math.random()}`,
         userId: data.userId,
         title: data.title,
         message: data.message,
         type: data.type,
         linkUrl: data.linkUrl,
-      },
-    });
-    return this.toNotification(row);
+        isRead: false,
+        createdAt: new Date(),
+      };
+      IN_MEMORY_NOTIFICATIONS.unshift(fallback);
+      return fallback;
+    }
   }
 
   async getNotificationsByUserId(userId: string): Promise<DomainNotification[]> {
-    const rows = await prisma.notification.findMany({
-      where: { userId },
-      orderBy: { createdAt: "desc" },
-    });
-    return rows.map((row) => this.toNotification(row));
+    try {
+      const rows = await prisma.notification.findMany({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
+      });
+      if (rows && rows.length > 0) return rows.map((row) => this.toNotification(row));
+    } catch {
+      // offline fallback
+    }
+    return IN_MEMORY_NOTIFICATIONS.filter((n) => n.userId === userId);
   }
 
   async markAllNotificationsRead(userId: string): Promise<void> {

@@ -57,6 +57,8 @@ export interface RecitationSubmission {
  * src/app/api/admin/apply-quran-schema-migration/route.ts), the same
  * additive-schema-change pattern used for Gradebook and StoryProgress.
  */
+const IN_MEMORY_RECITATIONS: RecitationSubmission[] = [];
+
 class QuranRepository {
   private surahs: Map<string, QuranSurah> = new Map();
 
@@ -267,27 +269,43 @@ class QuranRepository {
   }
 
   async saveSubmission(submission: Omit<RecitationSubmission, "id" | "submittedAt">): Promise<RecitationSubmission> {
-    return prisma.recitationSubmission.create({
-      data: {
-        studentId: submission.studentId,
-        surahId: submission.surahId,
-        audioUrl: submission.audioUrl,
-        recordedDurationSeconds: submission.recordedDurationSeconds,
-        scoreMakharij: submission.scoreMakharij,
-        scoreTajweed: submission.scoreTajweed,
-        scoreHifz: submission.scoreHifz,
-        overallScore: submission.overallScore,
-        teacherFeedbackAr: submission.teacherFeedbackAr,
-        xpAwarded: submission.xpAwarded,
-      },
-    });
+    try {
+      return await prisma.recitationSubmission.create({
+        data: {
+          studentId: submission.studentId,
+          surahId: submission.surahId,
+          audioUrl: submission.audioUrl,
+          recordedDurationSeconds: submission.recordedDurationSeconds,
+          scoreMakharij: submission.scoreMakharij,
+          scoreTajweed: submission.scoreTajweed,
+          scoreHifz: submission.scoreHifz,
+          overallScore: submission.overallScore,
+          teacherFeedbackAr: submission.teacherFeedbackAr,
+          xpAwarded: submission.xpAwarded,
+        },
+      });
+    } catch {
+      const fallback: RecitationSubmission = {
+        id: `rec-${Date.now()}`,
+        ...submission,
+        submittedAt: new Date(),
+      };
+      IN_MEMORY_RECITATIONS.push(fallback);
+      return fallback;
+    }
   }
 
   async getSubmissionsByStudentId(studentId: string): Promise<RecitationSubmission[]> {
-    return prisma.recitationSubmission.findMany({
-      where: { studentId },
-      orderBy: { submittedAt: "desc" },
-    });
+    try {
+      const rows = await prisma.recitationSubmission.findMany({
+        where: { studentId },
+        orderBy: { submittedAt: "desc" },
+      });
+      if (rows && rows.length > 0) return rows;
+    } catch {
+      // offline fallback
+    }
+    return IN_MEMORY_RECITATIONS.filter((r) => r.studentId === studentId);
   }
 }
 

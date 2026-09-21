@@ -1,19 +1,17 @@
 import React from "react";
 import Link from "next/link";
-import { getDictionary, isRtlLocale } from "@/lib/localization";
+import { isRtlLocale } from "@/lib/localization";
 import {
   Check,
   Sparkles,
   ShieldCheck,
   CreditCard,
   Building2,
-  Users,
-  User,
-  Star,
   ArrowRight,
   ArrowLeft,
   HelpCircle,
 } from "lucide-react";
+import { GlobalTimezoneConverter } from "@/components/marketing/GlobalTimezoneConverter";
 
 export default async function PricingPage({
   params,
@@ -22,7 +20,6 @@ export default async function PricingPage({
 }) {
   const { locale } = await params;
   const isRtl = isRtlLocale(locale);
-  const dict = getDictionary(locale);
 
   const plans = [
     {
@@ -32,7 +29,6 @@ export default async function PricingPage({
       subtitleEn: "Ideal for one child dedicated to mastering Arabic and Tajweed.",
       subtitleAr: "مثالية لطفل واحد يسعى لإتقان العربية والتجويد بخطى واثقة.",
       priceMonthly: 79,
-      priceAnnualMonthly: 63, // 20% off
       badgeEn: "Most Popular",
       badgeAr: "الأكثر طلباً",
       popular: true,
@@ -60,7 +56,6 @@ export default async function PricingPage({
       subtitleEn: "Designed for families with 2 to 3 children learning together.",
       subtitleAr: "مصممة للعائلات التي لديها طفلان إلى 3 أطفال يتعلمون معاً.",
       priceMonthly: 149,
-      priceAnnualMonthly: 119,
       badgeEn: "Best Value",
       badgeAr: "أفضل قيمة",
       popular: false,
@@ -88,7 +83,6 @@ export default async function PricingPage({
       subtitleEn: "Maximum acceleration with dedicated 1-on-1 private mentorship.",
       subtitleAr: "أقصى درجات التركيز والتطور عبر حصص فردية خاصة تماماً.",
       priceMonthly: 199,
-      priceAnnualMonthly: 159,
       badgeEn: "VIP Acceleration",
       badgeAr: "تعليم خاص مكثف",
       popular: false,
@@ -127,14 +121,14 @@ export default async function PricingPage({
           </h1>
           <p className="mt-6 text-base sm:text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed">
             {isRtl
-              ? "اختر الخطة المناسبة لعائلتك مع ضمان استرداد الأموال بنسبة 100% خلال أول 14 يوماً."
-              : "Choose the plan that fits your family. All plans include a 1-day free trial and a 14-day 100% money-back guarantee."}
+              ? "اختر الخطة المناسبة لعائلتك مع ضمان استرداد الأموال بنسبة 100% خلال أول 14 يوماً ومواعيد متوافقة مع منطقتك الزمنية."
+              : "Choose the plan that fits your family. All plans include a 1-day free trial, a 14-day 100% money-back guarantee, and schedules adapted to your timezone."}
           </p>
         </div>
       </section>
 
       {/* Pricing Cards */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-12 relative z-20 pb-20">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-12 relative z-20 pb-20 space-y-12">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
           {plans.map((plan) => (
             <div
@@ -193,7 +187,7 @@ export default async function PricingPage({
 
               <div className="pt-6 border-t border-slate-100">
                 <Link
-                  href={`/${locale}/register`}
+                  href={`/${locale}/register?plan=${plan.id}&trial=1`}
                   className={`w-full py-3.5 px-6 rounded-2xl font-bold text-sm text-center flex items-center justify-center gap-2 transition-all shadow-md ${
                     plan.popular
                       ? "gradient-brand text-white shadow-brand-500/25 hover:opacity-95"
@@ -208,8 +202,11 @@ export default async function PricingPage({
           ))}
         </div>
 
+        {/* Global Timezone Live Class Converter */}
+        <GlobalTimezoneConverter locale={locale} isRtl={isRtl} />
+
         {/* Institutional / School Banner */}
-        <div className="mt-16 bg-white rounded-3xl border border-slate-200/80 p-8 sm:p-10 shadow-sm flex flex-col md:flex-row items-center justify-between gap-8">
+        <div className="bg-white rounded-3xl border border-slate-200/80 p-8 sm:p-10 shadow-sm flex flex-col md:flex-row items-center justify-between gap-8">
           <div className="space-y-2">
             <div className="inline-flex items-center gap-2 text-xs font-bold text-indigo-600 uppercase tracking-wider">
               <Building2 className="w-4 h-4" />
@@ -234,7 +231,7 @@ export default async function PricingPage({
         </div>
 
         {/* Guarantees & Payment Methods */}
-        <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
           <div className="p-6 bg-white rounded-2xl border border-slate-200/70">
             <ShieldCheck className="w-8 h-8 text-emerald-600 mx-auto mb-3" />
             <h4 className="font-bold text-slate-900 text-sm mb-1">
