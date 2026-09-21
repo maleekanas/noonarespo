@@ -113,7 +113,7 @@ export default async function FaqPage({
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Hero Header */}
-      <section className="bg-gradient-to-b from-brand-950 via-slate-900 to-slate-900 text-white py-20 text-center">
+      <section className="relative bg-slate-900 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-900 text-white py-20 text-center">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand-500/10 border border-brand-400/20 text-brand-300 text-xs sm:text-sm font-semibold mb-6">
             <HelpCircle className="w-4 h-4 text-brand-400" />

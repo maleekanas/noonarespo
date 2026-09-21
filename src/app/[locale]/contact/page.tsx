@@ -45,16 +45,16 @@ export default async function ContactPage({
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
-      <section className="bg-gradient-to-b from-brand-950 via-slate-900 to-slate-900 text-white py-20 text-center">
+      <section className="relative bg-slate-900 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-900 text-white py-20 text-center">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand-500/10 border border-brand-400/20 text-brand-300 text-xs sm:text-sm font-semibold mb-6">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand-500/20 border border-brand-400/30 text-brand-300 text-xs sm:text-sm font-semibold mb-6">
             <MessageSquare className="w-4 h-4 text-brand-400" />
             <span>{isRtl ? "فريق دعم متخصص على مدار الساعة" : "We are here to support your child's journey"}</span>
           </div>
-          <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight max-w-3xl mx-auto leading-tight">
+          <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight max-w-3xl mx-auto leading-tight text-white">
             {isRtl ? "تواصل مع فريق أكاديمية براعم العربية" : "Contact Our Academic & Support Team"}
           </h1>
-          <p className="mt-4 text-base text-slate-300 max-w-xl mx-auto">
+          <p className="mt-4 text-base text-slate-200 max-w-xl mx-auto">
             {isRtl
               ? "سواء كان لديك استفسار حول المناهج، جداول الحصص، أو رغبة في تقييم تشخيصي، فريقنا يسعد بمساعدتك."
               : "Have questions about placement, cohort schedules, or curriculum? Our academic advisors are ready to assist."}

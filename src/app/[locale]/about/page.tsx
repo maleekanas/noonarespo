@@ -95,18 +95,18 @@ export default async function AboutPage({
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Hero Header */}
-      <section className="bg-gradient-to-b from-brand-950 via-slate-900 to-slate-900 text-white py-20 lg:py-24 text-center">
+      <section className="relative bg-slate-900 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-900 text-white py-20 lg:py-24 text-center">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand-500/10 border border-brand-400/20 text-brand-300 text-xs sm:text-sm font-semibold mb-6">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand-500/20 border border-brand-400/30 text-brand-300 text-xs sm:text-sm font-semibold mb-6">
             <Globe2 className="w-4 h-4 text-brand-400" />
             <span>{isRtl ? "أكاديمية عالمية متخصصة في تعليم الأطفال" : "Serving Muslim & Arabic-Learning Families Worldwide"}</span>
           </div>
-          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight max-w-4xl mx-auto leading-tight">
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight max-w-4xl mx-auto leading-tight text-white">
             {isRtl
               ? "نبني جيلاً يعتز بلغته، ويفهم قرآنه، ويتحدث بفصاحة"
               : "Building a Generation that Speaks Arabic with Pride & Love"}
           </h1>
-          <p className="mt-6 text-base sm:text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed">
+          <p className="mt-6 text-base sm:text-lg text-slate-200 max-w-2xl mx-auto leading-relaxed">
             {isRtl
               ? "تأسست أكاديمية براعم العربية لتكون الجسر التربوي والتعليمي الذي يربط أبناءنا في المهجر والشتات بلغتهم الأم وقيمهم الإسلامية من خلال أحدث تقنيات التعليم الرقمي التفاعلي."
               : "Founded to be the premier educational bridge connecting children in diaspora to their heritage language, the Holy Quran, and authentic values through interactive technology."}
@@ -183,7 +183,7 @@ export default async function AboutPage({
 
       {/* Global Impact Stats */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div className="bg-gradient-to-br from-slate-900 to-brand-950 rounded-3xl p-8 sm:p-14 text-white shadow-xl">
+        <div className="bg-slate-900 bg-gradient-to-br from-slate-900 to-slate-950 rounded-3xl p-8 sm:p-14 text-white shadow-xl">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 text-center">
             <div>
               <div className="text-3xl sm:text-5xl font-black text-brand-400 mb-2">5,000+</div>
