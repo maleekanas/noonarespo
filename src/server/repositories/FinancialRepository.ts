@@ -88,7 +88,7 @@ class InMemoryFinancialRepository {
         nameAr: "باقة العائلة المتميزة",
         nameEn: "Family Premium Plan",
         descriptionAr: "تغطية شاملة لما يصل إلى 3 أطفال مع فصول جماعية واستشارات",
-        priceMinorUnits: 9685, // $96.85 (was $149.00 - 35% off)
+        priceMinorUnits: 7450, // $74.50 (was $149.00 - 50% total discount: 35% + 15% extra)
         currency: "USD",
         billingInterval: "MONTHLY",
         maxChildren: 3,
@@ -107,7 +107,7 @@ class InMemoryFinancialRepository {
         nameAr: "الدروس الخاصة المباشرة (1 على 1)",
         nameEn: "Private 1-on-1 Tutoring",
         descriptionAr: "تعليم فردي مكثف مخصص بالكامل لاحتياجات طفلك وسرعة تعلمه",
-        priceMinorUnits: 14300, // $143.00 (was $220.00 - 35% off)
+        priceMinorUnits: 9900, // $99.00 (was $220.00 - 55% total discount: 35% + 20% extra)
         currency: "USD",
         billingInterval: "MONTHLY",
         maxChildren: 1,

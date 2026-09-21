@@ -201,6 +201,7 @@ export function PricingCalculator({ locale, isRtl = false }: PricingCalculatorPr
       subtitleAr: "مثالية لطفل واحد يسعى لإتقان العربية والتجويد بخطى واثقة.",
       baseUsdMonthly: 51.35,
       originalUsdMonthly: 79,
+      discountPercent: 35,
       badgeEn: "Most Popular • 35% OFF",
       badgeAr: "الأكثر طلباً • خصم 35%",
       popular: true,
@@ -227,10 +228,11 @@ export function PricingCalculator({ locale, isRtl = false }: PricingCalculatorPr
       nameAr: "باقة العائلة",
       subtitleEn: "Designed for families with 2 to 3 children learning together.",
       subtitleAr: "مصممة للعائلات التي لديها طفلان إلى 3 أطفال يتعلمون معاً.",
-      baseUsdMonthly: 96.85,
+      baseUsdMonthly: 74.50,
       originalUsdMonthly: 149,
-      badgeEn: "Best Value • 35% OFF",
-      badgeAr: "أفضل قيمة • خصم 35%",
+      discountPercent: 50,
+      badgeEn: "Best Value • 50% OFF",
+      badgeAr: "أفضل قيمة • خصم 50%",
       popular: false,
       featuresEn: [
         "Up to 3 Children Student Profiles included",
@@ -255,10 +257,11 @@ export function PricingCalculator({ locale, isRtl = false }: PricingCalculatorPr
       nameAr: "التعليم الفردي الخاص (1 على 1)",
       subtitleEn: "Maximum acceleration with dedicated 1-on-1 private mentorship.",
       subtitleAr: "أقصى درجات التركيز والتطور عبر حصص فردية خاصة تماماً.",
-      baseUsdMonthly: 129.35,
+      baseUsdMonthly: 89.55,
       originalUsdMonthly: 199,
-      badgeEn: "VIP Acceleration • 35% OFF",
-      badgeAr: "تعليم خاص مكثف • خصم 35%",
+      discountPercent: 55,
+      badgeEn: "VIP Acceleration • 55% OFF",
+      badgeAr: "تعليم خاص مكثف • خصم 55%",
       popular: false,
       featuresEn: [
         "100% Dedicated One-on-One Live Lessons",
@@ -437,7 +440,7 @@ export function PricingCalculator({ locale, isRtl = false }: PricingCalculatorPr
                   {isRtl ? "/ شهرياً" : "/ month"}
                 </span>
                 <span className="text-xs font-extrabold text-emerald-700 bg-emerald-100 border border-emerald-300 px-2 py-0.5 rounded-full">
-                  -35%
+                  -{plan.discountPercent}%
                 </span>
               </div>
 

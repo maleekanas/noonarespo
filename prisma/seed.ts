@@ -177,7 +177,7 @@ async function main() {
   }
   console.log("✅ Gamification Badges seeded.");
 
-  // 6. Seed Plans (reduced by 35%)
+  // 6. Seed Plans (reduced by 35% for group, 50% for family, 55% for private)
   const plansData = [
     {
       type: PlanType.GROUP,
@@ -190,14 +190,14 @@ async function main() {
       type: PlanType.PRIVATE_1_ON_1,
       nameAr: "باقة الدروس الخاصة (معلم خاص)",
       nameEn: "Private 1-on-1 Lessons",
-      priceMinorUnits: 9685, // $96.85 / month (was $149.00 - 35% off)
+      priceMinorUnits: 6705, // $67.05 / month (was $149.00 - 55% off)
       interval: BillingInterval.MONTHLY,
     },
     {
       type: PlanType.FAMILY,
       nameAr: "الباقة العائلية (متعدد الأطفال)",
       nameEn: "Family Plan (Multi-Child)",
-      priceMinorUnits: 8385, // $83.85 / month (was $129.00 - 35% off)
+      priceMinorUnits: 6450, // $64.50 / month (was $129.00 - 50% off)
       interval: BillingInterval.MONTHLY,
     },
   ];
