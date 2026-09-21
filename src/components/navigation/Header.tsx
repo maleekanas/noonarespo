@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { LanguageSwitcher } from "../shared/LanguageSwitcher";
 import { getDictionary } from "@/lib/localization";
 import { Sparkles, GraduationCap, Menu, X, School } from "lucide-react";
@@ -12,26 +13,38 @@ interface HeaderProps {
 
 export function Header({ locale }: HeaderProps) {
   const dict = getDictionary(locale);
+  const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  // The desktop nav previously had no mobile counterpart at all -- below the
-  // `md` breakpoint, `hidden md:flex` simply removed Programs/Age Groups/
-  // Pricing/Schools from the page with nothing replacing them, leaving phone
-  // visitors (the majority of parents landing from a social/search link) with
-  // no way to reach any of those sections at all. This adds a real toggled
-  // mobile menu with the same links instead of silently dropping them.
+  const forParentsLabels: Record<string, string> = {
+    ar: "لأولياء الأمور",
+    en: "For Parents",
+    nl: "Voor Ouders",
+    tr: "Veliler İçin",
+    it: "Per i Genitori",
+    es: "Para Padres",
+  };
+
   const navLinks = [
     { href: `/${locale}/programs`, label: dict.nav.programs },
-    { href: `/${locale}/how-it-works`, label: dict.nav.howItWorks || (locale === "ar" ? "كيف تعمل؟" : "How It Works") },
+    { href: `/${locale}/how-it-works`, label: dict.nav.howItWorks || (locale === "ar" ? "كيف نعمل" : "How It Works") },
     { href: `/${locale}/pricing`, label: dict.nav.pricing },
     { href: `/${locale}/schools`, label: dict.nav.schools },
-    { href: `/${locale}/for-parents`, label: locale === "ar" ? "لأولياء الأمور" : "For Parents" },
+    { href: `/${locale}/for-parents`, label: forParentsLabels[locale] || "For Parents" },
     { href: `/${locale}/about`, label: dict.nav.about },
     { href: `/${locale}/contact`, label: dict.nav.contact },
   ];
 
+  const isLinkActive = (href: string) => {
+    if (!pathname) return false;
+    if (href === `/${locale}`) {
+      return pathname === `/${locale}` || pathname === `/${locale}/`;
+    }
+    return pathname === href || pathname.startsWith(`${href}/`);
+  };
+
   return (
-    <header className="sticky top-0 z-50 w-full glass-panel border-b border-slate-200/80">
+    <header className="sticky top-0 z-50 w-full glass-panel border-b border-slate-200/80 bg-white/95 backdrop-blur-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
         {/* Logo */}
         <Link
@@ -52,17 +65,25 @@ export function Header({ locale }: HeaderProps) {
           </div>
         </Link>
 
-        {/* Desktop Navigation Links */}
-        <nav className="hidden md:flex items-center gap-8">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="text-sm font-medium text-slate-600 hover:text-brand-600 transition-colors"
-            >
-              {link.label}
-            </Link>
-          ))}
+        {/* Desktop Navigation Links with Active State */}
+        <nav className="hidden md:flex items-center gap-7 lg:gap-8" aria-label="Main Navigation">
+          {navLinks.map((link) => {
+            const active = isLinkActive(link.href);
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                aria-current={active ? "page" : undefined}
+                className={`text-sm transition-all relative py-1 ${
+                  active
+                    ? "font-bold text-brand-600 after:absolute after:-bottom-1 after:left-0 after:right-0 after:h-0.5 after:bg-brand-600 after:rounded-full"
+                    : "font-medium text-slate-600 hover:text-brand-600"
+                }`}
+              >
+                {link.label}
+              </Link>
+            );
+          })}
         </nav>
 
         {/* Actions (Language Switcher + Sign In) */}
@@ -99,18 +120,29 @@ export function Header({ locale }: HeaderProps) {
           id="mobile-nav-menu"
           className="md:hidden border-t border-slate-200/80 bg-white shadow-lg animate-in fade-in slide-in-from-top-2 duration-150"
         >
-          <nav className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-col gap-1">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={() => setIsMenuOpen(false)}
-                className="flex items-center gap-2.5 px-3 py-3 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-brand-600 transition-colors"
-              >
-                {link.href.includes("/schools") && <School className="w-4 h-4 text-brand-500" />}
-                <span>{link.label}</span>
-              </Link>
-            ))}
+          <nav className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-col gap-1" aria-label="Mobile Navigation">
+            {navLinks.map((link) => {
+              const active = isLinkActive(link.href);
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setIsMenuOpen(false)}
+                  aria-current={active ? "page" : undefined}
+                  className={`flex items-center justify-between px-3 py-3 rounded-xl text-sm transition-colors ${
+                    active
+                      ? "bg-brand-50 text-brand-600 font-bold"
+                      : "font-semibold text-slate-700 hover:bg-slate-50 hover:text-brand-600"
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    {link.href.includes("/schools") && <School className="w-4 h-4 text-brand-500" />}
+                    <span>{link.label}</span>
+                  </div>
+                  {active && <span className="w-2 h-2 rounded-full bg-brand-600" />}
+                </Link>
+              );
+            })}
             <div className="pt-3 mt-2 border-t border-slate-100 sm:hidden">
               <LanguageSwitcher currentLocale={locale} />
             </div>
