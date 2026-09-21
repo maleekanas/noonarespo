@@ -15,6 +15,21 @@ class SchedulingRepository {
     return prisma.classSession.findMany({ orderBy: { startTimeUtc: "asc" } });
   }
 
+  async getSessionsByDateRange(
+    startDate: Date,
+    endDate: Date
+  ): Promise<any[]> {
+    return prisma.classSession.findMany({
+      where: {
+        startTimeUtc: { gte: startDate, lte: endDate },
+      },
+      include: {
+        classGroup: { select: { name: true } },
+      },
+      orderBy: { startTimeUtc: "asc" },
+    });
+  }
+
   async getSessionById(id: string): Promise<DomainClassSession | null> {
     return prisma.classSession.findUnique({ where: { id } });
   }

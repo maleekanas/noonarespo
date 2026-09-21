@@ -21,10 +21,13 @@ export function Header({ locale }: HeaderProps) {
   // no way to reach any of those sections at all. This adds a real toggled
   // mobile menu with the same links instead of silently dropping them.
   const navLinks = [
-    { href: `/${locale}#programs`, label: dict.nav.programs },
-    { href: `/${locale}#age-groups`, label: dict.nav.ageGroups },
-    { href: `/${locale}#pricing`, label: dict.nav.pricing },
+    { href: `/${locale}/programs`, label: dict.nav.programs },
+    { href: `/${locale}/how-it-works`, label: dict.nav.howItWorks || (locale === "ar" ? "كيف تعمل؟" : "How It Works") },
+    { href: `/${locale}/pricing`, label: dict.nav.pricing },
     { href: `/${locale}/schools`, label: dict.nav.schools },
+    { href: `/${locale}/for-parents`, label: locale === "ar" ? "لأولياء الأمور" : "For Parents" },
+    { href: `/${locale}/about`, label: dict.nav.about },
+    { href: `/${locale}/contact`, label: dict.nav.contact },
   ];
 
   return (

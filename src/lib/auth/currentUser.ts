@@ -147,3 +147,17 @@ export async function requireSchoolAdminSession(
 
   return { session, schoolId: profile.schoolId };
 }
+
+const SUPPORT_ROLES: RoleType[] = [
+  RoleType.SUPPORT_AGENT,
+  RoleType.SUPER_ADMIN,
+  RoleType.SCHOOL_ADMIN,
+];
+
+export async function requireSupportAgentSession(locale: string): Promise<SessionUser> {
+  const session = await requireSession(locale);
+  if (!SUPPORT_ROLES.includes(session.role)) {
+    redirect(`/${locale}/login`);
+  }
+  return session;
+}

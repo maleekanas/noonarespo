@@ -110,6 +110,16 @@ NEXT_PUBLIC_SENTRY_DSN=""       # browser errors (safe to expose — write-only)
 # translation of parent reviews/academy replies into non-Arabic locales
 # (falls back to showing the original text as written if unset or a call fails).
 ANTHROPIC_API_KEY=""
+
+# Marketing & CRM Integrations — typed adapters sync leads from contact, inquiry,
+# and teacher career portals. If unset, leads are gracefully logged in-memory.
+HUBSPOT_API_KEY=""
+GOHIGHLEVEL_API_KEY=""
+GOHIGHLEVEL_LOCATION_ID=""
+MAILCHIMP_API_KEY=""
+MAILCHIMP_SERVER_PREFIX=""
+MAILCHIMP_LIST_ID=""
+CRM_PRIMARY_PROVIDER=""          # "hubspot" | "gohighlevel" | "mailchimp" (default: in-memory mock)
 ```
 
 ---

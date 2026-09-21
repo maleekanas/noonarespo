@@ -109,11 +109,22 @@ class UserRepository {
     return prisma.administratorProfile.findUnique({ where: { userId } });
   }
 
-  async getAllTeachers(): Promise<DomainTeacherProfile[]> {
-    // Intentionally unfiltered (including inactive teachers) -- this is
-    // used by the admin teacher-management page, which needs to see and
-    // be able to re-activate an inactive teacher, not just active ones.
-    return prisma.teacherProfile.findMany({ orderBy: { firstName: "asc" } });
+  async getAllTeachers(): Promise<any[]> {
+    return prisma.teacherProfile.findMany({
+      include: {
+        user: { select: { email: true, status: true } },
+      },
+      orderBy: { firstName: "asc" },
+    });
+  }
+
+  async getAllStudents(): Promise<any[]> {
+    return prisma.studentProfile.findMany({
+      include: {
+        user: { select: { email: true, status: true } },
+      },
+      orderBy: { firstName: "asc" },
+    });
   }
 
   /**

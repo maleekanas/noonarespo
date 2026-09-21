@@ -43,3 +43,19 @@ Kids Arabic Academy enforces multi-layered automated and manual verification to 
 - Validate that switching to `/ar` sets `dir="rtl"` on `<html>`.
 - Confirm directional UI elements (back navigation, chevrons, pagination) mirror properly in RTL.
 - Ensure all interactive elements have keyboard focus indicators and minimum touch targets of 44x44px.
+
+### E. Support Agent & Diagnostics
+- Confirm `canViewStudent` allows `SUPPORT_AGENT` role diagnostic read access to student learning data.
+- Confirm `canMessageUser` prevents support agents from sending unauthorized direct messages to students.
+- Validate diagnostic session status and connectivity indicators.
+
+### F. Multi-Format Assessment Suite
+- Validate test execution across all 7 question formats: MCQ, True/False, Matching, Fill-in-Blank, Essay, Audio, and Voice Recording.
+- Verify automatic scoring and immediate feedback for objective question types.
+- Ensure pending teacher evaluation state for subjective and audio submissions.
+
+### G. CRM & Marketing Integrations
+- Validate lead submission handling across HubSpot, GoHighLevel, and Mailchimp adapters.
+- Confirm fallback behavior when external CRM API keys are unconfigured.
+- Ensure referral code generation, invite tracking, and reward calculation are strictly idempotent.
+

@@ -175,6 +175,14 @@ export function RoleSwitcher() {
       icon: <Wrench className="w-4 h-4 text-indigo-600" />,
       badgeColor: "bg-indigo-100 text-indigo-800",
     },
+    {
+      role: "SUPPORT_AGENT",
+      name: currentLocale === "ar" ? "وكيل الدعم الفني" : "Support Agent",
+      desc: currentLocale === "ar" ? "تشخيص الحسابات والاستفسارات" : "Diagnostics & Admissions Inbox",
+      path: `/${currentLocale}/support`,
+      icon: <Shield className="w-4 h-4 text-cyan-600" />,
+      badgeColor: "bg-cyan-100 text-cyan-800",
+    },
   ];
 
   return (

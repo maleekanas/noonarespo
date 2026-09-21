@@ -5,19 +5,23 @@
 
 ---
 
-## 1. System Administrative Roles
+## 1. System Administrative & Support Roles
 - **Super Administrator**:
   - Email: `superadmin@kidsarabicacademy.internal`
   - Password: `Password123!`
-  - Scope: System settings, feature flags, audit log inspection.
+  - Scope: System settings, feature flags, audit log inspection, platform-wide overrides.
+- **Support Agent**:
+  - Email: `supportagent@kidsarabicacademy.internal`
+  - Password: `Password123!`
+  - Scope: User diagnostic lookup, session troubleshooting, admissions and inquiries inbox.
 - **School Administrator**:
   - Email: `schooladmin@kidsarabicacademy.internal`
   - Password: `Password123!`
-  - Scope: Teacher onboarding, class group creation, student enrollment.
+  - Scope: Scoped to PartnerSchool (Al-Noor Islamic Academy); bulk roster onboarding, scoped classes.
 - **Academic Administrator**:
   - Email: `academicadmin@kidsarabicacademy.internal`
   - Password: `Password123!`
-  - Scope: Curriculum design, levels, learning units, placement review.
+  - Scope: Curriculum design, levels, learning units, assessment bank.
 - **Finance Administrator**:
   - Email: `financeadmin@kidsarabicacademy.internal`
   - Password: `Password123!`

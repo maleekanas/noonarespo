@@ -68,7 +68,7 @@ export function Footer({ locale }: FooterProps) {
             </ul>
           </div>
 
-          {/* For Institutions */}
+          {/* For Institutions & Careers */}
           <div>
             <h4 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">
               {dict.footer.institutionsHeading}
@@ -77,6 +77,16 @@ export function Footer({ locale }: FooterProps) {
               <li>
                 <Link href={`/${locale}/schools`} className="hover:text-white transition-colors">
                   {dict.footer.institutionsOverview}
+                </Link>
+              </li>
+              <li>
+                <Link href={`/${locale}/teach`} className="hover:text-white transition-colors">
+                  {locale === "ar" ? "التدريس بالأكاديمية (وظائف)" : "Teach With Us (Careers)"}
+                </Link>
+              </li>
+              <li>
+                <Link href={`/${locale}/inquiry`} className="hover:text-white transition-colors">
+                  {locale === "ar" ? "طلب استشارة تسجيل" : "Enrollment Inquiry"}
                 </Link>
               </li>
               <li>
@@ -98,6 +108,11 @@ export function Footer({ locale }: FooterProps) {
             </h4>
             <ul className="space-y-2.5 text-sm text-slate-400">
               <li>
+                <Link href={`/${locale}/child-safety`} className="hover:text-white transition-colors font-medium text-emerald-400">
+                  {locale === "ar" ? "ميثاق أمان الطفل (COPPA)" : "Child Safety & COPPA"}
+                </Link>
+              </li>
+              <li>
                 <Link href={`/${locale}/privacy`} className="hover:text-white transition-colors">
                   {dict.footer.privacyPolicy}
                 </Link>
@@ -108,8 +123,13 @@ export function Footer({ locale }: FooterProps) {
                 </Link>
               </li>
               <li>
-                <Link href={`/${locale}/login`} className="hover:text-white transition-colors">
-                  {dict.common.login}
+                <Link href={`/${locale}/faq`} className="hover:text-white transition-colors">
+                  {locale === "ar" ? "الأسئلة الشائعة" : "FAQ"}
+                </Link>
+              </li>
+              <li>
+                <Link href={`/${locale}/contact`} className="hover:text-white transition-colors">
+                  {locale === "ar" ? "اتصل بنا" : "Contact Us"}
                 </Link>
               </li>
             </ul>
