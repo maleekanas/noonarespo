@@ -58,6 +58,16 @@ export function verifyTotp(secretBase32: string, code: string, at = Date.now()):
   return false;
 }
 
+export function verifyTotpStep(secretBase32: string, code: string, at = Date.now()): number | null {
+  if (!/^\d{6}$/.test(code)) return null;
+  for (const drift of [-1, 0, 1]) {
+    const stepTime = at + drift * PERIOD_SECONDS * 1000;
+    const expected = generateTotp(secretBase32, stepTime);
+    if (crypto.timingSafeEqual(Buffer.from(code), Buffer.from(expected))) return Math.floor(stepTime / 1000 / PERIOD_SECONDS);
+  }
+  return null;
+}
+
 function encryptionKey(): Buffer {
   return crypto.createHash("sha256").update(secret()).digest();
 }
