@@ -22,7 +22,7 @@ export default async function MfaSetupPage({ params, searchParams }: {
   const recoveryFlash = store.get(FLASH)?.value;
   const recoveryCodes = recoveryFlash ? Buffer.from(recoveryFlash, "base64url").toString("utf8").split(",") : [];
 
-  let pendingSecret = user.mfaEnabled ? null : generateTotpSecret();
+const pendingSecret = user.mfaEnabled ? null : generateTotpSecret();
   const provisioning = pendingSecret ? otpauthUri(user.email, pendingSecret) : null;
 
   async function enable(formData: FormData) {
