@@ -68,7 +68,7 @@ export default async function MfaChallengePage({ params, searchParams }: {
     if (role === RoleType.STUDENT) redirect(`/${locale}/student`);
     if (role === RoleType.TEACHER) redirect(`/${locale}/teacher`);
     if (role === RoleType.SCHOOL_ADMIN) redirect(`/${locale}/school-admin`);
-    if ([RoleType.SUPER_ADMIN, RoleType.ACADEMIC_ADMIN, RoleType.FINANCE_ADMIN].includes(role)) redirect(`/${locale}/admin`);
+    if (role === RoleType.SUPER_ADMIN || role === RoleType.ACADEMIC_ADMIN || role === RoleType.FINANCE_ADMIN) redirect(`/${locale}/admin`);
     redirect(`/${locale}/parent`);
   }
 
