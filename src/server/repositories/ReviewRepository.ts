@@ -133,6 +133,21 @@ class ReviewRepository {
     }
   }
 
+  async deleteReview(id: string): Promise<boolean> {
+    try {
+      await prisma.parentReview.delete({ where: { id } });
+      return true;
+    } catch {
+      const idx = IN_MEMORY_REVIEWS.findIndex((r) => r.id === id);
+      if (idx !== -1) {
+        IN_MEMORY_REVIEWS.splice(idx, 1);
+        return true;
+      }
+      return false;
+    }
+  }
+
+
   private toReview(row: {
     id: string;
     parentId: string;

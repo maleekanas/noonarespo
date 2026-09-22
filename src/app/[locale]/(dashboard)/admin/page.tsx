@@ -22,9 +22,15 @@ import {
   Star,
   Building2,
   UserCog,
+  LogOut,
+  Sliders,
 } from "lucide-react";
+import { redirect } from "next/navigation";
 import { getDictionary } from "@/lib/localization";
 import { requireAdminSession } from "@/lib/auth/currentUser";
+import { destroySession } from "@/lib/auth/session";
+import { systemSettingsService } from "@/server/services/SystemSettingsService";
+
 
 export default async function AdminDashboardPage({
   params,
@@ -35,6 +41,12 @@ export default async function AdminDashboardPage({
   await requireAdminSession(locale);
   const dict = getDictionary(locale);
   const ad = dict.adminDashboard;
+
+  async function handleSignOut() {
+    "use server";
+    await destroySession();
+    redirect(`/${locale}/login`);
+  }
 
   const stats = await administrationService.getSchoolAnalyticsOverview();
   const finance = await payrollService.getFinanceReconciliationOverview();
@@ -170,7 +182,16 @@ export default async function AdminDashboardPage({
       icon: Building2,
       color: "text-indigo-600 bg-indigo-50 border-indigo-200",
     },
+    {
+      title: locale === "ar" ? "إعدادات المنظومة والخصائص" : "System Settings & Governance",
+      desc: locale === "ar" ? "التحكم في الميزات التشغيلية، وضع الصيانة، شريط الإعلانات، والسياسات الأمنية" : "Feature flags, maintenance lockdown, global announcements, and security policies",
+      href: `/${locale}/admin/settings`,
+      icon: Sliders,
+      color: "text-rose-600 bg-rose-50 border-rose-200",
+    },
   ];
+
+  const settings = systemSettingsService.getSettings();
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
@@ -188,7 +209,21 @@ export default async function AdminDashboardPage({
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          {settings.maintenanceMode && (
+            <div className="px-3 py-1.5 rounded-xl bg-rose-50 text-rose-800 border border-rose-200 text-xs font-bold flex items-center gap-1.5 animate-pulse">
+              <span className="w-2 h-2 rounded-full bg-rose-500" />
+              <span>{locale === "ar" ? "وضع الصيانة مفعل" : "Maintenance Mode ON"}</span>
+            </div>
+          )}
+
+          {settings.announcementActive && (
+            <div className="px-3 py-1.5 rounded-xl bg-amber-50 text-amber-800 border border-amber-200 text-xs font-bold flex items-center gap-1.5">
+              <span>📢</span>
+              <span>{locale === "ar" ? "إعلان عام نشط" : "Announcement Active"}</span>
+            </div>
+          )}
+
           <Link
             href={`/${locale}/admin/reports`}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700 transition-colors"
@@ -202,13 +237,25 @@ export default async function AdminDashboardPage({
             title={dict.account.title}
           >
             <UserCog className="w-4 h-4 text-slate-600" />
+            <span className="hidden sm:inline">{dict.account.title}</span>
           </Link>
+          <form action={handleSignOut}>
+            <button
+              type="submit"
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-xs font-bold text-rose-700 border border-rose-200 transition-colors cursor-pointer"
+              title={dict.account.signOutButton}
+            >
+              <LogOut className="w-4 h-4 text-rose-600" />
+              <span>{dict.account.signOutButton}</span>
+            </button>
+          </form>
           <div className="px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
             <span>{ad.systemsOperational}</span>
           </div>
         </div>
       </div>
+
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">

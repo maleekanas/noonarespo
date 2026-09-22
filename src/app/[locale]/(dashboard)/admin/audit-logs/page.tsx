@@ -8,6 +8,9 @@ import {
   Lock,
   Filter,
   CheckCircle2,
+  Search,
+  Download,
+  FileSpreadsheet,
 } from "lucide-react";
 
 export default async function AdminAuditLogsPage({
@@ -15,17 +18,29 @@ export default async function AdminAuditLogsPage({
   searchParams,
 }: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ category?: string }>;
+  searchParams: Promise<{ category?: string; q?: string }>;
 }) {
   const { locale } = await params;
   await requireAdminSession(locale);
-  const { category: filterCategory } = await searchParams;
+  const { category: filterCategory, q: searchQuery } = await searchParams;
 
-  const logs = await administrationService.getAuditLogs(
+  let logs = await administrationService.getAuditLogs(
     filterCategory && filterCategory !== "ALL"
       ? { category: filterCategory as AuditActionCategory }
       : undefined
   );
+
+  if (searchQuery && searchQuery.trim()) {
+    const term = searchQuery.trim().toLowerCase();
+    logs = logs.filter(
+      (log) =>
+        log.actorEmail.toLowerCase().includes(term) ||
+        log.action.toLowerCase().includes(term) ||
+        (log.targetEntityId && log.targetEntityId.toLowerCase().includes(term)) ||
+        (log.diffSummary && log.diffSummary.toLowerCase().includes(term)) ||
+        (log.ipAddress && log.ipAddress.toLowerCase().includes(term))
+    );
+  }
 
   const categoryLabels: Record<AuditActionCategory, string> = {
     AUTH: "المصادقة والأمان",
@@ -63,43 +78,78 @@ export default async function AdminAuditLogsPage({
           </p>
         </div>
 
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold">
-          <ShieldCheck className="w-4 h-4 text-emerald-600" />
-          <span>توقيع التشفير (SHA-256 Hash): سليم 100%</span>
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold">
+            <ShieldCheck className="w-4 h-4 text-emerald-600" />
+            <span>توقيع التشفير (SHA-256): سليم 100%</span>
+          </div>
+
+          <a
+            href="/api/admin/export?category=AUDIT_LOGS&format=csv"
+            download="audit_logs.csv"
+            className="px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold flex items-center gap-1.5 transition-colors shadow-sm"
+          >
+            <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
+            <span>تصدير CSV</span>
+          </a>
         </div>
       </div>
 
-      {/* Category Filter Bar */}
-      <div className="flex flex-wrap items-center gap-2 bg-white p-4 rounded-2xl border border-slate-200 text-xs">
-        <span className="font-bold text-slate-500 me-2 flex items-center gap-1.5">
-          <Filter className="w-4 h-4 text-slate-400" />
-          <span>تصنيف العمليات:</span>
-        </span>
+      {/* Filter and Search Bar */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-200 text-xs">
+        {/* Category Filters */}
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="font-bold text-slate-500 me-1 flex items-center gap-1.5">
+            <Filter className="w-4 h-4 text-slate-400" />
+            <span>التصنيف:</span>
+          </span>
 
-        <Link
-          href={`/${locale}/admin/audit-logs?category=ALL`}
-          className={`px-3 py-1.5 rounded-xl font-bold transition-colors ${
-            !filterCategory || filterCategory === "ALL"
-              ? "bg-slate-900 text-white"
-              : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-          }`}
-        >
-          كافة العمليات ({logs.length})
-        </Link>
-
-        {Object.keys(categoryLabels).map((cat) => (
           <Link
-            key={cat}
-            href={`/${locale}/admin/audit-logs?category=${cat}`}
+            href={`/${locale}/admin/audit-logs?category=ALL${searchQuery ? `&q=${encodeURIComponent(searchQuery)}` : ""}`}
             className={`px-3 py-1.5 rounded-xl font-bold transition-colors ${
-              filterCategory === cat
-                ? "bg-brand-600 text-white shadow-sm"
-                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+              !filterCategory || filterCategory === "ALL"
+                ? "bg-slate-900 text-white"
+                : "bg-slate-100 text-slate-700 hover:bg-slate-200"
             }`}
           >
-            {categoryLabels[cat as AuditActionCategory]}
+            كافة العمليات
           </Link>
-        ))}
+
+          {Object.keys(categoryLabels).map((cat) => (
+            <Link
+              key={cat}
+              href={`/${locale}/admin/audit-logs?category=${cat}${searchQuery ? `&q=${encodeURIComponent(searchQuery)}` : ""}`}
+              className={`px-3 py-1.5 rounded-xl font-bold transition-colors ${
+                filterCategory === cat
+                  ? "bg-brand-600 text-white shadow-sm"
+                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+              }`}
+            >
+              {categoryLabels[cat as AuditActionCategory]}
+            </Link>
+          ))}
+        </div>
+
+        {/* Search by actor/action/ID */}
+        <form method="GET" action={`/${locale}/admin/audit-logs`} className="flex items-center gap-2">
+          {filterCategory && <input type="hidden" name="category" value={filterCategory} />}
+          <div className="relative">
+            <input
+              name="q"
+              type="text"
+              defaultValue={searchQuery || ""}
+              placeholder="بحث بالبريد أو المعرف أو الإجراء..."
+              className="px-3 py-1.5 pe-8 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-brand-500 w-56 sm:w-64"
+            />
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute end-2.5 top-1/2 -translate-y-1/2" />
+          </div>
+          <button
+            type="submit"
+            className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition-colors"
+          >
+            بحث
+          </button>
+        </form>
       </div>
 
       {/* Audit Log Table */}

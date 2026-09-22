@@ -142,6 +142,8 @@ export class CrmService {
     topic: string;
     message: string;
     locale: string;
+    country?: string;
+    city?: string;
   }): Promise<CrmLead> {
     const lead: CrmLead = {
       id: `lead-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
@@ -151,7 +153,12 @@ export class CrmService {
       type: "CONTACT_INQUIRY",
       source: `Contact Page (${params.locale})`,
       status: "NEW",
-      metadata: { topic: params.topic, message: params.message },
+      metadata: {
+        topic: params.topic,
+        message: params.message,
+        country: params.country,
+        city: params.city,
+      },
       createdAt: new Date(),
     };
 
@@ -174,6 +181,8 @@ export class CrmService {
     currentLevel: string;
     goals?: string;
     preferredSchedule?: string;
+    country?: string;
+    city?: string;
     locale: string;
   }): Promise<CrmLead> {
     const lead: CrmLead = {
@@ -190,6 +199,8 @@ export class CrmService {
         currentLevel: params.currentLevel,
         goals: params.goals,
         preferredSchedule: params.preferredSchedule,
+        country: params.country,
+        city: params.city,
       },
       createdAt: new Date(),
     };
@@ -213,6 +224,8 @@ export class CrmService {
     certifications?: string;
     languages?: string;
     bio?: string;
+    country?: string;
+    city?: string;
     locale: string;
   }): Promise<CrmLead> {
     const lead: CrmLead = {
@@ -229,6 +242,8 @@ export class CrmService {
         certifications: params.certifications,
         languages: params.languages,
         bio: params.bio,
+        country: params.country,
+        city: params.city,
       },
       createdAt: new Date(),
     };

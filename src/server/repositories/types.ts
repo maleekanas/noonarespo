@@ -77,9 +77,20 @@ export interface DomainTeacherProfile {
   // instead of a hardcoded "100%" badge.
   isCertified: boolean;
   employmentType: EmploymentType;
+  // Scoped to a PartnerSchool or freelance cooperative; null for independent platform teachers
+  schoolId?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
+
+export type BundleTier = "STARTER" | "GROWTH" | "INSTITUTION";
+
+export type InstitutionType =
+  | "ISLAMIC_SCHOOL"
+  | "COMMUNITY_CENTER"
+  | "HOMESCHOOL_COOP"
+  | "FREELANCER_TEACHER"
+  | "PRIVATE_INSTITUTE";
 
 export interface DomainAdministratorProfile {
   id: string;

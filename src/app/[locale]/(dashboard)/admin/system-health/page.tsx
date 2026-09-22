@@ -17,6 +17,8 @@ import {
   RefreshCw,
   ShieldCheck,
   Globe,
+  CreditCard,
+  Radio,
 } from "lucide-react";
 import { systemHealthService, type HealthState, type SubsystemHealth } from "@/server/services/SystemHealthService";
 import { languages, type Locale, getDictionary } from "@/lib/localization";
@@ -71,10 +73,15 @@ export default async function SystemHealthPage({
         return <MessageSquare className="w-5 h-5 text-emerald-600" />;
       case "aiEngines":
         return <Sparkles className="w-5 h-5 text-purple-600" />;
+      case "payments":
+        return <CreditCard className="w-5 h-5 text-amber-600" />;
+      case "realTimeSync":
+        return <Radio className="w-5 h-5 text-cyan-600" />;
       default:
         return <Server className="w-5 h-5 text-slate-600" />;
     }
   }
+
 
   const uptimeHours = Math.floor(report.telemetry.uptimeSeconds / 3600);
   const uptimeMinutes = Math.floor((report.telemetry.uptimeSeconds % 3600) / 60);

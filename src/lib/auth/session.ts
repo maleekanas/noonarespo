@@ -19,7 +19,7 @@ const SESSION_COOKIE_NAME = "kaa_session_token";
  * unrelated routes that merely import this module.
  */
 function getSessionSecret(): string {
-  const secret = process.env.SESSION_SECRET;
+  const secret = process.env.SESSION_SECRET || process.env.AUTH_SECRET;
   if (!secret || secret.length < 16) {
     throw new Error(
       "SESSION_SECRET is not set (or shorter than 16 characters). Set a strong random value in the deployment environment before serving traffic."

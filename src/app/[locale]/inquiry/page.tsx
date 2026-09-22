@@ -12,6 +12,8 @@ import {
   CheckCircle2,
 } from "lucide-react";
 
+import { CountryCitySelector } from "@/components/shared/CountryCitySelector";
+
 export default async function EnrollmentInquiryPage({
   params,
 }: {
@@ -26,6 +28,8 @@ export default async function EnrollmentInquiryPage({
     const parentName = formData.get("parentName")?.toString() || "";
     const email = formData.get("email")?.toString() || "";
     const phone = formData.get("phone")?.toString() || "";
+    const country = formData.get("country")?.toString() || "";
+    const city = formData.get("city")?.toString() || "";
     const childName = formData.get("childName")?.toString() || "";
     const childAge = formData.get("childAge")?.toString() || "";
     const currentLevel = formData.get("currentLevel")?.toString() || "BEGINNER";
@@ -37,6 +41,8 @@ export default async function EnrollmentInquiryPage({
       parentName,
       email,
       phone,
+      country,
+      city,
       childName,
       childAge,
       currentLevel,
@@ -120,6 +126,16 @@ export default async function EnrollmentInquiryPage({
                 />
               </div>
             </div>
+
+            {/* Country & City Selection */}
+            <CountryCitySelector
+              nameCountry="country"
+              nameCity="city"
+              required
+              locale={locale}
+              countryLabel={isRtl ? "دولة إقامة العائلة *" : "Country of Residence *"}
+              cityLabel={isRtl ? "المدينة *" : "City *"}
+            />
 
             {/* Child Section */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-4 border-t border-slate-100">

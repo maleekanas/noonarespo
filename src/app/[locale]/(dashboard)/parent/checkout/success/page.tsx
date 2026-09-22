@@ -21,7 +21,7 @@ export default async function CheckoutSuccessPage({
     try {
       const stripe = getStripeClient();
       const session = await stripe.checkout.sessions.retrieve(sessionId);
-      paid = session.payment_status === "paid";
+      paid = session.payment_status === "paid" || session.payment_status === "no_payment_required";
     } catch {
       // If we can't verify the session (e.g. it belongs to a different
       // account/mode), fall back to the neutral "processing" message below
@@ -40,11 +40,10 @@ export default async function CheckoutSuccessPage({
         {paid ? (
           <>
             <h1 className="text-2xl font-extrabold text-slate-900">
-              تم الدفع بنجاح! 🎉
+              تم تأكيد الاشتراك بنجاح! 🎉
             </h1>
             <p className="text-sm text-slate-600 leading-relaxed">
-              شكراً لاشتراكك. تم تأكيد عملية الدفع مع Stripe، وسيتم تفعيل باقتك وإصدار
-              فاتورتك الضريبية خلال لحظات.
+              شكراً لاشتراكك. تم تأكيد العملية بنجاح مع Stripe، وتم تفعيل خطتك التعليمية فوراً.
             </p>
           </>
         ) : (

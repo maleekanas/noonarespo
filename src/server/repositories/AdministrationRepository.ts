@@ -1991,11 +1991,15 @@ class AdministrationRepository {
 
   /** Real per-school student counts, for the Institutional Admin Dashboard. */
   async countStudentsBySchool(schoolId: string): Promise<{ total: number; active: number }> {
-    const [total, active] = await Promise.all([
-      prisma.studentProfile.count({ where: { schoolId } }),
-      prisma.studentProfile.count({ where: { schoolId, user: { status: UserStatus.ACTIVE } } }),
-    ]);
-    return { total, active };
+    try {
+      const [total, active] = await Promise.all([
+        prisma.studentProfile.count({ where: { schoolId } }),
+        prisma.studentProfile.count({ where: { schoolId, user: { status: UserStatus.ACTIVE } } }),
+      ]);
+      return { total, active };
+    } catch {
+      return { total: 0, active: 0 };
+    }
   }
 
   async setStudentStatus(studentId: string, status: UserStatus): Promise<void> {

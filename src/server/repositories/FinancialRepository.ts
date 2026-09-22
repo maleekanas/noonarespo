@@ -42,8 +42,29 @@ class InMemoryFinancialRepository {
   }
 
   private seedDefaults() {
-    // Subscription Plans in integer minor units (reduced by 35%)
+    // Subscription Plans in integer minor units (reduced by 35%, 50%, 55%)
     const plansCatalog: SubscriptionPlan[] = [
+      {
+        id: "plan-individual",
+        code: "INDIVIDUAL",
+        nameAr: "الخطة الفردية للطلاب",
+        nameEn: "Individual Student Plan",
+        descriptionAr: "حصتان أسبوعياً في مجموعة مصغرة (بحد أقصى 6 طلاب) مع وصول كامل لجميع الاستوديوهات",
+        priceMinorUnits: 5135, // $51.35 (was $79.00 - 35% off)
+        currency: "USD",
+        billingInterval: "MONTHLY",
+        maxChildren: 1,
+        weeklySessionsPerChild: 2,
+        isPopular: true,
+        featuresAr: [
+          "طفل واحد",
+          "حصتان أسبوعياً في مجموعة مصغرة (بحد أقصى 6 طلاب)",
+          "معلم معتمد متخصص في تعليم الأطفال والتجويد",
+          "وصول غير محدود لجميع الاستوديوهات التعليمية التفاعلية",
+          "تقارير أسبوعية تفصيلية وتسجيلات الدروس لولي الأمر",
+          "بيئة تعليمية آمنة ومتوافقة مع معايير COPPA وGDPR",
+        ],
+      },
       {
         id: "plan-starter",
         code: "STARTER",
@@ -107,7 +128,7 @@ class InMemoryFinancialRepository {
         nameAr: "الدروس الخاصة المباشرة (1 على 1)",
         nameEn: "Private 1-on-1 Tutoring",
         descriptionAr: "تعليم فردي مكثف مخصص بالكامل لاحتياجات طفلك وسرعة تعلمه",
-        priceMinorUnits: 9900, // $99.00 (was $220.00 - 55% total discount: 35% + 20% extra)
+        priceMinorUnits: 8955, // $89.55 (was $199.00 - 55% total discount: 35% + 20% extra)
         currency: "USD",
         billingInterval: "MONTHLY",
         maxChildren: 1,
@@ -154,6 +175,35 @@ class InMemoryFinancialRepository {
     const coupon = this.coupons.get(code.toUpperCase());
     return coupon && coupon.isActive ? coupon : null;
   }
+
+  async getAllCoupons(): Promise<DiscountCoupon[]> {
+    return Array.from(this.coupons.values());
+  }
+
+  async createOrUpdateCoupon(coupon: DiscountCoupon): Promise<DiscountCoupon> {
+    const normalized: DiscountCoupon = {
+      ...coupon,
+      code: coupon.code.toUpperCase().trim(),
+      discountPercentage: Math.max(1, Math.min(100, Math.round(coupon.discountPercentage))),
+    };
+    this.coupons.set(normalized.code, normalized);
+    return normalized;
+  }
+
+  async toggleCouponActive(code: string): Promise<DiscountCoupon | null> {
+    const key = code.toUpperCase().trim();
+    const existing = this.coupons.get(key);
+    if (!existing) return null;
+    const updated: DiscountCoupon = { ...existing, isActive: !existing.isActive };
+    this.coupons.set(key, updated);
+    return updated;
+  }
+
+  async deleteCoupon(code: string): Promise<boolean> {
+    const key = code.toUpperCase().trim();
+    return this.coupons.delete(key);
+  }
 }
 
 export const financialRepository = new InMemoryFinancialRepository();
+

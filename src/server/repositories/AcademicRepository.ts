@@ -1159,10 +1159,44 @@ class AcademicRepository {
         role: TeacherRoleInClass.PRIMARY,
         createdAt: new Date(),
       },
+      {
+        id: "ta-15",
+        teacherId: "teacher-4",
+        classGroupId: "class-foundations-b1-cohort1",
+        role: TeacherRoleInClass.PRIMARY,
+        createdAt: new Date(),
+      },
+      {
+        id: "ta-16",
+        teacherId: "teacher-4",
+        classGroupId: "class-foundations-b2-cohort1",
+        role: TeacherRoleInClass.PRIMARY,
+        createdAt: new Date(),
+      },
     ];
 
     for (const ta of teacherAssignments) {
       this.fallbackTeacherAssignments.set(ta.id, ta);
+    }
+
+    // Ensure every fallback class group has at least one primary specialist teacher assigned
+    const defaultTeacherIds = ["teacher-1", "teacher-2", "teacher-3", "teacher-4"];
+    let teacherIdx = 0;
+    for (const cg of classGroups) {
+      const hasAssignment = Array.from(this.fallbackTeacherAssignments.values()).some(
+        (ta) => ta.classGroupId === cg.id
+      );
+      if (!hasAssignment) {
+        const id = "ta-" + (this.fallbackTeacherAssignments.size + 1);
+        this.fallbackTeacherAssignments.set(id, {
+          id,
+          teacherId: defaultTeacherIds[teacherIdx % defaultTeacherIds.length],
+          classGroupId: cg.id,
+          role: TeacherRoleInClass.PRIMARY,
+          createdAt: new Date(),
+        });
+        teacherIdx++;
+      }
     }
   }
 

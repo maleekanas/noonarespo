@@ -47,6 +47,29 @@ export async function getClientIp(): Promise<string> {
   return "unknown";
 }
 
+const inMemoryAttempts = new Map<string, number[]>();
+
+function checkInMemoryRateLimit(
+  key: string,
+  options: { max: number; windowSeconds: number }
+): RateLimitResult {
+  const now = Date.now();
+  const windowStart = now - options.windowSeconds * 1000;
+
+  const timestamps = (inMemoryAttempts.get(key) || []).filter((t) => t >= windowStart);
+
+  if (timestamps.length >= options.max) {
+    const oldest = timestamps[0];
+    const retryAfterSeconds = Math.max(1, Math.ceil((oldest + options.windowSeconds * 1000 - now) / 1000));
+    inMemoryAttempts.set(key, timestamps);
+    return { allowed: false, retryAfterSeconds };
+  }
+
+  timestamps.push(now);
+  inMemoryAttempts.set(key, timestamps);
+  return { allowed: true };
+}
+
 /**
  * Checks and records an attempt against a rate-limit key (e.g.
  * "login:ip:1.2.3.4" or "login:email:parent@example.com"). Returns
@@ -70,28 +93,33 @@ export async function checkRateLimit(
     // ignore -- worst case the table grows a little until the next prune
   }
 
-  const currentCount = await prisma.rateLimitAttempt.count({
-    where: { key, createdAt: { gte: windowStart } },
-  });
-
-  if (currentCount >= options.max) {
-    const oldestInWindow = await prisma.rateLimitAttempt.findFirst({
+  try {
+    const currentCount = await prisma.rateLimitAttempt.count({
       where: { key, createdAt: { gte: windowStart } },
-      orderBy: { createdAt: "asc" },
     });
-    const retryAfterSeconds = oldestInWindow
-      ? Math.max(
-          1,
-          Math.ceil(
-            (oldestInWindow.createdAt.getTime() + options.windowSeconds * 1000 - Date.now()) / 1000
-          )
-        )
-      : options.windowSeconds;
-    return { allowed: false, retryAfterSeconds };
-  }
 
-  await prisma.rateLimitAttempt.create({ data: { key } });
-  return { allowed: true };
+    if (currentCount >= options.max) {
+      const oldestInWindow = await prisma.rateLimitAttempt.findFirst({
+        where: { key, createdAt: { gte: windowStart } },
+        orderBy: { createdAt: "asc" },
+      });
+      const retryAfterSeconds = oldestInWindow
+        ? Math.max(
+            1,
+            Math.ceil(
+              (oldestInWindow.createdAt.getTime() + options.windowSeconds * 1000 - Date.now()) / 1000
+            )
+          )
+        : options.windowSeconds;
+      return { allowed: false, retryAfterSeconds };
+    }
+
+    await prisma.rateLimitAttempt.create({ data: { key } });
+    return { allowed: true };
+  } catch {
+    // Graceful in-memory fallback when database is unreachable (e.g. local dev sandbox, connection hiccups)
+    return checkInMemoryRateLimit(key, options);
+  }
 }
 
 /** Named windows shared across the auth pages that call into this module. */

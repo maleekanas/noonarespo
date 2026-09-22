@@ -1,5 +1,6 @@
 import type { SessionUser } from "@/lib/auth/session";
 import { RoleType } from "@prisma/client";
+import { prisma } from "@/lib/database/prisma";
 import { schedulingRepository } from "../repositories/SchedulingRepository";
 import { academicRepository } from "../repositories/AcademicRepository";
 import { userRepository } from "../repositories/UserRepository";
@@ -91,6 +92,21 @@ class ClassroomLiveService {
         viewerFirstName = studentProfile.firstName;
         viewerLastName = studentProfile.lastName;
       }
+    } else if (sessionUser.role === RoleType.SCHOOL_ADMIN) {
+      const adminProfile = await prisma.administratorProfile.findUnique({
+        where: { userId: sessionUser.id },
+      });
+      if (adminProfile && adminProfile.schoolId && adminProfile.schoolId === classGroup.schoolId) {
+        viewerRole = "TEACHER";
+        viewerParticipantId = adminProfile.id;
+        viewerFirstName = adminProfile.firstName;
+        viewerLastName = `${adminProfile.lastName} (مشرف المؤسسة)`;
+      }
+    } else if (sessionUser.role === RoleType.SUPER_ADMIN) {
+      viewerRole = "TEACHER";
+      viewerParticipantId = sessionUser.id;
+      viewerFirstName = sessionUser.name || "Super";
+      viewerLastName = "Admin (مشرف عام)";
     }
 
     if (!viewerRole || !viewerParticipantId) {

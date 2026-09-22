@@ -13,6 +13,8 @@ import {
   CheckCircle2,
 } from "lucide-react";
 
+import { CountryCitySelector } from "@/components/shared/CountryCitySelector";
+
 export default async function ContactPage({
   params,
 }: {
@@ -27,6 +29,8 @@ export default async function ContactPage({
     const name = formData.get("name")?.toString() || "";
     const email = formData.get("email")?.toString() || "";
     const phone = formData.get("phone")?.toString() || "";
+    const country = formData.get("country")?.toString() || "";
+    const city = formData.get("city")?.toString() || "";
     const topic = formData.get("topic")?.toString() || "GENERAL";
     const message = formData.get("message")?.toString() || "";
 
@@ -36,6 +40,8 @@ export default async function ContactPage({
       name,
       email,
       phone,
+      country,
+      city,
       topic,
       message,
       locale,
@@ -214,6 +220,14 @@ export default async function ContactPage({
                   </select>
                 </div>
               </div>
+
+              <CountryCitySelector
+                nameCountry="country"
+                nameCity="city"
+                locale={locale}
+                countryLabel={isRtl ? "الدولة (اختياري)" : "Country (Optional)"}
+                cityLabel={isRtl ? "المدينة (اختياري)" : "City (Optional)"}
+              />
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">

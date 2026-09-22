@@ -183,6 +183,50 @@ export default async function ParentDashboardPage({
         </div>
       </div>
 
+      {/* 24-Hour B2C Free Trial Capability Preview Banner */}
+      {trialHoursRemaining !== null && (
+        <div className="bg-gradient-to-r from-amber-500/15 via-brand-500/10 to-indigo-500/15 border-2 border-amber-400/60 rounded-3xl p-6 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+          <div className="space-y-2 max-w-3xl">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="px-3 py-1 rounded-full bg-amber-500 text-slate-950 font-black text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-sm">
+                <Sparkles className="w-3.5 h-3.5 fill-slate-950" />
+                <span>{isAr ? "تجربة مجانية ليوم واحد (طفل واحد)" : "1-Day Free Trial (1 Child Max)"}</span>
+              </span>
+              <span className="text-xs font-bold text-amber-800 bg-amber-100/80 px-2.5 py-1 rounded-full border border-amber-300/60">
+                {isAr
+                  ? `متبقي في الفترة التجريبية: ${trialHoursRemaining} ساعة`
+                  : `Trial time remaining: ${trialHoursRemaining} hours`}
+              </span>
+            </div>
+            <h3 className="text-lg font-black text-slate-900">
+              {isAr
+                ? "مرحباً بك في المعاينة التجريبية لاستكشاف إمكانيات الأكاديمية!"
+                : "Welcome to your trial preview exploring Academy capabilities!"}
+            </h3>
+            <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+              {isAr
+                ? "تشمل التجربة: اختبار تشخيص المستوى للطفل (محاولة واحدة)، درساً تمهيدياً في مسار التأسيس والتجويد، لعبة قطار الحروف، قصة مصورة واحدة، ونموذج التقييم الصوتي الذكي. الفصول الحية المباشرة وإضافة أطفال إضافيين تتطلب الاشتراك الكامل."
+                : "Included in trial: Diagnostic placement assessment (1 attempt), 1 preview lesson in Foundations & Tajweed, 1 phonics game, 1 illustrated story, and speech pronunciation preview. Live micro-cohort classes and additional children require upgrading to a full plan."}
+            </p>
+          </div>
+          <div className="flex flex-col sm:flex-row md:flex-col items-stretch gap-2 shrink-0 w-full md:w-auto">
+            <Link
+              href={`/${locale}/pricing`}
+              className="px-5 py-3 rounded-2xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs sm:text-sm text-center shadow-md transition-all flex items-center justify-center gap-2"
+            >
+              <span>{isAr ? "ترقية الاشتراك الآن (خصم حتى 55%)" : "Upgrade Plan Now (Up to 55% Off)"}</span>
+              <DirectionalIcon icon={ArrowRight} locale={locale} className="w-4 h-4" />
+            </Link>
+            <Link
+              href={`/${locale}/parent/recommendations?studentId=${selectedChild?.id}`}
+              className="px-5 py-2.5 rounded-2xl bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 font-bold text-xs text-center transition-all"
+            >
+              {isAr ? "معاينة تشخيص المستوى والمسار" : "Preview Placement & Roadmap"}
+            </Link>
+          </div>
+        </div>
+      )}
+
       {/* Quick Navigation Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
         <Link

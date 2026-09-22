@@ -168,6 +168,14 @@ export function RoleSwitcher() {
       badgeColor: "bg-indigo-100 text-indigo-800",
     },
     {
+      role: "SCHOOL_ADMIN",
+      name: currentLocale === "ar" ? "مدير مدرسة / مؤسسة شريكة" : "School / Institutional Admin",
+      desc: currentLocale === "ar" ? "إدارة القوائم، الفصول وتقارير الحضور" : "Roster, Classes & Attendance Reports",
+      path: `/${currentLocale}/school-admin`,
+      icon: <Building2 className="w-4 h-4 text-purple-600" />,
+      badgeColor: "bg-purple-100 text-purple-800",
+    },
+    {
       role: "INTEGRATIONS",
       name: rs.integrationsName,
       desc: rs.integrationsDesc,

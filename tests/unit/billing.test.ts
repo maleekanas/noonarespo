@@ -5,16 +5,20 @@ import { billingService } from "../../src/server/services/BillingService";
 describe("Billing & Subscription Engine (Minor Units Precision)", () => {
   const planId = "plan-family"; // $74.50 = 7450 minor units (reduced 50% from $149.00: 35% + 15% extra)
 
-  test("Should verify all plans have reduced prices in minor units (35% Starter/Group, 50% Family, 55% Private)", async () => {
+  test("Should verify all plans have reduced prices in minor units (35% Individual/Starter/Group, 50% Family, 55% Private)", async () => {
     const plans = await billingService.getAllPlans();
-    assert.equal(plans.length, 4);
+    assert.equal(plans.length, 5);
+
+    const individual = plans.find((p) => p.id === "plan-individual");
+    assert.equal(individual?.priceMinorUnits, 5135); // $51.35 (35% off $79)
+    assert.equal(billingService.formatPrice(individual!.priceMinorUnits), "$51.35");
 
     const starter = plans.find((p) => p.id === "plan-starter");
-    assert.equal(starter?.priceMinorUnits, 3185); // $31.85 (35% off)
+    assert.equal(starter?.priceMinorUnits, 3185); // $31.85 (35% off $49)
     assert.equal(billingService.formatPrice(starter!.priceMinorUnits), "$31.85");
 
     const group = plans.find((p) => p.id === "plan-group");
-    assert.equal(group?.priceMinorUnits, 5785); // $57.85 (35% off)
+    assert.equal(group?.priceMinorUnits, 5785); // $57.85 (35% off $89)
     assert.equal(billingService.formatPrice(group!.priceMinorUnits), "$57.85");
 
     const family = plans.find((p) => p.id === "plan-family");
@@ -22,8 +26,8 @@ describe("Billing & Subscription Engine (Minor Units Precision)", () => {
     assert.equal(billingService.formatPrice(family!.priceMinorUnits), "$74.50");
 
     const privatePlan = plans.find((p) => p.id === "plan-private");
-    assert.equal(privatePlan?.priceMinorUnits, 9900); // $99.00 (55% off: 35% + 20% extra)
-    assert.equal(billingService.formatPrice(privatePlan!.priceMinorUnits), "$99.00");
+    assert.equal(privatePlan?.priceMinorUnits, 8955); // $89.55 (55% off $199: 35% + 20% extra)
+    assert.equal(billingService.formatPrice(privatePlan!.priceMinorUnits), "$89.55");
   });
 
   test("Should calculate base checkout price without coupons accurately in minor units", async () => {

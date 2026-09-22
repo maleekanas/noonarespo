@@ -59,11 +59,28 @@ describe("Academic Service & Class Enrollment Rules", () => {
   });
 
   test("Should reject duplicate enrollment for the same student", async () => {
-    const classGroup = (await academicRepository.getAllClassGroups())[0];
-    // student-1 is already enrolled in class-reading-a1-cohort1 in seed
+    const testClass = await academicService.createClassGroup({
+      courseLevelId: "level-a1-reading",
+      name: "فصل الاختبار تكرار التسجيل",
+      classType: ClassType.GROUP,
+      capacityMax: 5,
+    });
+
+    const child = await userRepository.createChildWithParentLink("parent-1", {
+      firstName: "عمر",
+      lastName: "فاروق",
+      dateOfBirth: new Date("2017-05-01"),
+      ageGroup: AgeGroup.AGE_7_10,
+      relationshipType: RelationshipType.FATHER,
+    });
+
+    // First enrollment succeeds
+    await academicService.enrollStudent(child.id, testClass.id);
+
+    // Second enrollment for same student in same class must throw ALREADY_ENROLLED
     await assert.rejects(
       async () => {
-        await academicService.enrollStudent("student-1", classGroup.id);
+        await academicService.enrollStudent(child.id, testClass.id);
       },
       {
         message: /ALREADY_ENROLLED/,

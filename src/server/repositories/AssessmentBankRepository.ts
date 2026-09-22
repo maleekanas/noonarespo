@@ -289,6 +289,15 @@ class InMemoryAssessmentBankRepository {
     a.isPublished = !a.isPublished;
     return a;
   }
+
+  async deleteAssessment(id: string): Promise<boolean> {
+    return this.assessments.delete(id);
+  }
+
+  async deleteQuestion(id: string): Promise<boolean> {
+    return this.questions.delete(id);
+  }
 }
 
 export const assessmentBankRepository = new InMemoryAssessmentBankRepository();
+

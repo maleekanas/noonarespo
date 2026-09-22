@@ -459,7 +459,7 @@ export function PricingCalculator({ locale, isRtl = false }: PricingCalculatorPr
               </div>
             </div>
 
-            <div className="pt-6 border-t border-slate-100">
+            <div className="pt-6 border-t border-slate-100 space-y-2">
               <Link
                 href={`/${locale}/register?plan=${plan.id}&cycle=${billingCycle}&currency=${currency}&tz=${selectedTz}&trial=1`}
                 className={`w-full py-3.5 px-6 rounded-2xl font-bold text-sm text-center flex items-center justify-center gap-2 transition-all shadow-md ${
@@ -470,6 +470,12 @@ export function PricingCalculator({ locale, isRtl = false }: PricingCalculatorPr
               >
                 <span>{isRtl ? "ابدأ التجربة المجانية اليوم" : "Start 1-Day Free Trial"}</span>
                 <ArrowIcon className="w-4 h-4" />
+              </Link>
+              <Link
+                href={`/${locale}/register?plan=${plan.id}&cycle=${billingCycle}&currency=${currency}&tz=${selectedTz}`}
+                className="w-full py-2 px-4 rounded-xl text-xs font-bold text-center flex items-center justify-center gap-1.5 text-slate-500 hover:text-brand-600 transition-colors"
+              >
+                <span>{isRtl ? "أو اشترك وادفع فوراً (بدون تجربة)" : "Or Subscribe & Pay Now (Skip Trial)"}</span>
               </Link>
             </div>
           </div>

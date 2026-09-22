@@ -14,6 +14,7 @@ import {
   Volume2,
   Mic,
   PlusCircle,
+  Trash2,
 } from "lucide-react";
 
 export default async function AdminAssessmentsPage({
@@ -39,6 +40,61 @@ export default async function AdminAssessmentsPage({
 
     await assessmentBankService.togglePublishAssessment(
       assessmentId,
+      adminSession
+    );
+
+    revalidatePath(`/${locale}/admin/assessments`);
+    revalidatePath(`/${locale}/admin/audit-logs`);
+  }
+
+  async function handleDeleteAssessment(formData: FormData) {
+    "use server";
+    const assessmentId = formData.get("assessmentId")?.toString();
+    if (!assessmentId) return;
+
+    await assessmentBankService.deleteAssessment(assessmentId, adminSession);
+
+    revalidatePath(`/${locale}/admin/assessments`);
+    revalidatePath(`/${locale}/admin/audit-logs`);
+  }
+
+  async function handleDeleteQuestion(formData: FormData) {
+    "use server";
+    const questionId = formData.get("questionId")?.toString();
+    if (!questionId) return;
+
+    await assessmentBankService.deleteQuestion(questionId, adminSession);
+
+    revalidatePath(`/${locale}/admin/assessments`);
+    revalidatePath(`/${locale}/admin/audit-logs`);
+  }
+
+  async function handleCreateQuestion(formData: FormData) {
+    "use server";
+    const titleAr = formData.get("titleAr")?.toString() || "";
+    const promptAr = formData.get("promptAr")?.toString() || "";
+    const type = (formData.get("type")?.toString() || "MULTIPLE_CHOICE") as AssessmentFormatType;
+    const courseLevelCode = formData.get("courseLevelCode")?.toString() || "A1";
+    const points = parseInt(formData.get("points")?.toString() || "10", 10);
+    const correctAnswer = formData.get("correctAnswer")?.toString() || "";
+    const optionsRaw = formData.get("options")?.toString() || "";
+    const options = optionsRaw ? optionsRaw.split(",").map((s) => s.trim()).filter(Boolean) : undefined;
+
+    if (!titleAr || !promptAr) return;
+
+    await assessmentBankService.addQuestionToBank(
+      {
+        programId: "prog-integrated-arabic",
+        titleAr,
+        titleEn: titleAr,
+        promptAr,
+        promptEn: promptAr,
+        type,
+        courseLevelCode,
+        points,
+        correctAnswer: correctAnswer || "",
+        options,
+      },
       adminSession
     );
 
@@ -172,25 +228,38 @@ export default async function AdminAssessmentsPage({
                 </div>
               </div>
 
-              <form action={handleTogglePublish} className="pt-2">
-                <input type="hidden" name="assessmentId" value={item.id} />
-                <button
-                  type="submit"
-                  className={`w-full py-2 rounded-xl text-xs font-bold transition-colors ${
-                    item.isPublished
-                      ? "bg-slate-100 hover:bg-slate-200 text-slate-700"
-                      : "bg-brand-600 hover:bg-brand-700 text-white"
-                  }`}
-                >
-                  {item.isPublished ? "تحويل إلى مسودة ⏸" : "نشر الاختبار للطلاب ▶"}
-                </button>
-              </form>
+              <div className="pt-2 flex items-center gap-2">
+                <form action={handleTogglePublish} className="flex-1">
+                  <input type="hidden" name="assessmentId" value={item.id} />
+                  <button
+                    type="submit"
+                    className={`w-full py-2 rounded-xl text-xs font-bold transition-colors ${
+                      item.isPublished
+                        ? "bg-slate-100 hover:bg-slate-200 text-slate-700"
+                        : "bg-brand-600 hover:bg-brand-700 text-white"
+                    }`}
+                  >
+                    {item.isPublished ? "تحويل إلى مسودة ⏸" : "نشر الاختبار للطلاب ▶"}
+                  </button>
+                </form>
+
+                <form action={handleDeleteAssessment}>
+                  <input type="hidden" name="assessmentId" value={item.id} />
+                  <button
+                    type="submit"
+                    title="حذف الاختبار نهائياً"
+                    className="p-2 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </form>
+              </div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Question Bank Explorer & Add Exam Grid */}
+      {/* Question Bank Explorer & Forms Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pt-4">
         {/* Question Bank List */}
         <div className="lg:col-span-2 space-y-6">
@@ -242,9 +311,21 @@ export default async function AdminAssessmentsPage({
                       <span>{formatLabels[q.type]}</span>
                     </span>
 
-                    <span className="text-xs font-mono font-bold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-lg border border-emerald-100">
-                      {q.points} نقاط
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-mono font-bold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-lg border border-emerald-100">
+                        {q.points} نقاط
+                      </span>
+                      <form action={handleDeleteQuestion}>
+                        <input type="hidden" name="questionId" value={q.id} />
+                        <button
+                          type="submit"
+                          title="حذف هذا السؤال من البنك"
+                          className="p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </form>
+                    </div>
                   </div>
 
                   <div>
@@ -274,97 +355,206 @@ export default async function AdminAssessmentsPage({
           </div>
         </div>
 
-        {/* Create Exam / Quiz Form */}
-        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-6 h-fit">
-          <div>
-            <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
-              <PlusCircle className="w-5 h-5 text-brand-600" />
-              <span>إنشاء اختبار تقييمي جديد 📋</span>
-            </h3>
-            <p className="text-xs text-slate-500 mt-1">
-              تحديد العنوان، نسبة النجاح، والمدة الزمنية المتاحة للطلاب
-            </p>
-          </div>
-
-          <form action={handleCreateAssessment} className="space-y-4 text-xs">
+        {/* Action Forms Column: Create Question & Create Exam */}
+        <div className="space-y-6">
+          {/* Add Question to Bank Form */}
+          <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-4">
             <div>
-              <label className="block font-bold text-slate-700 mb-1">
-                عنوان الاختبار أو الكويز
-              </label>
-              <input
-                name="titleAr"
-                type="text"
-                required
-                placeholder="مثال: الاختبار الفصلي لمخارج الحروف والطلاقة"
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500"
-              />
+              <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+                <PlusCircle className="w-4 h-4 text-purple-600" />
+                <span>إضافة سؤال إلى بنك الأسئلة 💡</span>
+              </h3>
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                توسيع مخزون الأسئلة عبر الأنماط السبعة
+              </p>
             </div>
 
-            <div>
-              <label className="block font-bold text-slate-700 mb-1">
-                وصف موجز للمحتوى التقييمي
-              </label>
-              <textarea
-                name="descriptionAr"
-                rows={3}
-                required
-                placeholder="يوضح هذا الاختبار مدى إتقان الطالب لقواعد النطق والقراءة السليمة..."
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
+            <form action={handleCreateQuestion} className="space-y-3 text-xs">
               <div>
-                <label className="block font-bold text-slate-700 mb-1">
-                  المستوى المستهدف
-                </label>
+                <label className="block font-bold text-slate-700 mb-1">نمط السؤال</label>
                 <select
-                  name="courseLevelCode"
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
+                  name="type"
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white"
                 >
-                  <option value="PRE_A1">Pre-A1</option>
-                  <option value="A1">A1</option>
-                  <option value="A2">A2</option>
-                  <option value="B1">B1</option>
+                  <option value="MULTIPLE_CHOICE">اختيار من متعدد (MULTIPLE_CHOICE)</option>
+                  <option value="TRUE_FALSE">صح أو خطأ (TRUE_FALSE)</option>
+                  <option value="WORD_MATCHING">ربط الكلمات (WORD_MATCHING)</option>
+                  <option value="FILL_IN_THE_BLANK">إكمال الفراغ (FILL_IN_THE_BLANK)</option>
+                  <option value="ESSAY">التعبير والإنشاء (ESSAY)</option>
+                  <option value="AUDIO_LISTENING">الاستماع الصوتي (AUDIO_LISTENING)</option>
+                  <option value="SPEECH_RECORDING">تسجيل النطق (SPEECH_RECORDING)</option>
                 </select>
               </div>
 
               <div>
+                <label className="block font-bold text-slate-700 mb-1">عنوان السؤال / المهارة</label>
+                <input
+                  name="titleAr"
+                  type="text"
+                  required
+                  placeholder="مثال: نطق حرف القاف بالشكل الصحيح"
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">نص السؤال أو التوجيه</label>
+                <textarea
+                  name="promptAr"
+                  rows={2}
+                  required
+                  placeholder="اختر الإجابة الصحيحة أو انطق الكلمة التالية..."
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">المستوى</label>
+                  <select
+                    name="courseLevelCode"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white"
+                  >
+                    <option value="PRE_A1">Pre-A1</option>
+                    <option value="A1">A1</option>
+                    <option value="A2">A2</option>
+                    <option value="B1">B1</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">النقاط</label>
+                  <input
+                    name="points"
+                    type="number"
+                    defaultValue={10}
+                    min={1}
+                    max={50}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500 font-mono font-bold"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">الخيارات (مفصولة بفواصل)</label>
+                <input
+                  name="options"
+                  type="text"
+                  placeholder="تفاحة, برتقالة, موزة"
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">الإجابة النموذجية الصحيحة</label>
+                <input
+                  name="correctAnswer"
+                  type="text"
+                  placeholder="مثال: تفاحة"
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="w-full py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-sm transition-colors"
+              >
+                إضافة السؤال لبنك الأسئلة ➕
+              </button>
+            </form>
+          </div>
+
+          {/* Create Exam / Quiz Form */}
+          <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-4">
+            <div>
+              <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+                <PlusCircle className="w-4 h-4 text-brand-600" />
+                <span>إنشاء اختبار تقييمي جديد 📋</span>
+              </h3>
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                تحديد العنوان، نسبة النجاح، والمدة الزمنية
+              </p>
+            </div>
+
+            <form action={handleCreateAssessment} className="space-y-3 text-xs">
+              <div>
                 <label className="block font-bold text-slate-700 mb-1">
-                  نسبة النجاح (%)
+                  عنوان الاختبار أو الكويز
                 </label>
                 <input
-                  name="passingScore"
+                  name="titleAr"
+                  type="text"
+                  required
+                  placeholder="مثال: الاختبار الفصلي لمخارج الحروف والطلاقة"
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">
+                  وصف موجز للمحتوى التقييمي
+                </label>
+                <textarea
+                  name="descriptionAr"
+                  rows={2}
+                  required
+                  placeholder="يوضح هذا الاختبار مدى إتقان الطالب لقواعد النطق والقراءة..."
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">
+                    المستوى المستهدف
+                  </label>
+                  <select
+                    name="courseLevelCode"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
+                  >
+                    <option value="PRE_A1">Pre-A1</option>
+                    <option value="A1">A1</option>
+                    <option value="A2">A2</option>
+                    <option value="B1">B1</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">
+                    نسبة النجاح (%)
+                  </label>
+                  <input
+                    name="passingScore"
+                    type="number"
+                    defaultValue={70}
+                    min={50}
+                    max={100}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500 font-mono font-bold"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">
+                  المدة الزمنية (بالدقائق)
+                </label>
+                <input
+                  name="durationMinutes"
                   type="number"
-                  defaultValue={70}
-                  min={50}
-                  max={100}
+                  defaultValue={30}
+                  min={10}
+                  max={120}
                   className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500 font-mono font-bold"
                 />
               </div>
-            </div>
 
-            <div>
-              <label className="block font-bold text-slate-700 mb-1">
-                المدة الزمنية (بالدقائق)
-              </label>
-              <input
-                name="durationMinutes"
-                type="number"
-                defaultValue={30}
-                min={10}
-                max={120}
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500 font-mono font-bold"
-              />
-            </div>
-
-            <button
-              type="submit"
-              className="w-full py-3 rounded-2xl gradient-brand text-white font-bold text-xs shadow-md shadow-brand-500/20 transition-all mt-2"
-            >
-              اعتماد ونشر الاختبار في بنك التقييمات 🚀
-            </button>
-          </form>
+              <button
+                type="submit"
+                className="w-full py-2.5 rounded-xl gradient-brand text-white font-bold text-xs shadow-md shadow-brand-500/20 transition-all mt-1"
+              >
+                اعتماد ونشر الاختبار في بنك التقييمات 🚀
+              </button>
+            </form>
+          </div>
         </div>
       </div>
     </div>

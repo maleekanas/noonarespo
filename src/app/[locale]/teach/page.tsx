@@ -14,6 +14,8 @@ import {
   Laptop,
 } from "lucide-react";
 
+import { CountryCitySelector } from "@/components/shared/CountryCitySelector";
+
 export default async function TeachWithUsPage({
   params,
 }: {
@@ -28,6 +30,8 @@ export default async function TeachWithUsPage({
     const fullName = formData.get("fullName")?.toString() || "";
     const email = formData.get("email")?.toString() || "";
     const phone = formData.get("phone")?.toString() || "";
+    const country = formData.get("country")?.toString() || "";
+    const city = formData.get("city")?.toString() || "";
     const experienceYears = parseInt(formData.get("experienceYears")?.toString() || "0", 10);
     const qualifications = formData.get("qualifications")?.toString() || "";
     const certifications = formData.get("certifications")?.toString() || "";
@@ -39,6 +43,8 @@ export default async function TeachWithUsPage({
       fullName,
       email,
       phone,
+      country,
+      city,
       experienceYears,
       qualifications,
       certifications,
@@ -250,6 +256,15 @@ export default async function TeachWithUsPage({
                   />
                 </div>
               </div>
+
+              <CountryCitySelector
+                nameCountry="country"
+                nameCity="city"
+                required
+                locale={locale}
+                countryLabel={isRtl ? "بلد الإقامة الحالي *" : "Current Country of Residence *"}
+                cityLabel={isRtl ? "المدينة *" : "City *"}
+              />
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div>
