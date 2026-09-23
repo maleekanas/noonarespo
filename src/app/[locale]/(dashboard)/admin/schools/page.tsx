@@ -10,6 +10,18 @@ import { requireAdminSession } from "@/lib/auth/currentUser";
 import { InstitutionType, BundleTier } from "@/server/repositories/SchoolRepository";
 import { EmailAdapter } from "@/lib/integrations/notifications/EmailAdapter";
 
+// This page is session-gated (requireAdminSession reads the auth cookie) and
+// shows live DB state (KPIs, school directory) plus two admin action panels
+// (Register New Partner School / Activate 3-Day Free Trial) that were added
+// after this route had already been cached by Vercel's Full Route Cache --
+// the parent [locale] layout defines generateStaticParams, which makes this
+// route eligible for that cache even though it should be request-dynamic.
+// Force dynamic, uncached rendering so every request re-executes this page
+// (and its Server Actions) fresh and new admin UI added here always ships
+// immediately on deploy instead of waiting on a cache invalidation.
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function AdminSchoolsPage({
   params,
   searchParams,
