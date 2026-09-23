@@ -184,6 +184,7 @@
     "emailInUse": "This email is already registered. Try signing in instead.",
     "weakPassword": "Password must be at least 8 characters long.",
     "registrationError": "We couldn't create your account. Please try again.",
+    "registrationEmailFailed": "We couldn't send your confirmation email, so your account wasn't created. Please try registering again in a few minutes.",
     "termsAgreementPrefix": "By creating an account, you agree to our",
     "termsOfServiceLink": "Terms of Service",
     "termsAgreementConnector": "and our",
@@ -306,6 +307,8 @@
     "applyErrorInvalidEmail": "Please enter a valid email address.",
     "applyErrorRateLimited": "Too many submissions. Please wait a bit and try again.",
     "applyErrorServer": "We couldn't submit your application. Please try again or email us directly.",
+    "applyErrorTrialLimit": "The 3-Day Free Trial is limited to 10 students. Please lower the count or choose a paid bundle.",
+    "applyTrialCapHint": "Free trial applications are capped at 10 students.",
     "trustBadge": "Trusted by certified Islamic schools, community centers and homeschool co-ops"
   },
   "programsCatalog": {
