@@ -182,7 +182,7 @@ export default async function AdminSchoolsPage({
         .send({
           recipientContact: contactEmail,
           recipientName: contactPerson,
-          eventName: "TRIAL_ACCOUNT_ACTIVATED",
+          eventName: "ACCOUNT_NOTICE",
           titleAr: `تم تفعيل حسابكم التجريبي المجاني (3 أيام) - ${nameAr}`,
           bodyAr: [
             `تم تفعيل التجربة المجانية المؤسسية لـ "${nameAr}" بنجاح، وجميع الميزات المؤسسية متاحة الآن لمدة 3 أيام (حتى 10 طلاب).`,
