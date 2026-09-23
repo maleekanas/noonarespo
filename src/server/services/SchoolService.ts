@@ -396,7 +396,16 @@ export class SchoolService {
       },
     });
 
-    let forwardedTo: string | undefined;
+    if (!result.isDelivered) {
+      console.error("[SchoolService] Institutional inquiry email failed to deliver", {
+        recipient: primaryRecipient,
+        isTrial: isTrialApplication,
+        organizationName: input.organizationName,
+        statusMessage: result.statusMessage,
+      });
+    }
+
+        let forwardedTo: string | undefined;
     // When applying for 3-Day Free Trial, also notify/forward to partnerships sales if distinct
     if (
       isTrialApplication &&
