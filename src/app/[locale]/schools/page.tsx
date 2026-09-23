@@ -458,7 +458,7 @@ export default async function SchoolsPage({
                 </select>
               </div>
 
-              </div>
+            </div>
 
             <BundleAndStudentsFields
               isAr={isAr}
