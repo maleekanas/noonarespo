@@ -100,7 +100,7 @@ export function B2BBundleCalculator({ locale }: B2BBundleCalculatorProps) {
           </p>
         </div>
         <Link
-          href="#apply"
+          href={`/${locale}/schools?bundle=TRIAL_3_DAYS#apply`}
           className="shrink-0 px-6 py-3.5 rounded-2xl bg-white text-emerald-950 hover:bg-emerald-50 font-black text-xs sm:text-sm shadow-md transition-all flex items-center gap-2"
         >
           <span>{isAr ? "طلب تجربة مجانية (3 أيام • 10 طلاب)" : "Start 3-Day Trial (10 Students)"}</span>

@@ -8,6 +8,28 @@ import {
   BundleTier,
 } from "../repositories/SchoolRepository";
 import { getDictionary } from "@/lib/localization";
+import { EmailAdapter } from "@/lib/integrations/notifications/EmailAdapter";
+
+export interface InstitutionalInquiryInput {
+  organizationName: string;
+  contactName: string;
+  email: string;
+  phone?: string;
+  institutionType: string;
+  bundlePreference?: string;
+  country: string;
+  city?: string;
+  studentsEstimate: string | number;
+  message?: string;
+}
+
+export interface InstitutionalInquiryResult {
+  isDelivered: boolean;
+  recipientContact: string;
+  forwardedTo?: string;
+  isTrial: boolean;
+  statusMessage?: string;
+}
 
 export interface B2BBundleDefinition {
   id: BundleTier;
@@ -318,6 +340,99 @@ export class SchoolService {
 
   async deleteSchool(id: string): Promise<boolean> {
     return schoolRepository.deleteSchool(id);
+  }
+
+  /**
+   * Processes an institutional inquiry or 3-Day Free Trial application.
+   * When an applicant requests the 3-Days Free Trial (TRIAL_3_DAYS),
+   * the email is specifically routed and forwarded to admin@arabickidsacademy.com.
+   */
+  async handleInstitutionalInquiry(
+    input: InstitutionalInquiryInput
+  ): Promise<InstitutionalInquiryResult> {
+    const isTrialApplication =
+      input.bundlePreference === "TRIAL_3_DAYS" ||
+      (Boolean(input.bundlePreference) &&
+        input.bundlePreference!.toLowerCase().includes("trial"));
+
+    const adminEmail = process.env.ADMIN_EMAIL || "admin@arabickidsacademy.com";
+    const salesEmail = process.env.B2B_SALES_EMAIL || "partnerships@arabickidsacademy.com";
+
+    // When applying for 3-Days Free Trial, send directly to admin@arabickidsacademy.com
+    const primaryRecipient = isTrialApplication ? adminEmail : salesEmail;
+
+    const bodyLines = [
+      `Institution: ${input.organizationName}`,
+      `Contact: ${input.contactName}`,
+      `Email: ${input.email}`,
+      input.phone ? `Phone: ${input.phone}` : null,
+      `Type: ${input.institutionType}`,
+      input.bundlePreference ? `Preferred Bundle: ${input.bundlePreference}` : null,
+      `Location: ${input.city ? `${input.city}, ` : ""}${input.country}`,
+      `Estimated students: ${input.studentsEstimate}`,
+      isTrialApplication ? "Application Type: 3-Day Free Trial (10 Students Max - €0)" : null,
+      input.message ? `Message: ${input.message}` : null,
+    ].filter(Boolean);
+
+    const emailAdapter = new EmailAdapter();
+    const result = await emailAdapter.send({
+      recipientContact: primaryRecipient,
+      recipientName: isTrialApplication
+        ? "Arabic Kids Academy Administration"
+        : "Arabic Kids Academy Partnerships",
+      eventName: "B2B_INQUIRY",
+      titleAr: isTrialApplication
+        ? `طلب تجربة مجانية 3 أيام: ${input.organizationName} (${input.studentsEstimate} طلاب)`
+        : `New institutional inquiry: ${input.organizationName} (${input.bundlePreference || input.institutionType})`,
+      bodyAr: bodyLines.join("<br/>"),
+      actionUrl: undefined,
+      metadata: {
+        organizationName: input.organizationName,
+        contactEmail: input.email,
+        institutionType: input.institutionType,
+        bundlePreference: input.bundlePreference || "",
+        studentsEstimate: String(input.studentsEstimate),
+        isTrial: isTrialApplication ? "true" : "false",
+      },
+    });
+
+    let forwardedTo: string | undefined;
+    // When applying for 3-Day Free Trial, also notify/forward to partnerships sales if distinct
+    if (
+      isTrialApplication &&
+      salesEmail &&
+      salesEmail.toLowerCase() !== adminEmail.toLowerCase()
+    ) {
+      await emailAdapter
+        .send({
+          recipientContact: salesEmail,
+          recipientName: "Arabic Kids Academy Partnerships",
+          eventName: "B2B_INQUIRY",
+          titleAr: `[Forwarded Trial Request] ${input.organizationName} (3-Day Free Trial - ${input.studentsEstimate} Students)`,
+          bodyAr: bodyLines.join("<br/>"),
+          actionUrl: undefined,
+          metadata: {
+            organizationName: input.organizationName,
+            contactEmail: input.email,
+            institutionType: input.institutionType,
+            bundlePreference: input.bundlePreference || "",
+            studentsEstimate: String(input.studentsEstimate),
+            forwardedTo: adminEmail,
+          },
+        })
+        .catch((err) =>
+          console.error("Error forwarding trial email to sales:", err)
+        );
+      forwardedTo = salesEmail;
+    }
+
+    return {
+      isDelivered: result.isDelivered,
+      recipientContact: primaryRecipient,
+      forwardedTo,
+      isTrial: isTrialApplication,
+      statusMessage: result.statusMessage,
+    };
   }
 }
 

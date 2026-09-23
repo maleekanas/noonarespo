@@ -151,6 +151,44 @@ describe("Trial Plans: B2B (3 Days, Max 10 Students) & B2C (1 Day, Max 1 Child)"
       assert.equal(result.school.contractStatus, "TRIAL");
       assert.equal(result.school.licenseSeatsTotal, 10);
     });
+
+    test("handleInstitutionalInquiry routes 3-Day Free Trial applications directly to admin@arabickidsacademy.com", async () => {
+      const inquiryResult = await schoolService.handleInstitutionalInquiry({
+        organizationName: "مدرسة الفرقان التجريبية",
+        contactName: "أستاذ عبدالله",
+        email: "abdullah@alfurqan-trial.edu",
+        phone: "+966500000001",
+        institutionType: "ISLAMIC_SCHOOL",
+        bundlePreference: "TRIAL_3_DAYS",
+        country: "Saudi Arabia",
+        city: "Riyadh",
+        studentsEstimate: 10,
+        message: "طلب تجربة 3 أيام لتقييم المنصة مع 10 طلاب",
+      });
+
+      assert.equal(inquiryResult.isDelivered, true);
+      assert.equal(inquiryResult.isTrial, true);
+      assert.equal(inquiryResult.recipientContact, "admin@arabickidsacademy.com");
+      assert.equal(inquiryResult.forwardedTo, "partnerships@arabickidsacademy.com");
+    });
+
+    test("handleInstitutionalInquiry routes standard non-trial inquiries to partnerships sales email", async () => {
+      const inquiryResult = await schoolService.handleInstitutionalInquiry({
+        organizationName: "معهد المستقبل الدولي",
+        contactName: "د. هاني",
+        email: "hani@future-academy.edu",
+        institutionType: "PRIVATE_INSTITUTE",
+        bundlePreference: "GROWTH",
+        country: "United Kingdom",
+        city: "London",
+        studentsEstimate: 50,
+      });
+
+      assert.equal(inquiryResult.isDelivered, true);
+      assert.equal(inquiryResult.isTrial, false);
+      assert.equal(inquiryResult.recipientContact, "partnerships@arabickidsacademy.com");
+      assert.equal(inquiryResult.forwardedTo, undefined);
+    });
   });
 
   describe("B2C 1-Day Free Trial Enforcements", () => {

@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { getDictionary } from "@/lib/localization";
 import { DirectionalIcon } from "@/components/shared/DirectionalIcon";
 import { checkRateLimit, getClientIp, RATE_LIMITS } from "@/lib/security/rateLimit";
-import { EmailAdapter } from "@/lib/integrations/notifications/EmailAdapter";
+import { schoolService } from "@/server/services/SchoolService";
 import { B2BBundleCalculator } from "@/components/marketing/B2BBundleCalculator";
 import { CountryCitySelector } from "@/components/shared/CountryCitySelector";
 import {
@@ -39,12 +39,21 @@ export default async function SchoolsPage({
   searchParams,
 }: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ submitted?: string; error?: string }>;
+  searchParams: Promise<{
+    submitted?: string;
+    error?: string;
+    bundle?: string;
+    trial?: string;
+  }>;
 }) {
   const { locale } = await params;
-  const { submitted, error } = await searchParams;
+  const { submitted, error, bundle, trial } = await searchParams;
   const isAr = locale === "ar";
   const dict = getDictionary(locale);
+
+  const isTrialIntent =
+    bundle === "TRIAL_3_DAYS" || trial === "1" || trial === "3days";
+  const defaultBundle = isTrialIntent ? "TRIAL_3_DAYS" : "GROWTH";
 
   async function handleInquiry(formData: FormData) {
     "use server";
@@ -86,28 +95,17 @@ export default async function SchoolsPage({
       fail("rateLimited");
     }
 
-    const salesRecipient = process.env.B2B_SALES_EMAIL || "partnerships@arabickidsacademy.com";
-
-    const bodyLines = [
-      `Institution: ${organizationName}`,
-      `Contact: ${contactName}`,
-      `Email: ${email}`,
-      phone ? `Phone: ${phone}` : null,
-      `Type: ${institutionType}`,
-      bundlePreference ? `Preferred Bundle: ${bundlePreference}` : null,
-      `Location: ${city ? `${city}, ` : ""}${country}`,
-      `Estimated students: ${studentsEstimate}`,
-      message ? `Message: ${message}` : null,
-    ].filter(Boolean);
-
-    const result = await new EmailAdapter().send({
-      recipientContact: salesRecipient,
-      recipientName: "Arabic Kids Academy Partnerships",
-      eventName: "B2B_INQUIRY",
-      titleAr: `New institutional inquiry: ${organizationName} (${bundlePreference || institutionType})`,
-      bodyAr: bodyLines.join("<br/>"),
-      actionUrl: undefined,
-      metadata: { organizationName, contactEmail: email, institutionType, bundlePreference, studentsEstimate },
+    const result = await schoolService.handleInstitutionalInquiry({
+      organizationName,
+      contactName,
+      email,
+      phone: phone || undefined,
+      institutionType,
+      bundlePreference,
+      country,
+      city: city || undefined,
+      studentsEstimate,
+      message: message || undefined,
     });
 
     if (!result.isDelivered) {
@@ -232,7 +230,7 @@ export default async function SchoolsPage({
               <DirectionalIcon icon={ArrowRight} locale={locale} className="w-4 h-4" />
             </Link>
             <Link
-              href="#apply"
+              href={`/${locale}/schools?bundle=TRIAL_3_DAYS#apply`}
               className="inline-flex items-center gap-2 px-6 py-3.5 text-sm font-bold text-emerald-800 bg-emerald-50 border border-emerald-300 hover:bg-emerald-100 rounded-2xl transition-all"
             >
               <Sparkles className="w-4 h-4 text-emerald-600" />
@@ -448,7 +446,7 @@ export default async function SchoolsPage({
                 </label>
                 <select
                   name="bundlePreference"
-                  defaultValue="GROWTH"
+                  defaultValue={defaultBundle}
                   className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 text-start bg-white"
                 >
                   <option value="TRIAL_3_DAYS">{isAr ? "🌟 تجربة مجانية 3 أيام (10 طلاب كحد أقصى - مجاناً)" : "🌟 3-Day Free Trial (Max 10 students - 100% Free)"}</option>

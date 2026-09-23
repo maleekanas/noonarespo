@@ -308,7 +308,7 @@ export default async function PricingPage({
               </ul>
               <div className="pt-2 text-[11px] text-slate-500 border-t border-slate-100 flex items-center justify-between">
                 <span>{isRtl ? "بدون أي بطاقة بنكية مطلوبة" : "Zero credit card required"}</span>
-                <Link href={`/${locale}/schools#apply`} className="text-brand-600 font-bold hover:underline">
+                <Link href={`/${locale}/schools?bundle=TRIAL_3_DAYS#apply`} className="text-brand-600 font-bold hover:underline">
                   {isRtl ? "طلب التجربة المؤسسية ←" : "Request B2B Trial →"}
                 </Link>
               </div>
