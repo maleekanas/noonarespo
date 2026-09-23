@@ -184,6 +184,7 @@
     "emailInUse": "Dit e-mailadres is al geregistreerd. Probeer in te loggen.",
     "weakPassword": "Het wachtwoord moet minimaal 8 tekens lang zijn.",
     "registrationError": "We konden uw account niet aanmaken. Probeer het opnieuw.",
+    "registrationEmailFailed": "We konden uw bevestigingsmail niet verzenden, dus uw account is niet aangemaakt. Probeer het over een paar minuten opnieuw.",
     "termsAgreementPrefix": "Door een account aan te maken, ga je akkoord met onze",
     "termsOfServiceLink": "Servicevoorwaarden",
     "termsAgreementConnector": "en ons",
@@ -306,6 +307,8 @@
     "applyErrorInvalidEmail": "Voer een geldig e-mailadres in.",
     "applyErrorRateLimited": "Te veel inzendingen. Wacht even en probeer het opnieuw.",
     "applyErrorServer": "We konden uw aanvraag niet verzenden. Probeer het opnieuw of e-mail ons rechtstreeks.",
+    "applyErrorTrialLimit": "De gratis proefperiode van 3 dagen is beperkt tot 10 leerlingen. Verlaag het aantal of kies een betaald pakket.",
+    "applyTrialCapHint": "Aanvragen voor de gratis proefperiode zijn beperkt tot 10 leerlingen.",
     "trustBadge": "Vertrouwd door gecertificeerde islamitische scholen, gemeenschapscentra en thuisonderwijscoöperaties"
   },
   "programsCatalog": {
