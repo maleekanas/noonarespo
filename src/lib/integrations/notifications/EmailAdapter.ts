@@ -40,6 +40,12 @@ export class EmailAdapter implements NotificationChannelAdapter {
 
         if (!res.ok) {
           const errorBody = await res.text().catch(() => "");
+          // Logged via console.error (not the gated "External APIs" panel)
+          // so the real Resend failure reason shows up in Vercel's regular
+          // Runtime Logs without needing an Observability add-on.
+          console.error(
+            `[EmailAdapter] Resend API request failed (status ${res.status}) sending to ${payload.recipientContact}, from=${fromEmail}: ${errorBody.slice(0, 500)}`
+          );
           return {
             messageId,
             channel: "EMAIL",
@@ -62,6 +68,10 @@ export class EmailAdapter implements NotificationChannelAdapter {
           statusMessage: `تم تسليم البريد الإلكتروني الرسمي بنجاح إلى ${payload.recipientContact}`,
         };
       } catch (err) {
+          console.error(
+            `[EmailAdapter] Resend API request threw sending to ${payload.recipientContact}, from=${fromEmail}:`,
+            err
+          );
         return {
           messageId,
           channel: "EMAIL",
