@@ -405,7 +405,7 @@ export class SchoolService {
       });
     }
 
-        let forwardedTo: string | undefined;
+    let forwardedTo: string | undefined;
     // When applying for 3-Day Free Trial, also notify/forward to partnerships sales if distinct
     if (
       isTrialApplication &&
