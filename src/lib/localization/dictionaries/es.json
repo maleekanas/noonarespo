@@ -184,6 +184,7 @@
     "emailInUse": "Este correo electrónico ya está registrado. Intenta iniciar sesión.",
     "weakPassword": "La contraseña debe tener al menos 8 caracteres.",
     "registrationError": "No pudimos crear tu cuenta. Inténtalo de nuevo.",
+    "registrationEmailFailed": "No pudimos enviar su correo de confirmación, así que su cuenta no fue creada. Inténtelo de nuevo en unos minutos.",
     "termsAgreementPrefix": "Al crear una cuenta, aceptas nuestros",
     "termsOfServiceLink": "Términos de Servicio",
     "termsAgreementConnector": "y nuestra",
@@ -306,6 +307,8 @@
     "applyErrorInvalidEmail": "Por favor introduzca un correo electrónico válido.",
     "applyErrorRateLimited": "Demasiados envíos. Espere un momento e inténtelo de nuevo.",
     "applyErrorServer": "No pudimos enviar su solicitud. Inténtelo de nuevo o escríbanos directamente por correo.",
+    "applyErrorTrialLimit": "La prueba gratuita de 3 días está limitada a 10 estudiantes. Reduzca la cantidad o elija un paquete de pago.",
+    "applyTrialCapHint": "Las solicitudes de prueba gratuita están limitadas a 10 estudiantes.",
     "trustBadge": "Con la confianza de colegios islámicos, centros comunitarios y cooperativas de educación en casa certificados"
   },
   "programsCatalog": {
