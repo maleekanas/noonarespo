@@ -184,6 +184,7 @@
     "emailInUse": "Questa email è già registrata. Prova ad accedere.",
     "weakPassword": "La password deve contenere almeno 8 caratteri.",
     "registrationError": "Impossibile creare l'account. Riprova.",
+    "registrationEmailFailed": "Non siamo riusciti a inviare l'email di conferma, quindi il tuo account non è stato creato. Riprova tra qualche minuto.",
     "termsAgreementPrefix": "Creando un account, accetti i nostri",
     "termsOfServiceLink": "Termini di Servizio",
     "termsAgreementConnector": "e la nostra",
@@ -306,6 +307,8 @@
     "applyErrorInvalidEmail": "Inserisci un indirizzo email valido.",
     "applyErrorRateLimited": "Troppi invii. Attendi un momento e riprova.",
     "applyErrorServer": "Non siamo riusciti a inviare la tua candidatura. Riprova o scrivici direttamente via email.",
+    "applyErrorTrialLimit": "La prova gratuita di 3 giorni è limitata a 10 studenti. Riduci il numero o scegli un pacchetto a pagamento.",
+    "applyTrialCapHint": "Le richieste di prova gratuita sono limitate a 10 studenti.",
     "trustBadge": "Scelto da scuole islamiche, centri comunitari e cooperative di homeschooling certificati"
   },
   "programsCatalog": {
