@@ -120,7 +120,7 @@ export default async function RegisterPage({
     const trialSuffix = trialParam === "1" ? "&trial=1" : "";
     const verifyUrl = `${siteUrl}/${locale}/verify-email?token=${rawToken}${planSuffix}${trialSuffix}`;
 
-    await notificationDispatcherService.dispatch("EMAIL", {
+    const dispatchResult = await notificationDispatcherService.dispatch("EMAIL", {
       recipientContact: email,
       recipientName: `${firstName} ${lastName}`,
       eventName: "EMAIL_VERIFICATION",
@@ -128,6 +128,21 @@ export default async function RegisterPage({
       bodyAr: `مرحباً ${firstName}، شكراً لتسجيلك في أكاديمية الأطفال العرب. اضغط على الزر أدناه لتأكيد بريدك الإلكتروني وتفعيل حسابك. هذا الرابط صالح لمدة 24 ساعة.`,
       actionUrl: verifyUrl,
     });
+
+    if (!dispatchResult.isDelivered) {
+      console.error("[Register] Verification email failed to send", {
+        email,
+        statusMessage: dispatchResult.statusMessage,
+      });
+      // Without this check, the visitor is shown a false "Check Your
+      // Email" success screen even though no email actually went out --
+      // and since the account already exists as PENDING_VERIFICATION,
+      // they'd be permanently stuck (retrying registration would just
+      // fail with "email already in use"). Roll the account back so a
+      // retry a few minutes later works cleanly instead.
+      await prisma.user.delete({ where: { id: createdUser.id } }).catch(() => {});
+      redirectWithError("emailFailed");
+    }
 
     // No session is created here -- the account is PENDING_VERIFICATION
     // and can't sign in (see login/page.tsx's status check) until the
@@ -145,6 +160,7 @@ export default async function RegisterPage({
     inuse: dict.auth.emailInUse,
     server: dict.auth.registrationError,
     ratelimited: dict.auth.tooManyAttempts,
+    emailFailed: dict.auth.registrationEmailFailed,
   };
 
   return (
