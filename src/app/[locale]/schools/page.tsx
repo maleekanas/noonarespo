@@ -6,6 +6,7 @@ import { DirectionalIcon } from "@/components/shared/DirectionalIcon";
 import { checkRateLimit, getClientIp, RATE_LIMITS } from "@/lib/security/rateLimit";
 import { schoolService } from "@/server/services/SchoolService";
 import { B2BBundleCalculator } from "@/components/marketing/B2BBundleCalculator";
+import { BundleAndStudentsFields } from "@/components/marketing/BundleAndStudentsFields";
 import { CountryCitySelector } from "@/components/shared/CountryCitySelector";
 import {
   Sparkles,
@@ -69,8 +70,14 @@ export default async function SchoolsPage({
     const studentsEstimate = formData.get("studentsEstimate")?.toString().trim() || "";
     const message = formData.get("message")?.toString().trim() || "";
 
+    // Preserve the bundle/trial intent across an error redirect -- without
+    // this, any validation failure below silently resets the form back to
+    // the default "Growth" bundle and clears whatever the visitor typed.
     const fail = (reason: string) => {
-      redirect(`/${locale}/schools?error=${reason}#apply`);
+      const qp = new URLSearchParams({ error: reason });
+      if (bundle) qp.set("bundle", bundle);
+      if (trial) qp.set("trial", trial);
+      redirect(`/${locale}/schools?${qp.toString()}#apply`);
     };
 
     if (
@@ -87,6 +94,16 @@ export default async function SchoolsPage({
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailPattern.test(email)) {
       fail("invalidEmail");
+    }
+
+    // The 3-Day Free Trial is advertised everywhere as capped at 10
+    // students. The client-side field enforces this too, but that can
+    // always be bypassed, so it's re-checked here.
+    if (bundlePreference === "TRIAL_3_DAYS") {
+      const studentsNum = Number(studentsEstimate);
+      if (Number.isFinite(studentsNum) && studentsNum > 10) {
+        fail("trialLimit");
+      }
     }
 
     const ip = await getClientIp();
@@ -188,6 +205,7 @@ export default async function SchoolsPage({
     invalidEmail: dict.schools.applyErrorInvalidEmail,
     rateLimited: dict.schools.applyErrorRateLimited,
     server: dict.schools.applyErrorServer,
+    trialLimit: dict.schools.applyErrorTrialLimit,
   };
 
   return (
@@ -440,22 +458,15 @@ export default async function SchoolsPage({
                 </select>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  {isAr ? "الباقة المفضلة" : "Preferred Bundle"}
-                </label>
-                <select
-                  name="bundlePreference"
-                  defaultValue={defaultBundle}
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 text-start bg-white"
-                >
-                  <option value="TRIAL_3_DAYS">{isAr ? "🌟 تجربة مجانية 3 أيام (10 طلاب كحد أقصى - مجاناً)" : "🌟 3-Day Free Trial (Max 10 students - 100% Free)"}</option>
-                  <option value="STARTER">{isAr ? "الأساسية Starter (حتى 25 طالباً - €129/ش)" : "Starter (Up to 25 students - €129/mo)"}</option>
-                  <option value="GROWTH">{isAr ? "النمو Growth (26 – 100 طالب - €324/ش)" : "Growth (26 – 100 students - €324/mo)"}</option>
-                  <option value="INSTITUTION">{isAr ? "المؤسسات Institution (100+ طالب - من €584/ش)" : "Institution (100+ students - from €584/mo)"}</option>
-                </select>
               </div>
-            </div>
+
+            <BundleAndStudentsFields
+              isAr={isAr}
+              defaultBundle={defaultBundle}
+              bundleLabel={isAr ? "الباقة المفضلة" : "Preferred Bundle"}
+              studentsLabel={dict.schools.applyStudentsLabel}
+              trialCapHint={dict.schools.applyTrialCapHint}
+            />
 
             <CountryCitySelector
               nameCountry="country"
@@ -465,20 +476,6 @@ export default async function SchoolsPage({
               countryLabel={dict.schools.applyCountryLabel}
               cityLabel={dict.schools.applyCityLabel}
             />
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                {dict.schools.applyStudentsLabel}
-              </label>
-              <input
-                name="studentsEstimate"
-                type="number"
-                min={1}
-                required
-                defaultValue={35}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 text-start"
-              />
-            </div>
 
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1.5">
