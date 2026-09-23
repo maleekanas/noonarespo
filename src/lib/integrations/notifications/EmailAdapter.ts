@@ -68,10 +68,10 @@ export class EmailAdapter implements NotificationChannelAdapter {
           statusMessage: `تم تسليم البريد الإلكتروني الرسمي بنجاح إلى ${payload.recipientContact}`,
         };
       } catch (err) {
-          console.error(
-            `[EmailAdapter] Resend API request threw sending to ${payload.recipientContact}, from=${fromEmail}:`,
-            err
-          );
+        console.error(
+          `[EmailAdapter] Resend API request threw sending to ${payload.recipientContact}, from=${fromEmail}:`,
+          err
+        );
         return {
           messageId,
           channel: "EMAIL",
