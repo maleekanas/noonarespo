@@ -30,6 +30,28 @@ export default async function TeacherMeetingsPage({
     revalidatePath(`/${locale}/parent/meetings`);
   }
 
+  async function handleDeclineMeeting(formData: FormData) {
+    "use server";
+    const meetingId = formData.get("meetingId")?.toString();
+    const reason = formData.get("reason")?.toString() || "تعذر الموعد، يرجى اختيار توقيت آخر";
+    if (!meetingId) return;
+
+    await communicationService.cancelMeeting(meetingId, reason);
+    revalidatePath(`/${locale}/teacher/meetings`);
+    revalidatePath(`/${locale}/parent/meetings`);
+  }
+
+  async function handleRescheduleMeeting(formData: FormData) {
+    "use server";
+    const meetingId = formData.get("meetingId")?.toString();
+    const newDateStr = formData.get("newMeetingDate")?.toString();
+    if (!meetingId || !newDateStr) return;
+
+    await communicationService.rescheduleMeeting(meetingId, new Date(newDateStr));
+    revalidatePath(`/${locale}/teacher/meetings`);
+    revalidatePath(`/${locale}/parent/meetings`);
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       {/* Header */}
@@ -97,27 +119,67 @@ export default async function TeacherMeetingsPage({
                 </div>
               </div>
 
-              {meeting.status === "CONFIRMED" && meeting.meetingUrl ? (
-                <a
-                  href={meeting.meetingUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-emerald-600 text-white font-bold text-xs shadow-md hover:bg-emerald-700 transition-all"
-                >
-                  <Video className="w-4 h-4" />
-                  <span>دخول الغرفة الافتراضية (كمقدم)</span>
-                </a>
-              ) : (
-                <form action={handleConfirmMeeting}>
-                  <input type="hidden" name="meetingId" value={meeting.id} />
-                  <button
-                    type="submit"
-                    className="px-6 py-3 rounded-xl gradient-brand text-white font-bold text-xs shadow-md hover:opacity-95 transition-all"
+              <div className="flex flex-col sm:items-end gap-2">
+                {meeting.status === "CONFIRMED" && meeting.meetingUrl ? (
+                  <a
+                    href={meeting.meetingUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-emerald-600 text-white font-bold text-xs shadow-md hover:bg-emerald-700 transition-all"
                   >
-                    تأكيد الموعد وتوليد رابط الغرفة
-                  </button>
-                </form>
-              )}
+                    <Video className="w-4 h-4" />
+                    <span>دخول الغرفة الافتراضية (كمقدم)</span>
+                  </a>
+                ) : (
+                  <form action={handleConfirmMeeting}>
+                    <input type="hidden" name="meetingId" value={meeting.id} />
+                    <button
+                      type="submit"
+                      className="px-6 py-2.5 rounded-xl gradient-brand text-white font-bold text-xs shadow-md hover:opacity-95 transition-all"
+                    >
+                      تأكيد الموعد وتوليد رابط الغرفة ✓
+                    </button>
+                  </form>
+                )}
+
+                {/* Reschedule & Decline Controls */}
+                <div className="flex items-center gap-3 text-xs pt-1">
+                  <details className="group">
+                    <summary className="cursor-pointer text-slate-500 hover:text-brand-600 font-bold select-none text-[11px]">
+                      اقتراح موعد بديل ↻
+                    </summary>
+                    <form action={handleRescheduleMeeting} className="p-3 bg-slate-50 rounded-xl space-y-2 mt-2 border border-slate-100 text-xs">
+                      <input type="hidden" name="meetingId" value={meeting.id} />
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-600 mb-0.5">الموعد البديل المقترح</label>
+                        <input
+                          name="newMeetingDate"
+                          type="datetime-local"
+                          required
+                          className="w-full p-1.5 rounded-lg border border-slate-200 text-xs bg-white"
+                        />
+                      </div>
+                      <button
+                        type="submit"
+                        className="w-full py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs"
+                      >
+                        إرسال الموعد المقترح
+                      </button>
+                    </form>
+                  </details>
+
+                  <form action={handleDeclineMeeting}>
+                    <input type="hidden" name="meetingId" value={meeting.id} />
+                    <button
+                      type="submit"
+                      className="text-slate-400 hover:text-rose-600 font-bold transition-colors text-[11px]"
+                      title="الاعتذار عن الموعد"
+                    >
+                      اعتذار عن الموعد ✕
+                    </button>
+                  </form>
+                </div>
+              </div>
             </div>
           ))}
         </div>

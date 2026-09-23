@@ -267,8 +267,11 @@ model TeacherProfile {
   // teacher's certifications field against real documentation.
   isCertified          Boolean         @default(false)
   employmentType       EmploymentType  @default(CONTRACT)
+  // Set when teacher is assigned to an institution or operates a freelance cooperative
+  schoolId             String?
 
   user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  partnerSchool        PartnerSchool? @relation(fields: [schoolId], references: [id], onDelete: SetNull)
   assignments          TeacherAssignment[]
   sessions             ClassSession[]
   feedbacks            TeacherFeedback[]
@@ -280,6 +283,7 @@ model TeacherProfile {
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
 
+  @@index([schoolId])
   @@map("teacher_profiles")
 }
 
@@ -851,7 +855,7 @@ model PartnerSchool {
   id                String   @id // Stable slug id (e.g. "school-al-noor"), not a generated uuid -- these are real B2B partner institutions, seeded once.
   nameAr            String
   nameEn            String
-  type              String   // "ISLAMIC_SCHOOL" | "COMMUNITY_CENTER" | "HOMESCHOOL_COOP"
+  type              String   // "ISLAMIC_SCHOOL" | "COMMUNITY_CENTER" | "HOMESCHOOL_COOP" | "FREELANCER_TEACHER" | "PRIVATE_INSTITUTE"
   country           String
   city              String
   licenseSeatsTotal Int
@@ -862,10 +866,12 @@ model PartnerSchool {
   contactEmail      String
   contractStatus    String   // "ACTIVE" | "PENDING_RENEWAL" | "TRIAL"
   curriculumTrackAr String
+  bundleTier        String   @default("STARTER") // "STARTER" (up to 25) | "GROWTH" (26-100) | "INSTITUTION" (100+)
 
   students          StudentProfile[]
   classGroups       ClassGroup[]
   administrators    AdministratorProfile[]
+  teachers          TeacherProfile[]
 
   createdAt         DateTime @default(now())
 

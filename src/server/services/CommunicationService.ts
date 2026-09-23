@@ -129,6 +129,20 @@ export class CommunicationService {
 
     return updated;
   }
+
+  /**
+   * Cancels a meeting request (by teacher or parent).
+   */
+  async cancelMeeting(meetingId: string, reason?: string): Promise<DomainMeetingRequest> {
+    return communicationRepository.cancelMeetingRequest(meetingId, reason);
+  }
+
+  /**
+   * Reschedules a meeting request to a new time.
+   */
+  async rescheduleMeeting(meetingId: string, newTimeUtc: Date): Promise<DomainMeetingRequest> {
+    return communicationRepository.rescheduleMeetingRequest(meetingId, newTimeUtc);
+  }
 }
 
 export const communicationService = new CommunicationService();

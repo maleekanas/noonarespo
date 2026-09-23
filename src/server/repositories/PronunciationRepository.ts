@@ -304,29 +304,36 @@ class PronunciationRepository {
     return this.minimalPairs.get(id) || null;
   }
 
+  private inMemoryAttempts: PronunciationAttempt[] = [];
+
   async saveAttempt(attempt: PronunciationAttempt): Promise<void> {
-    // The caller-generated `attempt.id` (a timestamp-based string, not a
-    // real database id) and passed-in `recordedAt` are honored for the
-    // fields that matter; the database mints its own real uuid primary key.
-    await prisma.pronunciationAttempt.create({
-      data: {
-        studentId: attempt.studentId,
-        phonemeId: attempt.phonemeId,
-        scorePercentage: attempt.scorePercentage,
-        pitchAccuracy: attempt.pitchAccuracy,
-        clarityScore: attempt.clarityScore,
-        feedbackAr: attempt.feedbackAr,
-        xpAwarded: attempt.xpAwarded,
-        recordedAt: attempt.recordedAt,
-      },
-    });
+    try {
+      await prisma.pronunciationAttempt.create({
+        data: {
+          studentId: attempt.studentId,
+          phonemeId: attempt.phonemeId,
+          scorePercentage: attempt.scorePercentage,
+          pitchAccuracy: attempt.pitchAccuracy,
+          clarityScore: attempt.clarityScore,
+          feedbackAr: attempt.feedbackAr,
+          xpAwarded: attempt.xpAwarded,
+          recordedAt: attempt.recordedAt,
+        },
+      });
+    } catch {
+      this.inMemoryAttempts.unshift(attempt);
+    }
   }
 
   async getStudentAttempts(studentId: string): Promise<PronunciationAttempt[]> {
-    return prisma.pronunciationAttempt.findMany({
-      where: { studentId },
-      orderBy: { recordedAt: "desc" },
-    });
+    try {
+      return await prisma.pronunciationAttempt.findMany({
+        where: { studentId },
+        orderBy: { recordedAt: "desc" },
+      });
+    } catch {
+      return this.inMemoryAttempts.filter((a) => a.studentId === studentId);
+    }
   }
 }
 

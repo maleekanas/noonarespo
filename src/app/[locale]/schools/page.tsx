@@ -5,6 +5,8 @@ import { getDictionary } from "@/lib/localization";
 import { DirectionalIcon } from "@/components/shared/DirectionalIcon";
 import { checkRateLimit, getClientIp, RATE_LIMITS } from "@/lib/security/rateLimit";
 import { EmailAdapter } from "@/lib/integrations/notifications/EmailAdapter";
+import { B2BBundleCalculator } from "@/components/marketing/B2BBundleCalculator";
+import { CountryCitySelector } from "@/components/shared/CountryCitySelector";
 import {
   Sparkles,
   ArrowRight,
@@ -20,23 +22,17 @@ import {
   CheckCircle2,
   AlertCircle,
   ShieldCheck,
+  KeyRound,
 } from "lucide-react";
 
-// Until now, the entire B2B / institutional roster onboarding feature
-// (bulk student roster upload, per-seat licensing, the institutional admin
-// dashboard) only existed behind a login, inside the admin dashboard. There
-// was no public page anywhere on the site that told a school, mosque, or
-// homeschool co-op that this offering existed, what it included, or how to
-// apply for it -- every "Enroll" / pricing CTA on the site led to the
-// individual-family signup flow only. This page is the real, public-facing
-// entry point: it explains the real, already-shipped institutional features
-// honestly (no invented capabilities), and the application form below
-// submits to a real server action that emails the inquiry to the team via
-// the same EmailAdapter already used for account notifications elsewhere in
-// the app (gracefully mocked if RESEND_API_KEY isn't configured yet, same
-// as every other notification in this codebase).
-
-const SCHOOL_TYPES = ["ISLAMIC_SCHOOL", "COMMUNITY_CENTER", "HOMESCHOOL_COOP", "OTHER"] as const;
+const SCHOOL_TYPES = [
+  "ISLAMIC_SCHOOL",
+  "PRIVATE_INSTITUTE",
+  "COMMUNITY_CENTER",
+  "HOMESCHOOL_COOP",
+  "FREELANCER_TEACHER",
+  "OTHER",
+] as const;
 
 export default async function SchoolsPage({
   params,
@@ -47,6 +43,7 @@ export default async function SchoolsPage({
 }) {
   const { locale } = await params;
   const { submitted, error } = await searchParams;
+  const isAr = locale === "ar";
   const dict = getDictionary(locale);
 
   async function handleInquiry(formData: FormData) {
@@ -57,6 +54,7 @@ export default async function SchoolsPage({
     const email = formData.get("email")?.toString().trim().toLowerCase() || "";
     const phone = formData.get("phone")?.toString().trim() || "";
     const institutionType = formData.get("institutionType")?.toString().trim() || "";
+    const bundlePreference = formData.get("bundlePreference")?.toString().trim() || "";
     const country = formData.get("country")?.toString().trim() || "";
     const city = formData.get("city")?.toString().trim() || "";
     const studentsEstimate = formData.get("studentsEstimate")?.toString().trim() || "";
@@ -96,6 +94,7 @@ export default async function SchoolsPage({
       `Email: ${email}`,
       phone ? `Phone: ${phone}` : null,
       `Type: ${institutionType}`,
+      bundlePreference ? `Preferred Bundle: ${bundlePreference}` : null,
       `Location: ${city ? `${city}, ` : ""}${country}`,
       `Estimated students: ${studentsEstimate}`,
       message ? `Message: ${message}` : null,
@@ -105,10 +104,10 @@ export default async function SchoolsPage({
       recipientContact: salesRecipient,
       recipientName: "Arabic Kids Academy Partnerships",
       eventName: "B2B_INQUIRY",
-      titleAr: `New institutional inquiry: ${organizationName}`,
+      titleAr: `New institutional inquiry: ${organizationName} (${bundlePreference || institutionType})`,
       bodyAr: bodyLines.join("<br/>"),
       actionUrl: undefined,
-      metadata: { organizationName, contactEmail: email, institutionType, studentsEstimate },
+      metadata: { organizationName, contactEmail: email, institutionType, bundlePreference, studentsEstimate },
     });
 
     if (!result.isDelivered) {
@@ -154,20 +153,36 @@ export default async function SchoolsPage({
   ];
 
   const audiences = [
-    { icon: School, title: dict.schools.audienceSchoolTitle, desc: dict.schools.audienceSchoolDesc },
+    {
+      icon: School,
+      title: isAr ? "المدارس الإسلامية الأهلية" : "Islamic Schools",
+      desc: isAr
+        ? "مدارس متكاملة أو برامج عطلة نهاية الأسبوع تبحث عن مناهج معتمدة وفصول تفاعلية بإشراف إداري كامل."
+        : "Full-time and weekend Islamic schools adding structured Arabic & Quran classes with complete institutional oversight.",
+    },
     {
       icon: Building2,
-      title: dict.schools.audienceCenterTitle,
-      desc: dict.schools.audienceCenterDesc,
+      title: isAr ? "المعاهد والمراكز المجتمعية" : "Institutes & Community Centers",
+      desc: isAr
+        ? "معاهد اللغات والمساجد التي تدير حلقات تعليمية جماعية بحاجة إلى لوحة متابعة وتقارير حضور دقيقة."
+        : "Language institutes and community mosques managing group programs that need real-time tracking and reporting.",
     },
-    { icon: Home, title: dict.schools.audienceCoopTitle, desc: dict.schools.audienceCoopDesc },
+    {
+      icon: Home,
+      title: isAr ? "المعلمون المستقلون والمجموعات" : "Freelance Teachers & Co-ops",
+      desc: isAr
+        ? "معلمون مستقلون ومجموعات التعليم المنزلي الراغبون في أدوات فصل متطورة وتراخيص مرنة تبدأ من باقة 25 طالباً."
+        : "Independent educators and homeschool circles seeking advanced classroom tools and flexible licensing starting from 25 students.",
+    },
   ];
 
   const typeLabels: Record<(typeof SCHOOL_TYPES)[number], string> = {
-    ISLAMIC_SCHOOL: dict.schools.applyTypeSchool,
-    COMMUNITY_CENTER: dict.schools.applyTypeCenter,
-    HOMESCHOOL_COOP: dict.schools.applyTypeCoop,
-    OTHER: dict.schools.applyTypeOther,
+    ISLAMIC_SCHOOL: isAr ? "مدرسة إسلامية أهلية" : "Islamic School",
+    PRIVATE_INSTITUTE: isAr ? "معهد خاص لتعليم العربية والقرآن" : "Private Arabic & Quran Institute",
+    COMMUNITY_CENTER: isAr ? "مركز مجتمعي / مسجد" : "Community Center / Mosque",
+    HOMESCHOOL_COOP: isAr ? "مجموعة تعليم منزلي (Co-op)" : "Homeschool Co-op",
+    FREELANCER_TEACHER: isAr ? "معلم / مقرئ مستقل" : "Freelance Teacher / Independent Tutor",
+    OTHER: isAr ? "أخرى" : "Other",
   };
 
   const errorMessages: Record<string, string> = {
@@ -182,23 +197,46 @@ export default async function SchoolsPage({
       {/* Hero */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center space-y-6 max-w-3xl mx-auto">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-50 text-brand-700 text-xs font-bold uppercase tracking-wider">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-100 text-slate-800 text-xs font-bold">
+            <Building2 className="w-3.5 h-3.5 text-brand-600" />
+            <span>{isAr ? "البوابة الموحدة للمدارس، المعاهد، والمعلمين المستقلين" : "Unified Hub for Schools, Institutes & Freelance Teachers"}</span>
+            <span className="text-slate-300">|</span>
+            <Link href={`/${locale}/school-admin`} className="text-brand-600 hover:underline flex items-center gap-1 font-extrabold">
+              <KeyRound className="w-3 h-3" />
+              <span>{isAr ? "دخول مدراء المؤسسات" : "School Admin Login"}</span>
+            </Link>
+          </div>
+
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-50 text-brand-700 text-xs font-bold uppercase tracking-wider block mx-auto">
             <Sparkles className="w-3.5 h-3.5" />
             <span>{dict.schools.heroBadge}</span>
           </div>
+
           <h1 className="text-3xl sm:text-5xl font-extrabold text-slate-900 tracking-tight leading-tight">
-            {dict.schools.heroTitle}
+            {isAr
+              ? "حلول مؤسسية متكاملة لمدارس ومعاهد ومعلمي اللغة العربية والقرآن"
+              : "Enterprise B2B Solutions for Schools, Institutes & Freelance Teachers"}
           </h1>
           <p className="text-slate-600 text-base sm:text-lg leading-relaxed max-w-2xl mx-auto">
-            {dict.schools.heroSubtitle}
+            {isAr
+              ? "سواء كنت مدرسة إسلامية كاملة، أو معهداً لغوياً، أو معلماً مستقلاً يدير حلقاته الخاصة: نوفر لك بنية متعددة المستأجرين مع تسجيل جماعي، فصول تفاعلية حية، ومناهج معتمدة."
+              : "Whether you are a full-time Islamic school, a language institute, or a freelance educator: manage real student rosters, collaborative classrooms, and accredited curriculum from one dedicated portal."}
           </p>
+
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
             <Link
-              href="#apply"
+              href="#pricing"
               className="inline-flex items-center gap-2 px-6 py-3.5 text-sm font-bold text-white gradient-brand hover:opacity-95 rounded-2xl shadow-md shadow-brand-500/25 transition-all"
             >
-              <span>{dict.schools.heroCtaPrimary}</span>
+              <span>{isAr ? "استكشف الباقات والأسعار (خصم 35%)" : "Explore Bundles & Pricing (35% Off)"}</span>
               <DirectionalIcon icon={ArrowRight} locale={locale} className="w-4 h-4" />
+            </Link>
+            <Link
+              href="#apply"
+              className="inline-flex items-center gap-2 px-6 py-3.5 text-sm font-bold text-emerald-800 bg-emerald-50 border border-emerald-300 hover:bg-emerald-100 rounded-2xl transition-all"
+            >
+              <Sparkles className="w-4 h-4 text-emerald-600" />
+              <span>{isAr ? "طلب تجربة مجانية (3 أيام • 10 طلاب)" : "Get 3-Day Trial (10 Students)"}</span>
             </Link>
             <Link
               href="#features"
@@ -281,69 +319,23 @@ export default async function SchoolsPage({
         </div>
       </section>
 
-      {/* Pricing */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center space-y-4 mb-16">
+      {/* Pricing & Interactive Bundle Calculator */}
+      <section id="pricing" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 scroll-mt-28">
+        <div className="text-center space-y-4 mb-12">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-700 text-xs font-bold uppercase tracking-wider">
             {dict.schools.pricingTag}
           </div>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900">
-            {dict.schools.pricingTitle}
+            {isAr ? "باقات مخصصة للمؤسسات والمعلمين المستقلين" : "Bundles Tailored for Institutions & Freelance Educators"}
           </h2>
-          <p className="text-slate-600 max-w-2xl mx-auto">{dict.schools.pricingSubtitle}</p>
+          <p className="text-slate-600 max-w-2xl mx-auto">
+            {isAr
+              ? "3 باقات مرنة بحسب عدد المقاعد (Starter، Growth، Institution) مع تطبيق خصم 35% لجميع المؤسسات."
+              : "3 flexible tiers (Starter, Growth, Institution) based on enrolled seats with a 35% discount applied across all plans."}
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-          <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm flex flex-col justify-between">
-            <div>
-              <h3 className="text-2xl font-bold text-slate-900">{dict.schools.pricingTier1Title}</h3>
-              <p className="text-sm font-semibold text-brand-600 mt-1">
-                {dict.schools.pricingTier1Range}
-              </p>
-              <p className="text-xs text-slate-500 mt-3 leading-relaxed">
-                {dict.schools.pricingTier1Desc}
-              </p>
-            </div>
-          </div>
-
-          <div className="bg-gradient-to-b from-brand-900 to-indigo-950 text-white rounded-3xl p-8 shadow-xl shadow-brand-950/20 relative flex flex-col justify-between border border-brand-700">
-            <div className="absolute -top-3.5 start-1/2 -translate-x-1/2 bg-amber-400 text-slate-900 text-[11px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider shadow-sm">
-              {dict.schools.pricingTier2Badge}
-            </div>
-            <div>
-              <h3 className="text-2xl font-bold text-white">{dict.schools.pricingTier2Title}</h3>
-              <p className="text-sm font-semibold text-brand-300 mt-1">
-                {dict.schools.pricingTier2Range}
-              </p>
-              <p className="text-xs text-slate-300 mt-3 leading-relaxed">
-                {dict.schools.pricingTier2Desc}
-              </p>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm flex flex-col justify-between">
-            <div>
-              <h3 className="text-2xl font-bold text-slate-900">{dict.schools.pricingTier3Title}</h3>
-              <p className="text-sm font-semibold text-brand-600 mt-1">
-                {dict.schools.pricingTier3Range}
-              </p>
-              <p className="text-xs text-slate-500 mt-3 leading-relaxed">
-                {dict.schools.pricingTier3Desc}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="text-center mt-10">
-          <Link
-            href="#apply"
-            className="inline-flex items-center gap-2 px-8 py-4 text-sm font-bold text-white gradient-brand hover:opacity-95 rounded-2xl shadow-md shadow-brand-500/25 transition-all"
-          >
-            <span>{dict.schools.pricingCta}</span>
-            <DirectionalIcon icon={ArrowRight} locale={locale} className="w-4 h-4" />
-          </Link>
-          <p className="text-xs text-slate-500 mt-3">{dict.schools.pricingNote}</p>
-        </div>
+        <B2BBundleCalculator locale={locale} />
       </section>
 
       {/* Apply form */}
@@ -380,12 +372,13 @@ export default async function SchoolsPage({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  {dict.schools.applyOrgNameLabel}
+                  {isAr ? "اسم المؤسسة / اسم المعلم المستقل" : "Institution / Freelancer Name"}
                 </label>
                 <input
                   name="organizationName"
                   type="text"
                   required
+                  placeholder={isAr ? "مثال: مدرسة النور أو حلقة أ. حسن" : "e.g. Al-Noor Academy"}
                   className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 text-start"
                 />
               </div>
@@ -421,55 +414,59 @@ export default async function SchoolsPage({
                 <input
                   name="phone"
                   type="tel"
+                  placeholder="+31 6856 630 10"
                   className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 text-start"
                 />
               </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                {dict.schools.applyTypeLabel}
-              </label>
-              <select
-                name="institutionType"
-                required
-                defaultValue=""
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 text-start bg-white"
-              >
-                <option value="" disabled>
-                  {dict.schools.applyTypeLabel}
-                </option>
-                {SCHOOL_TYPES.map((type) => (
-                  <option key={type} value={type}>
-                    {typeLabels[type]}
-                  </option>
-                ))}
-              </select>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  {dict.schools.applyCountryLabel}
+                  {dict.schools.applyTypeLabel}
                 </label>
-                <input
-                  name="country"
-                  type="text"
+                <select
+                  name="institutionType"
                   required
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 text-start"
-                />
+                  defaultValue=""
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 text-start bg-white"
+                >
+                  <option value="" disabled>
+                    {dict.schools.applyTypeLabel}
+                  </option>
+                  {SCHOOL_TYPES.map((type) => (
+                    <option key={type} value={type}>
+                      {typeLabels[type]}
+                    </option>
+                  ))}
+                </select>
               </div>
+
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  {dict.schools.applyCityLabel}
+                  {isAr ? "الباقة المفضلة" : "Preferred Bundle"}
                 </label>
-                <input
-                  name="city"
-                  type="text"
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 text-start"
-                />
+                <select
+                  name="bundlePreference"
+                  defaultValue="GROWTH"
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 text-start bg-white"
+                >
+                  <option value="TRIAL_3_DAYS">{isAr ? "🌟 تجربة مجانية 3 أيام (10 طلاب كحد أقصى - مجاناً)" : "🌟 3-Day Free Trial (Max 10 students - 100% Free)"}</option>
+                  <option value="STARTER">{isAr ? "الأساسية Starter (حتى 25 طالباً - €129/ش)" : "Starter (Up to 25 students - €129/mo)"}</option>
+                  <option value="GROWTH">{isAr ? "النمو Growth (26 – 100 طالب - €324/ش)" : "Growth (26 – 100 students - €324/mo)"}</option>
+                  <option value="INSTITUTION">{isAr ? "المؤسسات Institution (100+ طالب - من €584/ش)" : "Institution (100+ students - from €584/mo)"}</option>
+                </select>
               </div>
             </div>
+
+            <CountryCitySelector
+              nameCountry="country"
+              nameCity="city"
+              required
+              locale={locale}
+              countryLabel={dict.schools.applyCountryLabel}
+              cityLabel={dict.schools.applyCityLabel}
+            />
 
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1.5">
@@ -480,6 +477,7 @@ export default async function SchoolsPage({
                 type="number"
                 min={1}
                 required
+                defaultValue={35}
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 text-start"
               />
             </div>

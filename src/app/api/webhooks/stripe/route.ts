@@ -40,7 +40,12 @@ export async function POST(request: NextRequest) {
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
-        if (session.mode === "subscription" && session.payment_status === "paid") {
+        // Immediate-charge checkouts have payment_status === "paid".
+        // Free trial checkouts (e.g. 1-day free trial) have payment_status === "no_payment_required".
+        if (
+          session.mode === "subscription" &&
+          (session.payment_status === "paid" || session.payment_status === "no_payment_required")
+        ) {
           await fulfillCheckoutSession(session);
         }
         break;

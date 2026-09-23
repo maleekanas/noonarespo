@@ -100,6 +100,39 @@ export class AcademicService {
 
     return await academicRepository.assignTeacherToClass(teacherId, classGroupId);
   }
+
+  /**
+   * Updates an existing class group.
+   */
+  async updateClassGroup(
+    id: string,
+    data: {
+      name?: string;
+      capacityMax?: number;
+      courseLevelId?: string;
+      classType?: ClassType;
+      schoolId?: string | null;
+    }
+  ): Promise<DomainClassGroup | null> {
+    if (data.capacityMax !== undefined && data.capacityMax <= 0) {
+      throw new Error("INVALID_CAPACITY: Class capacity must be greater than zero");
+    }
+    return academicRepository.updateClassGroup(id, data);
+  }
+
+  /**
+   * Deletes a class group.
+   */
+  async deleteClassGroup(id: string): Promise<boolean> {
+    return academicRepository.deleteClassGroup(id);
+  }
+
+  /**
+   * Unenrolls a student from a class group.
+   */
+  async unenrollStudent(studentId: string, classGroupId: string): Promise<boolean> {
+    return academicRepository.unenrollStudent(studentId, classGroupId);
+  }
 }
 
 export const academicService = new AcademicService();

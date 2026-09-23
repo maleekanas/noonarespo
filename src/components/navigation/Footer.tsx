@@ -10,12 +10,59 @@ interface FooterProps {
 export function Footer({ locale }: FooterProps) {
   const dict = getDictionary(locale);
 
-  // Every item in this column used to be plain, unlinked <li> text -- it
-  // looked like a nav list but nothing was clickable. These now route to the
-  // real program catalog page, deep-linked to the matching program via the
-  // same ?program= param the /programs page already reads (see
-  // ProgramsCatalogPage), and the list now covers all 7 programs instead of
-  // silently dropping Writing & Penmanship and Listening & Comprehension.
+  const localizedLabels: Record<string, {
+    teach: string;
+    inquiry: string;
+    childSafety: string;
+    faq: string;
+    contact: string;
+  }> = {
+    ar: {
+      teach: "التدريس بالأكاديمية (وظائف)",
+      inquiry: "طلب استشارة تسجيل",
+      childSafety: "ميثاق أمان الطفل (COPPA)",
+      faq: "الأسئلة الشائعة",
+      contact: "اتصل بنا",
+    },
+    en: {
+      teach: "Teach With Us (Careers)",
+      inquiry: "Enrollment Inquiry",
+      childSafety: "Child Safety & COPPA",
+      faq: "FAQ",
+      contact: "Contact Us",
+    },
+    nl: {
+      teach: "Geef les bij ons (Carrières)",
+      inquiry: "Aanmeldingsadvies",
+      childSafety: "Kindveiligheid (COPPA)",
+      faq: "Veelgestelde Vragen",
+      contact: "Contacteer Ons",
+    },
+    tr: {
+      teach: "Bizimle Öğretin (Kariyer)",
+      inquiry: "Kayıt Danışmanlığı",
+      childSafety: "Çocuk Güvenliği (COPPA)",
+      faq: "Sıkça Sorulan Sorular",
+      contact: "İletişime Geçin",
+    },
+    it: {
+      teach: "Insegna con Noi (Carriere)",
+      inquiry: "Richiesta di Iscrizione",
+      childSafety: "Sicurezza dei Minori (COPPA)",
+      faq: "Domande Frequenti (FAQ)",
+      contact: "Contattaci",
+    },
+    es: {
+      teach: "Enseña con Nosotros (Carreras)",
+      inquiry: "Consulta de Inscripción",
+      childSafety: "Seguridad Infantil (COPPA)",
+      faq: "Preguntas Frecuentes (FAQ)",
+      contact: "Contáctenos",
+    },
+  };
+
+  const labels = localizedLabels[locale] || localizedLabels.en;
+
   const programLinks = [
     { id: "prog-foundations", label: dict.programs.foundations },
     { id: "prog-reading", label: dict.programs.reading },
@@ -27,19 +74,19 @@ export function Footer({ locale }: FooterProps) {
   ];
 
   return (
-    <footer className="w-full bg-slate-900 text-slate-300 border-t border-slate-800 mt-20">
+    <footer className="w-full bg-slate-900 text-slate-300 border-t border-slate-800 mt-20" aria-label="Footer">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
         <div className="grid grid-cols-1 md:grid-cols-5 gap-10 mb-10">
           {/* Brand Info */}
           <div className="md:col-span-2 space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl gradient-brand flex items-center justify-center text-white">
+            <Link href={`/${locale}`} className="flex items-center gap-3 w-fit group">
+              <div className="w-10 h-10 rounded-xl gradient-brand flex items-center justify-center text-white shadow-md shadow-brand-500/20 group-hover:scale-105 transition-transform">
                 <GraduationCap className="w-6 h-6" />
               </div>
-              <span className="font-extrabold text-xl text-white">
+              <span className="font-extrabold text-xl text-white group-hover:text-brand-300 transition-colors">
                 {dict.common.siteName}
               </span>
-            </div>
+            </Link>
             <p className="text-sm text-slate-400 max-w-md leading-relaxed">
               {dict.common.siteTagline}. {dict.footer.platformDescription}
             </p>
@@ -68,7 +115,7 @@ export function Footer({ locale }: FooterProps) {
             </ul>
           </div>
 
-          {/* For Institutions */}
+          {/* For Institutions & Careers */}
           <div>
             <h4 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">
               {dict.footer.institutionsHeading}
@@ -77,6 +124,16 @@ export function Footer({ locale }: FooterProps) {
               <li>
                 <Link href={`/${locale}/schools`} className="hover:text-white transition-colors">
                   {dict.footer.institutionsOverview}
+                </Link>
+              </li>
+              <li>
+                <Link href={`/${locale}/teach`} className="hover:text-white transition-colors">
+                  {labels.teach}
+                </Link>
+              </li>
+              <li>
+                <Link href={`/${locale}/inquiry`} className="hover:text-white transition-colors">
+                  {labels.inquiry}
                 </Link>
               </li>
               <li>
@@ -98,6 +155,11 @@ export function Footer({ locale }: FooterProps) {
             </h4>
             <ul className="space-y-2.5 text-sm text-slate-400">
               <li>
+                <Link href={`/${locale}/child-safety`} className="hover:text-white transition-colors font-medium text-emerald-400">
+                  {labels.childSafety}
+                </Link>
+              </li>
+              <li>
                 <Link href={`/${locale}/privacy`} className="hover:text-white transition-colors">
                   {dict.footer.privacyPolicy}
                 </Link>
@@ -108,8 +170,13 @@ export function Footer({ locale }: FooterProps) {
                 </Link>
               </li>
               <li>
-                <Link href={`/${locale}/login`} className="hover:text-white transition-colors">
-                  {dict.common.login}
+                <Link href={`/${locale}/faq`} className="hover:text-white transition-colors">
+                  {labels.faq}
+                </Link>
+              </li>
+              <li>
+                <Link href={`/${locale}/contact`} className="hover:text-white transition-colors">
+                  {labels.contact}
                 </Link>
               </li>
             </ul>

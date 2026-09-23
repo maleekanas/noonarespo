@@ -1,7 +1,9 @@
 import React from "react";
 import Link from "next/link";
-import { getDictionary } from "@/lib/localization";
+import { getDictionary, isRtlLocale } from "@/lib/localization";
 import { DirectionalIcon } from "@/components/shared/DirectionalIcon";
+import { InteractivePlacementCalculator } from "@/components/marketing/InteractivePlacementCalculator";
+import { InteractivePhonemeSoundboard } from "@/components/marketing/InteractivePhonemeSoundboard";
 import {
   Sparkles,
   ArrowRight,
@@ -17,6 +19,7 @@ import {
   CheckCircle2,
   Flame,
 } from "lucide-react";
+import { HolisticLearningFramework } from "@/components/curriculum/HolisticLearningFramework";
 
 export default async function HomePage({
   params,
@@ -24,6 +27,7 @@ export default async function HomePage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
+  const isRtl = isRtlLocale(locale);
   const dict = getDictionary(locale);
 
   const programsList = [
@@ -223,6 +227,9 @@ export default async function HomePage({
         </div>
       </section>
 
+      {/* Holistic Learning Framework: Bloom, BIDE & STEAM */}
+      <HolisticLearningFramework locale={locale} isRtl={isRtl} />
+
       {/* Age Groups Section */}
       <section id="age-groups" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 scroll-mt-28">
         <div className="text-center space-y-4 mb-16">
@@ -265,6 +272,42 @@ export default async function HomePage({
             </div>
           ))}
         </div>
+      </section>
+
+      {/* Interactive Level Placement Diagnostic */}
+      <section id="placement-diagnostic" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 scroll-mt-28">
+        <div className="text-center space-y-4 mb-12">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold uppercase tracking-wider">
+            {isRtl ? "تحديد المستوى التفاعلي" : "Interactive Diagnostic"}
+          </div>
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900">
+            {isRtl ? "لا تعرف من أين تبدأ؟ حدد مستوى طفلك في 60 ثانية" : "Not Sure Where to Start? Find Your Child's Level in 60 Seconds"}
+          </h2>
+          <p className="text-slate-600 max-w-2xl mx-auto">
+            {isRtl
+              ? "أداة ذكية تحدد المستوى المعياري، المجموعة المصغرة المناسبة، وخارطة طريق تمتد لـ 12 أسبوعاً."
+              : "Our smart diagnostic matches your child to the right micro-cohort, CEFR benchmark, and a customized 12-week roadmap."}
+          </p>
+        </div>
+        <InteractivePlacementCalculator locale={locale} isRtl={isRtl} />
+      </section>
+
+      {/* Interactive Phoneme & Makharij Soundboard */}
+      <section id="soundboard" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 scroll-mt-28">
+        <div className="text-center space-y-4 mb-12">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-700 text-xs font-bold uppercase tracking-wider">
+            {isRtl ? "فصاحة النطق والتجويد" : "Authentic Pronunciation"}
+          </div>
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900">
+            {isRtl ? "مخارج الحروف الفصيحة: تجربة تفاعلية مباشرة" : "The Art of Arabic Makharij: Interactive Soundboard"}
+          </h2>
+          <p className="text-slate-600 max-w-2xl mx-auto">
+            {isRtl
+              ? "استمع لأصوات الحروف العربية المميزة، واكتشف كيف يتقن أطفال المهجر النطق الفصيح دون عجمة."
+              : "Hear the unique sounds that define Arabic, and discover how our certified native tutors help diaspora kids pronounce them with pure native confidence."}
+          </p>
+        </div>
+        <InteractivePhonemeSoundboard locale={locale} isRtl={isRtl} />
       </section>
 
       {/* Pricing & Plan Preview */}

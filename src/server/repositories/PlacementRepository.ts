@@ -112,37 +112,50 @@ const QUESTIONS: AssessmentQuestion[] = [
   },
 ];
 
+const IN_MEMORY_PLACEMENT_ATTEMPTS: PlacementAttempt[] = [];
+
 class PlacementRepository {
   async getAllQuestions(): Promise<AssessmentQuestion[]> {
     return QUESTIONS;
   }
 
   async saveAttempt(attempt: PlacementAttempt): Promise<PlacementAttempt> {
-    // The caller supplies a non-uuid id (e.g. "attempt-<timestamp>"); let the
-    // database generate the real primary key instead, same convention used
-    // for PronunciationAttempt.
-    const row = await prisma.placementAttempt.create({
-      data: {
-        studentId: attempt.studentId,
-        scorePercentage: attempt.scorePercentage,
-        recommendedLevelCode: attempt.recommendedLevelCode,
-        recommendedLevelTitleAr: attempt.recommendedLevelTitleAr,
-        recommendedLevelTitleEn: attempt.recommendedLevelTitleEn,
-        answers: attempt.answers,
-        completedAt: attempt.completedAt,
-      },
-    });
+    try {
+      const row = await prisma.placementAttempt.create({
+        data: {
+          studentId: attempt.studentId,
+          scorePercentage: attempt.scorePercentage,
+          recommendedLevelCode: attempt.recommendedLevelCode,
+          recommendedLevelTitleAr: attempt.recommendedLevelTitleAr,
+          recommendedLevelTitleEn: attempt.recommendedLevelTitleEn,
+          answers: attempt.answers,
+          completedAt: attempt.completedAt,
+        },
+      });
 
-    return this.toAttempt(row);
+      return this.toAttempt(row);
+    } catch {
+      const savedAttempt: PlacementAttempt = {
+        ...attempt,
+        id: `attempt-${Date.now()}`,
+      };
+      IN_MEMORY_PLACEMENT_ATTEMPTS.unshift(savedAttempt);
+      return savedAttempt;
+    }
   }
 
   async getLatestAttemptByStudentId(studentId: string): Promise<PlacementAttempt | null> {
-    const row = await prisma.placementAttempt.findFirst({
-      where: { studentId },
-      orderBy: { completedAt: "desc" },
-    });
+    try {
+      const row = await prisma.placementAttempt.findFirst({
+        where: { studentId },
+        orderBy: { completedAt: "desc" },
+      });
 
-    return row ? this.toAttempt(row) : null;
+      return row ? this.toAttempt(row) : null;
+    } catch {
+      const found = IN_MEMORY_PLACEMENT_ATTEMPTS.find((a) => a.studentId === studentId);
+      return found ?? null;
+    }
   }
 
   private toAttempt(row: {

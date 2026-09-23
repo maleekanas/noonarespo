@@ -1,19 +1,24 @@
 import React from "react";
 import Link from "next/link";
-import { ArrowRight, Building2, ShieldCheck } from "lucide-react";
+import { revalidatePath } from "next/cache";
+import { ArrowRight, Building2, ShieldCheck, PlusCircle, CheckCircle2, Sliders, Trash2, Power } from "lucide-react";
 import { schoolService } from "@/server/services/SchoolService";
 import { administrationService } from "@/server/services/AdministrationService";
 import { SchoolManagementClient } from "@/components/admin/SchoolManagementClient";
 import { getDictionary } from "@/lib/localization";
 import { requireAdminSession } from "@/lib/auth/currentUser";
+import { InstitutionType, BundleTier } from "@/server/repositories/SchoolRepository";
 
 export default async function AdminSchoolsPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ locale: string }>;
+  searchParams: Promise<{ saved?: string; updated?: string; toggled?: string }>;
 }) {
   const { locale } = await params;
-  await requireAdminSession(locale);
+  const { saved, updated, toggled } = await searchParams;
+  const adminSession = await requireAdminSession(locale);
   const isAr = locale === "ar";
   const dict = getDictionary(locale);
   const sc = dict.adminSchools;
@@ -37,13 +42,13 @@ export default async function AdminSchoolsPage({
     email?: string;
   }) {
     "use server";
-    const adminSession = await requireAdminSession(locale);
+    const admin = await requireAdminSession(locale);
     const account = await schoolService.createSchoolAdmin(params);
 
     await administrationService.recordAuditLog({
       category: "USER_MANAGEMENT",
       action: "SCHOOL_ADMIN_CREATED",
-      actor: adminSession,
+      actor: admin,
       targetEntityId: params.schoolId,
       targetEntityType: "PartnerSchool",
       diffSummary: `إنشاء حساب مدير مؤسسة جديد [${account.email}] لمؤسسة [${params.schoolId}]`,
@@ -52,10 +57,102 @@ export default async function AdminSchoolsPage({
     return account;
   }
 
+  // Server Action: Register New Partner School
+  async function handleCreateSchool(formData: FormData) {
+    "use server";
+    const admin = await requireAdminSession(locale);
+    const nameAr = formData.get("nameAr")?.toString().trim() || "";
+    const nameEn = formData.get("nameEn")?.toString().trim() || nameAr;
+    const type = (formData.get("type")?.toString() || "PRIVATE_INSTITUTE") as InstitutionType;
+    const country = formData.get("country")?.toString().trim() || "Saudi Arabia";
+    const city = formData.get("city")?.toString().trim() || "Riyadh";
+    const bundleTier = (formData.get("bundleTier")?.toString() || "STARTER") as BundleTier;
+    const licenseSeatsTotal = parseInt(formData.get("licenseSeatsTotal")?.toString() || "25", 10);
+    const contactPerson = formData.get("contactPerson")?.toString().trim() || "مدير المؤسسة";
+    const contactEmail = formData.get("contactEmail")?.toString().trim() || "school@example.com";
+
+    if (!nameAr) return;
+
+    const newSchool = await schoolService.createSchool({
+      nameAr,
+      nameEn,
+      type,
+      country,
+      city,
+      bundleTier,
+      licenseSeatsTotal,
+      contactPerson,
+      contactEmail,
+    });
+
+    await administrationService.recordAuditLog({
+      category: "USER_MANAGEMENT",
+      action: "REGISTER_PARTNER_SCHOOL",
+      actor: admin,
+      targetEntityId: newSchool.id,
+      targetEntityType: "PartnerSchool",
+      diffSummary: `تسجيل مؤسسة جديدة: ${nameAr} (${type}, ${bundleTier}, ${licenseSeatsTotal} مقعد)`,
+    });
+
+    revalidatePath(`/${locale}/admin/schools`);
+    revalidatePath(`/${locale}/schools`);
+  }
+
+  // Server Action: Update School Tier & Seats
+  async function handleUpdateSchoolTier(formData: FormData) {
+    "use server";
+    const admin = await requireAdminSession(locale);
+    const schoolId = formData.get("schoolId")?.toString();
+    const bundleTier = formData.get("bundleTier")?.toString() as BundleTier | undefined;
+    const licenseSeatsTotal = formData.get("licenseSeatsTotal")
+      ? parseInt(formData.get("licenseSeatsTotal")!.toString(), 10)
+      : undefined;
+
+    if (!schoolId) return;
+
+    await schoolService.updateSchool(schoolId, {
+      bundleTier,
+      licenseSeatsTotal,
+    });
+
+    await administrationService.recordAuditLog({
+      category: "USER_MANAGEMENT",
+      action: "UPDATE_SCHOOL_TIER_SEATS",
+      actor: admin,
+      targetEntityId: schoolId,
+      targetEntityType: "PartnerSchool",
+      diffSummary: `تحديث باقة ومقاعد المؤسسة [${schoolId}] إلى [${bundleTier}, ${licenseSeatsTotal} مقعد]`,
+    });
+
+    revalidatePath(`/${locale}/admin/schools`);
+    revalidatePath(`/${locale}/school-admin`);
+  }
+
+  // Server Action: Toggle School Active
+  async function handleToggleSchool(formData: FormData) {
+    "use server";
+    const admin = await requireAdminSession(locale);
+    const schoolId = formData.get("schoolId")?.toString();
+    if (!schoolId) return;
+
+    const updated = await schoolService.toggleSchoolActive(schoolId);
+
+    await administrationService.recordAuditLog({
+      category: "USER_MANAGEMENT",
+      action: "TOGGLE_SCHOOL_STATUS",
+      actor: admin,
+      targetEntityId: schoolId,
+      targetEntityType: "PartnerSchool",
+      diffSummary: `تغيير حالة تعاقد المؤسسة [${schoolId}] إلى [${updated?.contractStatus}]`,
+    });
+
+    revalidatePath(`/${locale}/admin/schools`);
+  }
+
   return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl">
+    <div className="container mx-auto px-4 py-8 max-w-7xl space-y-8">
       {/* Breadcrumb & Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 text-sm text-slate-500 mb-1">
             <Link href={`/${locale}/admin`} className="hover:text-brand-600 flex items-center gap-1">
@@ -84,6 +181,153 @@ export default async function AdminSchoolsPage({
           </div>
         </div>
       </div>
+
+      {/* New Partner School Registration Form */}
+      <details className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden group">
+        <summary className="p-6 cursor-pointer flex items-center justify-between font-extrabold text-slate-900 text-base select-none hover:bg-slate-50 transition-colors">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-700 flex items-center justify-center">
+              <PlusCircle className="w-5 h-5" />
+            </div>
+            <div>
+              <span>{isAr ? "تسجيل مدرسة أو معهد أو معلم مستقل جديد (B2B Partner)" : "Register New B2B Partner School / Co-Op"}</span>
+              <p className="text-xs text-slate-500 font-normal mt-0.5">
+                {isAr
+                  ? "إنشاء كيان مؤسسي جديد وتحديد نوعه والمدينة وباقة الاشتراك وعدد المقاعد المرخصة"
+                  : "Create new institutional entity, configure bundle tier, and allocate licensed seats"}
+              </p>
+            </div>
+          </div>
+          <span className="px-3.5 py-1.5 rounded-xl bg-indigo-600 text-white text-xs font-bold shadow-sm">
+            {isAr ? "+ تسجيل مؤسسة جديدة" : "+ Register School"}
+          </span>
+        </summary>
+
+        <form action={handleCreateSchool} className="p-6 pt-0 border-t border-slate-100 space-y-4 text-xs mt-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">
+                {isAr ? "اسم المؤسسة (بالعربية)" : "Institution Name (Arabic)"}
+              </label>
+              <input
+                name="nameAr"
+                required
+                placeholder="مثال: أكاديمية النور الإسلامية"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">
+                {isAr ? "اسم المؤسسة (بالإنجليزية)" : "Institution Name (English)"}
+              </label>
+              <input
+                name="nameEn"
+                placeholder="Al-Noor Islamic Academy"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">
+                {isAr ? "نوع الكيان المؤسسي" : "Institution Type"}
+              </label>
+              <select
+                name="type"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-500 bg-white"
+              >
+                <option value="ISLAMIC_SCHOOL">{isAr ? "مدرسة إسلامية نظامية" : "Islamic School"}</option>
+                <option value="PRIVATE_INSTITUTE">{isAr ? "معهد لغات خاص" : "Private Language Institute"}</option>
+                <option value="COMMUNITY_CENTER">{isAr ? "مركز إسلامي / مجتمعي" : "Community Center"}</option>
+                <option value="HOMESCHOOL_COOP">{isAr ? "مجموعة تعليم منزلي (Co-Op)" : "Homeschool Co-Op"}</option>
+                <option value="FREELANCER_TEACHER">{isAr ? "معلم مستقل / حلقة فردية" : "Freelance Teacher / Studio"}</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">
+                {isAr ? "الدولة" : "Country"}
+              </label>
+              <input
+                name="country"
+                defaultValue="Saudi Arabia"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">
+                {isAr ? "المدينة" : "City"}
+              </label>
+              <input
+                name="city"
+                defaultValue="Riyadh"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">
+                {isAr ? "باقة الاشتراك المؤسسي" : "Bundle Tier"}
+              </label>
+              <select
+                name="bundleTier"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-500 bg-white"
+              >
+                <option value="STARTER">{isAr ? "الباقة الأساسية (STARTER - حتى 25 مقعداً)" : "Starter (Up to 25 seats)"}</option>
+                <option value="GROWTH">{isAr ? "باقة النمو (GROWTH - حتى 100 مقعد)" : "Growth (Up to 100 seats)"}</option>
+                <option value="INSTITUTION">{isAr ? "باقة المؤسسات (INSTITUTION - 100+ مقعد)" : "Institution (100+ seats)"}</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">
+                {isAr ? "إجمالي المقاعد المرخصة" : "Total Licensed Seats"}
+              </label>
+              <input
+                name="licenseSeatsTotal"
+                type="number"
+                min={5}
+                max={5000}
+                defaultValue={25}
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">
+                {isAr ? "اسم مسؤول التواصل" : "Contact Person"}
+              </label>
+              <input
+                name="contactPerson"
+                required
+                placeholder="أ/ عبد الله المنصور"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">
+                {isAr ? "البريد الإلكتروني للتواصل" : "Contact Email"}
+              </label>
+              <input
+                name="contactEmail"
+                type="email"
+                required
+                placeholder="admin@alnoor.edu"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            className="w-full sm:w-auto py-2.5 px-6 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md transition-all cursor-pointer"
+          >
+            {isAr ? "تسجيل واعتماد المؤسسة في المنظومة 🏫" : "Register & Confirm Partner School"}
+          </button>
+        </form>
+      </details>
 
       {/* Main School Management Hub */}
       <SchoolManagementClient

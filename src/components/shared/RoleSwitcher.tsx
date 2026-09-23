@@ -168,12 +168,28 @@ export function RoleSwitcher() {
       badgeColor: "bg-indigo-100 text-indigo-800",
     },
     {
+      role: "SCHOOL_ADMIN",
+      name: currentLocale === "ar" ? "مدير مدرسة / مؤسسة شريكة" : "School / Institutional Admin",
+      desc: currentLocale === "ar" ? "إدارة القوائم، الفصول وتقارير الحضور" : "Roster, Classes & Attendance Reports",
+      path: `/${currentLocale}/school-admin`,
+      icon: <Building2 className="w-4 h-4 text-purple-600" />,
+      badgeColor: "bg-purple-100 text-purple-800",
+    },
+    {
       role: "INTEGRATIONS",
       name: rs.integrationsName,
       desc: rs.integrationsDesc,
       path: `/${currentLocale}/admin/integrations`,
       icon: <Wrench className="w-4 h-4 text-indigo-600" />,
       badgeColor: "bg-indigo-100 text-indigo-800",
+    },
+    {
+      role: "SUPPORT_AGENT",
+      name: currentLocale === "ar" ? "وكيل الدعم الفني" : "Support Agent",
+      desc: currentLocale === "ar" ? "تشخيص الحسابات والاستفسارات" : "Diagnostics & Admissions Inbox",
+      path: `/${currentLocale}/support`,
+      icon: <Shield className="w-4 h-4 text-cyan-600" />,
+      badgeColor: "bg-cyan-100 text-cyan-800",
     },
   ];
 

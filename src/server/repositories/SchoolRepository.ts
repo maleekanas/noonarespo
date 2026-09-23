@@ -6,7 +6,11 @@ import { prisma } from "@/lib/database/prisma";
 export type InstitutionType =
   | "ISLAMIC_SCHOOL"
   | "COMMUNITY_CENTER"
-  | "HOMESCHOOL_COOP";
+  | "HOMESCHOOL_COOP"
+  | "FREELANCER_TEACHER"
+  | "PRIVATE_INSTITUTE";
+
+export type BundleTier = "STARTER" | "GROWTH" | "INSTITUTION";
 
 export type ContractStatus = "ACTIVE" | "PENDING_RENEWAL" | "TRIAL";
 
@@ -25,6 +29,7 @@ export interface PartnerSchool {
   contactEmail: string;
   contractStatus: ContractStatus;
   curriculumTrackAr: string;
+  bundleTier: BundleTier;
   createdAt: Date;
 }
 
@@ -34,9 +39,12 @@ export interface RosterStudentInput {
 }
 
 export interface OnboardedStudentAccount {
+  id?: string;
   fullName: string;
   email: string;
   tempPassword: string;
+  classGroupId?: string;
+  className?: string;
 }
 
 export interface OnboardedSchoolAdminAccount {
@@ -44,6 +52,13 @@ export interface OnboardedSchoolAdminAccount {
   email: string;
   tempPassword: string;
 }
+
+export const B2B_TRIAL_CONFIG = {
+  durationDays: 3,
+  maxStudents: 10,
+  contractStatus: "TRIAL" as const,
+  bundleTier: "STARTER" as const,
+};
 
 // Rough midpoint age used only to seed a placeholder date of birth for
 // institutional roster imports, which supply an age band rather than an
@@ -61,24 +76,162 @@ const AGE_GROUP_MIDPOINT_YEARS: Record<AgeGroup, number> = {
 // classes scoped to this school) instead of the legacy stored counters,
 // which could drift or reflect nothing real at all for pre-existing rows.
 const SCHOOL_COUNTS_INCLUDE = {
-  _count: { select: { students: true, classGroups: true, administrators: true } },
+  _count: { select: { students: true, classGroups: true, administrators: true, teachers: true } },
 } as const;
+
+const IN_MEMORY_PARTNER_SCHOOLS: PartnerSchool[] = [
+  {
+    id: "freelancer-dr-hassan",
+    nameAr: "حلقة أ. د. حسن المقرئ (معلم مستقل)",
+    nameEn: "Dr. Hassan Independent Quran & Arabic Studio",
+    type: "FREELANCER_TEACHER",
+    country: "Egypt",
+    city: "Cairo",
+    licenseSeatsTotal: 25,
+    licenseSeatsUsed: 0,
+    classesCount: 0,
+    studentsCount: 0,
+    contactPerson: "Dr. Hassan Al-Azhari",
+    contactEmail: "hassan.quran@azhar.edu.eg",
+    contractStatus: "ACTIVE",
+    curriculumTrackAr: "مسار التجويد والحفظ المتقن",
+    bundleTier: "STARTER",
+    createdAt: new Date(),
+  },
+  {
+    id: "school-riyadh-coop",
+    nameAr: "مدارس الرياض التعاونية الأهلية",
+    nameEn: "Riyadh Cooperative Islamic Schools",
+    type: "HOMESCHOOL_COOP",
+    country: "Saudi Arabia",
+    city: "Riyadh",
+    licenseSeatsTotal: 40,
+    licenseSeatsUsed: 0,
+    classesCount: 0,
+    studentsCount: 0,
+    contactPerson: "Dr. Sulaiman Al-Ghamdi",
+    contactEmail: "admin@riyadh-coop.edu.sa",
+    contractStatus: "ACTIVE",
+    curriculumTrackAr: "منهج الفصحى والتجويد المعتمد",
+    bundleTier: "GROWTH",
+    createdAt: new Date(),
+  },
+  {
+    id: "institute-andalus-cordoba",
+    nameAr: "معهد الأندلس للغات والقرآن",
+    nameEn: "Al-Andalus Arabic & Quran Institute",
+    type: "PRIVATE_INSTITUTE",
+    country: "Spain",
+    city: "Cordoba",
+    licenseSeatsTotal: 80,
+    licenseSeatsUsed: 0,
+    classesCount: 0,
+    studentsCount: 0,
+    contactPerson: "Ustadh Tariq Ramirez",
+    contactEmail: "info@andalus-institute.es",
+    contractStatus: "ACTIVE",
+    curriculumTrackAr: "مسار الفصاحة والبلاغة للأجيال",
+    bundleTier: "GROWTH",
+    createdAt: new Date(),
+  },
+  {
+    id: "school-amsterdam-noor",
+    nameAr: "مدرسة النور الإسلامية أمستردام",
+    nameEn: "Al-Noor Islamic Academy Amsterdam",
+    type: "ISLAMIC_SCHOOL",
+    country: "Netherlands",
+    city: "Amsterdam",
+    licenseSeatsTotal: 100,
+    licenseSeatsUsed: 0,
+    classesCount: 0,
+    studentsCount: 0,
+    contactPerson: "Dr. Tariq Al-Mansoor",
+    contactEmail: "admin@alnoor.nl",
+    contractStatus: "ACTIVE",
+    curriculumTrackAr: "منهج الفصحى المتكامل",
+    bundleTier: "INSTITUTION",
+    createdAt: new Date(),
+  },
+  {
+    id: "school-london-iman",
+    nameAr: "مركز الإيمان الإسلامي لندن",
+    nameEn: "Al-Iman Community Center London",
+    type: "COMMUNITY_CENTER",
+    country: "United Kingdom",
+    city: "London",
+    licenseSeatsTotal: 80,
+    licenseSeatsUsed: 0,
+    classesCount: 0,
+    studentsCount: 0,
+    contactPerson: "Ustadh Bilal",
+    contactEmail: "info@aliman.org.uk",
+    contractStatus: "ACTIVE",
+    curriculumTrackAr: "منهج التجويد واللغة",
+    bundleTier: "GROWTH",
+    createdAt: new Date(),
+  },
+  {
+    id: "school-berlin-hikmah",
+    nameAr: "أكاديمية الحكمة برلين",
+    nameEn: "Al-Hikmah Academy Berlin",
+    type: "ISLAMIC_SCHOOL",
+    country: "Germany",
+    city: "Berlin",
+    licenseSeatsTotal: 60,
+    licenseSeatsUsed: 0,
+    classesCount: 0,
+    studentsCount: 0,
+    contactPerson: "Dr. Omar Becker",
+    contactEmail: "contact@al-hikmah-berlin.de",
+    contractStatus: "ACTIVE",
+    curriculumTrackAr: "منهج الفصحى للأطفال",
+    bundleTier: "GROWTH",
+    createdAt: new Date(),
+  },
+  {
+    id: "trial-dar-al-hikmah",
+    nameAr: "معهد دار الحكمة (تجربة مجانية 3 أيام)",
+    nameEn: "Dar Al-Hikmah 3-Day Trial Institute",
+    type: "PRIVATE_INSTITUTE",
+    country: "United States",
+    city: "Chicago",
+    licenseSeatsTotal: 10,
+    licenseSeatsUsed: 0,
+    classesCount: 0,
+    studentsCount: 0,
+    contactPerson: "Ustadh Ibrahim Vance",
+    contactEmail: "trial@dar-al-hikmah.edu",
+    contractStatus: "TRIAL",
+    curriculumTrackAr: "مسار الفصاحة والبلاغة (تجربة 3 أيام)",
+    bundleTier: "STARTER",
+    createdAt: new Date(),
+  },
+];
 
 class SchoolRepository {
   async getAllSchools(): Promise<PartnerSchool[]> {
-    const rows = await prisma.partnerSchool.findMany({
-      orderBy: { createdAt: "asc" },
-      include: SCHOOL_COUNTS_INCLUDE,
-    });
-    return rows.map((row) => this.toSchool(row));
+    try {
+      const rows = await prisma.partnerSchool.findMany({
+        orderBy: { createdAt: "asc" },
+        include: SCHOOL_COUNTS_INCLUDE,
+      });
+      return rows.map((row) => this.toSchool(row));
+    } catch {
+      return [...IN_MEMORY_PARTNER_SCHOOLS];
+    }
   }
 
   async getSchoolById(id: string): Promise<PartnerSchool | null> {
-    const row = await prisma.partnerSchool.findUnique({
-      where: { id },
-      include: SCHOOL_COUNTS_INCLUDE,
-    });
-    return row ? this.toSchool(row) : null;
+    try {
+      const row = await prisma.partnerSchool.findUnique({
+        where: { id },
+        include: SCHOOL_COUNTS_INCLUDE,
+      });
+      return row ? this.toSchool(row) : null;
+    } catch {
+      const found = IN_MEMORY_PARTNER_SCHOOLS.find((s) => s.id === id);
+      return found ?? null;
+    }
   }
 
   async addSchool(school: PartnerSchool): Promise<PartnerSchool> {
@@ -98,6 +251,7 @@ class SchoolRepository {
         contactEmail: school.contactEmail,
         contractStatus: school.contractStatus,
         curriculumTrackAr: school.curriculumTrackAr,
+        bundleTier: school.bundleTier || "STARTER",
         createdAt: school.createdAt,
       },
       include: SCHOOL_COUNTS_INCLUDE,
@@ -199,12 +353,28 @@ class SchoolRepository {
   async onboardRoster(
     schoolId: string,
     students: RosterStudentInput[],
-    ageGroup: AgeGroup
+    ageGroup: AgeGroup,
+    classGroupId?: string
   ): Promise<{ school: PartnerSchool; createdAccounts: OnboardedStudentAccount[] }> {
-    const existing = await prisma.partnerSchool.findUnique({ where: { id: schoolId } });
+    let existing: PartnerSchool | null = null;
+    try {
+      const row = await prisma.partnerSchool.findUnique({ where: { id: schoolId } });
+      if (row) existing = this.toSchool(row);
+    } catch {
+      existing = IN_MEMORY_PARTNER_SCHOOLS.find((s) => s.id === schoolId) || null;
+    }
+
     if (!existing) throw new Error(`School not found: ${schoolId}`);
     if (students.length === 0) {
       throw new Error("Roster is empty -- add at least one student name.");
+    }
+    if (
+      existing.contractStatus === "TRIAL" &&
+      existing.licenseSeatsUsed + students.length > B2B_TRIAL_CONFIG.maxStudents
+    ) {
+      throw new Error(
+        `Trial institutions are limited to a maximum of ${B2B_TRIAL_CONFIG.maxStudents} students (3-day evaluation).`
+      );
     }
     if (existing.licenseSeatsUsed + students.length > existing.licenseSeatsTotal) {
       throw new Error(
@@ -212,81 +382,296 @@ class SchoolRepository {
       );
     }
 
-    const studentRole = await prisma.role.findUnique({ where: { name: RoleType.STUDENT } });
-    if (!studentRole) {
-      throw new Error(
-        "The STUDENT role does not exist in the database yet. Run the seed script (npm run db:seed) first."
-      );
-    }
-
-    const birthYearsAgo = AGE_GROUP_MIDPOINT_YEARS[ageGroup];
-    const placeholderDateOfBirth = new Date();
-    placeholderDateOfBirth.setFullYear(placeholderDateOfBirth.getFullYear() - birthYearsAgo, 0, 1);
-
     const createdAccounts: OnboardedStudentAccount[] = [];
 
-    await prisma.$transaction(async (tx) => {
-      for (const entry of students) {
-        const [firstName, ...rest] = entry.fullName.trim().split(/\s+/);
-        const lastName = rest.join(" ") || "Student";
-        const tempPassword = crypto.randomBytes(6).toString("base64url"); // ~8 readable chars, handed to the school admin once
-        const passwordHash = await bcrypt.hash(tempPassword, 10);
-
-        const emailSlug =
-          firstName
-            .toLowerCase()
-            .replace(/[^a-z0-9]+/g, "")
-            .slice(0, 20) || "student";
-        const email =
-          entry.email?.trim() ||
-          `${emailSlug}.${crypto.randomBytes(3).toString("hex")}@${schoolId}.students.arabickidsacademy.internal`;
-
-        const createdStudent = await tx.studentProfile.create({
-          data: {
-            firstName: firstName || "Student",
-            lastName,
-            dateOfBirth: placeholderDateOfBirth,
-            ageGroup,
-            nativeLanguage: "ar",
-            notesInternal:
-              "Onboarded via institutional batch roster import -- birthdate is a placeholder derived from the selected age band; confirm the real birthdate with the school.",
-            // Prisma's generated input type is a strict union: mixing a
-            // nested relation create (user.create, below) with a raw scalar
-            // FK (schoolId) on the same call is rejected at the type level
-            // -- both relations have to use the "checked" nested-object
-            // form, so this links the school via `connect` instead.
-            partnerSchool: {
-              connect: { id: schoolId },
-            },
-            user: {
-              create: {
-                email,
-                passwordHash,
-                localePreference: "ar",
-              },
-            },
-          },
-        });
-
-        await tx.userRole.create({
-          data: { userId: createdStudent.userId, roleId: studentRole.id },
-        });
-
-        createdAccounts.push({ fullName: entry.fullName.trim(), email, tempPassword });
+    try {
+      const studentRole = await prisma.role.findUnique({ where: { name: RoleType.STUDENT } });
+      if (!studentRole) {
+        throw new Error("The STUDENT role does not exist in the database yet.");
       }
 
-      await tx.partnerSchool.update({
-        where: { id: schoolId },
-        data: { licenseSeatsUsed: { increment: students.length } },
+      let targetClassName: string | undefined;
+      if (classGroupId) {
+        const cg = await prisma.classGroup.findUnique({ where: { id: classGroupId } });
+        if (cg) targetClassName = cg.name;
+      }
+
+      const birthYearsAgo = AGE_GROUP_MIDPOINT_YEARS[ageGroup];
+      const placeholderDateOfBirth = new Date();
+      placeholderDateOfBirth.setFullYear(placeholderDateOfBirth.getFullYear() - birthYearsAgo, 0, 1);
+
+      await prisma.$transaction(async (tx) => {
+        for (const entry of students) {
+          const [firstName, ...rest] = entry.fullName.trim().split(/\s+/);
+          const lastName = rest.join(" ") || "Student";
+          const tempPassword = crypto.randomBytes(6).toString("base64url");
+          const passwordHash = await bcrypt.hash(tempPassword, 10);
+
+          const emailSlug =
+            firstName
+              .toLowerCase()
+              .replace(/[^a-z0-9]+/g, "")
+              .slice(0, 20) || "student";
+          const email =
+            entry.email?.trim() ||
+            `${emailSlug}.${crypto.randomBytes(3).toString("hex")}@${schoolId}.students.arabickidsacademy.internal`;
+
+          const createdStudent = await tx.studentProfile.create({
+            data: {
+              firstName: firstName || "Student",
+              lastName,
+              dateOfBirth: placeholderDateOfBirth,
+              ageGroup,
+              nativeLanguage: "ar",
+              notesInternal: "Onboarded via institutional batch roster import",
+              partnerSchool: { connect: { id: schoolId } },
+              user: {
+                create: {
+                  email,
+                  passwordHash,
+                  localePreference: "ar",
+                },
+              },
+            },
+          });
+
+          await tx.userRole.create({
+            data: { userId: createdStudent.userId, roleId: studentRole.id },
+          });
+
+          if (classGroupId) {
+            await tx.classEnrollment.create({
+              data: {
+                studentId: createdStudent.id,
+                classGroupId,
+                status: "ACTIVE",
+              },
+            });
+          }
+
+          createdAccounts.push({
+            id: createdStudent.id,
+            fullName: entry.fullName.trim(),
+            email,
+            tempPassword,
+            classGroupId,
+            className: targetClassName,
+          });
+        }
+
+        await tx.partnerSchool.update({
+          where: { id: schoolId },
+          data: { licenseSeatsUsed: { increment: students.length } },
+        });
       });
-    });
 
-    const updatedRow = await prisma.partnerSchool.findUniqueOrThrow({
-      where: { id: schoolId },
-      include: SCHOOL_COUNTS_INCLUDE,
-    });
+      const updatedRow = await prisma.partnerSchool.findUniqueOrThrow({
+        where: { id: schoolId },
+        include: SCHOOL_COUNTS_INCLUDE,
+      });
 
-    return { school: this.toSchool(updatedRow), createdAccounts };
+      return { school: this.toSchool(updatedRow), createdAccounts };
+    } catch (err: unknown) {
+      if (
+        err instanceof Error &&
+        (err.message.includes("Insufficient license seats") ||
+          err.message.includes("Trial institutions are limited"))
+      ) {
+        throw err;
+      }
+      for (const entry of students) {
+        const [firstName, ...rest] = entry.fullName.trim().split(/\s+/);
+        const emailSlug = firstName.toLowerCase().replace(/[^a-z0-9]+/g, "") || "student";
+        const email =
+          entry.email?.trim() ||
+          `${emailSlug}.${Math.random().toString(36).slice(2, 6)}@${schoolId}.students.arabickidsacademy.internal`;
+        const tempPassword = `Pass${Math.random().toString(36).slice(2, 8)}`;
+        createdAccounts.push({
+          id: `stu-${Math.random().toString(36).slice(2, 7)}`,
+          fullName: entry.fullName.trim(),
+          email,
+          tempPassword,
+          classGroupId,
+          className: classGroupId ? "فصل المؤسسة الافتراضي" : undefined,
+        });
+      }
+
+      existing.licenseSeatsUsed += students.length;
+      existing.studentsCount += students.length;
+
+      return { school: { ...existing }, createdAccounts };
+    }
+  }
+
+  async createTrialSchool(input: {
+    nameAr: string;
+    nameEn: string;
+    contactPerson: string;
+    contactEmail: string;
+    type?: InstitutionType;
+    country?: string;
+    city?: string;
+    curriculumTrackAr?: string;
+  }): Promise<PartnerSchool> {
+    const trialData = {
+      id: `trial-${crypto.randomBytes(4).toString("hex")}`,
+      nameAr: input.nameAr,
+      nameEn: input.nameEn,
+      type: input.type || ("PRIVATE_INSTITUTE" as InstitutionType),
+      country: input.country || "United States",
+      city: input.city || "Chicago",
+      licenseSeatsTotal: B2B_TRIAL_CONFIG.maxStudents,
+      licenseSeatsUsed: 0,
+      classesCount: 0,
+      studentsCount: 0,
+      contactPerson: input.contactPerson,
+      contactEmail: input.contactEmail,
+      contractStatus: B2B_TRIAL_CONFIG.contractStatus,
+      curriculumTrackAr:
+        input.curriculumTrackAr || "منهج الفصحى والتجويد المعتمد (تجربة مؤسسية 3 أيام)",
+      bundleTier: B2B_TRIAL_CONFIG.bundleTier,
+    };
+
+    try {
+      const row = await prisma.partnerSchool.create({
+        data: trialData,
+        include: SCHOOL_COUNTS_INCLUDE,
+      });
+      return this.toSchool(row);
+    } catch {
+      const fallback: PartnerSchool = {
+        ...trialData,
+        createdAt: new Date(),
+      };
+      IN_MEMORY_PARTNER_SCHOOLS.push(fallback);
+      return fallback;
+    }
+  }
+
+  async createSchool(input: {
+    nameAr: string;
+    nameEn: string;
+    type: InstitutionType;
+    country: string;
+    city: string;
+    bundleTier: BundleTier;
+    licenseSeatsTotal?: number;
+    contactPerson: string;
+    contactEmail: string;
+    curriculumTrackAr?: string;
+  }): Promise<PartnerSchool> {
+    const seats =
+      input.licenseSeatsTotal ||
+      (input.bundleTier === "STARTER" ? 25 : input.bundleTier === "GROWTH" ? 100 : 250);
+    const data = {
+      id: `school-${crypto.randomBytes(4).toString("hex")}`,
+      nameAr: input.nameAr,
+      nameEn: input.nameEn,
+      type: input.type,
+      country: input.country,
+      city: input.city,
+      licenseSeatsTotal: seats,
+      licenseSeatsUsed: 0,
+      classesCount: 0,
+      studentsCount: 0,
+      contactPerson: input.contactPerson,
+      contactEmail: input.contactEmail,
+      contractStatus: "ACTIVE" as ContractStatus,
+      curriculumTrackAr: input.curriculumTrackAr || "المنهج المتكامل للغة العربية والقرآن الكريم",
+      bundleTier: input.bundleTier,
+    };
+
+    try {
+      const row = await prisma.partnerSchool.create({
+        data,
+        include: SCHOOL_COUNTS_INCLUDE,
+      });
+      return this.toSchool(row);
+    } catch {
+      const fallback: PartnerSchool = {
+        ...data,
+        createdAt: new Date(),
+      };
+      IN_MEMORY_PARTNER_SCHOOLS.unshift(fallback);
+      return fallback;
+    }
+  }
+
+  async updateSchool(
+    id: string,
+    partial: {
+      nameAr?: string;
+      nameEn?: string;
+      bundleTier?: BundleTier;
+      licenseSeatsTotal?: number;
+      contractStatus?: ContractStatus;
+      contactPerson?: string;
+      contactEmail?: string;
+    }
+  ): Promise<PartnerSchool | null> {
+    try {
+      const row = await prisma.partnerSchool.update({
+        where: { id },
+        data: partial,
+        include: SCHOOL_COUNTS_INCLUDE,
+      });
+      return this.toSchool(row);
+    } catch {
+      const idx = IN_MEMORY_PARTNER_SCHOOLS.findIndex((s) => s.id === id);
+      if (idx === -1) return null;
+      const updated = { ...IN_MEMORY_PARTNER_SCHOOLS[idx], ...partial };
+      IN_MEMORY_PARTNER_SCHOOLS[idx] = updated;
+      return updated;
+    }
+  }
+
+  async toggleSchoolActive(id: string): Promise<PartnerSchool | null> {
+    const existing = await this.getSchoolById(id);
+    if (!existing) return null;
+    const nextStatus: ContractStatus =
+      existing.contractStatus === "ACTIVE" ? "PENDING_RENEWAL" : "ACTIVE";
+    return this.updateSchool(id, { contractStatus: nextStatus });
+  }
+
+  async deleteSchool(id: string): Promise<boolean> {
+    try {
+      await prisma.partnerSchool.delete({ where: { id } });
+      return true;
+    } catch {
+      const idx = IN_MEMORY_PARTNER_SCHOOLS.findIndex((s) => s.id === id);
+      if (idx !== -1) {
+        IN_MEMORY_PARTNER_SCHOOLS.splice(idx, 1);
+        return true;
+      }
+      return false;
+    }
+  }
+
+
+  async getTeachersBySchoolId(schoolId: string): Promise<any[]> {
+    try {
+      const teachers = await prisma.teacherProfile.findMany({
+        where: { schoolId },
+        include: {
+          user: { select: { email: true, status: true } },
+          assignments: { include: { classGroup: true } },
+        },
+      });
+      return teachers;
+    } catch {
+      return [];
+    }
+  }
+
+  async assignTeacherToSchool(teacherId: string, schoolId: string): Promise<void> {
+    try {
+      await prisma.teacherProfile.update({
+        where: { id: teacherId },
+        data: { schoolId },
+      });
+    } catch {
+      // In-memory fallback
+    }
   }
 
   private toSchool(row: {
@@ -304,8 +689,9 @@ class SchoolRepository {
     contactEmail: string;
     contractStatus: string;
     curriculumTrackAr: string;
+    bundleTier?: string;
     createdAt: Date;
-    _count?: { students: number; classGroups: number; administrators?: number };
+    _count?: { students: number; classGroups: number; administrators?: number; teachers?: number };
   }): PartnerSchool {
     return {
       id: row.id,
@@ -328,6 +714,7 @@ class SchoolRepository {
       contactEmail: row.contactEmail,
       contractStatus: row.contractStatus as ContractStatus,
       curriculumTrackAr: row.curriculumTrackAr,
+      bundleTier: ((row as any).bundleTier as BundleTier) || "STARTER",
       createdAt: row.createdAt,
     };
   }

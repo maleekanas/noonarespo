@@ -9,6 +9,8 @@ import {
   DollarSign,
   Award,
   BadgeCheck,
+  UserPlus,
+  Trash2,
 } from "lucide-react";
 
 const EMPLOYMENT_TYPE_LABEL_AR: Record<EmploymentType, string> = {
@@ -28,6 +30,48 @@ export default async function AdminTeachersPage({
   const certifiedCount = teachers.filter((t) => t.isCertified).length;
   const certifiedPercentage =
     teachers.length > 0 ? Math.round((certifiedCount / teachers.length) * 100) : 0;
+
+  async function handleAddTeacher(formData: FormData) {
+    "use server";
+    const firstName = formData.get("firstName")?.toString().trim();
+    const lastName = formData.get("lastName")?.toString().trim();
+    const email = formData.get("email")?.toString().trim();
+    const qualifications = formData.get("qualifications")?.toString().trim() || "إجازة في القرآن الكريم واللغة العربية";
+    const experienceYears = parseInt(formData.get("experienceYears")?.toString() || "5", 10);
+    const rateDollars = parseFloat(formData.get("rateDollars")?.toString() || "30");
+    const employmentType = (formData.get("employmentType")?.toString() || "CONTRACT") as EmploymentType;
+    const isCertified = formData.get("isCertified")?.toString() === "true";
+
+    if (!firstName || !lastName || !email) return;
+
+    await administrationService.addTeacher(
+      {
+        email,
+        firstName,
+        lastName,
+        qualifications,
+        experienceYears,
+        hourlyRateMinorUnits: Math.round(rateDollars * 100),
+        employmentType,
+        isCertified,
+      },
+      adminSession
+    );
+
+    revalidatePath(`/${locale}/admin/teachers`);
+    revalidatePath(`/${locale}/admin/audit-logs`);
+  }
+
+  async function handleArchiveTeacher(formData: FormData) {
+    "use server";
+    const teacherId = formData.get("teacherId")?.toString();
+    if (!teacherId) return;
+
+    await administrationService.archiveTeacher(teacherId, adminSession);
+
+    revalidatePath(`/${locale}/admin/teachers`);
+    revalidatePath(`/${locale}/admin/audit-logs`);
+  }
 
   async function handleUpdateRate(formData: FormData) {
     "use server";
@@ -115,6 +159,122 @@ export default async function AdminTeachersPage({
           </div>
         </div>
       </div>
+
+      {/* Add New Teacher Form Section */}
+      <details className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden group">
+        <summary className="p-6 cursor-pointer flex items-center justify-between font-extrabold text-slate-900 text-base select-none hover:bg-slate-50 transition-colors">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center">
+              <UserPlus className="w-5 h-5" />
+            </div>
+            <div>
+              <span>إضافة معلم جديد واعتماده في الأكاديمية</span>
+              <p className="text-xs text-slate-500 font-normal mt-0.5">
+                إنشاء حساب معلم رسمي، تحديد أجر الساعة، ونوع التعاقد والشهادات
+              </p>
+            </div>
+          </div>
+          <span className="px-3 py-1.5 rounded-xl bg-emerald-600 text-white text-xs font-bold">
+            + إضافة معلم
+          </span>
+        </summary>
+
+        <form action={handleAddTeacher} className="p-6 pt-0 border-t border-slate-100 space-y-4 text-xs mt-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">الاسم الأول</label>
+              <input
+                name="firstName"
+                required
+                placeholder="مثال: يحيى"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-emerald-500"
+              />
+            </div>
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">اسم العائلة</label>
+              <input
+                name="lastName"
+                required
+                placeholder="مثال: الأنصاري"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-emerald-500"
+              />
+            </div>
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">البريد الإلكتروني</label>
+              <input
+                name="email"
+                type="email"
+                required
+                placeholder="teacher.yahya@arabickidsacademy.com"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-emerald-500 font-mono"
+              />
+            </div>
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">المؤهلات والإجازات</label>
+              <input
+                name="qualifications"
+                defaultValue="إجازة بالسند المتصل في القراءات العشر وليسانس لغة عربية"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-emerald-500"
+              />
+            </div>
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">سنوات الخبرة</label>
+              <input
+                name="experienceYears"
+                type="number"
+                min={1}
+                max={40}
+                defaultValue={6}
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-emerald-500"
+              />
+            </div>
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">أجر الساعة ($ USD)</label>
+              <input
+                name="rateDollars"
+                type="number"
+                min={15}
+                max={150}
+                defaultValue={30}
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-emerald-500 font-mono"
+              />
+            </div>
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">نوع التعاقد</label>
+              <select
+                name="employmentType"
+                defaultValue="CONTRACT"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-emerald-500 bg-white font-bold"
+              >
+                <option value="FULL_TIME">دوام كامل</option>
+                <option value="PART_TIME">دوام جزئي</option>
+                <option value="CONTRACT">بعقد تعاون</option>
+              </select>
+            </div>
+            <div className="flex items-center pt-6">
+              <label className="flex items-center gap-2 cursor-pointer font-bold text-slate-800">
+                <input
+                  type="checkbox"
+                  name="isCertified"
+                  value="true"
+                  defaultChecked
+                  className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500"
+                />
+                <span>معلم معتمد ومجاز رسمياً</span>
+              </label>
+            </div>
+          </div>
+
+          <div className="pt-2 flex justify-end">
+            <button
+              type="submit"
+              className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition-all"
+            >
+              حفظ واعتماد المعلم الجديد ✓
+            </button>
+          </div>
+        </form>
+      </details>
 
       {/* Teachers Directory */}
       <div className="space-y-6">
@@ -251,6 +411,18 @@ export default async function AdminTeachersPage({
                     }`}
                   >
                     {teacher.isActive ? "تعليق نشاط المعلم مؤقتاً ⏸" : "إعادة تنشيط المعلم للتدريس ▶"}
+                  </button>
+                </form>
+
+                <form action={handleArchiveTeacher} className="pt-1">
+                  <input type="hidden" name="teacherId" value={teacher.id} />
+                  <button
+                    type="submit"
+                    className="w-full py-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 text-[11px] font-bold transition-colors flex items-center justify-center gap-1"
+                    title="أرشفة سجل المعلم وإلغاء ظهوره في الدليل"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>أرشفة وحذف من التدريس النشط</span>
                   </button>
                 </form>
               </div>

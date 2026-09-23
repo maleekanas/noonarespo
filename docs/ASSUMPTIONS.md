@@ -42,3 +42,24 @@ This document tracks all explicit assumptions made during development based on `
 - **Primary**: Arabic (`ar`) with complete Right-to-Left (RTL) layout.
 - **Secondary**: English (`en`) with Left-to-Right (LTR).
 - **Target Expansions**: Dutch (`nl`), Turkish (`tr`), Italian (`it`), Spanish (`es`).
+
+## 6. Support Agent & Diagnostic Console
+- **Role Permissions**: Support agents have read-only diagnostic visibility across all user profiles (students, parents, teachers) and live/historical sessions to troubleshoot connectivity, audio, and attendance issues.
+- **Child Protection Boundaries**: Support agents cannot initiate direct messaging or tamper with student academic grades or assessment submissions.
+- **Audit Logging**: All support diagnostic queries and session inspections are recorded with actor ID, target ID, and timestamp in compliance with COPPA/GDPR-K.
+
+## 7. Marketing CRM & Referral Engine
+- **Multi-Adapter Support**: CRM leads (Contact inquiries, admissions consultation, teacher job applications) sync to external CRMs (HubSpot, GoHighLevel, Mailchimp) via typed adapters with graceful in-memory fallbacks when credentials are absent.
+- **Family Referral Program**: Parents can share unique referral codes (`REF-NAME-ID`) to invite other families. Successful enrollments award account credits to both the referrer and the referee.
+
+## 8. Multi-Format Assessment Engine
+- **Question Types**: 7 pedagogical question formats supported:
+  1. Multiple Choice Questions (MCQ)
+  2. True / False
+  3. Matching Pairs
+  4. Fill-in-the-Blank
+  5. Essay / Open Response
+  6. Audio Response (listening comprehension)
+  7. Voice Recording (pronunciation and recitation assessment)
+- **Auto-Grading & Manual Feedback**: Objective questions (MCQ, True/False, Matching, Fill-in-the-Blank) are evaluated automatically upon submission, while Essays and Voice Recordings are queued for teacher evaluation.
+

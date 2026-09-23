@@ -88,6 +88,39 @@ export class AssessmentBankService {
 
     return assessment;
   }
+
+  async deleteAssessment(id: string, actor: SessionUser): Promise<boolean> {
+    const existing = await assessmentBankRepository.getAssessmentById(id);
+    const success = await assessmentBankRepository.deleteAssessment(id);
+    if (success && existing) {
+      await administrationService.recordAuditLog({
+        category: "ACADEMIC",
+        action: "ASSESSMENT_EXAM_DELETED",
+        actor,
+        targetEntityId: id,
+        targetEntityType: "ManagedAssessment",
+        diffSummary: `حذف الاختبار التقييمي [${existing.titleAr}]`,
+      });
+    }
+    return success;
+  }
+
+  async deleteQuestion(id: string, actor: SessionUser): Promise<boolean> {
+    const existing = await assessmentBankRepository.getQuestionById(id);
+    const success = await assessmentBankRepository.deleteQuestion(id);
+    if (success && existing) {
+      await administrationService.recordAuditLog({
+        category: "ACADEMIC",
+        action: "QUESTION_BANK_ITEM_DELETED",
+        actor,
+        targetEntityId: id,
+        targetEntityType: "BankQuestion",
+        diffSummary: `حذف سؤال من بنك الأسئلة [${existing.titleAr}]`,
+      });
+    }
+    return success;
+  }
 }
 
 export const assessmentBankService = new AssessmentBankService();
+

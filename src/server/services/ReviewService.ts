@@ -69,6 +69,21 @@ export class ReviewService {
   ): Promise<ParentReview | null> {
     return reviewRepository.updateReviewStatus(reviewId, status, adminReplyAr);
   }
+
+  async replyToReview(
+    reviewId: string,
+    adminReplyAr: string
+  ): Promise<ParentReview | null> {
+    const existing = await reviewRepository.getAllReviews();
+    const target = existing.find((r) => r.id === reviewId);
+    const status = target ? target.status : "APPROVED";
+    return reviewRepository.updateReviewStatus(reviewId, status, adminReplyAr);
+  }
+
+  async deleteReview(reviewId: string): Promise<boolean> {
+    return reviewRepository.deleteReview(reviewId);
+  }
 }
 
 export const reviewService = new ReviewService();
+

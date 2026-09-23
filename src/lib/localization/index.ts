@@ -46,6 +46,10 @@ export function isValidLocale(locale: string): locale is Locale {
   return locales.includes(locale as Locale);
 }
 
+export function isRtlLocale(locale: string): boolean {
+  return languages[locale as Locale]?.direction === "rtl" || locale === "ar";
+}
+
 /**
  * Parses an HTTP Accept-Language header string and finds the highest-priority
  * language that is supported within the Global 6-Language Architecture.

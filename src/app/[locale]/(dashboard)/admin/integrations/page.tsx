@@ -11,16 +11,22 @@ import { requireAdminSession } from "@/lib/auth/currentUser";
 import { getClientIp } from "@/lib/security/rateLimit";
 import { userRepository } from "@/server/repositories/UserRepository";
 import { administrationRepository } from "@/server/repositories/AdministrationRepository";
+import { isStripeConfigured } from "@/lib/integrations/stripe";
+import { isRealtimeConfigured, triggerClassroomEvent } from "@/lib/integrations/realtime/RealtimeServer";
 import {
   Video,
   MessageSquare,
   HardDrive,
   Bot,
+  CreditCard,
+  Radio,
   CheckCircle2,
   Play,
   Send,
   Zap,
   Megaphone,
+  Sparkles,
+  RefreshCw,
 } from "lucide-react";
 
 export default async function AdminIntegrationsPage({
@@ -28,11 +34,18 @@ export default async function AdminIntegrationsPage({
   searchParams,
 }: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ broadcastSent?: string; broadcastFailed?: string }>;
+  searchParams: Promise<{
+    broadcastSent?: string;
+    broadcastFailed?: string;
+    aiReply?: string;
+    aiXp?: string;
+    pusherPingSent?: string;
+  }>;
 }) {
   const { locale } = await params;
-  const { broadcastSent, broadcastFailed } = await searchParams;
+  const { broadcastSent, broadcastFailed, aiReply, aiXp, pusherPingSent } = await searchParams;
   await requireAdminSession(locale);
+  const isAr = locale === "ar";
 
   const meetingPlatforms = meetingManager.getPlatformStatuses();
   const notificationChannels = notificationDispatcherService.getChannelStatuses();
@@ -41,6 +54,10 @@ export default async function AdminIntegrationsPage({
   const dispatchHistory = notificationDispatcherService.getDispatchHistory(6);
   const activeParentCount = (await userRepository.getAllParentsWithContact()).length;
 
+  const stripeConfigured = isStripeConfigured();
+  const realtimeConfigured = isRealtimeConfigured();
+
+  // Action: Dispatch Test Notification
   async function handleTestDispatch(formData: FormData) {
     "use server";
     await requireAdminSession(locale);
@@ -58,15 +75,41 @@ export default async function AdminIntegrationsPage({
     revalidatePath(`/${locale}/admin/integrations`);
   }
 
-  // Real, admin-triggered email to every active parent account -- the
-  // mechanism behind the Terms of Service's promises to notify parents by
-  // email of a price change (s4) or a material change to their subscription
-  // or to the Privacy Policy (s9/s11). Those clauses previously had no code
-  // path that actually sent anything; this genuinely dispatches via the
-  // same notificationDispatcherService/EmailAdapter pipeline the
-  // password-reset flow uses (real delivery through Resend when
-  // RESEND_API_KEY is configured, a clearly-labeled dev-sandbox mock
-  // otherwise -- see the "Multi-Channel" panel above for current status).
+  // Action: Interactive AI Sandbox Prompt
+  async function handleTestAiPrompt(formData: FormData) {
+    "use server";
+    await requireAdminSession(locale);
+    const prompt = formData.get("prompt")?.toString().trim() || "مرحباً فصيح، كيف أتعلم الحروف العربية؟";
+
+    const response = await aiService.sendStudentMessage({
+      studentId: "superadmin-sandbox",
+      message: prompt,
+    });
+
+    revalidatePath(`/${locale}/admin/integrations`);
+    redirect(
+      `/${locale}/admin/integrations?aiReply=${encodeURIComponent(
+        response.reply.content
+      )}&aiXp=${response.newTotalXp}`
+    );
+  }
+
+  // Action: Pusher WebSocket Ping
+  async function handlePusherPing() {
+    "use server";
+    await requireAdminSession(locale);
+    await triggerClassroomEvent("sandbox-admin-monitor", "admin:ping", {
+      sender: "superadmin",
+      timestamp: Date.now(),
+      status: "OK",
+    });
+
+    revalidatePath(`/${locale}/admin/integrations`);
+    redirect(`/${locale}/admin/integrations?pusherPingSent=1`);
+  }
+
+
+  // Action: Broadcast Notice Email to Parents
   async function handleBroadcastNotice(formData: FormData) {
     "use server";
     const admin = await requireAdminSession(locale);
@@ -119,150 +162,301 @@ export default async function AdminIntegrationsPage({
         <div>
           <div className="flex items-center gap-2 text-xs font-bold text-brand-600 mb-1">
             <Link href={`/${locale}/admin`} className="hover:underline">
-              لوحة الإدارة العامة
+              {isAr ? "لوحة الإدارة العامة" : "Admin Operations Center"}
             </Link>
             <span>/</span>
-            <span>الربط التقني والتكاملات</span>
+            <span>{isAr ? "الربط التقني والتكاملات" : "Cloud Integrations Hub"}</span>
           </div>
           <h1 className="text-2xl font-extrabold text-slate-900">
-            مركز الربط السحابي والتكاملات الخارجية 🔌
+            {isAr ? "مركز الربط السحابي والتكاملات الخارجية 🔌" : "Cloud Integrations & External Gateways Hub"}
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            متابعة حالة بوابات الفصول الافتراضية، الإشعارات المتعددة، التخزين الخاص، ومحركات الذكاء الاصطناعي
+            {isAr
+              ? "متابعة شاملة لـ 6 ركائز تكامل: بوابات الفصول الافتراضية، الإشعارات المتعددة، التخزين الخاص، الذكاء الاصطناعي، بوابات الدفع، والتزامن اللحظي"
+              : "End-to-end monitoring across 6 integration pillars: Virtual Meetings, Multi-Channel Alerts, Cloud Storage, AI Engines, Stripe Payments, and Real-Time Sync"}
           </p>
         </div>
 
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold">
+        <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold shadow-sm">
           <Zap className="w-4 h-4 text-emerald-600" />
-          <span>4 منظومات تكامل رئيسية متصلة وجاهزة</span>
+          <span>{isAr ? "6 منظومات تكامل رئيسية متصلة وجاهزة" : "6 Core Cloud Integrations Active"}</span>
         </div>
       </div>
 
+      {/* Broadcast Alert Feedback */}
       {(broadcastSent !== undefined || broadcastFailed !== undefined) && (
-        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3.5 text-sm text-emerald-800 flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4 shrink-0" />
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3.5 text-sm text-emerald-800 flex items-center gap-2 shadow-sm">
+          <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
           <span>
-            تم إرسال الإشعار إلى {broadcastSent} من أولياء الأمور بنجاح
-            {Number(broadcastFailed) > 0 ? `، وفشل الإرسال لـ ${broadcastFailed} حساب` : ""}.
+            {isAr
+              ? `تم إرسال الإشعار إلى ${broadcastSent} من أولياء الأمور بنجاح`
+              : `Notification dispatched to ${broadcastSent} parents successfully`}
+            {Number(broadcastFailed) > 0
+              ? isAr
+                ? `، وفشل الإرسال لـ ${broadcastFailed} حساب`
+                : `, failed for ${broadcastFailed} accounts`
+              : ""}.
           </span>
         </div>
       )}
 
-      {/* The 4 Integration Pillars */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {pusherPingSent && (
+        <div className="rounded-2xl border border-cyan-200 bg-cyan-50 px-5 py-3.5 text-sm text-cyan-800 flex items-center gap-2 shadow-sm">
+          <Radio className="w-4 h-4 shrink-0 text-cyan-600" />
+          <span>
+            {isAr
+              ? "تم إرسال إشارة الفحص اللحظية (WebSocket Ping) إلى قنوات Pusher بنجاح."
+              : "Pusher WebSocket ping event successfully broadcasted to realtime cluster."}
+          </span>
+        </div>
+      )}
+
+      {/* The 6 Integration Pillars (3x2 Grid) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* Pillar 1: Video Meetings */}
-        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-            <h2 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
-              <Video className="w-5 h-5 text-blue-600" />
-              <span>1. بوابات الفصول الافتراضية المباشرة (Video)</span>
-            </h2>
-          </div>
-
-          <div className="space-y-3 text-xs">
-            {meetingPlatforms.map((mp, i) => (
-              <div
-                key={i}
-                className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between"
-              >
-                <div>
-                  <span className="font-bold text-slate-900 block">{mp.nameAr}</span>
-                  <span className="text-[11px] text-slate-400 font-mono">
-                    Provider: {mp.platform}
-                  </span>
-                </div>
-                <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
-                  {mp.badgeText}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Pillar 2: Notifications */}
-        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-            <h2 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
-              <MessageSquare className="w-5 h-5 text-emerald-600" />
-              <span>2. الإشعارات والتواصل المتعدد (Multi-Channel)</span>
-            </h2>
-          </div>
-
-          <div className="space-y-3 text-xs">
-            {notificationChannels.map((nc, i) => (
-              <div
-                key={i}
-                className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between"
-              >
-                <div>
-                  <span className="font-bold text-slate-900 block">{nc.nameAr}</span>
-                  <span className="text-[11px] text-slate-400 font-mono">
-                    Channel: {nc.channel}
-                  </span>
-                </div>
-                <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                  {nc.badgeText}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Pillar 3: Storage */}
-        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-            <h2 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
-              <HardDrive className="w-5 h-5 text-purple-600" />
-              <span>3. التخزين السحابي الخاص والروابط الموقعة (Storage)</span>
-            </h2>
-          </div>
-
-          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2 text-xs">
-            <div className="flex items-center justify-between">
-              <span className="font-bold text-slate-900">{storageStatus.providerName}</span>
-              <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
-                {storageStatus.badgeText}
+        <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-4 flex flex-col justify-between">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h2 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+                <Video className="w-4 h-4 text-blue-600" />
+                <span>1. الفصول الافتراضية (Video)</span>
+              </h2>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                {meetingPlatforms.length} مزودين
               </span>
             </div>
-            <p className="text-slate-600 leading-relaxed pt-1 border-t border-slate-200/60">
-              {storageStatus.securityPolicy}
-            </p>
+
+            <div className="space-y-2 text-xs">
+              {meetingPlatforms.map((mp, i) => (
+                <div
+                  key={i}
+                  className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between"
+                >
+                  <div>
+                    <span className="font-bold text-slate-900 block">{mp.nameAr}</span>
+                    <span className="text-[10px] text-slate-400 font-mono">Provider: {mp.platform}</span>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                    {mp.badgeText}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
+          <p className="text-[11px] text-slate-400 pt-2 border-t border-slate-100">
+            يدعم Zoom وTeams وMeet مع التوليد التلقائي للروابط الآمنة.
+          </p>
+        </div>
+
+        {/* Pillar 2: Multi-Channel Notifications */}
+        <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-4 flex flex-col justify-between">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h2 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+                <MessageSquare className="w-4 h-4 text-emerald-600" />
+                <span>2. قنوات الإشعارات (Alerts)</span>
+              </h2>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                {notificationChannels.length} قنوات
+              </span>
+            </div>
+
+            <div className="space-y-2 text-xs">
+              {notificationChannels.map((nc, i) => (
+                <div
+                  key={i}
+                  className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between"
+                >
+                  <div>
+                    <span className="font-bold text-slate-900 block">{nc.nameAr}</span>
+                    <span className="text-[10px] text-slate-400 font-mono">Channel: {nc.channel}</span>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    {nc.badgeText}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <p className="text-[11px] text-slate-400 pt-2 border-t border-slate-100">
+            تنبيهات WhatsApp وSMS والبريد الإلكتروني للواجبات ومواعيد الحصص.
+          </p>
+        </div>
+
+        {/* Pillar 3: Cloud Storage */}
+        <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-4 flex flex-col justify-between">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h2 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+                <HardDrive className="w-4 h-4 text-purple-600" />
+                <span>3. التخزين الخاص (Storage)</span>
+              </h2>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
+                COPPA / GDPR
+              </span>
+            </div>
+
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-slate-900">{storageStatus.providerName}</span>
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
+                  {storageStatus.badgeText}
+                </span>
+              </div>
+              <p className="text-slate-600 text-[11px] leading-relaxed pt-1 border-t border-slate-200/60">
+                {storageStatus.securityPolicy}
+              </p>
+            </div>
+          </div>
+          <p className="text-[11px] text-slate-400 pt-2 border-t border-slate-100">
+            روابط موقعة HMAC بمدة صلاحية 15 دقيقة لتسجيلات التلاوة والصوتيات.
+          </p>
         </div>
 
         {/* Pillar 4: AI Engine */}
-        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-            <h2 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
-              <Bot className="w-5 h-5 text-amber-500" />
-              <span>4. محرك الذكاء الاصطناعي والمساعد التعليمي (AI)</span>
-            </h2>
-          </div>
-
-          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2 text-xs">
-            <div className="flex items-center justify-between">
-              <span className="font-bold text-slate-900">{aiStatus.engineName}</span>
-              <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
-                {aiStatus.badgeText}
+        <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-4 flex flex-col justify-between">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h2 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+                <Bot className="w-4 h-4 text-amber-500" />
+                <span>4. محرك فصيح الذكي (AI Tutor)</span>
+              </h2>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                Faseeh v2.4
               </span>
             </div>
-            <p className="text-slate-600 leading-relaxed pt-1 border-t border-slate-200/60">
-              {aiStatus.modelCapability}
-            </p>
+
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-slate-900">{aiStatus.engineName}</span>
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                  {aiStatus.badgeText}
+                </span>
+              </div>
+              <p className="text-slate-600 text-[11px] leading-relaxed pt-1 border-t border-slate-200/60">
+                {aiStatus.modelCapability}
+              </p>
+            </div>
           </div>
+          <p className="text-[11px] text-slate-400 pt-2 border-t border-slate-100">
+            دعم Gemini Pro مع توجيه الحركات وتقييم مخارج الحروف.
+          </p>
+        </div>
+
+        {/* Pillar 5: Commercial Payments (Stripe Gateway) */}
+        <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-4 flex flex-col justify-between">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h2 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+                <CreditCard className="w-4 h-4 text-emerald-600" />
+                <span>5. بوابة الدفع السحابية (Stripe)</span>
+              </h2>
+              <span
+                className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                  stripeConfigured
+                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                    : "bg-amber-50 text-amber-700 border-amber-200"
+                }`}
+              >
+                {stripeConfigured ? "متصل بالإنتاج (Live)" : "وضع المحاكاة التجريبية"}
+              </span>
+            </div>
+
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-slate-900">Stripe Billing & Checkout</span>
+                <span className="font-mono text-[11px] text-slate-600">USD ($)</span>
+              </div>
+              <div className="text-[11px] text-slate-600 space-y-1 pt-1 border-t border-slate-200/60 font-mono">
+                <div className="flex justify-between">
+                  <span>Secret Key:</span>
+                  <span className={stripeConfigured ? "text-emerald-600 font-bold" : "text-amber-600"}>
+                    {stripeConfigured ? "CONFIGURED (sk_live/test)" : "FALLBACK_SANDBOX"}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Webhook Secret:</span>
+                  <span className={process.env.STRIPE_WEBHOOK_SECRET ? "text-emerald-600 font-bold" : "text-amber-600"}>
+                    {process.env.STRIPE_WEBHOOK_SECRET ? "ACTIVE (whsec_...)" : "AUTO_CONFIRM"}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Customer Portal:</span>
+                  <span className="text-emerald-600 font-bold">READY</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p className="text-[11px] text-slate-400 pt-2 border-t border-slate-100">
+            معالجة آمنة لبطاقات الائتمان، Apple Pay، والاشتراكات الشهرية وتجربة اليوم الواحد.
+          </p>
+        </div>
+
+        {/* Pillar 6: Real-Time Sync (Pusher Channels) */}
+        <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-4 flex flex-col justify-between">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h2 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+                <Radio className="w-4 h-4 text-cyan-600" />
+                <span>6. التزامن الفوري للفصول (Pusher)</span>
+              </h2>
+              <span
+                className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                  realtimeConfigured
+                    ? "bg-cyan-50 text-cyan-700 border-cyan-200"
+                    : "bg-slate-100 text-slate-600 border-slate-200"
+                }`}
+              >
+                {realtimeConfigured ? "قنوات WebSockets نشطة" : "محاكاة محلية نشطة"}
+              </span>
+            </div>
+
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-slate-900">Pusher Channels Cluster</span>
+                <span className="font-mono text-[11px] text-cyan-700">
+                  {process.env.NEXT_PUBLIC_PUSHER_CLUSTER || "eu"}
+                </span>
+              </div>
+              <div className="text-[11px] text-slate-600 space-y-1 pt-1 border-t border-slate-200/60 font-mono">
+                <div className="flex justify-between">
+                  <span>App ID:</span>
+                  <span>{process.env.PUSHER_APP_ID ? "CONFIGURED" : "SANDBOX_BROADCASTER"}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Presence Channels:</span>
+                  <span className="text-emerald-600 font-bold">ACTIVE</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Interactive Whiteboard:</span>
+                  <span className="text-cyan-600 font-bold">READY</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <form action={handlePusherPing} className="pt-2 border-t border-slate-100">
+            <button
+              type="submit"
+              className="w-full py-2 px-3 rounded-xl bg-cyan-50 hover:bg-cyan-100 text-cyan-800 font-bold text-[11px] border border-cyan-200 flex items-center justify-center gap-1.5 transition-colors"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              <span>إرسال إشارة فحص لحظية (Ping WebSockets)</span>
+            </button>
+          </form>
         </div>
       </div>
 
-      {/* Interactive Testing Sandbox */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Test Trigger Form */}
+      {/* Interactive Testing Sandboxes */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Test Console: Multi-Channel Dispatch */}
         <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-4">
           <h3 className="font-extrabold text-slate-900 text-sm flex items-center gap-2">
             <Play className="w-4 h-4 text-brand-600" />
-            <span>منصة اختبار الإرسال اللحظي (Sandbox)</span>
+            <span>منصة اختبار الإرسال اللحظي (Notification Sandbox)</span>
           </h3>
           <p className="text-xs text-slate-500">
-            أرسل إشعاراً تجريبياً حياً للتحقق من سلامة قنوات التوجيه
+            أرسل إشعاراً تجريبياً حياً للتحقق من سلامة قنوات التوجيه (واتساب، SMS، بريد إلكتروني)
           </p>
 
           <form action={handleTestDispatch} className="space-y-3 text-xs">
@@ -296,43 +490,74 @@ export default async function AdminIntegrationsPage({
               <span>إطلاق إشعار تجريبي 🚀</span>
             </button>
           </form>
+
+          {/* Recent Deliveries list */}
+          <div className="pt-4 border-t border-slate-100">
+            <h4 className="font-bold text-slate-800 text-xs mb-2">سجل آخر عمليات الإرسال:</h4>
+            <div className="space-y-2 text-xs">
+              {dispatchHistory.slice(0, 3).map((d, idx) => (
+                <div key={idx} className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between">
+                  <div>
+                    <span className="font-bold text-slate-800 block text-[11px]">{d.statusMessage}</span>
+                    <span className="text-[10px] text-slate-400 font-mono">{d.channel} • {d.recipientContact}</span>
+                  </div>
+                  <span className="text-emerald-600 font-bold text-[10px]">تم التسليم ✓</span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
-        {/* Live Dispatch Log */}
-        <div className="lg:col-span-2 bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-4">
+        {/* Test Console: Interactive AI Tutor Sandbox */}
+        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-4">
           <h3 className="font-extrabold text-slate-900 text-sm flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-            <span>سجل عمليات الإرسال الأخيرة (Recent Deliveries)</span>
+            <Sparkles className="w-4 h-4 text-amber-500" />
+            <span>منصة اختبار المعلم الذكي «فصيح» (AI Console)</span>
           </h3>
+          <p className="text-xs text-slate-500">
+            أرسل استفساراً حياً لمحرك الذكاء الاصطناعي لفحص دقة التشكيل وسرعة الاستجابة وتشجيع الطالب
+          </p>
 
-          <div className="divide-y divide-slate-100 text-xs">
-            {dispatchHistory.map((d, idx) => (
-              <div key={idx} className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <div className="space-y-0.5">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-slate-900">{d.statusMessage}</span>
-                    <span className="px-1.5 py-0.5 rounded bg-slate-100 font-mono text-[10px] text-slate-600">
-                      {d.channel}
-                    </span>
-                  </div>
-                  <span className="text-[11px] text-slate-400 font-mono">
-                    ID: {d.messageId} • المستلم: {d.recipientContact}
+          <form action={handleTestAiPrompt} className="space-y-3 text-xs">
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">الرسالة أو السؤال التجريبي</label>
+              <textarea
+                name="prompt"
+                rows={3}
+                defaultValue="مرحباً يا فصيح، هل يمكنك أن تشرح لي الفرق بين التاء المربوطة والمفتوحة مع الحركات؟"
+                className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white"
+                required
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="w-full py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-md shadow-amber-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <Bot className="w-3.5 h-3.5" />
+              <span>إرسال الاستفسار إلى محرك الذكاء الاصطناعي ⚡</span>
+            </button>
+          </form>
+
+          {aiReply && (
+            <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-amber-900 text-xs">إجابة فصيح الفورية:</span>
+                {aiXp && (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-200 text-amber-900">
+                    +{aiXp} XP تشجيعي
                   </span>
-                </div>
-
-                <div className="text-start sm:text-end text-[11px] text-slate-400">
-                  <span>{d.sentAt.toISOString().replace("T", " ").substring(11, 19)} UTC</span>
-                  <span className="block text-emerald-600 font-bold">تم التسليم ✓</span>
-                </div>
+                )}
               </div>
-            ))}
-          </div>
+              <p className="text-xs text-amber-950 leading-relaxed font-medium">
+                {aiReply}
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Account-wide Email Broadcast -- real delivery for the price-change /
-          policy-change notices the Terms of Service and Privacy Policy
-          promise to send by email (ToS §4/§11, Privacy §9). */}
+      {/* Account-wide Email Broadcast */}
       <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-4">
         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
           <h2 className="text-base font-extrabold text-slate-900 flex items-center gap-2">

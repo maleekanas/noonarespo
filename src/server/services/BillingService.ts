@@ -1,4 +1,4 @@
-import { financialRepository, SubscriptionPlan } from "../repositories/FinancialRepository";
+import { financialRepository, SubscriptionPlan, DiscountCoupon } from "../repositories/FinancialRepository";
 
 export interface CheckoutCalculation {
   plan: SubscriptionPlan;
@@ -24,6 +24,22 @@ export class BillingService {
 
   async getPlanById(planId: string): Promise<SubscriptionPlan | null> {
     return await financialRepository.getPlanById(planId);
+  }
+
+  async getAllCoupons(): Promise<DiscountCoupon[]> {
+    return await financialRepository.getAllCoupons();
+  }
+
+  async saveCoupon(coupon: DiscountCoupon): Promise<DiscountCoupon> {
+    return await financialRepository.createOrUpdateCoupon(coupon);
+  }
+
+  async toggleCoupon(code: string): Promise<DiscountCoupon | null> {
+    return await financialRepository.toggleCouponActive(code);
+  }
+
+  async deleteCoupon(code: string): Promise<boolean> {
+    return await financialRepository.deleteCoupon(code);
   }
 
   /**
@@ -78,3 +94,4 @@ export class BillingService {
 }
 
 export const billingService = new BillingService();
+

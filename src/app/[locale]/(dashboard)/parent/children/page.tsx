@@ -69,6 +69,38 @@ export default async function ParentChildrenPage({
     revalidatePath(`/${locale}/parent/children`);
   }
 
+  async function handleUpdateChild(formData: FormData) {
+    "use server";
+    const childId = formData.get("childId")?.toString();
+    const firstName = formData.get("firstName")?.toString().trim();
+    const lastName = formData.get("lastName")?.toString().trim();
+    const birthDateStr = formData.get("dateOfBirth")?.toString();
+    const ageGroupStr = formData.get("ageGroup")?.toString() as AgeGroup | undefined;
+    const notesInternal = formData.get("notesInternal")?.toString().trim();
+
+    if (!childId) return;
+
+    await userRepository.updateStudentProfile(childId, {
+      firstName: firstName || undefined,
+      lastName: lastName || undefined,
+      dateOfBirth: birthDateStr ? new Date(birthDateStr) : undefined,
+      ageGroup: ageGroupStr,
+      notesInternal: notesInternal || undefined,
+    });
+
+    revalidatePath(`/${locale}/parent/children`);
+  }
+
+  async function handleRemoveChild(formData: FormData) {
+    "use server";
+    const childId = formData.get("childId")?.toString();
+    if (!childId) return;
+
+    await userRepository.removeChild(parentId, childId);
+
+    revalidatePath(`/${locale}/parent/children`);
+  }
+
   const ageGroupLabels: Record<AgeGroup, string> = {
     AGE_4_6: "البراعم (4 - 6 سنوات)",
     AGE_7_10: "المستكشفون (7 - 10 سنوات)",
@@ -154,15 +186,72 @@ export default async function ParentChildrenPage({
                       </span>
                     </div>
                   </div>
+                  {/* Edit Child Details Dropdown */}
+                  <details className="text-xs group pt-2 border-t border-slate-100">
+                    <summary className="cursor-pointer text-slate-500 hover:text-brand-600 font-bold flex items-center justify-between select-none">
+                      <span>تعديل بيانات الطفل ✎</span>
+                      <span className="text-[10px] text-slate-400 group-open:rotate-180 transition-transform">▼</span>
+                    </summary>
+
+                    <form action={handleUpdateChild} className="p-3 bg-slate-50 rounded-xl space-y-2 mt-2 border border-slate-100">
+                      <input type="hidden" name="childId" value={child.id} />
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-600 mb-0.5">الاسم الأول</label>
+                          <input
+                            name="firstName"
+                            defaultValue={child.firstName}
+                            className="w-full p-1.5 rounded-lg border border-slate-200 text-xs bg-white"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-600 mb-0.5">اسم العائلة</label>
+                          <input
+                            name="lastName"
+                            defaultValue={child.lastName}
+                            className="w-full p-1.5 rounded-lg border border-slate-200 text-xs bg-white"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-600 mb-0.5">تاريخ الميلاد</label>
+                        <input
+                          name="dateOfBirth"
+                          type="date"
+                          defaultValue={child.dateOfBirth.toISOString().split("T")[0]}
+                          className="w-full p-1.5 rounded-lg border border-slate-200 text-xs bg-white"
+                        />
+                      </div>
+                      <button
+                        type="submit"
+                        className="w-full py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs"
+                      >
+                        حفظ التعديلات
+                      </button>
+                    </form>
+                  </details>
                 </div>
 
-                <Link
-                  href={`/${locale}/parent/enroll?studentId=${child.id}`}
-                  className="w-full py-2.5 rounded-xl bg-slate-100 hover:bg-brand-50 hover:text-brand-700 text-slate-700 font-bold text-xs text-center transition-colors flex items-center justify-center gap-2"
-                >
-                  <span>تسجيل في فصول إضافية</span>
-                  <DirectionalIcon icon={ArrowRight} locale={locale} className="w-4 h-4" />
-                </Link>
+                <div className="space-y-2">
+                  <Link
+                    href={`/${locale}/parent/enroll?studentId=${child.id}`}
+                    className="w-full py-2.5 rounded-xl bg-slate-100 hover:bg-brand-50 hover:text-brand-700 text-slate-700 font-bold text-xs text-center transition-colors flex items-center justify-center gap-2"
+                  >
+                    <span>تسجيل في فصول إضافية</span>
+                    <DirectionalIcon icon={ArrowRight} locale={locale} className="w-4 h-4" />
+                  </Link>
+
+                  <form action={handleRemoveChild}>
+                    <input type="hidden" name="childId" value={child.id} />
+                    <button
+                      type="submit"
+                      className="w-full py-1 text-slate-400 hover:text-rose-600 text-[11px] font-bold transition-colors text-center"
+                      title="إلغاء ربط ملف الطفل من حسابك"
+                    >
+                      إلغاء ربط ملف الطفل ✕
+                    </button>
+                  </form>
+                </div>
               </div>
             ))}
           </div>

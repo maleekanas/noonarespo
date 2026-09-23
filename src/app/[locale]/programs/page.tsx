@@ -87,6 +87,7 @@ import {
   Gamepad2,
   Mic,
 } from "lucide-react";
+import { HolisticLearningFramework } from "@/components/curriculum/HolisticLearningFramework";
 
 export default async function ProgramsCatalogPage({
   params,
@@ -127,7 +128,14 @@ export default async function ProgramsCatalogPage({
   // (courses/levels) -- mixing the two previously meant every program page
   // silently fell back to Foundations' metadata and always showed "0"
   // curriculum modules, regardless of which program tab was open.
-  const allPrograms = await academicRepository.getAllPrograms();
+  let allPrograms: Awaited<ReturnType<typeof academicRepository.getAllPrograms>> = [];
+  try {
+    allPrograms = await academicRepository.getAllPrograms();
+  } catch (err) {
+    console.error("Failed to load programs:", err);
+    allPrograms = [];
+  }
+
   const allProgramsWithSlug = allPrograms.map((p) => ({ ...p, slug: getProgramSlug(p.type) }));
   const selectedSlug =
     programParam && allProgramsWithSlug.some((p) => p.slug === programParam)
@@ -138,19 +146,36 @@ export default async function ProgramsCatalogPage({
     allProgramsWithSlug.find((p) => p.slug === selectedSlug) || allProgramsWithSlug[0];
 
   // Fetch courses, levels, and curriculum modules for the selected program
-  const courses = await academicRepository.getCoursesByProgramId(currentProgram.id);
-  const modules = await administrationService.getCurriculumModules(selectedSlug);
+  let courses: Awaited<ReturnType<typeof academicRepository.getCoursesByProgramId>> = [];
+  let modules: Awaited<ReturnType<typeof administrationService.getCurriculumModules>> = [];
+  try {
+    if (currentProgram?.id) {
+      courses = await academicRepository.getCoursesByProgramId(currentProgram.id);
+    }
+    modules = await administrationService.getCurriculumModules(selectedSlug);
+  } catch (err) {
+    console.error("Failed to load courses or modules:", err);
+  }
 
   // Collect levels across courses
-  const levels = [];
-  for (const course of courses) {
-    const courseLevels = await academicRepository.getLevelsByCourseId(course.id);
-    levels.push(...courseLevels);
+  const levels: Awaited<ReturnType<typeof academicRepository.getLevelsByCourseId>> = [];
+  try {
+    for (const course of courses) {
+      const courseLevels = await academicRepository.getLevelsByCourseId(course.id);
+      levels.push(...courseLevels);
+    }
+  } catch (err) {
+    console.error("Failed to load levels:", err);
   }
   const levelIds = new Set(levels.map((l) => l.id));
 
   // Get active class groups matching these levels
-  const allClasses = await academicRepository.getAllClassGroups();
+  let allClasses: Awaited<ReturnType<typeof academicRepository.getAllClassGroups>> = [];
+  try {
+    allClasses = await academicRepository.getAllClassGroups();
+  } catch (err) {
+    console.error("Failed to load class groups:", err);
+  }
   const programClasses = allClasses.filter((cg) => levelIds.has(cg.courseLevelId));
 
   // Program-specific metadata & studio tool integrations
@@ -416,6 +441,10 @@ export default async function ProgramsCatalogPage({
               </div>
               <div className="flex items-center gap-1.5">
                 <CheckCircle2 className="w-4 h-4 text-emerald-300" />
+                <span>{isAr ? "+75 درساً لكل فئة عمرية (320+ درساً معتمداً)" : "75+ Lessons / Age Group (320+ Total)"}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4 text-emerald-300" />
                 <span>{pc.liveSessionsBadge}</span>
               </div>
               <div className="flex items-center gap-1.5">
@@ -429,6 +458,122 @@ export default async function ProgramsCatalogPage({
 
       {/* Main Content Layout */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 space-y-12">
+        {/* Section 0: Academic Age Groups Showcase */}
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-50 text-brand-700 text-xs font-bold mb-1">
+                <Layers className="w-3.5 h-3.5" />
+                <span>{isAr ? "المسارات العمرية المعتمدة" : "Accredited Age-Group Tracks"}</span>
+              </div>
+              <h2 className="text-2xl font-extrabold text-slate-900">
+                {isAr ? "منهج مصمم خصيصاً لكل مرحلة عمرية" : "Curriculum Tailored for Every Age Stage"}
+              </h2>
+            </div>
+            <span className="text-xs text-brand-700 font-bold bg-brand-50 px-3 py-1.5 rounded-full border border-brand-200">
+              {isAr ? "80+ درساً تفاعلياً لكل فئة (320 درساً معتمداً)" : "80+ Lessons per Age Group (320 Total)"}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {[
+              {
+                group: "AGE_4_6",
+                nameAr: "البراعم (4 - 6 سنوات)",
+                nameEn: "Little Sprouts (Ages 4-6)",
+                cefr: "CEFR Pre-A1",
+                badgeColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
+                accentBg: "bg-emerald-500",
+                taglineAr: "اكتشاف الأصوات والمفردات بالحواس والأناشيد التفاعلية والتهجئة المبكرة",
+                taglineEn: "Sensory discovery, phonemes, and playful learning through interactive songs",
+                skillsAr: ["الوعي الصوتي والأبجدية", "التهجئة التفاعلية المبكرة", "اللوح التفاعلي السحابي"],
+                skillsEn: ["Phonemic Awareness & Alphabet", "Early Interactive Blending", "Cloud Whiteboard Games"],
+              },
+              {
+                group: "AGE_7_10",
+                nameAr: "المستكشفون (7 - 10 سنوات)",
+                nameEn: "Junior Explorers (Ages 7-10)",
+                cefr: "CEFR A1 - A2",
+                badgeColor: "bg-blue-50 text-blue-700 border-blue-200",
+                accentBg: "bg-blue-500",
+                taglineAr: "بناء الجمل، الطلاقة القرائية، جماليات خط النسخ، وحفظ وتجويد قصار السور",
+                taglineEn: "Sentence building, reading fluency, Naskh calligraphy, and foundational Tajweed",
+                skillsAr: ["الطلاقة القرائية وفهم المقروء", "تحسين الخط العربي وقواعد النسخ", "المحادثة اليومية الفصيحة"],
+                skillsEn: ["Reading Fluency & Comprehension", "Naskh Penmanship Mastery", "Daily Spoken Eloquence"],
+              },
+              {
+                group: "AGE_11_13",
+                nameAr: "الرواد (11 - 13 سنة)",
+                nameEn: "Intermediate Navigators (Ages 11-13)",
+                cefr: "CEFR B1",
+                badgeColor: "bg-purple-50 text-purple-700 border-purple-200",
+                accentBg: "bg-purple-500",
+                taglineAr: "القراءة التحليلية، فنون الخطابة، التعبير الإنشائي، وتجويد جزء تبارك",
+                taglineEn: "Analytical reading, public speaking, narrative composition, and Juz Tabarak",
+                skillsAr: ["القراءة التحليلية والنقد الأدبي", "الإلقاء والمناظرات المصغرة", "صياغة المقالات التعبيرية"],
+                skillsEn: ["Analytical Text & Literary Critique", "Oratory & Classroom Debates", "Narrative Essay Writing"],
+              },
+              {
+                group: "AGE_14_16",
+                nameAr: "الفرسان (14 - 16 سنة)",
+                nameEn: "Young Scholars (Ages 14-16)",
+                cefr: "CEFR B2",
+                badgeColor: "bg-amber-50 text-amber-700 border-amber-200",
+                accentBg: "bg-amber-500",
+                taglineAr: "فقه اللغة، عيون الأدب العربي، خط الرقعة والديواني، والمناظرات الفكرية",
+                taglineEn: "Arabic philology, classical masterpieces, Diwani calligraphy, and philosophical debates",
+                skillsAr: ["فقه اللغة والنحو المعمق", "تحليل عيون الشعر والنثر الأدبي", "المناظرات الفكرية والبلاغة"],
+                skillsEn: ["Arabic Philology & Advanced Syntax", "Classical Poetry & Prose Analysis", "Dialectical Debates & Rhetoric"],
+              },
+            ].map((ageCard) => (
+              <div
+                key={ageCard.group}
+                className="bg-white rounded-3xl p-6 border border-slate-200/90 shadow-sm flex flex-col justify-between space-y-4 hover:border-brand-300 hover:shadow-md transition-all"
+              >
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${ageCard.badgeColor}`}>
+                      {ageCard.cefr}
+                    </span>
+                    <span className="text-[11px] font-bold text-slate-500">
+                      {isAr ? "80 درساً" : "80 Lessons"}
+                    </span>
+                  </div>
+
+                  <div>
+                    <h3 className="text-base font-extrabold text-slate-900">
+                      {isAr ? ageCard.nameAr : ageCard.nameEn}
+                    </h3>
+                    <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">
+                      {isAr ? ageCard.taglineAr : ageCard.taglineEn}
+                    </p>
+                  </div>
+
+                  <div className="space-y-1.5 pt-2 border-t border-slate-100">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                      {isAr ? "أبرز المهارات المستهدفة" : "Target Competencies"}
+                    </span>
+                    {(isAr ? ageCard.skillsAr : ageCard.skillsEn).map((skill, sIdx) => (
+                      <div key={sIdx} className="flex items-center gap-1.5 text-xs text-slate-700 font-medium">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-brand-600 shrink-0" />
+                        <span>{skill}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <Link
+                  href={`/${locale}/parent/enroll?program=${selectedSlug}&age=${ageCard.group}`}
+                  className="w-full py-2 px-3 rounded-xl bg-slate-50 hover:bg-brand-50 text-slate-700 hover:text-brand-700 font-bold text-xs text-center border border-slate-200 transition-colors flex items-center justify-center gap-1.5"
+                >
+                  <span>{isAr ? "تسجيل بهذه الفئة" : "Enroll for this Age"}</span>
+                  <ForwardArrow className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+            ))}
+          </div>
+        </div>
+
         {/* Section 1: Detailed Curriculum Sequence */}
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -446,7 +591,7 @@ export default async function ProgramsCatalogPage({
             </span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {modules.map((m, idx) => (
               <div
                 key={m.id}
@@ -467,10 +612,10 @@ export default async function ProgramsCatalogPage({
                     <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
                       {isAr ? `${pc.moduleLabel} ${idx + 1}: ${m.levelTitleAr}` : `${pc.moduleLabel} ${idx + 1}: ${m.courseLevelCode}`}
                     </span>
-                    <h3 className="text-lg font-bold text-slate-900 leading-snug">
+                    <h3 className="text-base font-bold text-slate-900 leading-snug">
                       {moduleTitle(locale, m)}
                     </h3>
-                    <p className="text-xs text-slate-600 mt-2 leading-relaxed">
+                    <p className="text-xs text-slate-600 mt-2 leading-relaxed line-clamp-3">
                       {moduleDescription(locale, m)}
                     </p>
                   </div>
@@ -498,13 +643,18 @@ export default async function ProgramsCatalogPage({
                       ? pc.ageSproutsLabel
                       : m.targetAgeGroup === "AGE_7_10"
                       ? pc.ageExplorersLabel
-                      : pc.ageNavigatorsLabel}
+                      : m.targetAgeGroup === "AGE_11_13"
+                      ? pc.ageNavigatorsLabel
+                      : isAr ? "الفرسان (14-16 سنة)" : "Young Scholars (Ages 14-16)"}
                   </span>
                 </div>
               </div>
             ))}
           </div>
         </div>
+
+        {/* Holistic Learning Framework: Bloom, BIDE & STEAM */}
+        <HolisticLearningFramework locale={locale} isRtl={isRtl} />
 
         {/* Section 2: Integrated Interactive Studios */}
         <div className="bg-white rounded-3xl p-8 border border-slate-200/90 shadow-sm space-y-6">
@@ -556,7 +706,7 @@ export default async function ProgramsCatalogPage({
           </div>
         </div>
 
-        {/* Section 3: Active Micro-Cohorts & Direct Enrollment */}
+        {/* Section 3: Active Micro-Cohorts Across All Age Groups & Direct Enrollment */}
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
@@ -570,7 +720,7 @@ export default async function ProgramsCatalogPage({
             </div>
 
             <Link
-              href={`/${locale}/parent/enroll`}
+              href={`/${locale}/parent/enroll?program=${selectedSlug}`}
               className="text-xs font-bold text-brand-600 hover:underline flex items-center gap-1"
             >
               <span>{pc.viewAllCta}</span>
@@ -578,52 +728,82 @@ export default async function ProgramsCatalogPage({
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {programClasses.map((cg) => {
+              const matchedLevel = levels.find((l) => l.id === cg.courseLevelId);
+              const ageGroupTag =
+                matchedLevel?.targetAge === "AGE_4_6"
+                  ? (isAr ? "البراعم (4-6 سنوات)" : "Sprouts (Ages 4-6)")
+                  : matchedLevel?.targetAge === "AGE_7_10"
+                  ? (isAr ? "المستكشفون (7-10 سنوات)" : "Explorers (Ages 7-10)")
+                  : matchedLevel?.targetAge === "AGE_11_13"
+                  ? (isAr ? "الرواد (11-13 سنة)" : "Navigators (Ages 11-13)")
+                  : (isAr ? "الفرسان (14-16 سنة)" : "Scholars (Ages 14-16)");
+
+              const ageGroupBadgeColor =
+                matchedLevel?.targetAge === "AGE_4_6"
+                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                  : matchedLevel?.targetAge === "AGE_7_10"
+                  ? "bg-blue-50 text-blue-700 border-blue-200"
+                  : matchedLevel?.targetAge === "AGE_11_13"
+                  ? "bg-purple-50 text-purple-700 border-purple-200"
+                  : "bg-amber-50 text-amber-700 border-amber-200";
+
               return (
                 <div
                   key={cg.id}
-                  className="bg-white rounded-3xl p-6 border border-slate-200/90 shadow-sm flex flex-col justify-between hover:border-brand-300 transition-all space-y-6"
+                  className="bg-white rounded-3xl p-6 border border-slate-200/90 shadow-sm flex flex-col justify-between hover:border-brand-300 hover:shadow-md transition-all space-y-5"
                 >
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="px-3 py-1 rounded-full bg-brand-50 text-brand-700 font-extrabold text-xs">
-                        {cg.classType === "GROUP" ? pc.microGroupLabel : pc.privateLabel}
+                    <div className="flex items-center justify-between gap-1.5 flex-wrap">
+                      <span className={`px-2.5 py-0.5 rounded-full font-extrabold text-[11px] border ${ageGroupBadgeColor}`}>
+                        {ageGroupTag}
                       </span>
-                      <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full">
+                      <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
                         {pc.enrollmentOpenLabel}
                       </span>
                     </div>
 
-                    <h3 className="text-lg font-bold text-slate-900">
-                      {cg.name}
-                    </h3>
-                    <p className="text-xs text-slate-500">
-                      {pc.cohortDescriptionGeneric}
-                    </p>
+                    <div>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                        {cg.classType === "GROUP" ? (isAr ? "فصل مصغر (أقصاه 6 طلاب)" : "Micro-Group (Max 6)") : pc.privateLabel}
+                      </span>
+                      <h3 className="text-base font-extrabold text-slate-900 leading-snug">
+                        {cg.name}
+                      </h3>
+                      <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                        {matchedLevel?.titleAr && isAr ? matchedLevel.titleAr : matchedLevel?.titleEn || pc.cohortDescriptionGeneric}
+                      </p>
+                    </div>
+
+                    <div className="bg-slate-50 rounded-xl p-3 text-[11px] text-slate-600 space-y-1 border border-slate-100">
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-400">{isAr ? "السعة القصوى:" : "Max Capacity:"}</span>
+                        <span className="font-bold text-slate-800">{cg.capacityMax} {isAr ? "طلاب" : "Students"}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-400">{isAr ? "الجدول الأسبوعي:" : "Frequency:"}</span>
+                        <span className="font-bold text-slate-800">{isAr ? "حصتان • 40 دقيقة" : "2 Sessions • 40m"}</span>
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full bg-brand-100 text-brand-700 font-bold text-xs flex items-center justify-center">
+                  <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-7 h-7 rounded-full bg-brand-100 text-brand-700 font-bold text-xs flex items-center justify-center">
                         👨‍🏫
                       </div>
-                      <div>
-                        <span className="text-[11px] text-slate-400 block leading-none">
-                          {pc.leadInstructorLabel}
-                        </span>
-                        <span className="text-xs font-bold text-slate-800">
-                          {pc.certifiedFacultyLabel}
-                        </span>
-                      </div>
+                      <span className="text-xs font-bold text-slate-800">
+                        {pc.certifiedFacultyLabel}
+                      </span>
                     </div>
 
                     <Link
-                      href={`/${locale}/parent/enroll`}
-                      className="px-5 py-2.5 rounded-xl gradient-brand text-white font-bold text-xs shadow-sm hover:opacity-95 transition-all flex items-center gap-1.5 shrink-0"
+                      href={`/${locale}/parent/enroll?program=${selectedSlug}&age=${matchedLevel?.targetAge || "AGE_7_10"}&classId=${cg.id}`}
+                      className="px-3.5 py-2 rounded-xl gradient-brand text-white font-bold text-xs shadow-xs hover:opacity-95 transition-all flex items-center gap-1 shrink-0"
                     >
                       <span>{pc.reserveSeatCta}</span>
-                      <ForwardArrow className="w-3.5 h-3.5" />
+                      <ForwardArrow className="w-3 h-3" />
                     </Link>
                   </div>
                 </div>

@@ -4,6 +4,37 @@ All notable changes to the Kids Arabic Academy platform will be documented in th
 
 ---
 
+## [Full APP.md & PROJECT_BRIEF.md Platform Implementation] - 2026-09-21
+### Added
+- **Complete Public Marketing & Informational Portal**: Built 9 dedicated public routes with full multi-lingual (AR, EN, NL, TR, IT, ES) and BiDi RTL/LTR layout support:
+  - `/how-it-works`: 4-step pedagogical journey, age-group pathways (4-6, 7-10, 11-13, 14-16), micro-cohorts, and parent transparency loop.
+  - `/pricing`: Comprehensive comparison of Individual ($79/mo), Family ($149/mo), Group ($99/mo), and Private 1-on-1 ($199/mo) plans with 1-day free trial, 14-day money-back guarantee, and school licensing CTA.
+  - `/about`: Mission, CEFR pedagogy alignment, certified lead faculty profiles, and international diaspora reach.
+  - `/contact`: Interactive contact form with lead capture into CRM, direct WhatsApp Concierge link, email, and support hours SLA.
+  - `/faq`: Categorized accordion FAQ covering Curriculum, Live Classes, Tech Requirements, Billing, and Child Safety.
+  - `/for-parents`: Dedicated parent portal landing page emphasizing progress transparency, live session recording playback, and printable worksheets.
+  - `/teach`: Teacher career application portal with qualifications requirements, compensation structure ($25-$40/hr), and application form.
+  - `/inquiry`: Personalized enrollment inquiry & placement intake form for parents seeking customized micro-cohort recommendations.
+  - `/child-safety`: Comprehensive Child Safety & Data Protection policy compliant with COPPA and GDPR-K.
+- **Support Agent Role & Diagnostic Console** (`/support`):
+  - Added `requireSupportAgentSession` guard supporting `SUPPORT_AGENT` and `SUPER_ADMIN`.
+  - Diagnostic user lookup (students, parents, teachers) by name, email, or account ID.
+  - Inquiries & CRM leads inbox with topic filters and contact channels.
+  - Live session diagnostics with room link verification and scheduled time display.
+  - Added `SUPPORT_AGENT` demo persona to `RoleSwitcher`.
+- **Marketing & CRM Integration Layer** (`src/server/services/CrmService.ts`):
+  - Lead capture for contact inquiries, admissions, and teacher applications.
+  - Typed integration adapters with graceful development mocks for **HubSpot**, **GoHighLevel**, and **Mailchimp**.
+- **Family Referral & Rewards Program** (`src/server/services/ReferralService.ts` & `/parent/referrals`):
+  - Unique referral codes for parents (`REF-NAME-ID`), shareable WhatsApp link, invite tracking table, and $25 credit accumulation.
+- **Multi-Format Interactive Assessment & Examination Suite**:
+  - `AssessmentExamRunner.tsx`: Interactive student exam runner with timed sessions, auto-scoring, and support for all 7 question types: Multiple Choice, True/False, Matching, Fill in the Blank, Essay, Audio Response, Voice Recording.
+  - `/student/assessments/[id]`: Dedicated student assessment route.
+- **Updated Navigation**: Connected all new public and dashboard routes into `Header.tsx` and `Footer.tsx`.
+- **Updated Governance Documentation**: Updated all 10 core markdown files in `docs/` (`ARCHITECTURE.md`, `ASSUMPTIONS.md`, `DATABASE.md`, `SECURITY.md`, `USER_ROLES.md`, `IMPLEMENTATION_PLAN.md`, `TESTING.md`, `DEPLOYMENT.md`, `DEVELOPMENT_ACCOUNTS.md`, `CHANGELOG.md`).
+
+---
+
 ## [Public 1-Day Free Trial with Verified Email] - 2026-09-17
 ### ⚠️ Requires a manual step from you: apply the schema migration
 This release adds a new database table (`EmailVerificationToken`, for the email-confirmation step below). After pulling these changes, run `npx prisma db push` against the production database before or immediately after deploying -- the same one-time step required for the earlier Multi-Tenant B2B release. Until it's run, new registrations will fail at the point of creating a verification token.

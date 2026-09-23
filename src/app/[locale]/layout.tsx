@@ -40,8 +40,8 @@ export default async function LocaleLayout({
   const direction = getDirection(locale);
 
   return (
-    <html lang={locale} dir={direction}>
-      <body className="min-h-screen flex flex-col bg-slate-50 text-slate-900">
+    <html lang={locale} dir={direction} suppressHydrationWarning>
+      <body className="min-h-screen flex flex-col bg-slate-50 text-slate-900" suppressHydrationWarning>
         <SentryInit />
         <Header locale={locale} />
         <main className="flex-1">{children}</main>

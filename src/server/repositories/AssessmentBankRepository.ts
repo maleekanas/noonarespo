@@ -224,6 +224,12 @@ class InMemoryAssessmentBankRepository {
     return this.questions.get(id) || null;
   }
 
+  async getQuestionsByIds(ids: string[]): Promise<BankQuestion[]> {
+    return ids
+      .map((id) => this.questions.get(id))
+      .filter((q): q is BankQuestion => Boolean(q));
+  }
+
   async addQuestion(data: Omit<BankQuestion, "id">): Promise<BankQuestion> {
     const id = "bq-" + (this.questions.size + 1);
     const question: BankQuestion = { id, ...data };
@@ -283,6 +289,15 @@ class InMemoryAssessmentBankRepository {
     a.isPublished = !a.isPublished;
     return a;
   }
+
+  async deleteAssessment(id: string): Promise<boolean> {
+    return this.assessments.delete(id);
+  }
+
+  async deleteQuestion(id: string): Promise<boolean> {
+    return this.questions.delete(id);
+  }
 }
 
 export const assessmentBankRepository = new InMemoryAssessmentBankRepository();
+

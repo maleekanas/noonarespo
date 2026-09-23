@@ -304,6 +304,125 @@ class InMemoryPrintablesRepository {
         },
       ],
     });
+
+    // 9. AGE_11_13: Ruq'ah Calligraphy & Speed Writing Workbook
+    this.printables.set("printable-ruqah-calligraphy-workbook", {
+      id: "printable-ruqah-calligraphy-workbook",
+      titleAr: "كراسة تدريبات خط الرقعة وضبط زوايا الحروف السريعة",
+      titleEn: "Ruq'ah Calligraphy & Fluid Cursive Writing Workbook",
+      category: "HANDWRITING_TRACING",
+      categoryNameAr: "تحسين الخط والتتبع",
+      targetAgeGroup: "AGE_11_13",
+      pageCount: 4,
+      paperFormat: "A4_PORTRAIT",
+      thumbnailEmoji: "✒️",
+      descriptionAr: "كراسة مسطرة تركز على الزوايا الحادة لخط الرقعة، وطمس الحروف المفرغة، واستقرار الكلمات على السطر.",
+      descriptionEn: "Ruled workbook focusing on Ruq'ah script angles, letter loops, and efficient cursive penmanship.",
+      qrCodeDestinationUrl: "/student/activities",
+      qrCodeLabelAr: "امسح الرمز لمشاهدة فيديو توجيه القلم التفاعلي",
+      items: [
+        {
+          titleAr: "قواعد خط الرقعة: حروف (السين، الصاد، الهاء)",
+          guideTextAr: "ارسم السين دون أسنان، واطمس رأس الهاء الوسطية مثل شكل الفيونكة.",
+          guideTextEn: "Trace toothless Seen and fill the medial Haa bow-tie loop.",
+          practiceLinesCount: 4,
+          sampleCharacters: ["سِرٌّ", "صَبْرٌ", "مَهْدٌ", "العِلْمُ نُورٌ"],
+          illustrationEmoji: "📐",
+        },
+      ],
+    });
+
+    // 10. AGE_11_13: Interactive Grammar & I'rab Mind Map
+    this.printables.set("printable-grammar-diagrams", {
+      id: "printable-grammar-diagrams",
+      titleAr: "ملصق الخريطة الذهنية الشاملة لعلامات الإعراب الأصلية والفرعية",
+      titleEn: "Comprehensive Arabic Grammar & I'rab Mind-Map Poster",
+      category: "VOCABULARY_FLASHCARDS",
+      categoryNameAr: "ملصقات وبطاقات تعليمية",
+      targetAgeGroup: "AGE_11_13",
+      pageCount: 2,
+      paperFormat: "A4_LANDSCAPE",
+      thumbnailEmoji: "📊",
+      descriptionAr: "ملصق دراسي ملون يوضح علامات الرفع والنصب والجر والجزم للمفرد والمثنى وجمع التكسير والجموع السالمة.",
+      descriptionEn: "Color-coded study infographic detailing nominative, accusative, genitive, and jussive markers across noun forms.",
+      qrCodeDestinationUrl: "/student/activities",
+      qrCodeLabelAr: "امسح الرمز لحل تدريبات الإعراب التفاعلية",
+      items: [
+        {
+          titleAr: "شجرة الإعراب: المرفوعات والمنصوبات والمجرورات",
+          guideTextAr: "راجع الجدول قبل كتابة موضوع التعبير لضبط نهايات الكلمات الإعرابية بدقة.",
+          guideTextEn: "Review table before essay composition to verify terminal case markers.",
+          practiceLinesCount: 2,
+          sampleCharacters: [
+            "المُبْتَدَأُ: مَرْفُوعٌ بِالضَّمَّةِ",
+            "المَفْعُولُ بِهِ: مَنْصُوبٌ بِالفَتْحَةِ",
+            "المَجْرُورُ: مَجْرُورٌ بِالكَسْرَةِ",
+          ],
+          illustrationEmoji: "🌳",
+        },
+      ],
+    });
+
+    // 11. AGE_14_16: Classical Rhetoric & Poetry Workbook
+    this.printables.set("printable-classical-poetry-workbook", {
+      id: "printable-classical-poetry-workbook",
+      titleAr: "كراسة التحليل البلاغي لروائع الشعر العربي والمعلقات",
+      titleEn: "Classical Arabic Poetry & Balagha Rhetorical Analysis Guide",
+      category: "PROPHETIC_COMICS",
+      categoryNameAr: "قصص الأنبياء الورقية",
+      targetAgeGroup: "AGE_14_16",
+      pageCount: 4,
+      paperFormat: "A4_PORTRAIT",
+      thumbnailEmoji: "📜",
+      descriptionAr: "أوراق عمل تطبيقية تتضمن قصائد مختارة من المعلقات وعصر النهضة مع جداول تحليل الصور البيانية والمحسنات.",
+      descriptionEn: "Applied worksheets featuring classical odes with analytical tables for similes, metaphors, and phonetic rhythm.",
+      qrCodeDestinationUrl: "/student/stories",
+      qrCodeLabelAr: "امسح الرمز للاستماع للإلقاء الشعري النموذجي",
+      items: [
+        {
+          titleAr: "معلقة زهير بن أبي سلمى في الحكمة والمدح",
+          guideTextAr: "استخرج أركان التشبيه الأربعة من البيتين واشرح أثر الكناية في إبراز كرم العربي.",
+          guideTextEn: "Extract the 4 simile pillars and explain the metonymic praise of generosity.",
+          practiceLinesCount: 4,
+          sampleCharacters: [
+            "وَمَنْ يَكُ ذَا فَضْلٍ فَيَبْخَلْ بِفَضْلِهِ",
+            "عَلَى قَوْمِهِ يُسْتَغْنَ عَنْهُ وَيُذْمَمِ",
+          ],
+          illustrationEmoji: "🏛️",
+        },
+      ],
+    });
+
+    // 12. AGE_14_16: Islamic Civilization & Science Timeline
+    this.printables.set("printable-islamic-civilization-timeline", {
+      id: "printable-islamic-civilization-timeline",
+      titleAr: "مخطط خط الزمن: معالم الريادة العلمية للحضارة الإسلامية",
+      titleEn: "Islamic Civilization Scientific Leadership Timeline Map",
+      category: "VOCABULARY_FLASHCARDS",
+      categoryNameAr: "ملصقات وبطاقات تعليمية",
+      targetAgeGroup: "AGE_14_16",
+      pageCount: 3,
+      paperFormat: "A4_LANDSCAPE",
+      thumbnailEmoji: "🌍",
+      descriptionAr: "ملصق تاريخي تفاعلي يوثق اختراعات علماء المسلمين (الخوارزمي، ابن الهيثم، الزهراوي، مريم الأسطرلابي) ودورهم الإنساني.",
+      descriptionEn: "Chronological wall poster documenting discoveries of Muslim scholars in algebra, optics, medicine, and astronomy.",
+      qrCodeDestinationUrl: "/student/stories/story-al-khwarizmi-algebra",
+      qrCodeLabelAr: "امسح الرمز لقراءة القصة الرقمية التفاعلية للخوارزمي",
+      items: [
+        {
+          titleAr: "عصر الازدهار العلمي: من بغداد إلى قرطبة",
+          guideTextAr: "تتبع خط الزمن وصل كل عالم باكتشافه العلمي الرائد في الطب والفلك والجبر.",
+          guideTextEn: "Trace the timeline and connect each scholar to their groundbreaking discovery.",
+          practiceLinesCount: 2,
+          sampleCharacters: [
+            "الخَوَارِزْمِيُّ: مُؤسِّسُ عِلْمِ الجَبْرِ 📐",
+            "ابْنُ الهَيْثَمِ: رَائِدُ عِلْمِ البَصَرِيَّاتِ 👁️",
+            "الزَّهْرَاوِيُّ: أَبُو الجِرَاحَةِ الطِّبِّيَّةِ 🩺",
+          ],
+          illustrationEmoji: "🔭",
+        },
+      ],
+    });
   }
 
   async getAllPrintables(): Promise<PrintablePacket[]> {
