@@ -184,6 +184,7 @@
     "emailInUse": "Bu e-posta zaten kayıtlı. Bunun yerine giriş yapmayı deneyin.",
     "weakPassword": "Şifre en az 8 karakter uzunluğunda olmalıdır.",
     "registrationError": "Hesabınız oluşturulamadı. Lütfen tekrar deneyin.",
+    "registrationEmailFailed": "Onay e-postanızı gönderemediğimiz için hesabınız oluşturulamadı. Lütfen birkaç dakika sonra tekrar deneyin.",
     "termsAgreementPrefix": "Hesap oluşturarak",
     "termsOfServiceLink": "Hizmet Şartları'nı",
     "termsAgreementConnector": "ve",
@@ -306,6 +307,8 @@
     "applyErrorInvalidEmail": "Lütfen geçerli bir e-posta adresi girin.",
     "applyErrorRateLimited": "Çok fazla gönderim yapıldı. Lütfen biraz bekleyip tekrar deneyin.",
     "applyErrorServer": "Başvurunuzu gönderemedik. Lütfen tekrar deneyin veya doğrudan bize e-posta gönderin.",
+    "applyErrorTrialLimit": "3 Günlük Ücretsiz Deneme en fazla 10 öğrenci ile sınırlıdır. Lütfen sayıyı azaltın veya ücretli bir paket seçin.",
+    "applyTrialCapHint": "Ücretsiz deneme başvuruları en fazla 10 öğrenci ile sınırlıdır.",
     "trustBadge": "Sertifikalı İslami okullar, toplum merkezleri ve ev okulu kooperatifleri tarafından güveniliyor"
   },
   "programsCatalog": {
