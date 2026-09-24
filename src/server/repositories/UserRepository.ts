@@ -7,7 +7,7 @@ import {
   DomainTeacherProfile,
   DomainAdministratorProfile,
 } from "./types";
-import { RoleType, AgeGroup, RelationshipType, EmploymentType } from "@prisma/client";
+import { RoleType, AgeGroup, RelationshipType, EmploymentType, UserStatus, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/database/prisma";
 
 /**
@@ -561,6 +561,130 @@ class UserRepository {
       return true;
     } catch {
       return true;
+    }
+  }
+
+  /**
+   * Creates a real login (User + AdministratorProfile{scope, schoolId:
+   * null} + role) for a second, platform-wide admin with LIMITED hub
+   * access -- ACADEMIC_ADMIN or FINANCE_ADMIN, never another SUPER_ADMIN
+   * from this path. Mirrors SchoolRepository.createSchoolAdmin's
+   * transaction/bcrypt/temp-password/P2002-duplicate-email pattern, but
+   * deliberately leaves the AdministratorProfile.partnerSchool relation
+   * unset (schoolId stays null) -- that's what canAccessAdminHub's matrix
+   * and requireSchoolAdminSession both use to tell a platform-wide admin
+   * apart from a school-scoped SCHOOL_ADMIN. Before this existed there was
+   * no way to create a second admin account at all: every real login was
+   * either the seeded super-admin or nothing, so "give someone limited
+   * access" meant sharing the one superadmin password.
+   */
+  async createPlatformAdmin(admin: {
+    fullName: string;
+    email?: string;
+    role: typeof RoleType.ACADEMIC_ADMIN | typeof RoleType.FINANCE_ADMIN;
+  }): Promise<{ fullName: string; email: string; tempPassword: string }> {
+    const adminRole = await prisma.role.findUnique({ where: { name: admin.role } });
+    if (!adminRole) {
+      throw new Error(
+        `The ${admin.role} role does not exist in the database yet. Run the seed script (npm run db:seed) first.`
+      );
+    }
+
+    const [firstName, ...rest] = admin.fullName.trim().split(/\s+/);
+    const lastName = rest.join(" ") || "Admin";
+    const tempPassword = crypto.randomBytes(6).toString("base64url");
+    const passwordHash = await bcrypt.hash(tempPassword, 10);
+
+    const emailSlug =
+      firstName
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "")
+        .slice(0, 20) || "admin";
+    const email =
+      admin.email?.trim().toLowerCase() ||
+      `${emailSlug}.${crypto.randomBytes(3).toString("hex")}@platform.admins.arabickidsacademy.internal`;
+
+    try {
+      await prisma.$transaction(async (tx) => {
+        const createdAdmin = await tx.administratorProfile.create({
+          data: {
+            firstName: firstName || "Admin",
+            lastName,
+            scope: admin.role,
+            user: {
+              create: {
+                email,
+                passwordHash,
+                localePreference: "ar",
+              },
+            },
+          },
+        });
+
+        await tx.userRole.create({
+          data: { userId: createdAdmin.userId, roleId: adminRole.id },
+        });
+      });
+    } catch (err) {
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
+        throw new Error(
+          `The email "${email}" is already registered to another account. Use a different email, or leave the field blank to auto-generate an internal login email.`
+        );
+      }
+      throw err;
+    }
+
+    return { fullName: admin.fullName.trim(), email, tempPassword };
+  }
+
+  /**
+   * Lists every platform-wide admin account -- SUPER_ADMIN,
+   * ACADEMIC_ADMIN and FINANCE_ADMIN with no school attached -- so the
+   * Settings page can show who currently has admin access instead of
+   * that being invisible/undiscoverable once more than one exists.
+   * SCHOOL_ADMIN accounts are intentionally excluded (they belong to the
+   * Schools hub's own per-school admin list, not this platform-wide one).
+   */
+  async listPlatformAdmins(): Promise<
+    Array<{
+      userId: string;
+      fullName: string;
+      email: string;
+      scope: RoleType;
+      status: UserStatus;
+      createdAt: Date;
+    }>
+  > {
+    const rows = await prisma.administratorProfile.findMany({
+      where: {
+        schoolId: null,
+        scope: { in: [RoleType.SUPER_ADMIN, RoleType.ACADEMIC_ADMIN, RoleType.FINANCE_ADMIN] },
+      },
+      include: { user: { select: { email: true, status: true, createdAt: true } } },
+      orderBy: { createdAt: "asc" },
+    });
+    return rows.map((row) => ({
+      userId: row.userId,
+      fullName: `${row.firstName} ${row.lastName}`,
+      email: row.user.email,
+      scope: row.scope,
+      status: row.user.status,
+      createdAt: row.user.createdAt,
+    }));
+  }
+
+  /**
+   * Activates or suspends a platform admin's own login -- the same
+   * ACTIVE/SUSPENDED toggle already used for students/teachers/parents,
+   * now reachable for a second admin account too, so a super admin can
+   * revoke a limited admin's access without deleting the account outright.
+   */
+  async setUserAccountStatus(userId: string, status: UserStatus): Promise<boolean> {
+    try {
+      await prisma.user.update({ where: { id: userId }, data: { status } });
+      return true;
+    } catch {
+      return false;
     }
   }
 }

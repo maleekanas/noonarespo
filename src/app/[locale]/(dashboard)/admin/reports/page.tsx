@@ -5,7 +5,7 @@ import { payrollService } from "@/server/services/PayrollService";
 import { billingService } from "@/server/services/BillingService";
 import { academicRepository } from "@/server/repositories/AcademicRepository";
 import { PrintButton } from "@/components/shared/PrintButton";
-import { requireAdminSession } from "@/lib/auth/currentUser";
+import { requireAdminHubAccess } from "@/lib/auth/currentUser";
 import {
   TrendingUp,
   BookOpen,
@@ -17,7 +17,7 @@ export default async function AdminReportsPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  await requireAdminSession(locale);
+  await requireAdminHubAccess(locale, "reports");
 
   const stats = await administrationService.getSchoolAnalyticsOverview();
   const finance = await payrollService.getFinanceReconciliationOverview();

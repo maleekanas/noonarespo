@@ -8,7 +8,8 @@ import { administrationRepository } from "@/server/repositories/AdministrationRe
 import { getClientIp } from "@/lib/security/rateLimit";
 import { prisma } from "@/lib/database/prisma";
 import { InvoiceStatus } from "@prisma/client";
-import { requireAdminSession } from "@/lib/auth/currentUser";
+import { requireAdminHubAccess } from "@/lib/auth/currentUser";
+import { refundPayment, writeOffInvoice } from "@/server/services/StripeSubscriptionService";
 import {
   Download,
   FileText,
@@ -21,6 +22,10 @@ import {
   ToggleRight,
   Layers,
   Sparkles,
+  Pencil,
+  Undo2,
+  Ban,
+  AlertTriangle,
 } from "lucide-react";
 
 const INVOICE_STATUS_LABELS_AR: Record<InvoiceStatus, string> = {
@@ -44,11 +49,20 @@ export default async function AdminFinancePage({
   searchParams,
 }: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ couponSaved?: string; couponToggled?: string; couponDeleted?: string }>;
+  searchParams: Promise<{
+    couponSaved?: string;
+    couponToggled?: string;
+    couponDeleted?: string;
+    planUpdated?: string;
+    refundDone?: string;
+    refundError?: string;
+    writeOffDone?: string;
+  }>;
 }) {
   const { locale } = await params;
-  const { couponSaved, couponToggled, couponDeleted } = await searchParams;
-  const admin = await requireAdminSession(locale);
+  const { couponSaved, couponToggled, couponDeleted, planUpdated, refundDone, refundError, writeOffDone } =
+    await searchParams;
+  const admin = await requireAdminHubAccess(locale, "finance");
   const isAr = locale === "ar";
 
   const overview = await payrollService.getFinanceOverview();
@@ -63,7 +77,7 @@ export default async function AdminFinancePage({
   // Server Action: Create or Update Coupon
   async function handleCreateOrUpdateCoupon(formData: FormData) {
     "use server";
-    const currentAdmin = await requireAdminSession(locale);
+    const currentAdmin = await requireAdminHubAccess(locale, "finance");
     const code = (formData.get("code")?.toString() || "").trim().toUpperCase();
     const discountPercentage = Number(formData.get("discountPercentage")) || 10;
     const descriptionAr = formData.get("descriptionAr")?.toString() || `خصم ${discountPercentage}%`;
@@ -98,7 +112,7 @@ export default async function AdminFinancePage({
   // Server Action: Toggle Coupon Active State
   async function handleToggleCoupon(formData: FormData) {
     "use server";
-    const currentAdmin = await requireAdminSession(locale);
+    const currentAdmin = await requireAdminHubAccess(locale, "finance");
     const code = formData.get("code")?.toString() || "";
     if (!code) return;
 
@@ -124,7 +138,7 @@ export default async function AdminFinancePage({
   // Server Action: Delete Coupon
   async function handleDeleteCoupon(formData: FormData) {
     "use server";
-    const currentAdmin = await requireAdminSession(locale);
+    const currentAdmin = await requireAdminHubAccess(locale, "finance");
     const code = formData.get("code")?.toString() || "";
     if (!code) return;
 
@@ -145,6 +159,115 @@ export default async function AdminFinancePage({
 
     revalidatePath(`/${locale}/admin/finance`);
     redirect(`/${locale}/admin/finance?couponDeleted=${code}`);
+  }
+
+  // Server Action: Update a plan's price/details. This is a REAL change --
+  // StripeSubscriptionService.findOrCreatePrismaPlan() derives the Prisma
+  // Plan row used at the next checkout from this same in-memory catalog, so
+  // saving a new price here changes what the plan actually charges going
+  // forward. It never touches subscriptions that already exist.
+  async function handleUpdatePlan(formData: FormData) {
+    "use server";
+    const currentAdmin = await requireAdminHubAccess(locale, "finance");
+    const planId = formData.get("planId")?.toString() || "";
+    const priceDollars = Number(formData.get("priceDollars"));
+    const descriptionAr = formData.get("descriptionAr")?.toString().trim();
+    if (!planId || !Number.isFinite(priceDollars) || priceDollars <= 0) return;
+
+    const priceMinorUnits = Math.round(priceDollars * 100);
+    const updated = await billingService.updatePlan(planId, {
+      priceMinorUnits,
+      descriptionAr: descriptionAr || undefined,
+    });
+    if (!updated) return;
+
+    const ip = await getClientIp();
+    await administrationRepository.addAuditLog({
+      category: "FINANCE",
+      action: "UPDATE_SUBSCRIPTION_PLAN",
+      actorId: currentAdmin.id,
+      actorEmail: currentAdmin.email,
+      actorRole: currentAdmin.role,
+      targetEntityId: planId,
+      targetEntityType: "SubscriptionPlan",
+      ipAddress: ip,
+      diffSummary: `Plan ${planId} price updated to ${billingService.formatPrice(priceMinorUnits, updated.currency)}`,
+    });
+
+    revalidatePath(`/${locale}/admin/finance`);
+    redirect(`/${locale}/admin/finance?planUpdated=${planId}`);
+  }
+
+  // Server Action: Refund a payment (full or partial). Only ever reachable
+  // for a payment that actually succeeded -- see the invoice table below,
+  // where the button is only rendered for a PAID invoice's payment.
+  async function handleRefundPayment(formData: FormData) {
+    "use server";
+    const currentAdmin = await requireAdminHubAccess(locale, "finance");
+    const paymentId = formData.get("paymentId")?.toString() || "";
+    const invoiceNumber = formData.get("invoiceNumber")?.toString() || "";
+    const amountDollarsRaw = formData.get("amountDollars")?.toString().trim();
+    const reason = formData.get("reason")?.toString().trim() || undefined;
+    if (!paymentId) return;
+
+    const amountMinorUnits = amountDollarsRaw ? Math.round(Number(amountDollarsRaw) * 100) : undefined;
+
+    let result: { refundId: string; amountMinorUnits: number };
+    try {
+      result = await refundPayment(paymentId, { amountMinorUnits, reason });
+    } catch (err) {
+      revalidatePath(`/${locale}/admin/finance`);
+      redirect(
+        `/${locale}/admin/finance?refundError=${encodeURIComponent(
+          err instanceof Error ? err.message : "Refund failed"
+        )}`
+      );
+    }
+
+    const ip = await getClientIp();
+    await administrationRepository.addAuditLog({
+      category: "FINANCE",
+      action: "REFUND_PAYMENT",
+      actorId: currentAdmin.id,
+      actorEmail: currentAdmin.email,
+      actorRole: currentAdmin.role,
+      targetEntityId: paymentId,
+      targetEntityType: "Payment",
+      ipAddress: ip,
+      diffSummary: `Refunded ${billingService.formatPrice(result!.amountMinorUnits)} on invoice ${invoiceNumber}${reason ? ` -- ${reason}` : ""}`,
+    });
+
+    revalidatePath(`/${locale}/admin/finance`);
+    redirect(`/${locale}/admin/finance?refundDone=${invoiceNumber}`);
+  }
+
+  // Server Action: Write off an unpaid invoice (accounting UNCOLLECTIBLE
+  // status) -- distinct from a refund, since no money was ever collected.
+  async function handleWriteOffInvoice(formData: FormData) {
+    "use server";
+    const currentAdmin = await requireAdminHubAccess(locale, "finance");
+    const invoiceId = formData.get("invoiceId")?.toString() || "";
+    const invoiceNumber = formData.get("invoiceNumber")?.toString() || "";
+    const reason = formData.get("reason")?.toString().trim() || undefined;
+    if (!invoiceId) return;
+
+    await writeOffInvoice(invoiceId, reason);
+
+    const ip = await getClientIp();
+    await administrationRepository.addAuditLog({
+      category: "FINANCE",
+      action: "WRITE_OFF_INVOICE",
+      actorId: currentAdmin.id,
+      actorEmail: currentAdmin.email,
+      actorRole: currentAdmin.role,
+      targetEntityId: invoiceId,
+      targetEntityType: "Invoice",
+      ipAddress: ip,
+      diffSummary: `Invoice ${invoiceNumber} marked UNCOLLECTIBLE${reason ? ` -- ${reason}` : ""}`,
+    });
+
+    revalidatePath(`/${locale}/admin/finance`);
+    redirect(`/${locale}/admin/finance?writeOffDone=${invoiceNumber}`);
   }
 
   return (
@@ -208,6 +331,44 @@ export default async function AdminFinancePage({
             {isAr
               ? `تم حذف كود الخصم "${couponDeleted}" بنجاح.`
               : `Coupon "${couponDeleted}" deleted.`}
+          </span>
+        </div>
+      )}
+
+      {planUpdated && (
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3.5 text-sm text-emerald-800 flex items-center gap-2 shadow-sm">
+          <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
+          <span>
+            {isAr
+              ? "تم تحديث سعر الباقة بنجاح. سيُطبَّق على أي اشتراك جديد بدءاً من الآن."
+              : "Plan updated successfully. Applies to new checkouts from now on."}
+          </span>
+        </div>
+      )}
+
+      {refundDone && (
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3.5 text-sm text-emerald-800 flex items-center gap-2 shadow-sm">
+          <Undo2 className="w-4 h-4 shrink-0 text-emerald-600" />
+          <span>
+            {isAr ? `تم استرداد المبلغ لفاتورة ${refundDone} بنجاح.` : `Refund processed for invoice ${refundDone}.`}
+          </span>
+        </div>
+      )}
+
+      {refundError && (
+        <div className="rounded-2xl border border-rose-200 bg-rose-50 px-5 py-3.5 text-sm text-rose-800 flex items-center gap-2 shadow-sm">
+          <AlertTriangle className="w-4 h-4 shrink-0 text-rose-600" />
+          <span>{decodeURIComponent(refundError)}</span>
+        </div>
+      )}
+
+      {writeOffDone && (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-3.5 text-sm text-amber-800 flex items-center gap-2 shadow-sm">
+          <Ban className="w-4 h-4 shrink-0 text-amber-600" />
+          <span>
+            {isAr
+              ? `تم شطب فاتورة ${writeOffDone} كدين متعذر تحصيله.`
+              : `Invoice ${writeOffDone} written off as uncollectible.`}
           </span>
         </div>
       )}
@@ -468,6 +629,46 @@ export default async function AdminFinancePage({
                   <span className="font-bold">{plan.weeklySessionsPerChild}</span>
                 </div>
               </div>
+
+              <details className="mt-3 pt-3 border-t border-slate-200/60 text-[10px]">
+                <summary className="cursor-pointer font-bold text-slate-500 hover:text-brand-600 flex items-center gap-1 select-none">
+                  <Pencil className="w-3 h-3" />
+                  <span>{isAr ? "تعديل السعر" : "Edit price"}</span>
+                </summary>
+                <form action={handleUpdatePlan} className="mt-2 space-y-2">
+                  <input type="hidden" name="planId" value={plan.id} />
+                  <div>
+                    <label className="block font-bold text-slate-600 mb-0.5">
+                      {isAr ? "السعر (دولار)" : "Price (USD)"}
+                    </label>
+                    <input
+                      type="number"
+                      name="priceDollars"
+                      step="0.01"
+                      min="0.01"
+                      defaultValue={(plan.priceMinorUnits / 100).toFixed(2)}
+                      className="w-full px-2 py-1.5 rounded-lg border border-slate-200 font-mono text-slate-900"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-bold text-slate-600 mb-0.5">
+                      {isAr ? "الوصف" : "Description"}
+                    </label>
+                    <input
+                      type="text"
+                      name="descriptionAr"
+                      defaultValue={plan.descriptionAr}
+                      className="w-full px-2 py-1.5 rounded-lg border border-slate-200 text-slate-900"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    className="w-full py-1.5 rounded-lg bg-slate-900 text-white font-bold hover:bg-slate-800 transition-colors"
+                  >
+                    {isAr ? "حفظ السعر الجديد" : "Save new price"}
+                  </button>
+                </form>
+              </details>
             </div>
           ))}
         </div>
@@ -496,37 +697,124 @@ export default async function AdminFinancePage({
               <span>{isAr ? "الحالة" : "Status"}</span>
             </div>
 
-            {allInvoices.map((inv) => (
-              <div
-                key={inv.id}
-                className="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-slate-800"
-              >
-                <div>
-                  <span className="font-bold text-slate-900 block">{inv.invoiceNumber}</span>
-                  <span className="text-slate-400 text-[11px]">
-                    {isAr ? "ولي الأمر: " : "Parent: "}{inv.parent.firstName} {inv.parent.lastName}
-                  </span>
-                </div>
+            {allInvoices.map((inv) => {
+              const succeededPayment = inv.payments.find((p) => p.status === "SUCCEEDED");
+              const canRefund = inv.status === "PAID" && !!succeededPayment;
+              const canWriteOff = inv.status === "ISSUED" || inv.status === "DRAFT";
 
-                <span className="text-slate-500">
-                  {inv.createdAt.toISOString().split("T")[0]}
-                </span>
-
-                <span className="text-slate-600">
-                  {inv.payments[0]?.provider === "STRIPE" ? "Stripe" : inv.payments[0]?.provider || "—"}
-                </span>
-
-                <span className="font-bold text-slate-900 text-sm">
-                  {billingService.formatPrice(inv.totalMinorUnits, inv.currency)}
-                </span>
-
-                <span
-                  className={`px-3 py-1 rounded-full font-bold text-[11px] border w-fit ${INVOICE_STATUS_STYLES[inv.status]}`}
+              return (
+                <div
+                  key={inv.id}
+                  className="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-slate-800"
                 >
-                  {INVOICE_STATUS_LABELS_AR[inv.status]}
-                </span>
-              </div>
-            ))}
+                  <div>
+                    <span className="font-bold text-slate-900 block">{inv.invoiceNumber}</span>
+                    <span className="text-slate-400 text-[11px]">
+                      {isAr ? "ولي الأمر: " : "Parent: "}{inv.parent.firstName} {inv.parent.lastName}
+                    </span>
+                  </div>
+
+                  <span className="text-slate-500">
+                    {inv.createdAt.toISOString().split("T")[0]}
+                  </span>
+
+                  <span className="text-slate-600">
+                    {inv.payments[0]?.provider === "STRIPE" ? "Stripe" : inv.payments[0]?.provider || "—"}
+                  </span>
+
+                  <span className="font-bold text-slate-900 text-sm">
+                    {billingService.formatPrice(inv.totalMinorUnits, inv.currency)}
+                  </span>
+
+                  <span
+                    className={`px-3 py-1 rounded-full font-bold text-[11px] border w-fit ${INVOICE_STATUS_STYLES[inv.status]}`}
+                  >
+                    {INVOICE_STATUS_LABELS_AR[inv.status]}
+                  </span>
+
+                  {(canRefund || canWriteOff) && (
+                    <div className="flex items-center gap-2">
+                      {canRefund && (
+                        <details className="relative">
+                          <summary className="cursor-pointer list-none px-2.5 py-1.5 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 font-bold text-[11px] flex items-center gap-1 select-none">
+                            <Undo2 className="w-3 h-3" />
+                            <span>{isAr ? "استرداد" : "Refund"}</span>
+                          </summary>
+                          <form
+                            action={handleRefundPayment}
+                            className="absolute z-10 mt-1 w-56 p-3 rounded-xl bg-white border border-slate-200 shadow-lg space-y-2 text-[11px] end-0"
+                          >
+                            <input type="hidden" name="paymentId" value={succeededPayment!.id} />
+                            <input type="hidden" name="invoiceNumber" value={inv.invoiceNumber} />
+                            <div>
+                              <label className="block font-bold text-slate-600 mb-0.5">
+                                {isAr ? "المبلغ (فارغ = كامل)" : "Amount (blank = full)"}
+                              </label>
+                              <input
+                                type="number"
+                                name="amountDollars"
+                                step="0.01"
+                                min="0.01"
+                                placeholder={(inv.totalMinorUnits / 100).toFixed(2)}
+                                className="w-full px-2 py-1 rounded-lg border border-slate-200 font-mono"
+                              />
+                            </div>
+                            <div>
+                              <label className="block font-bold text-slate-600 mb-0.5">
+                                {isAr ? "السبب" : "Reason"}
+                              </label>
+                              <input
+                                type="text"
+                                name="reason"
+                                className="w-full px-2 py-1 rounded-lg border border-slate-200"
+                              />
+                            </div>
+                            <button
+                              type="submit"
+                              className="w-full py-1.5 rounded-lg bg-rose-600 text-white font-bold hover:bg-rose-700 transition-colors"
+                            >
+                              {isAr ? "تأكيد الاسترداد" : "Confirm refund"}
+                            </button>
+                          </form>
+                        </details>
+                      )}
+
+                      {canWriteOff && (
+                        <details className="relative">
+                          <summary className="cursor-pointer list-none px-2.5 py-1.5 rounded-lg bg-slate-100 text-slate-600 border border-slate-200 hover:bg-slate-200 font-bold text-[11px] flex items-center gap-1 select-none">
+                            <Ban className="w-3 h-3" />
+                            <span>{isAr ? "شطب الدين" : "Write off"}</span>
+                          </summary>
+                          <form
+                            action={handleWriteOffInvoice}
+                            className="absolute z-10 mt-1 w-56 p-3 rounded-xl bg-white border border-slate-200 shadow-lg space-y-2 text-[11px] end-0"
+                          >
+                            <input type="hidden" name="invoiceId" value={inv.id} />
+                            <input type="hidden" name="invoiceNumber" value={inv.invoiceNumber} />
+                            <div>
+                              <label className="block font-bold text-slate-600 mb-0.5">
+                                {isAr ? "السبب" : "Reason"}
+                              </label>
+                              <input
+                                type="text"
+                                name="reason"
+                                className="w-full px-2 py-1 rounded-lg border border-slate-200"
+                              />
+                            </div>
+                            <button
+                              type="submit"
+                              className="w-full py-1.5 rounded-lg bg-slate-700 text-white font-bold hover:bg-slate-800 transition-colors"
+                            >
+                              {isAr ? "تأكيد الشطب" : "Confirm write-off"}
+                            </button>
+                          </form>
+                        </details>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

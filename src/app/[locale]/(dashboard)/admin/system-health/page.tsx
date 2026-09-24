@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 import { systemHealthService, type HealthState, type SubsystemHealth } from "@/server/services/SystemHealthService";
 import { languages, type Locale, getDictionary } from "@/lib/localization";
-import { requireAdminSession } from "@/lib/auth/currentUser";
+import { requireAdminHubAccess } from "@/lib/auth/currentUser";
 
 export default async function SystemHealthPage({
   params,
@@ -30,7 +30,7 @@ export default async function SystemHealthPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  await requireAdminSession(locale);
+  await requireAdminHubAccess(locale, "system-health");
   const isAr = locale === "ar";
   const dict = getDictionary(locale);
   const sh = dict.adminSystemHealth;

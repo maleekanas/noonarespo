@@ -162,3 +162,75 @@ export function canManageAssessments(actor: SessionUser | null): boolean {
     actor.role === RoleType.TEACHER
   );
 }
+
+/**
+ * The superadmin dashboard's 15 hubs. Everything here used to assume one
+ * implicit superadmin: requireAdminSession() let SUPER_ADMIN, ACADEMIC_ADMIN
+ * and FINANCE_ADMIN straight through to every single hub with no
+ * differentiation at all, even though canManageCurriculum() /
+ * canViewFinancialRecord() / canViewAuditLogs() / canManageAssessments()
+ * above already existed (and were already unit-tested) specifically to
+ * express which of those roles should see what. This is the missing piece:
+ * one real access matrix, actually consulted by each hub page, so a
+ * FINANCE_ADMIN account genuinely cannot open Settings or Integrations, and
+ * an ACADEMIC_ADMIN genuinely cannot see payroll or refund an invoice --
+ * instead of everyone silently getting superadmin-equivalent access.
+ */
+export type AdminHub =
+  | "students"
+  | "teachers"
+  | "curriculum"
+  | "assessments"
+  | "classes"
+  | "schedule"
+  | "reviews"
+  | "reports"
+  | "schools"
+  | "finance"
+  | "data-export"
+  | "audit-logs"
+  | "integrations"
+  | "system-health"
+  | "settings";
+
+export function canAccessAdminHub(actor: SessionUser | null, hub: AdminHub): boolean {
+  if (!actor) return false;
+
+  // SUPER_ADMIN is the one role with unrestricted platform-wide access --
+  // every other admin role's access is a strict subset of this.
+  if (actor.role === RoleType.SUPER_ADMIN) return true;
+
+  switch (hub) {
+    case "curriculum":
+      return canManageCurriculum(actor);
+    case "assessments":
+      return canManageAssessments(actor);
+    case "audit-logs":
+      return canViewAuditLogs(actor);
+    case "finance":
+    case "data-export":
+      // Finance's own controls (coupons, plans, invoice refunds/write-offs)
+      // and full-data exports are FINANCE_ADMIN's domain.
+      return actor.role === RoleType.FINANCE_ADMIN;
+    case "students":
+    case "teachers":
+    case "classes":
+    case "schedule":
+    case "reviews":
+    case "reports":
+      // Day-to-day academic operations, plus the reporting dashboard both
+      // roles reasonably need to see progress against.
+      return actor.role === RoleType.ACADEMIC_ADMIN || actor.role === RoleType.FINANCE_ADMIN;
+    case "schools":
+    case "integrations":
+    case "system-health":
+    case "settings":
+      // B2B contracts/billing, third-party credentials, infrastructure
+      // health, and platform-wide policy are superadmin-only -- these are
+      // exactly the kind of thing a limited second admin should NOT be able
+      // to touch.
+      return false;
+    default:
+      return false;
+  }
+}

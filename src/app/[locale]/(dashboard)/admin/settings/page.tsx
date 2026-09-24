@@ -2,10 +2,13 @@ import React from "react";
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { requireAdminSession } from "@/lib/auth/currentUser";
+import { requireAdminHubAccess } from "@/lib/auth/currentUser";
 import { systemSettingsService, AnnouncementType } from "@/server/services/SystemSettingsService";
 import { administrationRepository } from "@/server/repositories/AdministrationRepository";
+import { administrationService } from "@/server/services/AdministrationService";
 import { getClientIp } from "@/lib/security/rateLimit";
+import { RoleType, UserStatus } from "@prisma/client";
+import { PlatformAdminClient } from "@/components/admin/PlatformAdminClient";
 import {
   Sliders,
   ShieldCheck,
@@ -20,6 +23,7 @@ import {
   Lock,
   Sparkles,
   Zap,
+  UserCog,
 } from "lucide-react";
 
 export default async function AdminSettingsPage({
@@ -31,15 +35,16 @@ export default async function AdminSettingsPage({
 }) {
   const { locale } = await params;
   const { saved, flushed, reset } = await searchParams;
-  const admin = await requireAdminSession(locale);
+  const admin = await requireAdminHubAccess(locale, "settings");
   const isAr = locale === "ar";
   const settings = await systemSettingsService.getSettings();
   const usingFallback = systemSettingsService.isUsingFallback();
+  const platformAdmins = await administrationService.listPlatformAdmins();
 
   // Server Action: Update Feature Flags
   async function handleUpdateFlags(formData: FormData) {
     "use server";
-    const currentAdmin = await requireAdminSession(locale);
+    const currentAdmin = await requireAdminHubAccess(locale, "settings");
     const allowRegistration = formData.get("allowRegistration") === "on";
     const allowB2cTrial = formData.get("allowB2cTrial") === "on";
     const allowB2bTrial = formData.get("allowB2bTrial") === "on";
@@ -75,7 +80,7 @@ export default async function AdminSettingsPage({
   // Server Action: Update Announcement
   async function handleUpdateAnnouncement(formData: FormData) {
     "use server";
-    const currentAdmin = await requireAdminSession(locale);
+    const currentAdmin = await requireAdminHubAccess(locale, "settings");
     const announcementActive = formData.get("announcementActive") === "on";
     const announcementType = (formData.get("announcementType")?.toString() || "INFO") as AnnouncementType;
     const announcementTextAr = formData.get("announcementTextAr")?.toString() || "";
@@ -113,7 +118,7 @@ export default async function AdminSettingsPage({
   // Server Action: Update Maintenance Mode
   async function handleUpdateMaintenance(formData: FormData) {
     "use server";
-    const currentAdmin = await requireAdminSession(locale);
+    const currentAdmin = await requireAdminHubAccess(locale, "settings");
     const maintenanceMode = formData.get("maintenanceMode") === "on";
     const maintenanceMessageAr = formData.get("maintenanceMessageAr")?.toString() || "";
     const maintenanceMessageEn = formData.get("maintenanceMessageEn")?.toString() || "";
@@ -147,7 +152,7 @@ export default async function AdminSettingsPage({
   // Server Action: Update Profile & Security
   async function handleUpdateProfileAndSecurity(formData: FormData) {
     "use server";
-    const currentAdmin = await requireAdminSession(locale);
+    const currentAdmin = await requireAdminHubAccess(locale, "settings");
     const supportEmail = formData.get("supportEmail")?.toString() || "support@arabickidsacademy.com";
     const supportWhatsApp = formData.get("supportWhatsApp")?.toString() || "+971501234567";
     const defaultCurrency = formData.get("defaultCurrency")?.toString() || "USD";
@@ -191,7 +196,7 @@ export default async function AdminSettingsPage({
   // Server Action: Flush Cache
   async function handleFlushCache() {
     "use server";
-    const currentAdmin = await requireAdminSession(locale);
+    const currentAdmin = await requireAdminHubAccess(locale, "settings");
     systemSettingsService.flushCache();
 
     const ip = await getClientIp();
@@ -214,7 +219,7 @@ export default async function AdminSettingsPage({
   // Server Action: Reset Defaults
   async function handleResetDefaults() {
     "use server";
-    const currentAdmin = await requireAdminSession(locale);
+    const currentAdmin = await requireAdminHubAccess(locale, "settings");
     await systemSettingsService.resetDefaults(currentAdmin.email);
 
     const ip = await getClientIp();
@@ -233,6 +238,71 @@ export default async function AdminSettingsPage({
 
     revalidatePath(`/${locale}/admin/settings`);
     redirect(`/${locale}/admin/settings?reset=1`);
+  }
+
+  // Server Action: Create a second, limited platform admin (Role Management).
+  // Called directly from PlatformAdminClient (not a <form action>) so the
+  // one-time temp password can be returned and shown in the page itself,
+  // instead of ever appearing in a redirect URL / browser history.
+  async function handleCreatePlatformAdminAction(params: {
+    fullName: string;
+    email?: string;
+    role: "ACADEMIC_ADMIN" | "FINANCE_ADMIN";
+  }): Promise<{
+    account: { fullName: string; email: string; tempPassword: string } | null;
+    error: string | null;
+  }> {
+    "use server";
+    const currentAdmin = await requireAdminHubAccess(locale, "settings");
+    let account: { fullName: string; email: string; tempPassword: string };
+    try {
+      account = await administrationService.createPlatformAdmin(
+        {
+          fullName: params.fullName,
+          email: params.email,
+          role: params.role === "FINANCE_ADMIN" ? RoleType.FINANCE_ADMIN : RoleType.ACADEMIC_ADMIN,
+        },
+        currentAdmin
+      );
+    } catch (err) {
+      return {
+        account: null,
+        error: err instanceof Error ? err.message : "Failed to create the admin account.",
+      };
+    }
+    revalidatePath(`/${locale}/admin/settings`);
+    return { account, error: null };
+  }
+
+  // Server Action: Activate/suspend an existing platform admin's login.
+  // Refuses to let a super admin change their own account's status, so
+  // this can't be used to accidentally lock the caller themselves out.
+  async function handleTogglePlatformAdminStatusAction(
+    userId: string,
+    newStatus: "ACTIVE" | "SUSPENDED"
+  ): Promise<{ success: boolean; error: string | null }> {
+    "use server";
+    const currentAdmin = await requireAdminHubAccess(locale, "settings");
+    if (userId === currentAdmin.id) {
+      return {
+        success: false,
+        error: isAr ? "لا يمكنك تعديل حالة حسابك الخاص." : "You cannot change your own account's status.",
+      };
+    }
+    try {
+      await administrationService.setPlatformAdminStatus(
+        userId,
+        newStatus === "ACTIVE" ? UserStatus.ACTIVE : UserStatus.SUSPENDED,
+        currentAdmin
+      );
+    } catch (err) {
+      return {
+        success: false,
+        error: err instanceof Error ? err.message : "Failed to update the account status.",
+      };
+    }
+    revalidatePath(`/${locale}/admin/settings`);
+    return { success: true, error: null };
   }
 
   return (
@@ -744,6 +814,33 @@ export default async function AdminSettingsPage({
               </button>
             </div>
           </form>
+        </div>
+
+        {/* Section 5: Role Management — Platform Admin Accounts */}
+        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-6 lg:col-span-2">
+          <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+            <h2 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
+              <UserCog className="w-5 h-5 text-brand-600" />
+              <span>{isAr ? "5. إدارة صلاحيات المسؤولين (Role Management)" : "5. Admin Role Management"}</span>
+            </h2>
+            <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-brand-50 text-brand-700 border border-brand-200">
+              {platformAdmins.length} {isAr ? "حساب" : "accounts"}
+            </span>
+          </div>
+
+          <p className="text-xs text-slate-500 -mt-2">
+            {isAr
+              ? "أنشئ حساب مدير ثانٍ بصلاحيات محدودة (أكاديمي أو مالي فقط) بدلاً من مشاركة كلمة مرور المدير العام. كل حساب محدود يرى فقط الأقسام المسموح بها له."
+              : "Create a second admin account with limited access (academic-only or finance-only) instead of sharing the super admin password. Each limited account only sees the hubs it's granted."}
+          </p>
+
+          <PlatformAdminClient
+            initialAdmins={platformAdmins.map((a) => ({ ...a, createdAt: a.createdAt.toISOString() }))}
+            currentAdminUserId={admin.id}
+            locale={locale}
+            onCreate={handleCreatePlatformAdminAction}
+            onToggleStatus={handleTogglePlatformAdminStatusAction}
+          />
         </div>
       </div>
 

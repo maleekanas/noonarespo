@@ -815,6 +815,24 @@ class SchoolRepository {
     }
   }
 
+  /**
+   * Teachers with no school assignment yet (schoolId null) -- the pool a
+   * super admin picks from when assigning staff to a partner school, via
+   * assignTeacherToSchool above. Without this, that action existed with no
+   * way to discover which teacher ids were even eligible to assign.
+   */
+  async getUnassignedTeachers(): Promise<any[]> {
+    try {
+      return await prisma.teacherProfile.findMany({
+        where: { schoolId: null },
+        include: { user: { select: { email: true, status: true } } },
+        orderBy: { firstName: "asc" },
+      });
+    } catch {
+      return [];
+    }
+  }
+
   private toSchool(row: {
     id: string;
     nameAr: string;

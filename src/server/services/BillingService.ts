@@ -26,6 +26,13 @@ export class BillingService {
     return await financialRepository.getPlanById(planId);
   }
 
+  async updatePlan(
+    planId: string,
+    updates: Partial<Pick<SubscriptionPlan, "priceMinorUnits" | "nameAr" | "descriptionAr" | "isPopular" | "maxChildren" | "weeklySessionsPerChild">>
+  ): Promise<SubscriptionPlan | null> {
+    return await financialRepository.updatePlan(planId, updates);
+  }
+
   async getAllCoupons(): Promise<DiscountCoupon[]> {
     return await financialRepository.getAllCoupons();
   }

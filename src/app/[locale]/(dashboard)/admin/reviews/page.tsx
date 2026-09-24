@@ -1,6 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import {
   Star,
   ArrowRight,
@@ -12,12 +13,13 @@ import {
   Send,
   Filter,
   Users,
+  ListChecks,
 } from "lucide-react";
 import { reviewService } from "@/server/services/ReviewService";
 import { ReviewStatus } from "@/server/repositories/ReviewRepository";
 import { getDictionary } from "@/lib/localization";
 import { reviewTranslationAdapter } from "@/lib/integrations/ai/ReviewTranslationAdapter";
-import { requireAdminSession } from "@/lib/auth/currentUser";
+import { requireAdminHubAccess } from "@/lib/auth/currentUser";
 
 const INTL_LOCALE: Record<string, string> = {
   ar: "ar-SA",
@@ -33,11 +35,11 @@ export default async function AdminReviewModerationPage({
   searchParams,
 }: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ status?: string }>;
+  searchParams: Promise<{ status?: string; bulkModerated?: string }>;
 }) {
   const { locale } = await params;
-  const { status: filterStatus } = await searchParams;
-  await requireAdminSession(locale);
+  const { status: filterStatus, bulkModerated } = await searchParams;
+  await requireAdminHubAccess(locale, "reviews");
   const isAr = locale === "ar";
   const dict = getDictionary(locale);
   const arm = dict.adminReviews;
@@ -73,7 +75,7 @@ export default async function AdminReviewModerationPage({
   // Server Action: Moderate Review Status
   async function handleModerate(reviewId: string, newStatus: ReviewStatus) {
     "use server";
-    await requireAdminSession(locale);
+    await requireAdminHubAccess(locale, "reviews");
     await reviewService.moderateReview(reviewId, newStatus);
     revalidatePath(`/${locale}/admin/reviews`);
     revalidatePath(`/${locale}/parent/reviews`);
@@ -82,7 +84,7 @@ export default async function AdminReviewModerationPage({
   // Server Action: Post Official Admin Reply
   async function handleReply(formData: FormData) {
     "use server";
-    await requireAdminSession(locale);
+    await requireAdminHubAccess(locale, "reviews");
     const reviewId = formData.get("reviewId")?.toString();
     const replyText = formData.get("replyText")?.toString().trim();
     if (!reviewId || !replyText) return;
@@ -95,13 +97,37 @@ export default async function AdminReviewModerationPage({
   // Server Action: Delete Review
   async function handleDelete(formData: FormData) {
     "use server";
-    await requireAdminSession(locale);
+    await requireAdminHubAccess(locale, "reviews");
     const reviewId = formData.get("reviewId")?.toString();
     if (!reviewId) return;
 
     await reviewService.deleteReview(reviewId);
     revalidatePath(`/${locale}/admin/reviews`);
     revalidatePath(`/${locale}/parent/reviews`);
+  }
+
+  // Server Action: Bulk Moderate Selected Reviews. The checkboxes that
+  // populate reviewIds live inside each review card (see the `form="..."`
+  // attribute below) rather than nested inside this <form> -- HTML forbids
+  // nesting a <form> inside another <form>, and each review card already
+  // has its own reply/delete forms, so the checkboxes are associated with
+  // this external form by id instead.
+  async function handleBulkModerate(formData: FormData) {
+    "use server";
+    await requireAdminHubAccess(locale, "reviews");
+    const reviewIds = formData.getAll("reviewIds").map((v) => v.toString()).filter(Boolean);
+    const bulkStatus = formData.get("bulkStatus")?.toString() as ReviewStatus | undefined;
+    if (reviewIds.length === 0 || !bulkStatus) {
+      redirect(`/${locale}/admin/reviews${filterStatus ? `?status=${filterStatus}` : ""}`);
+    }
+
+    const { succeededIds } = await reviewService.bulkModerateReviews(reviewIds, bulkStatus);
+
+    revalidatePath(`/${locale}/admin/reviews`);
+    revalidatePath(`/${locale}/parent/reviews`);
+    redirect(
+      `/${locale}/admin/reviews?bulkModerated=${succeededIds.length}${filterStatus ? `&status=${filterStatus}` : ""}`
+    );
   }
 
   return (
@@ -175,6 +201,52 @@ export default async function AdminReviewModerationPage({
         </div>
       )}
 
+      {bulkModerated && (
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3.5 text-sm text-emerald-800 flex items-center gap-2 shadow-sm">
+          <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
+          <span>
+            {isAr
+              ? `تم تحديث حالة ${bulkModerated} تقييماً دفعة واحدة.`
+              : `Updated ${bulkModerated} review${bulkModerated === "1" ? "" : "s"} in bulk.`}
+          </span>
+        </div>
+      )}
+
+      {/* Bulk Moderation Bar -- checkboxes on each review card below are
+          associated with this form via the "form" attribute rather than
+          being nested inside it (see handleBulkModerate's comment). */}
+      <form
+        id="bulk-review-form"
+        action={handleBulkModerate}
+        className="flex flex-wrap items-center gap-2 bg-white p-4 rounded-2xl border border-slate-200 text-xs"
+      >
+        <span className="font-bold text-slate-500 me-2 flex items-center gap-1.5">
+          <ListChecks className="w-4 h-4 text-slate-400" />
+          <span>{isAr ? "إجراء جماعي على المحدد:" : "Bulk action on selected:"}</span>
+        </span>
+        <button
+          type="submit"
+          name="bulkStatus"
+          value="APPROVED"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 font-bold rounded-xl border bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200 transition-colors"
+        >
+          <CheckCircle2 className="w-3.5 h-3.5" />
+          <span>{isAr ? "اعتماد المحدد" : "Approve Selected"}</span>
+        </button>
+        <button
+          type="submit"
+          name="bulkStatus"
+          value="FLAGGED"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 font-bold rounded-xl border bg-rose-50 hover:bg-rose-100 text-rose-700 border-rose-200 transition-colors"
+        >
+          <Flag className="w-3.5 h-3.5" />
+          <span>{isAr ? "الإبلاغ عن المحدد" : "Flag Selected"}</span>
+        </button>
+        <span className="text-slate-400 text-[11px]">
+          {isAr ? "حدد التقييمات المطلوبة من مربعات الاختيار أدناه" : "Check the boxes below on the reviews you want to include"}
+        </span>
+      </form>
+
       {/* Filter Tabs */}
       <div className="flex flex-wrap items-center gap-2 bg-white p-4 rounded-2xl border border-slate-200 text-xs">
         <span className="font-bold text-slate-500 me-2 flex items-center gap-1.5">
@@ -242,6 +314,14 @@ export default async function AdminReviewModerationPage({
             >
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
                 <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    name="reviewIds"
+                    value={rev.id}
+                    form="bulk-review-form"
+                    className="w-4 h-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500 cursor-pointer shrink-0"
+                    aria-label={isAr ? "تحديد هذا التقييم للإجراء الجماعي" : "Select this review for bulk action"}
+                  />
                   <div className="w-10 h-10 rounded-2xl bg-brand-50 border border-brand-200 text-brand-700 font-bold flex items-center justify-center text-sm">
                     {rev.parentName[0]}
                   </div>

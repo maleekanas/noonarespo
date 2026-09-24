@@ -405,6 +405,62 @@ export class AdministrationService {
       attendanceRecordsCount: attendance.totalRecords,
     };
   }
+
+  // --- Platform Admin Governance (Role Management) ---
+
+  /**
+   * Creates a second, LIMITED admin account -- ACADEMIC_ADMIN or
+   * FINANCE_ADMIN, never SUPER_ADMIN from this path -- and audit-logs the
+   * creation the same way every other account-creation action here does.
+   * This is the concrete "second admin with limited permissions" the
+   * platform previously had no way to create: canAccessAdminHub already
+   * drew the access matrix, but there was no UI or backend path to a real
+   * account that would actually exercise it.
+   */
+  async createPlatformAdmin(
+    data: { fullName: string; email?: string; role: typeof RoleType.ACADEMIC_ADMIN | typeof RoleType.FINANCE_ADMIN },
+    actor: SessionUser
+  ): Promise<{ fullName: string; email: string; tempPassword: string }> {
+    const created = await userRepository.createPlatformAdmin(data);
+
+    await this.recordAuditLog({
+      category: "USER_MANAGEMENT",
+      action: "PLATFORM_ADMIN_CREATED",
+      actor,
+      targetEntityId: created.email,
+      targetEntityType: "AdministratorProfile",
+      diffSummary: `تم إنشاء حساب إداري جديد (${data.role}) باسم ${data.fullName}`,
+    });
+
+    return created;
+  }
+
+  async listPlatformAdmins() {
+    return userRepository.listPlatformAdmins();
+  }
+
+  /**
+   * Activates or suspends a platform admin's own login. SUPER_ADMIN
+   * accounts are intentionally excluded at the call site (settings/page.tsx)
+   * -- this exists to let a super admin revoke a limited admin's access,
+   * not to let anyone lock out the platform's own super-admin account.
+   */
+  async setPlatformAdminStatus(
+    userId: string,
+    newStatus: UserStatus,
+    actor: SessionUser
+  ): Promise<void> {
+    await userRepository.setUserAccountStatus(userId, newStatus);
+
+    await this.recordAuditLog({
+      category: "USER_MANAGEMENT",
+      action: newStatus === UserStatus.ACTIVE ? "PLATFORM_ADMIN_ACTIVATED" : "PLATFORM_ADMIN_SUSPENDED",
+      actor,
+      targetEntityId: userId,
+      targetEntityType: "AdministratorProfile",
+      diffSummary: `تعديل حالة الحساب الإداري إلى [${newStatus}]`,
+    });
+  }
 }
 
 export const administrationService = new AdministrationService();

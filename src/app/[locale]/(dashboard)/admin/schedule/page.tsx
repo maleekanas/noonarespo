@@ -6,7 +6,7 @@ import { schedulingRepository } from "@/server/repositories/SchedulingRepository
 import { schedulingService } from "@/server/services/SchedulingService";
 import { academicRepository } from "@/server/repositories/AcademicRepository";
 import { userRepository } from "@/server/repositories/UserRepository";
-import { requireAdminSession } from "@/lib/auth/currentUser";
+import { requireAdminHubAccess } from "@/lib/auth/currentUser";
 import {
   Calendar,
   Clock,
@@ -28,7 +28,7 @@ export default async function AdminSchedulePage({
 }) {
   const { locale } = await params;
   const { recurringError, created: recurringCreated, requested: recurringRequested } = await searchParams;
-  await requireAdminSession(locale);
+  await requireAdminHubAccess(locale, "schedule");
   const sessions = await schedulingRepository.getAllSessions();
   const classGroups = await academicRepository.getAllClassGroups();
 
@@ -48,7 +48,7 @@ export default async function AdminSchedulePage({
 
   async function handleScheduleSession(formData: FormData) {
     "use server";
-    await requireAdminSession(locale);
+    await requireAdminHubAccess(locale, "schedule");
     const classGroupId = formData.get("classGroupId")?.toString() || "class-reading-a1-cohort1";
     const startDateTimeStr = formData.get("startDateTime")?.toString() || "";
     const durationMinutesStr = formData.get("durationMinutes")?.toString() || "45";
@@ -93,7 +93,7 @@ export default async function AdminSchedulePage({
   // requested instead of pretending the whole batch always succeeds.
   async function handleGenerateRecurringSessions(formData: FormData) {
     "use server";
-    await requireAdminSession(locale);
+    await requireAdminHubAccess(locale, "schedule");
     const classGroupId = formData.get("classGroupId")?.toString() || "class-reading-a1-cohort1";
     const firstSessionDateTimeStr = formData.get("firstSessionDateTime")?.toString() || "";
     const durationMinutes = parseInt(formData.get("durationMinutes")?.toString() || "45", 10);
@@ -139,7 +139,7 @@ export default async function AdminSchedulePage({
 
   async function handleCancelSession(formData: FormData) {
     "use server";
-    await requireAdminSession(locale);
+    await requireAdminHubAccess(locale, "schedule");
     const sessionId = formData.get("sessionId")?.toString();
     if (!sessionId) return;
 
@@ -152,7 +152,7 @@ export default async function AdminSchedulePage({
 
   async function handleRescheduleSession(formData: FormData) {
     "use server";
-    await requireAdminSession(locale);
+    await requireAdminHubAccess(locale, "schedule");
     const sessionId = formData.get("sessionId")?.toString();
     const newStartDateTimeStr = formData.get("newStartDateTime")?.toString();
     const durationMinutesStr = formData.get("durationMinutes")?.toString() || "45";

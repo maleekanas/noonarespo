@@ -1,12 +1,13 @@
 import React from "react";
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
-import { ArrowRight, Building2, ShieldCheck, PlusCircle, CheckCircle2, Sliders, Trash2, Power, Zap, Bell, X } from "lucide-react";
+import { redirect } from "next/navigation";
+import { ArrowRight, Building2, ShieldCheck, PlusCircle, CheckCircle2, Sliders, Trash2, Power, Zap, Bell, X, Receipt, Users, UserPlus2 } from "lucide-react";
 import { schoolService, B2B_BUNDLES } from "@/server/services/SchoolService";
 import { administrationService } from "@/server/services/AdministrationService";
 import { SchoolManagementClient } from "@/components/admin/SchoolManagementClient";
 import { getDictionary } from "@/lib/localization";
-import { requireAdminSession } from "@/lib/auth/currentUser";
+import { requireAdminHubAccess } from "@/lib/auth/currentUser";
 import { InstitutionType, BundleTier } from "@/server/repositories/SchoolRepository";
 
 // This page is session-gated (requireAdminSession reads the auth cookie) and
@@ -26,11 +27,11 @@ export default async function AdminSchoolsPage({
   searchParams,
 }: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ saved?: string; updated?: string; toggled?: string }>;
+  searchParams: Promise<{ saved?: string; updated?: string; toggled?: string; teacherAssigned?: string }>;
 }) {
   const { locale } = await params;
-  const { saved, updated, toggled } = await searchParams;
-  const adminSession = await requireAdminSession(locale);
+  const { saved, updated, toggled, teacherAssigned } = await searchParams;
+  const adminSession = await requireAdminHubAccess(locale, "schools");
   const isAr = locale === "ar";
   const dict = getDictionary(locale);
   const sc = dict.adminSchools;
@@ -38,6 +39,18 @@ export default async function AdminSchoolsPage({
   const schools = await schoolService.getAllSchools();
   const kpis = await schoolService.getInstitutionalKPIs();
   const pendingTrialRequests = await schoolService.getPendingTrialRequests();
+
+  // Per-school teacher roster + the pool of not-yet-assigned teachers, for
+  // the new Billing & Roster panel below -- getSchoolTeachers/assignTeacher
+  // were already fully implemented on SchoolService with nothing in the UI
+  // ever calling them.
+  const teachersBySchoolId = new Map<string, any[]>();
+  await Promise.all(
+    schools.map(async (s) => {
+      teachersBySchoolId.set(s.id, await schoolService.getSchoolTeachers(s.id));
+    })
+  );
+  const unassignedTeachers = await schoolService.getUnassignedTeachers();
 
   const INSTITUTION_TYPE_LABELS: Record<string, string> = {
     ISLAMIC_SCHOOL: isAr ? "مدرسة إسلامية نظامية" : "Islamic School",
@@ -54,7 +67,7 @@ export default async function AdminSchoolsPage({
     ageGroup: "AGE_4_6" | "AGE_7_10" | "AGE_11_13" | "AGE_14_16";
   }) {
     "use server";
-    await requireAdminSession(locale);
+    await requireAdminHubAccess(locale, "schools");
     return schoolService.onboardBatchRoster({ ...params, locale });
   }
 
@@ -67,7 +80,7 @@ export default async function AdminSchoolsPage({
     error: string | null;
   }> {
     "use server";
-    const admin = await requireAdminSession(locale);
+    const admin = await requireAdminHubAccess(locale, "schools");
 
     // Caught here (rather than left to throw) because any error thrown out
     // of a Server Action is redacted by Next.js in production to a generic
@@ -99,7 +112,7 @@ export default async function AdminSchoolsPage({
   // Server Action: Register New Partner School
   async function handleCreateSchool(formData: FormData) {
     "use server";
-    const admin = await requireAdminSession(locale);
+    const admin = await requireAdminHubAccess(locale, "schools");
     const nameAr = formData.get("nameAr")?.toString().trim() || "";
     const nameEn = formData.get("nameEn")?.toString().trim() || nameAr;
     const type = (formData.get("type")?.toString() || "PRIVATE_INSTITUTE") as InstitutionType;
@@ -140,7 +153,7 @@ export default async function AdminSchoolsPage({
   // Server Action: Update School Tier & Seats
   async function handleUpdateSchoolTier(formData: FormData) {
     "use server";
-    const admin = await requireAdminSession(locale);
+    const admin = await requireAdminHubAccess(locale, "schools");
     const schoolId = formData.get("schoolId")?.toString();
     const bundleTier = formData.get("bundleTier")?.toString() as BundleTier | undefined;
     const licenseSeatsTotal = formData.get("licenseSeatsTotal")
@@ -170,7 +183,7 @@ export default async function AdminSchoolsPage({
   // Server Action: Toggle School Active
   async function handleToggleSchool(formData: FormData) {
     "use server";
-    const admin = await requireAdminSession(locale);
+    const admin = await requireAdminHubAccess(locale, "schools");
     const schoolId = formData.get("schoolId")?.toString();
     if (!schoolId) return;
 
@@ -192,7 +205,7 @@ export default async function AdminSchoolsPage({
   // real SCHOOL_ADMIN login, and emails the credentials to the applicant)
   async function handleActivateTrial(formData: FormData) {
     "use server";
-    const admin = await requireAdminSession(locale);
+    const admin = await requireAdminHubAccess(locale, "schools");
     const nameAr = formData.get("nameAr")?.toString().trim() || "";
     const nameEn = formData.get("nameEn")?.toString().trim() || nameAr;
     const type = (formData.get("type")?.toString() || "PRIVATE_INSTITUTE") as InstitutionType;
@@ -234,7 +247,7 @@ export default async function AdminSchoolsPage({
   // button that turns a queued request into a live account with one click.
   async function handleApproveTrialRequestAction(formData: FormData) {
     "use server";
-    const admin = await requireAdminSession(locale);
+    const admin = await requireAdminHubAccess(locale, "schools");
     const requestId = formData.get("requestId")?.toString();
     if (!requestId) return;
 
@@ -261,7 +274,7 @@ export default async function AdminSchoolsPage({
   // creating any account.
   async function handleRejectTrialRequestAction(formData: FormData) {
     "use server";
-    const admin = await requireAdminSession(locale);
+    const admin = await requireAdminHubAccess(locale, "schools");
     const requestId = formData.get("requestId")?.toString();
     if (!requestId) return;
 
@@ -277,6 +290,31 @@ export default async function AdminSchoolsPage({
     });
 
     revalidatePath(`/${locale}/admin/schools`);
+  }
+
+  // Server Action: Assign an unassigned teacher to this school's roster --
+  // wires up SchoolService.assignTeacher / getSchoolTeachers, which were
+  // already fully implemented but had no page calling them.
+  async function handleAssignTeacherToSchool(formData: FormData) {
+    "use server";
+    const admin = await requireAdminHubAccess(locale, "schools");
+    const schoolId = formData.get("schoolId")?.toString();
+    const teacherId = formData.get("teacherId")?.toString();
+    if (!schoolId || !teacherId) return;
+
+    await schoolService.assignTeacher(teacherId, schoolId);
+
+    await administrationService.recordAuditLog({
+      category: "USER_MANAGEMENT",
+      action: "ASSIGN_TEACHER_TO_SCHOOL",
+      actor: admin,
+      targetEntityId: teacherId,
+      targetEntityType: "TeacherProfile",
+      diffSummary: `تعيين المعلم [${teacherId}] لمؤسسة [${schoolId}]`,
+    });
+
+    revalidatePath(`/${locale}/admin/schools`);
+    redirect(`/${locale}/admin/schools?teacherAssigned=${schoolId}`);
   }
 
   return (
@@ -394,6 +432,15 @@ export default async function AdminSchoolsPage({
         </div>
       )}
 
+      {teacherAssigned && (
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3.5 text-sm text-emerald-800 flex items-center gap-2 shadow-sm">
+          <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
+          <span>
+            {isAr ? "تم تعيين المعلم لطاقم المؤسسة بنجاح." : "Teacher assigned to the school's staff successfully."}
+          </span>
+        </div>
+      )}
+
       {/* Partner Schools Directory -- lets the superadmin actually change an
           existing school's plan/seats or deactivate/reactivate its contract.
           handleUpdateSchoolTier and handleToggleSchool below were previously
@@ -423,10 +470,13 @@ export default async function AdminSchoolsPage({
           </div>
         ) : (
           <div className="divide-y divide-slate-100">
-            {schools.map((school) => (
+            {schools.map((school) => {
+              const billing = schoolService.getSchoolBillingSummary(school);
+              const schoolTeachers = teachersBySchoolId.get(school.id) || [];
+              return (
+              <div key={school.id} className="p-6 space-y-4">
               <div
-                key={school.id}
-                className="p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-4"
+                className="flex flex-col lg:flex-row lg:items-center justify-between gap-4"
               >
                 <div className="text-xs space-y-1 min-w-0">
                   <div className="flex items-center gap-2">
@@ -504,7 +554,96 @@ export default async function AdminSchoolsPage({
                   </form>
                 </div>
               </div>
-            ))}
+
+              {/* Billing & Roster Panel -- computed billing summary (B2B
+                  Invoice rows don't exist; the real numbers live in
+                  bundleTier/licenseSeatsTotal, already persisted) plus the
+                  real teacher roster + assignment action, both previously
+                  fully implemented on SchoolService with no UI reaching
+                  them. */}
+              <details className="rounded-2xl border border-slate-200 bg-slate-50/60 overflow-hidden group">
+                <summary className="px-4 py-2.5 cursor-pointer flex items-center gap-2 text-xs font-bold text-slate-600 hover:text-indigo-700 select-none">
+                  <Receipt className="w-3.5 h-3.5" />
+                  <span>{isAr ? "الفوترة وطاقم التدريس" : "Billing & Teaching Staff"}</span>
+                  <span className="text-slate-400 font-normal">({schoolTeachers.length} {isAr ? "معلم" : "teachers"})</span>
+                </summary>
+
+                <div className="px-4 pb-4 pt-1 grid grid-cols-1 lg:grid-cols-2 gap-4 text-xs">
+                  {/* Billing summary */}
+                  <div className="p-4 rounded-xl bg-white border border-slate-200 space-y-2">
+                    <h4 className="font-bold text-slate-800 flex items-center gap-1.5">
+                      <Receipt className="w-3.5 h-3.5 text-indigo-600" />
+                      <span>{isAr ? "ملخص الفوترة" : "Billing Summary"}</span>
+                    </h4>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">{isAr ? "الباقة" : "Bundle"}</span>
+                      <span className="font-bold text-slate-900">{isAr ? billing.bundle.nameAr : billing.bundle.nameEn}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">{isAr ? "السعر الشهري" : "Monthly price"}</span>
+                      <span className="font-bold text-slate-900 font-mono">€{billing.monthlyPriceEur}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">{isAr ? "استخدام المقاعد" : "Seat utilization"}</span>
+                      <span className="font-bold text-slate-900 font-mono">
+                        {billing.seatsUsed}/{billing.seatsTotal} ({billing.seatUtilizationPct}%)
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-slate-400 pt-1 border-t border-slate-100">
+                      {isAr
+                        ? "الفوترة المؤسسية تُدار تعاقدياً عبر الباقة والمقاعد المرخصة، وليست فواتير Stripe فردية."
+                        : "B2B billing is contract-managed via bundle tier and licensed seats, not individual Stripe invoices."}
+                    </p>
+                  </div>
+
+                  {/* Teacher roster + assignment */}
+                  <div className="p-4 rounded-xl bg-white border border-slate-200 space-y-2">
+                    <h4 className="font-bold text-slate-800 flex items-center gap-1.5">
+                      <Users className="w-3.5 h-3.5 text-indigo-600" />
+                      <span>{isAr ? "طاقم التدريس المعيّن" : "Assigned Teaching Staff"}</span>
+                    </h4>
+
+                    {schoolTeachers.length === 0 ? (
+                      <p className="text-slate-400 text-[11px]">{isAr ? "لا يوجد معلمون معيّنون بعد" : "No teachers assigned yet"}</p>
+                    ) : (
+                      <ul className="space-y-1">
+                        {schoolTeachers.map((t) => (
+                          <li key={t.id} className="flex items-center justify-between text-[11px] py-1 border-b border-slate-50 last:border-0">
+                            <span className="font-medium text-slate-700">{t.firstName} {t.lastName}</span>
+                            <span className="text-slate-400 font-mono">{t.user?.email}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+
+                    {unassignedTeachers.length > 0 && (
+                      <form action={handleAssignTeacherToSchool} className="flex items-center gap-1.5 pt-2 border-t border-slate-100">
+                        <input type="hidden" name="schoolId" value={school.id} />
+                        <select
+                          name="teacherId"
+                          className="flex-1 min-w-0 px-2 py-1.5 rounded-lg border border-slate-200 bg-white text-[11px]"
+                        >
+                          {unassignedTeachers.map((t) => (
+                            <option key={t.id} value={t.id}>
+                              {t.firstName} {t.lastName} ({t.user?.email})
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          type="submit"
+                          className="shrink-0 px-2.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[11px] flex items-center gap-1"
+                        >
+                          <UserPlus2 className="w-3 h-3" />
+                          <span>{isAr ? "تعيين" : "Assign"}</span>
+                        </button>
+                      </form>
+                    )}
+                  </div>
+                </div>
+              </details>
+              </div>
+              );
+            })}
           </div>
         )}
       </div>

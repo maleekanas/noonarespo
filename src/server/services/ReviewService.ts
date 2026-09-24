@@ -83,6 +83,27 @@ export class ReviewService {
   async deleteReview(reviewId: string): Promise<boolean> {
     return reviewRepository.deleteReview(reviewId);
   }
+
+  /**
+   * Moderates several reviews in one action. Before this, the admin Reviews
+   * hub only had moderateReview() reachable one review at a time (a click
+   * per card) -- with dozens of pending reviews after a busy week, clearing
+   * a backlog meant that many individual round trips. Best-effort per row:
+   * one bad id doesn't abort the rest of the batch.
+   */
+  async bulkModerateReviews(
+    reviewIds: string[],
+    status: ReviewStatus
+  ): Promise<{ succeededIds: string[]; failedIds: string[] }> {
+    const succeededIds: string[] = [];
+    const failedIds: string[] = [];
+    for (const id of reviewIds) {
+      const updated = await reviewRepository.updateReviewStatus(id, status);
+      if (updated) succeededIds.push(id);
+      else failedIds.push(id);
+    }
+    return { succeededIds, failedIds };
+  }
 }
 
 export const reviewService = new ReviewService();

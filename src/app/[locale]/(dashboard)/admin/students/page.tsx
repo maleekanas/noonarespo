@@ -3,7 +3,7 @@ import Link from "next/link";
 import { revalidatePath } from "next/cache";
 import { administrationService } from "@/server/services/AdministrationService";
 import { UserStatus, AgeGroup } from "@prisma/client";
-import { requireAdminSession } from "@/lib/auth/currentUser";
+import { requireAdminHubAccess } from "@/lib/auth/currentUser";
 import {
   ShieldCheck,
   GraduationCap,
@@ -21,7 +21,7 @@ export default async function AdminStudentsPage({
 }) {
   const { locale } = await params;
   const { status: filterStatus, age: filterAge } = await searchParams;
-  const adminSession = await requireAdminSession(locale);
+  const adminSession = await requireAdminHubAccess(locale, "students");
 
   let students = await administrationService.getAllStudents();
 

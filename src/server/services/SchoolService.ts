@@ -279,6 +279,39 @@ export class SchoolService {
     return schoolRepository.assignTeacherToSchool(teacherId, schoolId);
   }
 
+  async getUnassignedTeachers(): Promise<any[]> {
+    return schoolRepository.getUnassignedTeachers();
+  }
+
+  /**
+   * The school's billing summary as it actually exists today: B2B invoicing
+   * isn't represented by real Invoice rows (Invoice has no schoolId -- it's
+   * a per-parent B2C record), so rather than fabricate a fake invoice
+   * history, this computes the real number from the same bundleTier /
+   * licenseSeatsTotal fields the Schools hub already persists and displays
+   * (added in the Tier 1 fix), against the fixed B2B_BUNDLES price list.
+   */
+  getSchoolBillingSummary(school: PartnerSchool): {
+    bundle: B2BBundleDefinition;
+    monthlyPriceEur: number;
+    seatsUsed: number;
+    seatsTotal: number;
+    seatUtilizationPct: number;
+  } {
+    const bundle = B2B_BUNDLES[school.bundleTier];
+    const seatUtilizationPct =
+      school.licenseSeatsTotal > 0
+        ? Math.round((school.licenseSeatsUsed / school.licenseSeatsTotal) * 100)
+        : 0;
+    return {
+      bundle,
+      monthlyPriceEur: bundle.priceMonthlyEur,
+      seatsUsed: school.licenseSeatsUsed,
+      seatsTotal: school.licenseSeatsTotal,
+      seatUtilizationPct,
+    };
+  }
+
   /**
    * Registers an institution or independent teacher on the 3-day free trial
    * (capped at 10 students, with full institutional features).

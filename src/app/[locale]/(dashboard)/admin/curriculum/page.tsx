@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { administrationService } from "@/server/services/AdministrationService";
 import { academicRepository, getProgramSlug } from "@/server/repositories/AcademicRepository";
 import { AgeGroup } from "@prisma/client";
-import { requireAdminSession } from "@/lib/auth/currentUser";
+import { requireAdminHubAccess } from "@/lib/auth/currentUser";
 import {
   BookOpen,
   Layers,
@@ -40,7 +40,7 @@ export default async function AdminCurriculumPage({
 }) {
   const { locale } = await params;
   const { program: activeProgramId, age: activeAgeParam } = await searchParams;
-  const adminSession = await requireAdminSession(locale);
+  const adminSession = await requireAdminHubAccess(locale, "curriculum");
 
   const programs = await academicRepository.getAllPrograms();
   const programsWithSlug = programs.map((p) => ({ ...p, slug: getProgramSlug(p.type) }));

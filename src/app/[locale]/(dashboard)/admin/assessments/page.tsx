@@ -3,7 +3,7 @@ import Link from "next/link";
 import { revalidatePath } from "next/cache";
 import { assessmentBankService } from "@/server/services/AssessmentBankService";
 import { AssessmentFormatType } from "@/server/repositories/AssessmentBankRepository";
-import { requireAdminSession } from "@/lib/auth/currentUser";
+import { requireAdminHubAccess } from "@/lib/auth/currentUser";
 import {
   FileCheck,
   CheckCircle2,
@@ -26,7 +26,7 @@ export default async function AdminAssessmentsPage({
 }) {
   const { locale } = await params;
   const { type: filterType } = await searchParams;
-  const adminSession = await requireAdminSession(locale);
+  const adminSession = await requireAdminHubAccess(locale, "assessments");
 
   const assessments = await assessmentBankService.getAllAssessments();
   const questions = await assessmentBankService.getQuestionBank(

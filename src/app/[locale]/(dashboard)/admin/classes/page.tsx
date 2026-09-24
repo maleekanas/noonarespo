@@ -10,7 +10,7 @@ import { administrationService } from "@/server/services/AdministrationService";
 import { schedulingService } from "@/server/services/SchedulingService";
 import { schedulingRepository } from "@/server/repositories/SchedulingRepository";
 import { ClassType, SessionStatus } from "@prisma/client";
-import { requireAdminSession } from "@/lib/auth/currentUser";
+import { requireAdminHubAccess } from "@/lib/auth/currentUser";
 import {
   Users,
   PlusCircle,
@@ -35,7 +35,7 @@ export default async function AdminClassesPage({
   const { locale } = await params;
   const { conflict, classGroupId: conflictClassGroupId, teacherId: conflictTeacherId, reason: conflictReason } =
     await searchParams;
-  await requireAdminSession(locale);
+  await requireAdminHubAccess(locale, "classes");
   const isAr = locale === "ar";
 
   const classGroups = await academicRepository.getAllClassGroups();
@@ -80,7 +80,7 @@ export default async function AdminClassesPage({
   // Action: Create Class Group
   async function handleCreateClass(formData: FormData) {
     "use server";
-    await requireAdminSession(locale);
+    await requireAdminHubAccess(locale, "classes");
     const name = formData.get("name")?.toString() || "";
     const courseLevelId = formData.get("courseLevelId")?.toString() || "level-a1-reading";
     const classType = (formData.get("classType")?.toString() || "GROUP") as ClassType;
@@ -123,7 +123,7 @@ export default async function AdminClassesPage({
   // deliberately overrides via the "Assign anyway" confirmation form.
   async function handleAssignTeacher(formData: FormData) {
     "use server";
-    await requireAdminSession(locale);
+    await requireAdminHubAccess(locale, "classes");
     const classGroupId = formData.get("classGroupId")?.toString();
     const teacherId = formData.get("teacherId")?.toString();
     const force = formData.get("force")?.toString() === "true";
@@ -164,7 +164,7 @@ export default async function AdminClassesPage({
   // Action: Enroll Student in Class
   async function handleEnrollStudent(formData: FormData) {
     "use server";
-    await requireAdminSession(locale);
+    await requireAdminHubAccess(locale, "classes");
     const classGroupId = formData.get("classGroupId")?.toString();
     const studentId = formData.get("studentId")?.toString();
     if (!classGroupId || !studentId) return;
@@ -179,7 +179,7 @@ export default async function AdminClassesPage({
   // Action: Unenroll Student from Class
   async function handleUnenrollStudent(formData: FormData) {
     "use server";
-    await requireAdminSession(locale);
+    await requireAdminHubAccess(locale, "classes");
     const classGroupId = formData.get("classGroupId")?.toString();
     const studentId = formData.get("studentId")?.toString();
     if (!classGroupId || !studentId) return;
@@ -194,7 +194,7 @@ export default async function AdminClassesPage({
   // Action: Update Class
   async function handleUpdateClass(formData: FormData) {
     "use server";
-    await requireAdminSession(locale);
+    await requireAdminHubAccess(locale, "classes");
     const classId = formData.get("classId")?.toString();
     const name = formData.get("name")?.toString().trim();
     const capacityStr = formData.get("capacityMax")?.toString();
@@ -214,7 +214,7 @@ export default async function AdminClassesPage({
   // Action: Delete Class
   async function handleDeleteClass(formData: FormData) {
     "use server";
-    await requireAdminSession(locale);
+    await requireAdminHubAccess(locale, "classes");
     const classId = formData.get("classId")?.toString();
     if (!classId) return;
 

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { revalidatePath } from "next/cache";
 import { administrationService } from "@/server/services/AdministrationService";
 import { billingService } from "@/server/services/BillingService";
-import { requireAdminSession } from "@/lib/auth/currentUser";
+import { requireAdminHubAccess } from "@/lib/auth/currentUser";
 import { EmploymentType } from "@prisma/client";
 import {
   DollarSign,
@@ -25,7 +25,7 @@ export default async function AdminTeachersPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const adminSession = await requireAdminSession(locale);
+  const adminSession = await requireAdminHubAccess(locale, "teachers");
   const teachers = await administrationService.getAllTeachers();
   const certifiedCount = teachers.filter((t) => t.isCertified).length;
   const certifiedPercentage =

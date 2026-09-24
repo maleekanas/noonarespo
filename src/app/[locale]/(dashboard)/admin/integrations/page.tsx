@@ -7,12 +7,13 @@ import { notificationDispatcherService } from "@/server/services/NotificationDis
 import { storageService } from "@/server/services/StorageService";
 import { aiService } from "@/server/services/AiService";
 import { NotificationChannel } from "@/lib/integrations/notifications/types";
-import { requireAdminSession } from "@/lib/auth/currentUser";
+import { requireAdminHubAccess } from "@/lib/auth/currentUser";
 import { getClientIp } from "@/lib/security/rateLimit";
 import { userRepository } from "@/server/repositories/UserRepository";
 import { administrationRepository } from "@/server/repositories/AdministrationRepository";
 import { isStripeConfigured } from "@/lib/integrations/stripe";
 import { isRealtimeConfigured, triggerClassroomEvent } from "@/lib/integrations/realtime/RealtimeServer";
+import { integrationCredentialService } from "@/server/services/IntegrationCredentialService";
 import {
   Video,
   MessageSquare,
@@ -27,6 +28,9 @@ import {
   Megaphone,
   Sparkles,
   RefreshCw,
+  KeyRound,
+  ShieldAlert,
+  Link2,
 } from "lucide-react";
 
 export default async function AdminIntegrationsPage({
@@ -40,11 +44,12 @@ export default async function AdminIntegrationsPage({
     aiReply?: string;
     aiXp?: string;
     pusherPingSent?: string;
+    credentialRotated?: string;
   }>;
 }) {
   const { locale } = await params;
-  const { broadcastSent, broadcastFailed, aiReply, aiXp, pusherPingSent } = await searchParams;
-  await requireAdminSession(locale);
+  const { broadcastSent, broadcastFailed, aiReply, aiXp, pusherPingSent, credentialRotated } = await searchParams;
+  await requireAdminHubAccess(locale, "integrations");
   const isAr = locale === "ar";
 
   const meetingPlatforms = meetingManager.getPlatformStatuses();
@@ -56,11 +61,13 @@ export default async function AdminIntegrationsPage({
 
   const stripeConfigured = isStripeConfigured();
   const realtimeConfigured = isRealtimeConfigured();
+  const credentialRecords = await integrationCredentialService.listCredentialRecords();
+  const webhookBaseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://www.arabickidsacademy.com";
 
   // Action: Dispatch Test Notification
   async function handleTestDispatch(formData: FormData) {
     "use server";
-    await requireAdminSession(locale);
+    await requireAdminHubAccess(locale, "integrations");
     const channel = (formData.get("channel")?.toString() || "WHATSAPP") as NotificationChannel;
     const recipient = formData.get("recipient")?.toString() || "+966501234567";
 
@@ -78,7 +85,7 @@ export default async function AdminIntegrationsPage({
   // Action: Interactive AI Sandbox Prompt
   async function handleTestAiPrompt(formData: FormData) {
     "use server";
-    await requireAdminSession(locale);
+    await requireAdminHubAccess(locale, "integrations");
     const prompt = formData.get("prompt")?.toString().trim() || "مرحباً فصيح، كيف أتعلم الحروف العربية؟";
 
     const response = await aiService.sendStudentMessage({
@@ -97,7 +104,7 @@ export default async function AdminIntegrationsPage({
   // Action: Pusher WebSocket Ping
   async function handlePusherPing() {
     "use server";
-    await requireAdminSession(locale);
+    await requireAdminHubAccess(locale, "integrations");
     await triggerClassroomEvent("sandbox-admin-monitor", "admin:ping", {
       sender: "superadmin",
       timestamp: Date.now(),
@@ -108,11 +115,42 @@ export default async function AdminIntegrationsPage({
     redirect(`/${locale}/admin/integrations?pusherPingSent=1`);
   }
 
+  // Action: Log a credential rotation. This does NOT change the live
+  // credential itself (that only happens by updating the env var in
+  // Vercel and redeploying) -- it records, for real, that a human rotated
+  // it and when, which is the concrete gap this panel closes: before this,
+  // "when did we last rotate the Stripe key" had no persisted answer at
+  // all.
+  async function handleMarkCredentialRotated(formData: FormData) {
+    "use server";
+    const admin = await requireAdminHubAccess(locale, "integrations");
+    const provider = formData.get("provider")?.toString() || "";
+    const notes = formData.get("notes")?.toString().trim() || "";
+    if (!provider) return;
+
+    await integrationCredentialService.markRotated(provider, admin.email, notes);
+
+    const ip = await getClientIp();
+    await administrationRepository.addAuditLog({
+      category: "SECURITY",
+      action: "INTEGRATION_CREDENTIAL_ROTATION_LOGGED",
+      actorId: admin.id,
+      actorEmail: admin.email,
+      actorRole: admin.role,
+      targetEntityId: provider,
+      targetEntityType: "IntegrationCredentialRecord",
+      ipAddress: ip,
+      diffSummary: `Logged rotation of ${provider}${notes ? ` -- ${notes}` : ""}`,
+    });
+
+    revalidatePath(`/${locale}/admin/integrations`);
+    redirect(`/${locale}/admin/integrations?credentialRotated=${encodeURIComponent(provider)}`);
+  }
 
   // Action: Broadcast Notice Email to Parents
   async function handleBroadcastNotice(formData: FormData) {
     "use server";
-    const admin = await requireAdminSession(locale);
+    const admin = await requireAdminHubAccess(locale, "integrations");
     const subject = formData.get("subject")?.toString().trim() || "";
     const body = formData.get("body")?.toString().trim() || "";
 
@@ -207,6 +245,17 @@ export default async function AdminIntegrationsPage({
             {isAr
               ? "تم إرسال إشارة الفحص اللحظية (WebSocket Ping) إلى قنوات Pusher بنجاح."
               : "Pusher WebSocket ping event successfully broadcasted to realtime cluster."}
+          </span>
+        </div>
+      )}
+
+      {credentialRotated && (
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3.5 text-sm text-emerald-800 flex items-center gap-2 shadow-sm">
+          <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
+          <span>
+            {isAr
+              ? `تم تسجيل دورة تدوير بيانات الاعتماد لـ ${credentialRotated} في سجل التدقيق.`
+              : `Recorded a credential rotation for ${credentialRotated} in the audit log.`}
           </span>
         </div>
       )}
@@ -444,6 +493,90 @@ export default async function AdminIntegrationsPage({
               <span>إرسال إشارة فحص لحظية (Ping WebSockets)</span>
             </button>
           </form>
+        </div>
+      </div>
+
+      {/* Credential Rotation Log & Webhook Endpoints */}
+      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-5">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+          <h2 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
+            <KeyRound className="w-5 h-5 text-slate-700" />
+            <span>{isAr ? "سجل تدوير بيانات الاعتماد" : "Credential Rotation Log"}</span>
+          </h2>
+        </div>
+
+        <div className="rounded-2xl bg-amber-50 border border-amber-200 px-4 py-3 flex items-start gap-2.5 text-[11px] text-amber-900">
+          <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5 text-amber-600" />
+          <p>
+            {isAr
+              ? "هذا القسم يسجل متى ومن قام بتدوير كل مفتاح، ولا يغيّر القيمة الفعلية لأي بيانات اعتماد. تغيير القيمة الحقيقية يتم فقط عبر متغيرات البيئة (Environment Variables) في Vercel ثم إعادة النشر."
+              : "This section only records WHEN and WHO rotated each credential -- it never changes the live value. Rotating the actual credential happens only through the environment variables in Vercel, followed by a redeploy."}
+          </p>
+        </div>
+
+        <div className="divide-y divide-slate-100 text-xs">
+          {credentialRecords.map((rec) => (
+            <div key={rec.provider} className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-slate-900">{isAr ? rec.labelAr : rec.labelEn}</span>
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                      rec.isConfigured
+                        ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                        : "bg-slate-100 text-slate-500 border-slate-200"
+                    }`}
+                  >
+                    {rec.isConfigured ? (isAr ? "مُهيّأ حالياً" : "Currently set") : (isAr ? "غير مهيّأ" : "Not set")}
+                  </span>
+                </div>
+                <span className="text-slate-400 font-mono text-[11px] block">{rec.envVar}</span>
+                <span className="text-slate-500 block mt-0.5">
+                  {rec.lastRotatedAt
+                    ? isAr
+                      ? `آخر تدوير: ${new Date(rec.lastRotatedAt).toLocaleDateString("ar-EG")} بواسطة ${rec.lastRotatedBy}`
+                      : `Last rotated: ${new Date(rec.lastRotatedAt).toLocaleDateString("en-US")} by ${rec.lastRotatedBy}`
+                    : isAr
+                    ? "لم يُسجَّل أي تدوير بعد"
+                    : "No rotation logged yet"}
+                </span>
+              </div>
+
+              <form action={handleMarkCredentialRotated} className="flex items-center gap-2">
+                <input type="hidden" name="provider" value={rec.provider} />
+                <input
+                  type="text"
+                  name="notes"
+                  placeholder={isAr ? "ملاحظة اختيارية" : "Optional note"}
+                  className="hidden sm:block w-40 px-2.5 py-1.5 rounded-lg border border-slate-200 text-[11px]"
+                />
+                <button
+                  type="submit"
+                  className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[11px] border border-slate-200 whitespace-nowrap transition-colors"
+                >
+                  {isAr ? "تسجيل تدوير" : "Mark as rotated"}
+                </button>
+              </form>
+            </div>
+          ))}
+        </div>
+
+        <div className="pt-4 border-t border-slate-100 space-y-2">
+          <h3 className="font-bold text-slate-800 text-xs flex items-center gap-1.5">
+            <Link2 className="w-3.5 h-3.5 text-slate-500" />
+            <span>{isAr ? "روابط الـ Webhook الحقيقية" : "Real Webhook Endpoints"}</span>
+          </h3>
+          <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 font-mono text-[11px] text-slate-700 flex items-center justify-between gap-2 overflow-x-auto">
+            <span>{webhookBaseUrl}/api/webhooks/stripe</span>
+            <span className="text-emerald-600 font-bold whitespace-nowrap">
+              {isAr ? "نشط" : "LIVE"}
+            </span>
+          </div>
+          <p className="text-[11px] text-slate-400">
+            {isAr
+              ? "استخدم هذا الرابط بالضبط عند إعداد Webhook في لوحة تحكم Stripe."
+              : "Use this exact URL when configuring the webhook endpoint in the Stripe dashboard."}
+          </p>
         </div>
       </div>
 

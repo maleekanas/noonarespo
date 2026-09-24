@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { RoleType, UserStatus } from "@prisma/client";
 import { getSession, type SessionUser } from "./session";
 import { prisma } from "@/lib/database/prisma";
+import { canAccessAdminHub, type AdminHub } from "@/server/policies";
 
 /**
  * Every function here does two things at once: (1) confirms someone is
@@ -114,6 +115,24 @@ export async function requireAdminSession(locale: string): Promise<SessionUser> 
   const session = await requireSession(locale);
   if (!ADMIN_ROLES.includes(session.role)) {
     redirect(`/${locale}/login`);
+  }
+  return session;
+}
+
+/**
+ * Gates one specific admin hub, on top of requireAdminSession. Every hub
+ * page used to call only requireAdminSession() -- which just checks "is this
+ * any of the 3 admin roles" -- so SUPER_ADMIN, ACADEMIC_ADMIN and
+ * FINANCE_ADMIN all landed with identical, unrestricted access to every
+ * hub. canAccessAdminHub() (server/policies) is the real per-hub matrix;
+ * this is what actually enforces it, redirecting a role without access back
+ * to the dashboard with a plain "forbidden" notice instead of silently
+ * rendering the page anyway.
+ */
+export async function requireAdminHubAccess(locale: string, hub: AdminHub): Promise<SessionUser> {
+  const session = await requireAdminSession(locale);
+  if (!canAccessAdminHub(session, hub)) {
+    redirect(`/${locale}/admin?forbidden=${hub}`);
   }
   return session;
 }

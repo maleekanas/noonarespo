@@ -2,7 +2,7 @@ import React from "react";
 import Link from "next/link";
 import { administrationService } from "@/server/services/AdministrationService";
 import { AuditActionCategory } from "@/server/repositories/AdministrationRepository";
-import { requireAdminSession } from "@/lib/auth/currentUser";
+import { requireAdminHubAccess } from "@/lib/auth/currentUser";
 import {
   ShieldCheck,
   ShieldAlert,
@@ -23,7 +23,7 @@ export default async function AdminAuditLogsPage({
   searchParams: Promise<{ category?: string; q?: string }>;
 }) {
   const { locale } = await params;
-  await requireAdminSession(locale);
+  await requireAdminHubAccess(locale, "audit-logs");
   const { category: filterCategory, q: searchQuery } = await searchParams;
 
   let logs = await administrationService.getAuditLogs(

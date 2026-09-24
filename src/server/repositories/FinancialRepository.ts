@@ -171,6 +171,29 @@ class InMemoryFinancialRepository {
     return this.plans.get(id) || null;
   }
 
+  /**
+   * Mutates the in-memory plan catalog -- the exact same durability
+   * tradeoff already made (and left unflagged as a bug) for coupons above:
+   * a small business's pricing tiers are legitimately static, code-defined
+   * configuration, not something that needs a full Prisma table. This has
+   * a REAL effect on future checkouts, though: StripeSubscriptionService's
+   * findOrCreatePrismaPlan() derives/matches the actual Prisma Plan row
+   * used at checkout from this catalog's {type, interval, priceMinorUnits,
+   * currency} on demand, so a price change here changes what the next
+   * checkout for this plan actually charges. It does NOT retroactively
+   * change any subscription that already exists.
+   */
+  async updatePlan(
+    id: string,
+    updates: Partial<Pick<SubscriptionPlan, "priceMinorUnits" | "nameAr" | "descriptionAr" | "isPopular" | "maxChildren" | "weeklySessionsPerChild">>
+  ): Promise<SubscriptionPlan | null> {
+    const existing = this.plans.get(id);
+    if (!existing) return null;
+    const updated: SubscriptionPlan = { ...existing, ...updates };
+    this.plans.set(id, updated);
+    return updated;
+  }
+
   async getCoupon(code: string): Promise<DiscountCoupon | null> {
     const coupon = this.coupons.get(code.toUpperCase());
     return coupon && coupon.isActive ? coupon : null;

@@ -1199,3 +1199,28 @@ model SystemSetting {
 
   @@map("system_settings")
 }
+
+// Credential ROTATION RECORD-KEEPING, not credential storage -- no secret
+// value is ever written to this table. Every live credential this platform
+// uses (Stripe keys, Pusher keys, WhatsApp/SMS/email provider tokens) is
+// actually read from process.env at request time (see isStripeConfigured,
+// isRealtimeConfigured, NotificationDispatcherService) and set through
+// Vercel's environment variable UI -- this table exists only so a super
+// admin has a real, persisted answer to "when did we last rotate the
+// Stripe key, and who did it", instead of that living in someone's memory
+// or a Slack thread. The Integrations hub reads/writes this; it does not
+// and cannot change what value Stripe/Pusher/etc. actually use.
+model IntegrationCredentialRecord {
+  id            String    @id @default(uuid())
+  provider      String    // "STRIPE_SECRET_KEY" | "STRIPE_WEBHOOK_SECRET" | "PUSHER_APP_KEY" | "WHATSAPP_TOKEN" | "SMS_TOKEN" | "EMAIL_API_KEY" | ...
+  label         String
+  lastRotatedAt DateTime?
+  lastRotatedBy String?
+  notes         String    @default("")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([provider])
+  @@map("integration_credential_records")
+}

@@ -30,15 +30,18 @@ import { getDictionary } from "@/lib/localization";
 import { requireAdminSession } from "@/lib/auth/currentUser";
 import { destroySession } from "@/lib/auth/session";
 import { systemSettingsService } from "@/server/services/SystemSettingsService";
-
+import { canAccessAdminHub, type AdminHub } from "@/server/policies";
 
 export default async function AdminDashboardPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ locale: string }>;
+  searchParams: Promise<{ forbidden?: string }>;
 }) {
   const { locale } = await params;
-  await requireAdminSession(locale);
+  const { forbidden } = await searchParams;
+  const session = await requireAdminSession(locale);
   const dict = getDictionary(locale);
   const ad = dict.adminDashboard;
 
@@ -83,13 +86,21 @@ export default async function AdminDashboardPage({
     },
   ];
 
-  const adminModules = [
+  const allAdminModules: Array<{
+    title: string;
+    desc: string;
+    href: string;
+    icon: typeof Users;
+    color: string;
+    hub: AdminHub;
+  }> = [
     {
       title: ad.module1Title,
       desc: ad.module1Desc,
       href: `/${locale}/admin/students`,
       icon: Users,
       color: "text-blue-600 bg-blue-50 border-blue-200",
+      hub: "students",
     },
     {
       title: ad.module2Title,
@@ -97,6 +108,7 @@ export default async function AdminDashboardPage({
       href: `/${locale}/admin/teachers`,
       icon: GraduationCap,
       color: "text-emerald-600 bg-emerald-50 border-emerald-200",
+      hub: "teachers",
     },
     {
       title: ad.module3Title,
@@ -104,6 +116,7 @@ export default async function AdminDashboardPage({
       href: `/${locale}/admin/curriculum`,
       icon: BookOpen,
       color: "text-brand-600 bg-brand-50 border-brand-200",
+      hub: "curriculum",
     },
     {
       title: ad.module4Title,
@@ -111,6 +124,7 @@ export default async function AdminDashboardPage({
       href: `/${locale}/admin/assessments`,
       icon: FileCheck,
       color: "text-purple-600 bg-purple-50 border-purple-200",
+      hub: "assessments",
     },
     {
       title: ad.module5Title,
@@ -118,6 +132,7 @@ export default async function AdminDashboardPage({
       href: `/${locale}/admin/finance`,
       icon: CreditCard,
       color: "text-amber-600 bg-amber-50 border-amber-200",
+      hub: "finance",
     },
     {
       title: ad.module6Title,
@@ -125,6 +140,7 @@ export default async function AdminDashboardPage({
       href: `/${locale}/admin/audit-logs`,
       icon: Lock,
       color: "text-rose-600 bg-rose-50 border-rose-200",
+      hub: "audit-logs",
     },
     {
       title: ad.module7Title,
@@ -132,6 +148,7 @@ export default async function AdminDashboardPage({
       href: `/${locale}/admin/reports`,
       icon: FileSpreadsheet,
       color: "text-teal-600 bg-teal-50 border-teal-200",
+      hub: "reports",
     },
     {
       title: ad.module8Title,
@@ -139,6 +156,7 @@ export default async function AdminDashboardPage({
       href: `/${locale}/admin/classes`,
       icon: Sparkles,
       color: "text-indigo-600 bg-indigo-50 border-indigo-200",
+      hub: "classes",
     },
     {
       title: ad.module9Title,
@@ -146,6 +164,7 @@ export default async function AdminDashboardPage({
       href: `/${locale}/admin/schedule`,
       icon: Calendar,
       color: "text-cyan-600 bg-cyan-50 border-cyan-200",
+      hub: "schedule",
     },
     {
       title: ad.module10Title,
@@ -153,6 +172,7 @@ export default async function AdminDashboardPage({
       href: `/${locale}/admin/integrations`,
       icon: Zap,
       color: "text-amber-600 bg-amber-50 border-amber-200",
+      hub: "integrations",
     },
     {
       title: ad.module11Title,
@@ -160,6 +180,7 @@ export default async function AdminDashboardPage({
       href: `/${locale}/admin/system-health`,
       icon: Activity,
       color: "text-emerald-600 bg-emerald-50 border-emerald-200",
+      hub: "system-health",
     },
     {
       title: ad.module12Title,
@@ -167,6 +188,7 @@ export default async function AdminDashboardPage({
       href: `/${locale}/admin/data-export`,
       icon: Download,
       color: "text-blue-600 bg-blue-50 border-blue-200",
+      hub: "data-export",
     },
     {
       title: ad.module13Title,
@@ -174,6 +196,7 @@ export default async function AdminDashboardPage({
       href: `/${locale}/admin/reviews`,
       icon: Star,
       color: "text-amber-600 bg-amber-50 border-amber-200",
+      hub: "reviews",
     },
     {
       title: ad.module14Title,
@@ -181,6 +204,7 @@ export default async function AdminDashboardPage({
       href: `/${locale}/admin/schools`,
       icon: Building2,
       color: "text-indigo-600 bg-indigo-50 border-indigo-200",
+      hub: "schools",
     },
     {
       title: locale === "ar" ? "إعدادات المنظومة والخصائص" : "System Settings & Governance",
@@ -188,8 +212,22 @@ export default async function AdminDashboardPage({
       href: `/${locale}/admin/settings`,
       icon: Sliders,
       color: "text-rose-600 bg-rose-50 border-rose-200",
+      hub: "settings",
     },
   ];
+
+  // Hub cards used to be shown unconditionally to every admin role, even
+  // though canAccessAdminHub() (server/policies) already draws a real
+  // per-role matrix and every hub page now enforces it server-side via
+  // requireAdminHubAccess(). Filtering the cards here too means a
+  // FINANCE_ADMIN or ACADEMIC_ADMIN never even sees a link to a hub they'd
+  // be redirected out of -- the dashboard home reflects what this account
+  // can actually do, not implicit superadmin access for everyone.
+  const adminModules = allAdminModules.filter((mod) => canAccessAdminHub(session, mod.hub));
+
+  const forbiddenModule = forbidden
+    ? allAdminModules.find((mod) => mod.hub === forbidden)
+    : undefined;
 
   const settings = await systemSettingsService.getSettings();
 
@@ -256,6 +294,24 @@ export default async function AdminDashboardPage({
         </div>
       </div>
 
+      {/* Forbidden-hub notice: shown after requireAdminHubAccess() redirects
+          a role without access to a hub back here, instead of letting the
+          page render (or 404) with no explanation at all. */}
+      {forbidden && (
+        <div className="flex items-start gap-3 p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800">
+          <Lock className="w-5 h-5 shrink-0 mt-0.5" />
+          <div className="text-xs">
+            <span className="font-extrabold block mb-0.5">
+              {locale === "ar" ? "لا تملك صلاحية الوصول لهذا القسم" : "You don't have access to that section"}
+            </span>
+            <span className="text-rose-700">
+              {locale === "ar"
+                ? `حسابك الحالي لا يشمل صلاحية "${forbiddenModule?.title ?? forbidden}". تواصل مع المشرف العام إذا كنت تحتاج هذا الوصول.`
+                : `Your account doesn't include access to "${forbiddenModule?.title ?? forbidden}". Contact a super admin if you need this.`}
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">

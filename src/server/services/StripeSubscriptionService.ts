@@ -560,3 +560,118 @@ export async function getSubscriptionCancellationState(
     return null;
   }
 }
+
+/**
+ * Refunds a Payment row -- the Refund Prisma model has existed in the
+ * schema since the very first migration, but nothing anywhere ever created
+ * one; the admin Finance hub had no refund control at all, so a real
+ * refund had to be issued by hand directly in the Stripe dashboard with no
+ * record of it on this side. This is the real thing: for a STRIPE payment
+ * it actually calls Stripe's refund API, then records the Refund row and
+ * flips the invoice to VOID only once Stripe confirms it.
+ *
+ * providerTransactionId means two different things depending on how the
+ * payment was created (see fulfillCheckoutSession vs recordRenewalInvoice
+ * above): a first-time checkout payment stores the Stripe PaymentIntent id
+ * (starts with "pi_"), refundable directly; a recurring/renewal payment
+ * stores the Stripe *Invoice* id (starts with "in_") instead, which has to
+ * be resolved to its underlying PaymentIntent before Stripe will accept a
+ * refund against it. A MOCK payment (no real Stripe charge ever happened)
+ * is refunded locally only -- there is nothing to call Stripe about.
+ */
+export async function refundPayment(
+  paymentId: string,
+  params: { amountMinorUnits?: number; reason?: string } = {}
+): Promise<{ refundId: string; amountMinorUnits: number }> {
+  const payment = await prisma.payment.findUnique({
+    where: { id: paymentId },
+    include: { invoice: true },
+  });
+  if (!payment) throw new Error(`Payment not found: ${paymentId}`);
+  if (payment.status !== "SUCCEEDED") {
+    throw new Error(`Only a SUCCEEDED payment can be refunded (current status: ${payment.status})`);
+  }
+
+  const refundAmount = params.amountMinorUnits ?? payment.amountMinorUnits;
+  if (refundAmount <= 0 || refundAmount > payment.amountMinorUnits) {
+    throw new Error("Refund amount must be greater than 0 and no more than the original payment amount.");
+  }
+
+  if (payment.provider === "STRIPE") {
+    if (!payment.providerTransactionId) {
+      throw new Error("This Stripe payment has no recorded transaction id -- cannot issue a refund.");
+    }
+    const stripe = getStripeClient();
+
+    let paymentIntentId = payment.providerTransactionId;
+    if (payment.providerTransactionId.startsWith("in_")) {
+      // Renewal payment: the stored id is the Stripe Invoice, not a
+      // PaymentIntent. Newer Stripe API versions no longer expose a
+      // payment_intent field directly on the Invoice object -- the
+      // PaymentIntent has to be looked up via the invoice's own payments
+      // list instead (stripe.invoicePayments.list).
+      const invoicePayments = await stripe.invoicePayments.list({
+        invoice: payment.providerTransactionId,
+        limit: 1,
+      });
+      const paymentIntentRef = invoicePayments.data[0]?.payment?.payment_intent;
+      const resolvedIntent = typeof paymentIntentRef === "string" ? paymentIntentRef : paymentIntentRef?.id;
+      if (!resolvedIntent) {
+        throw new Error("Could not resolve the Stripe PaymentIntent for this renewal invoice.");
+      }
+      paymentIntentId = resolvedIntent;
+    }
+
+    const stripeRefund = await stripe.refunds.create({
+      payment_intent: paymentIntentId,
+      amount: refundAmount,
+      reason: "requested_by_customer",
+    });
+
+    await prisma.$transaction(async (tx) => {
+      await tx.refund.create({
+        data: { paymentId: payment.id, amountMinorUnits: refundAmount, reason: params.reason },
+      });
+      await tx.invoice.update({
+        where: { id: payment.invoiceId },
+        data: { status: refundAmount >= payment.amountMinorUnits ? "VOID" : payment.invoice.status },
+      });
+    });
+
+    return { refundId: stripeRefund.id, amountMinorUnits: refundAmount };
+  }
+
+  // MOCK payment: no real charge exists anywhere to reverse -- just record
+  // the refund and, if it's a full refund, void the invoice.
+  const localRefund = await prisma.$transaction(async (tx) => {
+    const created = await tx.refund.create({
+      data: { paymentId: payment.id, amountMinorUnits: refundAmount, reason: params.reason },
+    });
+    await tx.invoice.update({
+      where: { id: payment.invoiceId },
+      data: { status: refundAmount >= payment.amountMinorUnits ? "VOID" : payment.invoice.status },
+    });
+    return created;
+  });
+
+  return { refundId: localRefund.id, amountMinorUnits: refundAmount };
+}
+
+/**
+ * Marks an unpaid invoice UNCOLLECTIBLE -- an accounting write-off for debt
+ * that will never be collected (a parent who churned without paying, a
+ * disputed charge abandoned), distinct from a refund (which reverses money
+ * that WAS collected). No Stripe call: this only updates the local ledger.
+ */
+export async function writeOffInvoice(invoiceId: string, reason?: string): Promise<void> {
+  const invoice = await prisma.invoice.findUnique({ where: { id: invoiceId } });
+  if (!invoice) throw new Error(`Invoice not found: ${invoiceId}`);
+  if (invoice.status === "PAID") {
+    throw new Error("A fully paid invoice cannot be written off -- issue a refund instead.");
+  }
+  await prisma.invoice.update({
+    where: { id: invoiceId },
+    data: { status: "UNCOLLECTIBLE" },
+  });
+  void reason; // Reserved for a future audit-trail column; captured in the admin audit log by the caller today.
+}
