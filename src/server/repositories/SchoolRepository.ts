@@ -53,6 +53,27 @@ export interface OnboardedSchoolAdminAccount {
   tempPassword: string;
 }
 
+export type TrialRequestStatus = "PENDING" | "APPROVED" | "REJECTED";
+
+export interface TrialRequestRecord {
+  id: string;
+  nameAr: string;
+  nameEn: string;
+  type: InstitutionType;
+  country: string;
+  city: string | null;
+  contactPerson: string;
+  contactEmail: string;
+  phone: string | null;
+  studentsEstimate: number | null;
+  message: string | null;
+  status: TrialRequestStatus;
+  partnerSchoolId: string | null;
+  reviewedBy: string | null;
+  reviewedAt: Date | null;
+  createdAt: Date;
+}
+
 export const B2B_TRIAL_CONFIG = {
   durationDays: 3,
   maxStudents: 10,
@@ -207,6 +228,8 @@ const IN_MEMORY_PARTNER_SCHOOLS: PartnerSchool[] = [
     createdAt: new Date(),
   },
 ];
+
+const IN_MEMORY_TRIAL_REQUESTS: TrialRequestRecord[] = [];
 
 class SchoolRepository {
   async getAllSchools(): Promise<PartnerSchool[]> {
@@ -665,6 +688,107 @@ class SchoolRepository {
   }
 
 
+  /**
+   * Persists a 3-Day Free Trial application from the public /schools apply
+   * form so it shows up as a real, actionable row in the superadmin
+   * dashboard instead of only ever existing as an email in an inbox.
+   */
+  async createTrialRequest(input: {
+    nameAr: string;
+    nameEn: string;
+    type: InstitutionType;
+    country: string;
+    city?: string;
+    contactPerson: string;
+    contactEmail: string;
+    phone?: string;
+    studentsEstimate?: number;
+    message?: string;
+  }): Promise<TrialRequestRecord> {
+    const data = {
+      nameAr: input.nameAr,
+      nameEn: input.nameEn,
+      type: input.type,
+      country: input.country,
+      city: input.city || null,
+      contactPerson: input.contactPerson,
+      contactEmail: input.contactEmail,
+      phone: input.phone || null,
+      studentsEstimate: input.studentsEstimate ?? null,
+      message: input.message || null,
+      status: "PENDING" as TrialRequestStatus,
+    };
+
+    try {
+      const row = await prisma.trialRequest.create({ data });
+      return this.toTrialRequest(row);
+    } catch {
+      const fallback: TrialRequestRecord = {
+        id: `trial-req-${crypto.randomBytes(4).toString("hex")}`,
+        ...data,
+        partnerSchoolId: null,
+        reviewedBy: null,
+        reviewedAt: null,
+        createdAt: new Date(),
+      };
+      IN_MEMORY_TRIAL_REQUESTS.unshift(fallback);
+      return fallback;
+    }
+  }
+
+  async getPendingTrialRequests(): Promise<TrialRequestRecord[]> {
+    try {
+      const rows = await prisma.trialRequest.findMany({
+        where: { status: "PENDING" },
+        orderBy: { createdAt: "asc" },
+      });
+      return rows.map((row) => this.toTrialRequest(row));
+    } catch {
+      return IN_MEMORY_TRIAL_REQUESTS.filter((r) => r.status === "PENDING");
+    }
+  }
+
+  async getTrialRequestById(id: string): Promise<TrialRequestRecord | null> {
+    try {
+      const row = await prisma.trialRequest.findUnique({ where: { id } });
+      return row ? this.toTrialRequest(row) : null;
+    } catch {
+      return IN_MEMORY_TRIAL_REQUESTS.find((r) => r.id === id) ?? null;
+    }
+  }
+
+  /**
+   * Marks a trial request reviewed (approved or rejected). Approval also
+   * records which real PartnerSchool row the request turned into, so the
+   * dashboard can link back to it later.
+   */
+  async markTrialRequestReviewed(
+    id: string,
+    partial: { status: "APPROVED" | "REJECTED"; reviewedBy: string; partnerSchoolId?: string }
+  ): Promise<TrialRequestRecord | null> {
+    const data = {
+      status: partial.status,
+      reviewedBy: partial.reviewedBy,
+      reviewedAt: new Date(),
+      partnerSchoolId: partial.partnerSchoolId ?? undefined,
+    };
+    try {
+      const row = await prisma.trialRequest.update({ where: { id }, data });
+      return this.toTrialRequest(row);
+    } catch {
+      const idx = IN_MEMORY_TRIAL_REQUESTS.findIndex((r) => r.id === id);
+      if (idx === -1) return null;
+      IN_MEMORY_TRIAL_REQUESTS[idx] = {
+        ...IN_MEMORY_TRIAL_REQUESTS[idx],
+        status: partial.status,
+        reviewedBy: partial.reviewedBy,
+        reviewedAt: new Date(),
+        partnerSchoolId: partial.partnerSchoolId ?? IN_MEMORY_TRIAL_REQUESTS[idx].partnerSchoolId,
+      };
+      return IN_MEMORY_TRIAL_REQUESTS[idx];
+    }
+  }
+
   async getTeachersBySchoolId(schoolId: string): Promise<any[]> {
     try {
       const teachers = await prisma.teacherProfile.findMany({
@@ -732,6 +856,44 @@ class SchoolRepository {
       contractStatus: row.contractStatus as ContractStatus,
       curriculumTrackAr: row.curriculumTrackAr,
       bundleTier: ((row as any).bundleTier as BundleTier) || "STARTER",
+      createdAt: row.createdAt,
+    };
+  }
+
+  private toTrialRequest(row: {
+    id: string;
+    nameAr: string;
+    nameEn: string;
+    type: string;
+    country: string;
+    city: string | null;
+    contactPerson: string;
+    contactEmail: string;
+    phone: string | null;
+    studentsEstimate: number | null;
+    message: string | null;
+    status: string;
+    partnerSchoolId: string | null;
+    reviewedBy: string | null;
+    reviewedAt: Date | null;
+    createdAt: Date;
+  }): TrialRequestRecord {
+    return {
+      id: row.id,
+      nameAr: row.nameAr,
+      nameEn: row.nameEn,
+      type: row.type as InstitutionType,
+      country: row.country,
+      city: row.city,
+      contactPerson: row.contactPerson,
+      contactEmail: row.contactEmail,
+      phone: row.phone,
+      studentsEstimate: row.studentsEstimate,
+      message: row.message,
+      status: row.status as TrialRequestStatus,
+      partnerSchoolId: row.partnerSchoolId,
+      reviewedBy: row.reviewedBy,
+      reviewedAt: row.reviewedAt,
       createdAt: row.createdAt,
     };
   }

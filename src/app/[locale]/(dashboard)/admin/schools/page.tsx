@@ -1,14 +1,13 @@
 import React from "react";
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
-import { ArrowRight, Building2, ShieldCheck, PlusCircle, CheckCircle2, Sliders, Trash2, Power, Zap } from "lucide-react";
+import { ArrowRight, Building2, ShieldCheck, PlusCircle, CheckCircle2, Sliders, Trash2, Power, Zap, Bell, X } from "lucide-react";
 import { schoolService } from "@/server/services/SchoolService";
 import { administrationService } from "@/server/services/AdministrationService";
 import { SchoolManagementClient } from "@/components/admin/SchoolManagementClient";
 import { getDictionary } from "@/lib/localization";
 import { requireAdminSession } from "@/lib/auth/currentUser";
 import { InstitutionType, BundleTier } from "@/server/repositories/SchoolRepository";
-import { EmailAdapter } from "@/lib/integrations/notifications/EmailAdapter";
 
 // This page is session-gated (requireAdminSession reads the auth cookie) and
 // shows live DB state (KPIs, school directory) plus two admin action panels
@@ -38,6 +37,16 @@ export default async function AdminSchoolsPage({
 
   const schools = await schoolService.getAllSchools();
   const kpis = await schoolService.getInstitutionalKPIs();
+  const pendingTrialRequests = await schoolService.getPendingTrialRequests();
+
+  const INSTITUTION_TYPE_LABELS: Record<string, string> = {
+    ISLAMIC_SCHOOL: isAr ? "مدرسة إسلامية نظامية" : "Islamic School",
+    PRIVATE_INSTITUTE: isAr ? "معهد لغات خاص" : "Private Language Institute",
+    COMMUNITY_CENTER: isAr ? "مركز إسلامي / مجتمعي" : "Community Center",
+    HOMESCHOOL_COOP: isAr ? "مجموعة تعليم منزلي (Co-Op)" : "Homeschool Co-Op",
+    FREELANCER_TEACHER: isAr ? "معلم مستقل / حلقة فردية" : "Freelance Teacher / Studio",
+    OTHER: isAr ? "أخرى" : "Other",
+  };
 
   async function handleOnboardBatchAction(params: {
     schoolId: string;
@@ -194,7 +203,7 @@ export default async function AdminSchoolsPage({
 
     if (!nameAr || !contactPerson || !contactEmail) return;
 
-    const { school, adminAccount } = await schoolService.registerTrialSchool({
+    const { school, adminAccount } = await schoolService.activateTrialAndNotify({
       nameAr,
       nameEn,
       contactPerson,
@@ -202,31 +211,8 @@ export default async function AdminSchoolsPage({
       type,
       country,
       city,
+      locale,
     });
-
-    if (adminAccount) {
-      const emailAdapter = new EmailAdapter();
-      const loginUrl = `https://arabickidsacademy.com/${locale}/login`;
-      await emailAdapter
-        .send({
-          recipientContact: contactEmail,
-          recipientName: contactPerson,
-          eventName: "ACCOUNT_NOTICE",
-          titleAr: `تم تفعيل حسابكم التجريبي المجاني (3 أيام) - ${nameAr}`,
-          bodyAr: [
-            `تم تفعيل التجربة المجانية المؤسسية لـ "${nameAr}" بنجاح، وجميع الميزات المؤسسية متاحة الآن لمدة 3 أيام (حتى 10 طلاب).`,
-            `رابط الدخول: ${loginUrl}`,
-            `البريد الإلكتروني: ${adminAccount.email}`,
-            `كلمة المرور المؤقتة: ${adminAccount.tempPassword}`,
-            `يرجى تسجيل الدخول وتغيير كلمة المرور في أقرب وقت ممكن.`,
-          ].join("<br/>"),
-          actionUrl: loginUrl,
-          metadata: { schoolId: school.id, contactEmail },
-        })
-        .catch((err) =>
-          console.error("[AdminSchools] Failed to send trial activation credentials email", err)
-        );
-    }
 
     await administrationService.recordAuditLog({
       category: "USER_MANAGEMENT",
@@ -239,6 +225,58 @@ export default async function AdminSchoolsPage({
 
     revalidatePath(`/${locale}/admin/schools`);
     revalidatePath(`/${locale}/schools`);
+  }
+
+  // Server Action: Approve a pending 3-Day Free Trial request (submitted by
+  // a school/institution through the public /schools apply form). Reuses
+  // the exact same account-creation + credentials-email path as the manual
+  // "Activate 3-Day Free Trial" form above -- this is the "just approve it"
+  // button that turns a queued request into a live account with one click.
+  async function handleApproveTrialRequestAction(formData: FormData) {
+    "use server";
+    const admin = await requireAdminSession(locale);
+    const requestId = formData.get("requestId")?.toString();
+    if (!requestId) return;
+
+    const { school, adminAccount } = await schoolService.approveTrialRequest(
+      requestId,
+      admin.id,
+      locale
+    );
+
+    await administrationService.recordAuditLog({
+      category: "USER_MANAGEMENT",
+      action: "TRIAL_REQUEST_APPROVED",
+      actor: admin,
+      targetEntityId: school.id,
+      targetEntityType: "PartnerSchool",
+      diffSummary: `الموافقة على طلب تجربة مجانية [${requestId}] وتفعيل حساب دخول لـ [${adminAccount?.email || school.contactEmail}]`,
+    });
+
+    revalidatePath(`/${locale}/admin/schools`);
+    revalidatePath(`/${locale}/schools`);
+  }
+
+  // Server Action: Reject a pending 3-Day Free Trial request without
+  // creating any account.
+  async function handleRejectTrialRequestAction(formData: FormData) {
+    "use server";
+    const admin = await requireAdminSession(locale);
+    const requestId = formData.get("requestId")?.toString();
+    if (!requestId) return;
+
+    await schoolService.rejectTrialRequest(requestId, admin.id);
+
+    await administrationService.recordAuditLog({
+      category: "USER_MANAGEMENT",
+      action: "TRIAL_REQUEST_REJECTED",
+      actor: admin,
+      targetEntityId: requestId,
+      targetEntityType: "TrialRequest",
+      diffSummary: `رفض طلب تجربة مجانية [${requestId}]`,
+    });
+
+    revalidatePath(`/${locale}/admin/schools`);
   }
 
   return (
@@ -273,6 +311,88 @@ export default async function AdminSchoolsPage({
           </div>
         </div>
       </div>
+
+      {/* Pending 3-Day Free Trial Requests -- submitted publicly via /schools,
+          shown here so the superadmin can just approve (creates the account
+          + emails credentials automatically) or reject, with no retyping. */}
+      {pendingTrialRequests.length > 0 && (
+        <div className="bg-white rounded-3xl border-2 border-amber-300 shadow-md overflow-hidden">
+          <div className="p-6 pb-5 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+                <Bell className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="font-extrabold text-slate-900 text-base">
+                  {isAr ? "طلبات تجربة مجانية بانتظار الموافقة" : "Pending 3-Day Trial Requests"}
+                </h2>
+                <p className="text-xs text-slate-500 font-normal mt-0.5">
+                  {isAr
+                    ? "تصل تلقائياً من نموذج التقديم العام. الموافقة تنشئ الحساب فوراً وترسل بيانات الدخول للمتقدم."
+                    : "Arrives automatically from the public apply form. Approving instantly creates the account and emails the applicant their login credentials."}
+                </p>
+              </div>
+            </div>
+            <span className="px-3 py-1.5 rounded-full bg-amber-500 text-white text-xs font-bold shrink-0">
+              {pendingTrialRequests.length}
+            </span>
+          </div>
+
+          <div className="divide-y divide-slate-100 border-t border-slate-100">
+            {pendingTrialRequests.map((req) => (
+              <div
+                key={req.id}
+                className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+              >
+                <div className="text-xs space-y-1 min-w-0">
+                  <p className="font-bold text-slate-900 text-sm truncate">
+                    {isAr ? req.nameAr : req.nameEn || req.nameAr}
+                  </p>
+                  <p className="text-slate-600">
+                    {req.contactPerson} · {req.contactEmail}
+                    {req.phone ? ` · ${req.phone}` : ""}
+                  </p>
+                  <p className="text-slate-500">
+                    {req.city ? `${req.city}, ` : ""}
+                    {req.country} · {INSTITUTION_TYPE_LABELS[req.type] || req.type}
+                    {req.studentsEstimate
+                      ? ` · ~${req.studentsEstimate} ${isAr ? "طالب" : "students"}`
+                      : ""}
+                  </p>
+                  <p className="text-slate-400">
+                    {new Date(req.createdAt).toLocaleString(isAr ? "ar" : "en", {
+                      dateStyle: "medium",
+                      timeStyle: "short",
+                    })}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <form action={handleApproveTrialRequestAction}>
+                    <input type="hidden" name="requestId" value={req.id} />
+                    <button
+                      type="submit"
+                      className="flex items-center gap-1.5 py-2 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition-all cursor-pointer"
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      {isAr ? "موافقة وتفعيل" : "Approve & Activate"}
+                    </button>
+                  </form>
+                  <form action={handleRejectTrialRequestAction}>
+                    <input type="hidden" name="requestId" value={req.id} />
+                    <button
+                      type="submit"
+                      className="flex items-center gap-1.5 py-2 px-4 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 font-bold text-xs transition-all cursor-pointer"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                      {isAr ? "رفض" : "Reject"}
+                    </button>
+                  </form>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* New Partner School Registration Form */}
       <details className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden group">

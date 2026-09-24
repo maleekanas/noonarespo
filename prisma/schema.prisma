@@ -878,6 +878,37 @@ model PartnerSchool {
   @@map("partner_schools")
 }
 
+// A 3-Day Free Trial application submitted by a school/institution/freelance
+// teacher through the public /schools apply form. Previously that form only
+// sent an email to admin -- nothing was persisted, so a superadmin had to
+// read the email and manually retype every field into the "Activate 3-Day
+// Free Trial" form on /admin/schools to actually create the account. This
+// table makes the request a real, queryable row so it shows up as a pending
+// item in the superadmin dashboard; approving it re-uses the exact same
+// account-creation path (SchoolRepository.createTrialSchool +
+// createSchoolAdmin) that the manual form already used.
+model TrialRequest {
+  id               String    @id @default(uuid())
+  nameAr           String
+  nameEn           String
+  type             String    // "ISLAMIC_SCHOOL" | "COMMUNITY_CENTER" | "HOMESCHOOL_COOP" | "FREELANCER_TEACHER" | "PRIVATE_INSTITUTE" | "OTHER"
+  country          String
+  city             String?
+  contactPerson    String
+  contactEmail     String
+  phone            String?
+  studentsEstimate Int?
+  message          String?
+  status           String    @default("PENDING") // "PENDING" | "APPROVED" | "REJECTED"
+  partnerSchoolId  String?   // set once approved -- the PartnerSchool.id that was created
+  reviewedBy       String?   // admin User.id who approved/rejected
+  reviewedAt       DateTime?
+
+  createdAt        DateTime  @default(now())
+
+  @@map("trial_requests")
+}
+
 model ParentReview {
   id           String        @id @default(uuid())
   parentId     String

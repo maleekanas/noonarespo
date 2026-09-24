@@ -6,6 +6,8 @@ import {
   OnboardedStudentAccount,
   OnboardedSchoolAdminAccount,
   BundleTier,
+  TrialRequestRecord,
+  InstitutionType,
 } from "../repositories/SchoolRepository";
 import { getDictionary } from "@/lib/localization";
 import { EmailAdapter } from "@/lib/integrations/notifications/EmailAdapter";
@@ -304,6 +306,130 @@ export class SchoolService {
     return { school, adminAccount };
   }
 
+  /**
+   * Creates the trial school + real login (registerTrialSchool above), then
+   * emails the applicant their activation link and login credentials
+   * (their own email as the username). Shared by both places an admin can
+   * trigger a trial activation: the manual "Activate 3-Day Free Trial" form
+   * and approving a queued TrialRequest -- previously each place duplicated
+   * its own copy of this email.
+   */
+  async activateTrialAndNotify(input: {
+    nameAr: string;
+    nameEn: string;
+    contactPerson: string;
+    contactEmail: string;
+    type?: InstitutionType;
+    country?: string;
+    city?: string;
+    curriculumTrackAr?: string;
+    locale?: string;
+  }): Promise<{ school: PartnerSchool; adminAccount?: OnboardedSchoolAdminAccount }> {
+    const { school, adminAccount } = await this.registerTrialSchool(input);
+    const locale = input.locale || "ar";
+
+    if (adminAccount) {
+      const loginUrl = `https://arabickidsacademy.com/${locale}/login`;
+      await new EmailAdapter()
+        .send({
+          recipientContact: input.contactEmail,
+          recipientName: input.contactPerson,
+          eventName: "ACCOUNT_NOTICE",
+          titleAr: `تم تفعيل حسابكم التجريبي المجاني (3 أيام) - ${input.nameAr}`,
+          bodyAr: [
+            `تم تفعيل التجربة المجانية المؤسسية لـ "${input.nameAr}" بنجاح، وجميع الميزات المؤسسية متاحة الآن لمدة 3 أيام (حتى 10 طلاب).`,
+            `رابط تفعيل الدخول: ${loginUrl}`,
+            `البريد الإلكتروني (اسم المستخدم): ${adminAccount.email}`,
+            `كلمة المرور المؤقتة: ${adminAccount.tempPassword}`,
+            `يرجى تسجيل الدخول وتغيير كلمة المرور في أقرب وقت ممكن.`,
+          ].join("<br/>"),
+          actionUrl: loginUrl,
+          metadata: { schoolId: school.id, contactEmail: input.contactEmail },
+        })
+        .catch((err) =>
+          console.error("[SchoolService] Failed to send trial activation credentials email", err)
+        );
+    }
+
+    return { school, adminAccount };
+  }
+
+  /**
+   * Persists a 3-Day Free Trial application submitted through the public
+   * /schools apply form as a real, queryable row -- this is what makes the
+   * request show up as a pending item in the superadmin dashboard instead
+   * of only ever existing as an email.
+   */
+  async submitTrialRequest(input: {
+    nameAr: string;
+    nameEn?: string;
+    type: InstitutionType;
+    country: string;
+    city?: string;
+    contactPerson: string;
+    contactEmail: string;
+    phone?: string;
+    studentsEstimate?: number;
+    message?: string;
+  }): Promise<TrialRequestRecord> {
+    return schoolRepository.createTrialRequest({
+      ...input,
+      nameEn: input.nameEn || input.nameAr,
+    });
+  }
+
+  async getPendingTrialRequests(): Promise<TrialRequestRecord[]> {
+    return schoolRepository.getPendingTrialRequests();
+  }
+
+  /**
+   * The superadmin's one-click approval: turns a pending TrialRequest into
+   * a real trial school + login, emails the applicant their credentials,
+   * and marks the request APPROVED (linked to the school it created).
+   */
+  async approveTrialRequest(
+    id: string,
+    reviewerId: string,
+    locale?: string
+  ): Promise<{ school: PartnerSchool; adminAccount?: OnboardedSchoolAdminAccount }> {
+    const request = await schoolRepository.getTrialRequestById(id);
+    if (!request) throw new Error(`Trial request not found: ${id}`);
+    if (request.status !== "PENDING") {
+      throw new Error(`Trial request [${id}] has already been ${request.status.toLowerCase()}.`);
+    }
+
+    const { school, adminAccount } = await this.activateTrialAndNotify({
+      nameAr: request.nameAr,
+      nameEn: request.nameEn,
+      contactPerson: request.contactPerson,
+      contactEmail: request.contactEmail,
+      type: request.type,
+      country: request.country,
+      city: request.city || undefined,
+      locale,
+    });
+
+    await schoolRepository.markTrialRequestReviewed(id, {
+      status: "APPROVED",
+      reviewedBy: reviewerId,
+      partnerSchoolId: school.id,
+    });
+
+    return { school, adminAccount };
+  }
+
+  async rejectTrialRequest(id: string, reviewerId: string): Promise<void> {
+    const request = await schoolRepository.getTrialRequestById(id);
+    if (!request) throw new Error(`Trial request not found: ${id}`);
+    if (request.status !== "PENDING") {
+      throw new Error(`Trial request [${id}] has already been ${request.status.toLowerCase()}.`);
+    }
+    await schoolRepository.markTrialRequestReviewed(id, {
+      status: "REJECTED",
+      reviewedBy: reviewerId,
+    });
+  }
+
   async createSchool(input: {
     nameAr: string;
     nameEn: string;
@@ -354,6 +480,30 @@ export class SchoolService {
       input.bundlePreference === "TRIAL_3_DAYS" ||
       (Boolean(input.bundlePreference) &&
         input.bundlePreference!.toLowerCase().includes("trial"));
+
+    // Persist the 3-Day Free Trial application as a real, actionable row so
+    // it shows up in the superadmin dashboard's pending-requests queue --
+    // this must not block the notification email below (or vice versa),
+    // since either one succeeding should still get the applicant through.
+    if (isTrialApplication) {
+      const studentsNum = Number(input.studentsEstimate);
+      await schoolRepository
+        .createTrialRequest({
+          nameAr: input.organizationName,
+          nameEn: input.organizationName,
+          type: (input.institutionType as InstitutionType) || "PRIVATE_INSTITUTE",
+          country: input.country,
+          city: input.city,
+          contactPerson: input.contactName,
+          contactEmail: input.email,
+          phone: input.phone,
+          studentsEstimate: Number.isFinite(studentsNum) ? studentsNum : undefined,
+          message: input.message,
+        })
+        .catch((err) =>
+          console.error("[SchoolService] Failed to persist trial request", err)
+        );
+    }
 
     const adminEmail = process.env.ADMIN_EMAIL || "admin@arabickidsacademy.com";
     const salesEmail = process.env.B2B_SALES_EMAIL || "partnerships@arabickidsacademy.com";
