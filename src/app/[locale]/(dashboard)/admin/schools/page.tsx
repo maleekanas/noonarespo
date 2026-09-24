@@ -53,10 +53,27 @@ export default async function AdminSchoolsPage({
     schoolId: string;
     fullName: string;
     email?: string;
-  }) {
+  }): Promise<{
+    account: Awaited<ReturnType<typeof schoolService.createSchoolAdmin>> | null;
+    error: string | null;
+  }> {
     "use server";
     const admin = await requireAdminSession(locale);
-    const account = await schoolService.createSchoolAdmin(params);
+
+    // Caught here (rather than left to throw) because any error thrown out
+    // of a Server Action is redacted by Next.js in production to a generic
+    // "Server Components render" digest with no detail -- that's what admins
+    // were seeing instead of the real, usually very fixable, reason (most
+    // often: that email is already someone else's login).
+    let account: Awaited<ReturnType<typeof schoolService.createSchoolAdmin>>;
+    try {
+      account = await schoolService.createSchoolAdmin(params);
+    } catch (err) {
+      return {
+        account: null,
+        error: err instanceof Error ? err.message : "Failed to create the admin account.",
+      };
+    }
 
     await administrationService.recordAuditLog({
       category: "USER_MANAGEMENT",
@@ -67,7 +84,7 @@ export default async function AdminSchoolsPage({
       diffSummary: `إنشاء حساب مدير مؤسسة جديد [${account.email}] لمؤسسة [${params.schoolId}]`,
     });
 
-    return account;
+    return { account, error: null };
   }
 
   // Server Action: Register New Partner School

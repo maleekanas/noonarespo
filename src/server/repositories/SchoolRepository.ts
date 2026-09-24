@@ -1,6 +1,6 @@
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
-import { AgeGroup, RoleType } from "@prisma/client";
+import { AgeGroup, Prisma, RoleType } from "@prisma/client";
 import { prisma } from "@/lib/database/prisma";
 
 export type InstitutionType =
@@ -308,34 +308,51 @@ class SchoolRepository {
       admin.email?.trim().toLowerCase() ||
       `${emailSlug}.${crypto.randomBytes(3).toString("hex")}@${schoolId}.admins.arabickidsacademy.internal`;
 
-    await prisma.$transaction(async (tx) => {
-      const createdAdmin = await tx.administratorProfile.create({
-        data: {
-          firstName: firstName || "Admin",
-          lastName,
-          scope: RoleType.SCHOOL_ADMIN,
-          // Same reason as onboardRoster's partnerSchool.connect below:
-          // Prisma's generated "checked" input type rejects mixing a raw
-          // scalar FK (schoolId) with a nested relation create (user.create)
-          // in the same call -- both relations have to use the nested
-          // object form, so this links the school via `connect` instead.
-          partnerSchool: {
-            connect: { id: schoolId },
-          },
-          user: {
-            create: {
-              email,
-              passwordHash,
-              localePreference: "ar",
+    try {
+      await prisma.$transaction(async (tx) => {
+        const createdAdmin = await tx.administratorProfile.create({
+          data: {
+            firstName: firstName || "Admin",
+            lastName,
+            scope: RoleType.SCHOOL_ADMIN,
+            // Same reason as onboardRoster's partnerSchool.connect below:
+            // Prisma's generated "checked" input type rejects mixing a raw
+            // scalar FK (schoolId) with a nested relation create (user.create)
+            // in the same call -- both relations have to use the nested
+            // object form, so this links the school via `connect` instead.
+            partnerSchool: {
+              connect: { id: schoolId },
+            },
+            user: {
+              create: {
+                email,
+                passwordHash,
+                localePreference: "ar",
+              },
             },
           },
-        },
-      });
+        });
 
-      await tx.userRole.create({
-        data: { userId: createdAdmin.userId, roleId: schoolAdminRole.id },
+        await tx.userRole.create({
+          data: { userId: createdAdmin.userId, roleId: schoolAdminRole.id },
+        });
       });
-    });
+    } catch (err) {
+      // Surface a clear, safe message instead of letting a raw Prisma error
+      // bubble out of the Server Action -- Next.js redacts any uncaught
+      // error there to a generic "Server Components render" digest in
+      // production, which is what admins were seeing instead of the real
+      // (and very ordinary) reason: this email is already someone's login.
+      if (
+        err instanceof Prisma.PrismaClientKnownRequestError &&
+        err.code === "P2002"
+      ) {
+        throw new Error(
+          `The email "${email}" is already registered to another account. Use a different email, or leave the field blank to auto-generate an internal login email.`
+        );
+      }
+      throw err;
+    }
 
     return { fullName: admin.fullName.trim(), email, tempPassword };
   }

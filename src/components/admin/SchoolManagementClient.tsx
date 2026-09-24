@@ -40,7 +40,7 @@ interface SchoolManagementClientProps {
     schoolId: string;
     fullName: string;
     email?: string;
-  }) => Promise<OnboardedSchoolAdminAccount>;
+  }) => Promise<{ account: OnboardedSchoolAdminAccount | null; error: string | null }>;
 }
 
 // Parses the free-text roster box: one student per line, optionally
@@ -107,13 +107,19 @@ export function SchoolManagementClient({
     setIsCreatingAdmin(true);
     setAdminError(null);
     try {
-      const account = await onCreateSchoolAdmin({
+      const { account, error } = await onCreateSchoolAdmin({
         schoolId: adminModalSchool.id,
         fullName: adminFullName.trim(),
         email: adminEmail.trim() || undefined,
       });
+      if (error || !account) {
+        setAdminError(error || "Error creating school admin account");
+        return;
+      }
       setCreatedAdminAccount(account);
     } catch (err: unknown) {
+      // Still caught as a fallback for a genuine network/unexpected failure
+      // (the action itself now returns { error } for the expected cases).
       setAdminError(err instanceof Error ? err.message : "Error creating school admin account");
     } finally {
       setIsCreatingAdmin(false);
