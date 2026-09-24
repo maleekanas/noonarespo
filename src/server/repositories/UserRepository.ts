@@ -650,7 +650,7 @@ class UserRepository {
       userId: string;
       fullName: string;
       email: string;
-      scope: RoleType;
+      scope: typeof RoleType.SUPER_ADMIN | typeof RoleType.ACADEMIC_ADMIN | typeof RoleType.FINANCE_ADMIN;
       status: UserStatus;
       createdAt: Date;
     }>
@@ -663,11 +663,15 @@ class UserRepository {
       include: { user: { select: { email: true, status: true, createdAt: true } } },
       orderBy: { createdAt: "asc" },
     });
+    // The `where` filter above guarantees scope is one of the three platform-admin
+    // roles at runtime, but Prisma's generated type for `row.scope` is still the
+    // full RoleType enum (it can't narrow on a query filter) -- this cast reflects
+    // that guarantee so the return type matches what PlatformAdminClient expects.
     return rows.map((row) => ({
       userId: row.userId,
       fullName: `${row.firstName} ${row.lastName}`,
       email: row.user.email,
-      scope: row.scope,
+      scope: row.scope as typeof RoleType.SUPER_ADMIN | typeof RoleType.ACADEMIC_ADMIN | typeof RoleType.FINANCE_ADMIN,
       status: row.user.status,
       createdAt: row.user.createdAt,
     }));
