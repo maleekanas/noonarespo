@@ -1159,3 +1159,43 @@ model TeacherCompensation {
 
   @@map("teacher_compensations")
 }
+
+// Single-row table for platform-wide superadmin settings (feature flags,
+// maintenance mode, announcement banner, security thresholds). This used to
+// live only as an in-memory class field on SystemSettingsService -- meaning
+// every deploy or server restart silently reset maintenance mode, feature
+// flags, and security policy back to hardcoded defaults with no warning.
+// There is always exactly one row, with a fixed id, upserted in place.
+model SystemSetting {
+  id                       String   @id @default("global")
+
+  allowRegistration        Boolean  @default(true)
+  allowB2cTrial             Boolean  @default(true)
+  allowB2bTrial             Boolean  @default(true)
+  aiTutorEnabled            Boolean  @default(true)
+
+  maintenanceMode           Boolean  @default(false)
+  maintenanceMessageAr      String   @default("")
+  maintenanceMessageEn      String   @default("")
+
+  announcementActive        Boolean  @default(false)
+  announcementType          String   @default("INFO") // "INFO" | "WARNING" | "SUCCESS" | "URGENT"
+  announcementTextAr        String   @default("")
+  announcementTextEn        String   @default("")
+  announcementLinkUrl       String   @default("")
+
+  supportEmail              String   @default("support@arabickidsacademy.com")
+  supportWhatsApp           String   @default("")
+  defaultCurrency           String   @default("USD")
+  defaultTimezone           String   @default("Asia/Riyadh")
+
+  sessionDurationDays       Int      @default(30)
+  maxLoginAttemptsPerIp     Int      @default(5)
+  maxLoginAttemptsPerEmail  Int      @default(5)
+  lockoutWindowMinutes      Int      @default(15)
+
+  lastUpdatedAt              DateTime @default(now())
+  lastUpdatedBy               String   @default("system-init")
+
+  @@map("system_settings")
+}

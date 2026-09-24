@@ -5,9 +5,11 @@ import { AuditActionCategory } from "@/server/repositories/AdministrationReposit
 import { requireAdminSession } from "@/lib/auth/currentUser";
 import {
   ShieldCheck,
+  ShieldAlert,
   Lock,
   Filter,
   CheckCircle2,
+  XCircle,
   Search,
   Download,
   FileSpreadsheet,
@@ -41,6 +43,17 @@ export default async function AdminAuditLogsPage({
         (log.ipAddress && log.ipAddress.toLowerCase().includes(term))
     );
   }
+
+  // The header badge and each row's checkmark used to be static markup --
+  // always claiming "100% verified" regardless of whether the log's hash
+  // actually matched. administrationService.verifyLogIntegrity() already
+  // recomputes each entry's SHA-256 and compares it; this actually runs it
+  // per visible row so the badge reflects a real check.
+  const integrityResults = await Promise.all(
+    logs.map((log) => administrationService.verifyLogIntegrity(log.id))
+  );
+  const integrityByLogId = new Map(logs.map((log, idx) => [log.id, integrityResults[idx]]));
+  const allVerified = integrityResults.every(Boolean);
 
   const categoryLabels: Record<AuditActionCategory, string> = {
     AUTH: "المصادقة والأمان",
@@ -79,9 +92,23 @@ export default async function AdminAuditLogsPage({
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold">
-            <ShieldCheck className="w-4 h-4 text-emerald-600" />
-            <span>توقيع التشفير (SHA-256): سليم 100%</span>
+          <div
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-bold ${
+              allVerified
+                ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                : "bg-rose-50 text-rose-800 border-rose-200 animate-pulse"
+            }`}
+          >
+            {allVerified ? (
+              <ShieldCheck className="w-4 h-4 text-emerald-600" />
+            ) : (
+              <ShieldAlert className="w-4 h-4 text-rose-600" />
+            )}
+            <span>
+              {allVerified
+                ? "توقيع التشفير (SHA-256): سليم 100%"
+                : "تنبيه: تعذر التحقق من بعض السجلات — قد تكون البيانات معدَّلة"}
+            </span>
           </div>
 
           <a
@@ -202,7 +229,13 @@ export default async function AdminAuditLogsPage({
                 <div className="flex items-center gap-2 font-mono text-[10px] text-slate-400 truncate max-w-md">
                   <span className="text-emerald-600 font-bold">SHA-256:</span>
                   <span className="truncate">{log.hash}</span>
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                  {integrityByLogId.get(log.id) ? (
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                  ) : (
+                    <span title="Hash mismatch -- integrity check failed">
+                      <XCircle className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                    </span>
+                  )}
                 </div>
               </div>
             </div>

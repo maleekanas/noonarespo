@@ -2,7 +2,7 @@ import React from "react";
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
 import { ArrowRight, Building2, ShieldCheck, PlusCircle, CheckCircle2, Sliders, Trash2, Power, Zap, Bell, X } from "lucide-react";
-import { schoolService } from "@/server/services/SchoolService";
+import { schoolService, B2B_BUNDLES } from "@/server/services/SchoolService";
 import { administrationService } from "@/server/services/AdministrationService";
 import { SchoolManagementClient } from "@/components/admin/SchoolManagementClient";
 import { getDictionary } from "@/lib/localization";
@@ -393,6 +393,121 @@ export default async function AdminSchoolsPage({
           </div>
         </div>
       )}
+
+      {/* Partner Schools Directory -- lets the superadmin actually change an
+          existing school's plan/seats or deactivate/reactivate its contract.
+          handleUpdateSchoolTier and handleToggleSchool below were previously
+          fully implemented Server Actions with no button wired to either --
+          this was the only way to reach them. */}
+      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="p-6 pb-5 flex items-center justify-between gap-3 border-b border-slate-100">
+          <div>
+            <h2 className="font-extrabold text-slate-900 text-base flex items-center gap-2">
+              <Building2 className="w-5 h-5 text-indigo-600" />
+              {isAr ? "دليل المؤسسات الشريكة" : "Partner Schools Directory"}
+            </h2>
+            <p className="text-xs text-slate-500 font-normal mt-0.5">
+              {isAr
+                ? "تعديل باقة ومقاعد أي مؤسسة، أو تعليق/إعادة تفعيل تعاقدها"
+                : "Change a school's plan/seats, or deactivate/reactivate its contract"}
+            </p>
+          </div>
+          <span className="px-3 py-1.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 text-xs font-bold shrink-0">
+            {schools.length}
+          </span>
+        </div>
+
+        {schools.length === 0 ? (
+          <div className="p-8 text-center text-xs text-slate-400">
+            {isAr ? "لا توجد مؤسسات مسجلة بعد" : "No partner schools registered yet"}
+          </div>
+        ) : (
+          <div className="divide-y divide-slate-100">
+            {schools.map((school) => (
+              <div
+                key={school.id}
+                className="p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-4"
+              >
+                <div className="text-xs space-y-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="font-bold text-slate-900 text-sm truncate">
+                      {isAr ? school.nameAr : school.nameEn || school.nameAr}
+                    </p>
+                    <span
+                      className={`px-2 py-0.5 rounded-full text-[10px] font-bold border shrink-0 ${
+                        school.contractStatus === "ACTIVE"
+                          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                          : school.contractStatus === "TRIAL"
+                          ? "bg-amber-50 text-amber-700 border-amber-200"
+                          : "bg-slate-100 text-slate-600 border-slate-200"
+                      }`}
+                    >
+                      {school.contractStatus === "ACTIVE"
+                        ? isAr ? "نشط" : "Active"
+                        : school.contractStatus === "TRIAL"
+                        ? isAr ? "تجربة" : "Trial"
+                        : isAr ? "معلّق" : "Inactive"}
+                    </span>
+                  </div>
+                  <p className="text-slate-500">
+                    {INSTITUTION_TYPE_LABELS[school.type] || school.type} · {school.city}, {school.country}
+                  </p>
+                  <p className="text-slate-500">
+                    {isAr ? "المقاعد" : "Seats"}: {school.licenseSeatsUsed} / {school.licenseSeatsTotal} ·{" "}
+                    {isAr ? "الباقة الحالية" : "Current plan"}:{" "}
+                    {isAr ? B2B_BUNDLES[school.bundleTier]?.nameAr : B2B_BUNDLES[school.bundleTier]?.nameEn ?? school.bundleTier}
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2 shrink-0">
+                  <form action={handleUpdateSchoolTier} className="flex items-center gap-1.5">
+                    <input type="hidden" name="schoolId" value={school.id} />
+                    <select
+                      name="bundleTier"
+                      defaultValue={school.bundleTier}
+                      className="text-xs px-2.5 py-2 rounded-xl border border-slate-200 bg-white font-medium text-slate-700"
+                    >
+                      <option value="STARTER">{isAr ? "أساسية" : "Starter"}</option>
+                      <option value="GROWTH">{isAr ? "نمو" : "Growth"}</option>
+                      <option value="INSTITUTION">{isAr ? "مؤسسية" : "Institution"}</option>
+                    </select>
+                    <input
+                      type="number"
+                      name="licenseSeatsTotal"
+                      defaultValue={school.licenseSeatsTotal}
+                      min={1}
+                      className="w-20 text-xs px-2.5 py-2 rounded-xl border border-slate-200 bg-white font-mono text-slate-700"
+                    />
+                    <button
+                      type="submit"
+                      className="flex items-center gap-1 py-2 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-colors cursor-pointer"
+                    >
+                      <Sliders className="w-3.5 h-3.5" />
+                      {isAr ? "تحديث" : "Update"}
+                    </button>
+                  </form>
+                  <form action={handleToggleSchool}>
+                    <input type="hidden" name="schoolId" value={school.id} />
+                    <button
+                      type="submit"
+                      className={`flex items-center gap-1.5 py-2 px-3 rounded-xl font-bold text-xs transition-colors cursor-pointer border ${
+                        school.contractStatus === "ACTIVE"
+                          ? "bg-rose-50 hover:bg-rose-100 text-rose-700 border-rose-200"
+                          : "bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200"
+                      }`}
+                    >
+                      <Power className="w-3.5 h-3.5" />
+                      {school.contractStatus === "ACTIVE"
+                        ? isAr ? "تعليق" : "Deactivate"
+                        : isAr ? "تفعيل" : "Reactivate"}
+                    </button>
+                  </form>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* New Partner School Registration Form */}
       <details className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden group">

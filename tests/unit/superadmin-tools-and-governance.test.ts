@@ -5,8 +5,14 @@ import { billingService } from "@/server/services/BillingService";
 import { systemHealthService } from "@/server/services/SystemHealthService";
 
 test("Superadmin Tools & Governance - SystemSettingsService", async (t) => {
-  await t.test("returns expected platform default settings", () => {
-    const settings = systemSettingsService.getSettings();
+  // NOTE: getSettings/updateSettings/resetDefaults are now async -- they
+  // read/write a real `SystemSetting` DB row instead of an in-memory class
+  // field, so settings actually survive a deploy or server restart instead
+  // of silently resetting to defaults. Without a database this falls back
+  // to an in-memory copy for the duration of the process (same behavior as
+  // before), which is what these tests exercise in a DB-less test run.
+  await t.test("returns expected platform default settings", async () => {
+    const settings = await systemSettingsService.getSettings();
     assert.equal(settings.allowRegistration, true);
     assert.equal(settings.allowB2cTrial, true);
     assert.equal(settings.allowB2bTrial, true);
@@ -16,8 +22,8 @@ test("Superadmin Tools & Governance - SystemSettingsService", async (t) => {
     assert.equal(settings.sessionDurationDays, 30);
   });
 
-  await t.test("updates feature flags and announcement settings", () => {
-    systemSettingsService.updateSettings(
+  await t.test("updates feature flags and announcement settings", async () => {
+    await systemSettingsService.updateSettings(
       {
         allowB2cTrial: false,
         announcementActive: true,
@@ -27,7 +33,7 @@ test("Superadmin Tools & Governance - SystemSettingsService", async (t) => {
       "superadmin-tester"
     );
 
-    const updated = systemSettingsService.getSettings();
+    const updated = await systemSettingsService.getSettings();
     assert.equal(updated.allowB2cTrial, false);
     assert.equal(updated.announcementActive, true);
     assert.equal(updated.announcementType, "URGENT");
@@ -41,9 +47,9 @@ test("Superadmin Tools & Governance - SystemSettingsService", async (t) => {
     assert.ok(flushRes.message.includes("flushed"));
   });
 
-  await t.test("resets back to platform defaults", () => {
-    systemSettingsService.resetDefaults("superadmin-tester");
-    const restored = systemSettingsService.getSettings();
+  await t.test("resets back to platform defaults", async () => {
+    await systemSettingsService.resetDefaults("superadmin-tester");
+    const restored = await systemSettingsService.getSettings();
     assert.equal(restored.allowB2cTrial, true);
     assert.equal(restored.announcementActive, false);
     assert.equal(restored.maintenanceMode, false);

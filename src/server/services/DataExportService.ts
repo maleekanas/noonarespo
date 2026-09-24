@@ -116,49 +116,23 @@ export class DataExportService {
     let subscriptions: any[] = [];
     let payroll: any[] = [];
 
+    // A financial export must never silently substitute fabricated numbers
+    // for a real query failure -- that produces a file that *looks* like a
+    // legitimate export but isn't, with no indication anything went wrong.
+    // If the database can't be reached, the export fails loudly instead so
+    // whoever's exporting knows to retry rather than trusting bad numbers.
     try {
       [invoices, subscriptions, payroll] = await Promise.all([
         prisma.invoice.findMany({ include: { payments: true }, orderBy: { createdAt: "desc" } }),
         prisma.subscription.findMany({ include: { plan: true }, orderBy: { createdAt: "desc" } }),
         prisma.teacherCompensation.findMany({ orderBy: { createdAt: "desc" } }),
       ]);
-    } catch {
-      // offline fallback
-      invoices = [
-        {
-          invoiceNumber: "INV-2026-001",
-          parentId: "parent-1",
-          subtotalMinorUnits: 5135,
-          taxMinorUnits: 0,
-          totalMinorUnits: 5135,
-          currency: "USD",
-          status: "PAID",
-          payments: [{ provider: "STRIPE" }],
-          createdAt: new Date(),
-        },
-      ];
-      subscriptions = [
-        {
-          id: "sub-1",
-          parentId: "parent-1",
-          planId: "plan-individual",
-          plan: { nameEn: "Individual Student" },
-          status: "ACTIVE",
-          currentPeriodStart: new Date(),
-          currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-        },
-      ];
-      payroll = [
-        {
-          id: "comp-1",
-          teacherId: "teacher-1",
-          periodYear: 2026,
-          periodMonth: 9,
-          hoursTaught: 16,
-          totalMinorUnits: 56000,
-          isPaid: true,
-        },
-      ];
+    } catch (err) {
+      throw new Error(
+        `Financial export failed: could not read invoices/subscriptions/payroll from the database. ${
+          err instanceof Error ? err.message : "Unknown database error."
+        }`
+      );
     }
 
     const invoiceRows = invoices.map((inv) => ({
@@ -262,29 +236,21 @@ export class DataExportService {
       administrationRepository.getAuditLogs(),
     ]);
 
+    // Same rule as exportFinancials: a full-backup export that silently
+    // swaps in one fake invoice on a DB error would look like a complete,
+    // trustworthy backup when it isn't. Fail loudly instead.
     try {
       [invoices, subscriptions, payroll] = await Promise.all([
         prisma.invoice.findMany({ include: { payments: true } }),
         prisma.subscription.findMany({ include: { plan: true } }),
         prisma.teacherCompensation.findMany(),
       ]);
-    } catch {
-      // offline fallback
-      invoices = [
-        {
-          invoiceNumber: "INV-2026-001",
-          parentId: "parent-1",
-          subtotalMinorUnits: 5135,
-          taxMinorUnits: 0,
-          totalMinorUnits: 5135,
-          currency: "USD",
-          status: "PAID",
-          payments: [{ provider: "STRIPE" }],
-          createdAt: new Date(),
-        },
-      ];
-      subscriptions = [];
-      payroll = [];
+    } catch (err) {
+      throw new Error(
+        `Full backup export failed: could not read invoices/subscriptions/payroll from the database. ${
+          err instanceof Error ? err.message : "Unknown database error."
+        }`
+      );
     }
 
     const bundle = {

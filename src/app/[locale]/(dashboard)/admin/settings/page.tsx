@@ -33,7 +33,8 @@ export default async function AdminSettingsPage({
   const { saved, flushed, reset } = await searchParams;
   const admin = await requireAdminSession(locale);
   const isAr = locale === "ar";
-  const settings = systemSettingsService.getSettings();
+  const settings = await systemSettingsService.getSettings();
+  const usingFallback = systemSettingsService.isUsingFallback();
 
   // Server Action: Update Feature Flags
   async function handleUpdateFlags(formData: FormData) {
@@ -44,7 +45,7 @@ export default async function AdminSettingsPage({
     const allowB2bTrial = formData.get("allowB2bTrial") === "on";
     const aiTutorEnabled = formData.get("aiTutorEnabled") === "on";
 
-    systemSettingsService.updateSettings(
+    await systemSettingsService.updateSettings(
       {
         allowRegistration,
         allowB2cTrial,
@@ -81,7 +82,7 @@ export default async function AdminSettingsPage({
     const announcementTextEn = formData.get("announcementTextEn")?.toString() || "";
     const announcementLinkUrl = formData.get("announcementLinkUrl")?.toString() || "";
 
-    systemSettingsService.updateSettings(
+    await systemSettingsService.updateSettings(
       {
         announcementActive,
         announcementType,
@@ -117,7 +118,7 @@ export default async function AdminSettingsPage({
     const maintenanceMessageAr = formData.get("maintenanceMessageAr")?.toString() || "";
     const maintenanceMessageEn = formData.get("maintenanceMessageEn")?.toString() || "";
 
-    systemSettingsService.updateSettings(
+    await systemSettingsService.updateSettings(
       {
         maintenanceMode,
         maintenanceMessageAr,
@@ -156,7 +157,7 @@ export default async function AdminSettingsPage({
     const maxLoginAttemptsPerEmail = Number(formData.get("maxLoginAttemptsPerEmail")) || 5;
     const lockoutWindowMinutes = Number(formData.get("lockoutWindowMinutes")) || 15;
 
-    systemSettingsService.updateSettings(
+    await systemSettingsService.updateSettings(
       {
         supportEmail,
         supportWhatsApp,
@@ -214,7 +215,7 @@ export default async function AdminSettingsPage({
   async function handleResetDefaults() {
     "use server";
     const currentAdmin = await requireAdminSession(locale);
-    systemSettingsService.resetDefaults(currentAdmin.email);
+    await systemSettingsService.resetDefaults(currentAdmin.email);
 
     const ip = await getClientIp();
     await administrationRepository.addAuditLog({
@@ -283,6 +284,17 @@ export default async function AdminSettingsPage({
       </div>
 
       {/* Status Notifications */}
+      {usingFallback && (
+        <div className="rounded-2xl border border-rose-200 bg-rose-50 px-5 py-3.5 text-sm text-rose-900 flex items-center gap-2 shadow-sm">
+          <AlertTriangle className="w-5 h-5 shrink-0 text-rose-600" />
+          <span>
+            {isAr
+              ? "تعذر الوصول لقاعدة البيانات — الإعدادات محفوظة مؤقتاً في الذاكرة فقط وقد تُفقد عند إعادة التشغيل."
+              : "Database unreachable — settings are saved in memory only right now and may be lost on the next restart."}
+          </span>
+        </div>
+      )}
+
       {saved && (
         <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3.5 text-sm text-emerald-800 flex items-center gap-2 shadow-sm">
           <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-600" />
