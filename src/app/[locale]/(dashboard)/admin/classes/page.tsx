@@ -1,12 +1,15 @@
 import React from "react";
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { academicRepository } from "@/server/repositories/AcademicRepository";
 import { academicService } from "@/server/services/AcademicService";
 import { schoolService } from "@/server/services/SchoolService";
 import { userRepository } from "@/server/repositories/UserRepository";
 import { administrationService } from "@/server/services/AdministrationService";
-import { ClassType } from "@prisma/client";
+import { schedulingService } from "@/server/services/SchedulingService";
+import { schedulingRepository } from "@/server/repositories/SchedulingRepository";
+import { ClassType, SessionStatus } from "@prisma/client";
 import { requireAdminSession } from "@/lib/auth/currentUser";
 import {
   Users,
@@ -19,14 +22,19 @@ import {
   UserPlus,
   UserMinus,
   CheckCircle2,
+  AlertTriangle,
 } from "lucide-react";
 
 export default async function AdminClassesPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ locale: string }>;
+  searchParams: Promise<{ conflict?: string; classGroupId?: string; teacherId?: string; reason?: string }>;
 }) {
   const { locale } = await params;
+  const { conflict, classGroupId: conflictClassGroupId, teacherId: conflictTeacherId, reason: conflictReason } =
+    await searchParams;
   await requireAdminSession(locale);
   const isAr = locale === "ar";
 
@@ -101,12 +109,50 @@ export default async function AdminClassesPage({
   }
 
   // Action: Assign / Change Teacher
+  //
+  // This used to write the assignment straight through with zero conflict
+  // checking -- assigning a teacher who was already booked for one of this
+  // class's own upcoming sessions succeeded silently, and the double-booking
+  // only surfaced when the two classes collided live. checkTeacherConflict()
+  // already existed in SchedulingService for exactly this (it's what
+  // scheduleSession()/rescheduleSession() use), it just had no caller from
+  // the assignment flow itself. Now every upcoming, non-cancelled session on
+  // this class is checked against the new teacher's calendar before the
+  // assignment is saved; a real clash blocks the save and redirects back
+  // with the reason instead of assigning anyway, unless the admin
+  // deliberately overrides via the "Assign anyway" confirmation form.
   async function handleAssignTeacher(formData: FormData) {
     "use server";
     await requireAdminSession(locale);
     const classGroupId = formData.get("classGroupId")?.toString();
     const teacherId = formData.get("teacherId")?.toString();
+    const force = formData.get("force")?.toString() === "true";
     if (!classGroupId || !teacherId) return;
+
+    if (!force) {
+      const upcomingSessions = (
+        await schedulingRepository.getSessionsByClassGroupId(classGroupId)
+      ).filter(
+        (s) =>
+          s.status !== SessionStatus.CANCELLED &&
+          s.status !== SessionStatus.COMPLETED &&
+          s.endTimeUtc.getTime() > Date.now()
+      );
+
+      for (const session of upcomingSessions) {
+        const conflictReport = await schedulingService.checkTeacherConflict(
+          teacherId,
+          session.startTimeUtc,
+          session.endTimeUtc,
+          session.id
+        );
+        if (conflictReport.hasConflict) {
+          redirect(
+            `/${locale}/admin/classes?conflict=1&classGroupId=${encodeURIComponent(classGroupId)}&teacherId=${encodeURIComponent(teacherId)}&reason=${encodeURIComponent(conflictReport.reason || "")}`
+          );
+        }
+      }
+    }
 
     await academicRepository.assignTeacherToClass(teacherId, classGroupId);
 
@@ -209,6 +255,40 @@ export default async function AdminClassesPage({
           <span>{isAr ? "جدول الحصص الأسبوعي الموحد" : "Master Schedule"}</span>
         </Link>
       </div>
+
+      {/* Teacher Assignment Conflict Warning */}
+      {conflict === "1" && conflictClassGroupId && conflictTeacherId && (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 shadow-sm space-y-3">
+          <div className="flex items-start gap-2 text-sm text-amber-900">
+            <AlertTriangle className="w-5 h-5 shrink-0 text-amber-600 mt-0.5" />
+            <div>
+              <p className="font-bold">
+                {isAr
+                  ? `تعذر تعيين ${allTeachers.find((t) => t.id === conflictTeacherId)?.firstName || "المعلم"} — يوجد تعارض في الجدول`
+                  : `Couldn't assign ${allTeachers.find((t) => t.id === conflictTeacherId)?.firstName || "this teacher"} — schedule conflict`}
+              </p>
+              <p className="text-xs text-amber-800 mt-1">{conflictReason}</p>
+            </div>
+          </div>
+          <form action={handleAssignTeacher} className="flex items-center gap-2">
+            <input type="hidden" name="classGroupId" value={conflictClassGroupId} />
+            <input type="hidden" name="teacherId" value={conflictTeacherId} />
+            <input type="hidden" name="force" value="true" />
+            <button
+              type="submit"
+              className="px-3.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-sm transition-colors"
+            >
+              {isAr ? "تعيين رغم التعارض" : "Assign anyway"}
+            </button>
+            <Link
+              href={`/${locale}/admin/classes`}
+              className="px-3.5 py-1.5 rounded-xl bg-white hover:bg-amber-100 text-amber-800 border border-amber-200 font-bold text-xs transition-colors"
+            >
+              {isAr ? "إلغاء" : "Dismiss"}
+            </Link>
+          </form>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left 2 Cols: Class Groups List */}

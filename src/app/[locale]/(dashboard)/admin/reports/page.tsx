@@ -3,6 +3,7 @@ import Link from "next/link";
 import { administrationService } from "@/server/services/AdministrationService";
 import { payrollService } from "@/server/services/PayrollService";
 import { billingService } from "@/server/services/BillingService";
+import { academicRepository } from "@/server/repositories/AcademicRepository";
 import { PrintButton } from "@/components/shared/PrintButton";
 import { requireAdminSession } from "@/lib/auth/currentUser";
 import {
@@ -20,6 +21,60 @@ export default async function AdminReportsPage({
 
   const stats = await administrationService.getSchoolAnalyticsOverview();
   const finance = await payrollService.getFinanceReconciliationOverview();
+
+  // The "Academic Program Health" table below used to be 4 rows of
+  // hardcoded HTML (fixed titles, fixed "100%"/"94.2%" figures) sitting
+  // right next to real per-class enrollment data the Classes hub already
+  // computes the same way. This pulls the real chain instead --
+  // classGroup -> courseLevel -> course -> program -- and aggregates
+  // actual capacity/enrollment per program so the occupancy shown here
+  // moves when real enrollments change instead of always reading "100%".
+  const [allPrograms, allCourses, allLevels, allClassGroups] = await Promise.all([
+    academicRepository.getAllPrograms(),
+    academicRepository.getAllCourses(),
+    academicRepository.getAllLevels(),
+    academicRepository.getAllClassGroups(),
+  ]);
+
+  const courseById = new Map(allCourses.map((c) => [c.id, c]));
+  const levelById = new Map(allLevels.map((l) => [l.id, l]));
+
+  const programHealth = await Promise.all(
+    allPrograms.map(async (program) => {
+      const programClassGroups = allClassGroups.filter((cg) => {
+        const level = levelById.get(cg.courseLevelId);
+        const course = level ? courseById.get(level.courseId) : undefined;
+        return course?.programId === program.id;
+      });
+
+      let capacityTotal = 0;
+      let enrolledTotal = 0;
+      for (const cg of programClassGroups) {
+        capacityTotal += cg.capacityMax;
+        const enrollments = await academicRepository.getEnrollmentsByClassGroupId(cg.id);
+        enrolledTotal += enrollments.length;
+      }
+
+      const occupancyPct = capacityTotal > 0 ? Math.round((enrolledTotal / capacityTotal) * 100) : 0;
+      const ageGroups = Array.from(
+        new Set(
+          programClassGroups
+            .map((cg) => levelById.get(cg.courseLevelId)?.targetAge)
+            .filter((a): a is NonNullable<typeof a> => !!a)
+        )
+      );
+
+      return {
+        programId: program.id,
+        titleAr: program.titleAr,
+        classCount: programClassGroups.length,
+        capacityTotal,
+        enrolledTotal,
+        occupancyPct,
+        ageGroups,
+      };
+    })
+  );
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
@@ -99,45 +154,38 @@ export default async function AdminReportsPage({
           </h3>
 
           <div className="divide-y divide-slate-100 text-xs">
-            <div className="py-3 flex items-center justify-between">
-              <div>
-                <span className="font-bold text-slate-900 block">أساسيات اللغة العربية (Foundations)</span>
-                <span className="text-slate-400 text-[11px]">الفئة: 4-6 سنوات (Pre-A1)</span>
+            {programHealth.length === 0 ? (
+              <div className="py-6 text-center text-slate-400">
+                لا توجد برامج أكاديمية مسجلة بعد
               </div>
-              <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 font-bold">
-                إشغال 100% (مكتمل)
-              </span>
-            </div>
-
-            <div className="py-3 flex items-center justify-between">
-              <div>
-                <span className="font-bold text-slate-900 block">برنامج القراءة والطلاقة (Reading)</span>
-                <span className="text-slate-400 text-[11px]">الفئة: 7-10 سنوات (A1)</span>
-              </div>
-              <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 font-bold">
-                إشغال 100% (6/6 طلاب)
-              </span>
-            </div>
-
-            <div className="py-3 flex items-center justify-between">
-              <div>
-                <span className="font-bold text-slate-900 block">القرآن الكريم والتجويد (Quran & Tajweed)</span>
-                <span className="text-slate-400 text-[11px]">الفئة: 7-10 سنوات (A1)</span>
-              </div>
-              <span className="px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 font-bold">
-                نسبة إتقان 94.2%
-              </span>
-            </div>
-
-            <div className="py-3 flex items-center justify-between">
-              <div>
-                <span className="font-bold text-slate-900 block">برنامج الكتابة والخط العربي (Writing)</span>
-                <span className="text-slate-400 text-[11px]">الفئة: 7-10 سنوات (A2)</span>
-              </div>
-              <span className="px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 font-bold">
-                معدل تسليم 100%
-              </span>
-            </div>
+            ) : (
+              programHealth.map((p) => (
+                <div key={p.programId} className="py-3 flex items-center justify-between gap-3">
+                  <div>
+                    <span className="font-bold text-slate-900 block">{p.titleAr}</span>
+                    <span className="text-slate-400 text-[11px]">
+                      {p.classCount} {p.classCount === 1 ? "فصل" : "فصول"}
+                      {p.ageGroups.length > 0 ? ` • ${p.ageGroups.join(", ")}` : ""}
+                    </span>
+                  </div>
+                  <span
+                    className={`px-2.5 py-1 rounded-full font-bold whitespace-nowrap ${
+                      p.capacityTotal === 0
+                        ? "bg-slate-100 text-slate-500"
+                        : p.occupancyPct >= 90
+                        ? "bg-emerald-50 text-emerald-700"
+                        : p.occupancyPct >= 50
+                        ? "bg-blue-50 text-blue-700"
+                        : "bg-amber-50 text-amber-700"
+                    }`}
+                  >
+                    {p.capacityTotal === 0
+                      ? "لا يوجد فصول نشطة"
+                      : `إشغال ${p.occupancyPct}% (${p.enrolledTotal}/${p.capacityTotal})`}
+                  </span>
+                </div>
+              ))
+            )}
           </div>
         </div>
 

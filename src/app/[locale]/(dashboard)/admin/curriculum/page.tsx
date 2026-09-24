@@ -19,6 +19,7 @@ import {
   Clock,
   FileText,
   Award,
+  Pencil,
 } from "lucide-react";
 
 const TOOL_ICONS: Record<string, { labelAr: string; labelEn: string; icon: React.ComponentType<{ className?: string }>; color: string }> = {
@@ -170,6 +171,49 @@ export default async function AdminCurriculumPage({
     if (!lessonId) return;
 
     await administrationService.deleteLesson(lessonId, adminSession);
+
+    revalidatePath(`/${locale}/admin/curriculum`);
+    revalidatePath(`/${locale}/admin/audit-logs`);
+  }
+
+  // Was previously add/delete only -- administrationService.updateLesson()
+  // (which just proxies to the repository's already-implemented
+  // updateLesson()) existed but nothing in this page ever called it, so a
+  // lesson could not be corrected or improved without deleting and
+  // recreating it from scratch (losing its id and any references to it).
+  async function handleUpdateLesson(formData: FormData) {
+    "use server";
+    const lessonId = formData.get("lessonId")?.toString();
+    if (!lessonId) return;
+
+    const titleAr = formData.get("titleAr")?.toString().trim() || "";
+    const titleEn = formData.get("titleEn")?.toString().trim() || "";
+    const descriptionAr = formData.get("descriptionAr")?.toString().trim() || "";
+    const durationMinutes = parseInt(formData.get("durationMinutes")?.toString() || "40", 10);
+    const homeworkTitleAr = formData.get("homeworkTitleAr")?.toString().trim() || "";
+    const vocabStr = formData.get("targetVocabulary")?.toString() || "";
+    const targetVocabulary = vocabStr.split(",").map((v) => v.trim()).filter(Boolean);
+    const bloomStage = formData.get("bloomStage")?.toString() as any;
+    const steamDomain = formData.get("steamDomain")?.toString() as any;
+    const steamConnectionAr = formData.get("steamConnectionAr")?.toString().trim() || "";
+
+    if (!titleAr) return;
+
+    await administrationService.updateLesson(
+      lessonId,
+      {
+        titleAr,
+        titleEn: titleEn || titleAr,
+        descriptionAr,
+        durationMinutes,
+        homeworkTitleAr,
+        targetVocabulary: targetVocabulary.length > 0 ? targetVocabulary : undefined,
+        bloomStage,
+        steamDomain,
+        steamConnectionAr,
+      },
+      adminSession
+    );
 
     revalidatePath(`/${locale}/admin/curriculum`);
     revalidatePath(`/${locale}/admin/audit-logs`);
@@ -486,6 +530,95 @@ export default async function AdminCurriculumPage({
                     <span className="truncate">{lesson.homeworkTitleAr}</span>
                   </div>
                 )}
+
+                <details className="group/edit">
+                  <summary className="text-[11px] text-brand-600 hover:text-brand-700 transition-colors font-bold flex items-center gap-1 cursor-pointer select-none list-none">
+                    <Pencil className="w-3 h-3" />
+                    <span>تعديل الدرس</span>
+                  </summary>
+                  <form action={handleUpdateLesson} className="mt-3 space-y-2 pt-3 border-t border-dashed border-slate-200">
+                    <input type="hidden" name="lessonId" value={lesson.id} />
+                    <div className="grid grid-cols-2 gap-2">
+                      <input
+                        name="titleAr"
+                        defaultValue={lesson.titleAr}
+                        required
+                        placeholder="العنوان بالعربية"
+                        className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-[11px] focus:ring-2 focus:ring-brand-500"
+                      />
+                      <input
+                        name="titleEn"
+                        defaultValue={lesson.titleEn}
+                        placeholder="Title (EN)"
+                        className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-[11px] focus:ring-2 focus:ring-brand-500"
+                      />
+                    </div>
+                    <textarea
+                      name="descriptionAr"
+                      defaultValue={lesson.descriptionAr}
+                      rows={2}
+                      placeholder="الوصف"
+                      className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-[11px] focus:ring-2 focus:ring-brand-500 resize-none"
+                    />
+                    <div className="grid grid-cols-2 gap-2">
+                      <input
+                        name="durationMinutes"
+                        type="number"
+                        defaultValue={lesson.durationMinutes}
+                        className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-[11px] focus:ring-2 focus:ring-brand-500"
+                      />
+                      <input
+                        name="homeworkTitleAr"
+                        defaultValue={lesson.homeworkTitleAr}
+                        placeholder="عنوان الواجب"
+                        className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-[11px] focus:ring-2 focus:ring-brand-500"
+                      />
+                    </div>
+                    <input
+                      name="targetVocabulary"
+                      defaultValue={lesson.targetVocabulary.join(", ")}
+                      placeholder="المفردات المستهدفة (مفصولة بفاصلة)"
+                      className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-[11px] focus:ring-2 focus:ring-brand-500 font-mono"
+                    />
+                    <div className="grid grid-cols-2 gap-2">
+                      <select
+                        name="bloomStage"
+                        defaultValue={lesson.bloomStage}
+                        className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-[11px] focus:ring-2 focus:ring-brand-500 bg-white"
+                      >
+                        <option value="REMEMBER">تذكّر (Remember)</option>
+                        <option value="UNDERSTAND">فهم (Understand)</option>
+                        <option value="APPLY">تطبيق (Apply)</option>
+                        <option value="ANALYZE">تحليل (Analyze)</option>
+                        <option value="EVALUATE">تقييم (Evaluate)</option>
+                        <option value="CREATE">ابتكار (Create)</option>
+                      </select>
+                      <select
+                        name="steamDomain"
+                        defaultValue={lesson.steamDomain}
+                        className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-[11px] focus:ring-2 focus:ring-brand-500 bg-white"
+                      >
+                        <option value="TECHNOLOGY">تكنولوجيا (Technology)</option>
+                        <option value="SCIENCE">علوم (Science)</option>
+                        <option value="ENGINEERING">هندسة (Engineering)</option>
+                        <option value="ARTS">فنون (Arts)</option>
+                        <option value="MATHS">رياضيات (Maths)</option>
+                      </select>
+                    </div>
+                    <input
+                      name="steamConnectionAr"
+                      defaultValue={lesson.steamConnectionAr}
+                      placeholder="رابط مفهوم STEAM"
+                      className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-[11px] focus:ring-2 focus:ring-brand-500"
+                    />
+                    <button
+                      type="submit"
+                      className="w-full py-1.5 rounded-lg bg-brand-600 hover:bg-brand-700 text-white font-bold text-[11px] transition-colors"
+                    >
+                      حفظ التعديلات ✓
+                    </button>
+                  </form>
+                </details>
 
                 <div className="flex justify-end pt-1">
                   <form action={handleDeleteLesson}>

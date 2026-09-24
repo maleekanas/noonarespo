@@ -11,6 +11,7 @@ import {
   Trash2,
   Send,
   Filter,
+  Users,
 } from "lucide-react";
 import { reviewService } from "@/server/services/ReviewService";
 import { ReviewStatus } from "@/server/repositories/ReviewRepository";
@@ -41,11 +42,23 @@ export default async function AdminReviewModerationPage({
   const dict = getDictionary(locale);
   const arm = dict.adminReviews;
 
-  let allReviews = await reviewService.getAllReviewsForAdmin();
+  const unfilteredReviews = await reviewService.getAllReviewsForAdmin();
+  let allReviews = unfilteredReviews;
 
   if (filterStatus && filterStatus !== "ALL") {
     allReviews = allReviews.filter((r) => r.status === filterStatus);
   }
+
+  // Per-teacher ratings -- getTeacherReviewSummary() already existed in
+  // ReviewService (it's what the parent-facing teacher profile would use)
+  // but nothing surfaced it to admins, who could only see a flat,
+  // unaggregated list of every review with no way to tell which teachers
+  // were actually rated well without manually counting stars themselves.
+  const teacherIds = Array.from(new Set(unfilteredReviews.map((r) => r.teacherId)));
+  const teacherNameById = new Map(unfilteredReviews.map((r) => [r.teacherId, r.teacherName]));
+  const teacherSummaries = (
+    await Promise.all(teacherIds.map((id) => reviewService.getTeacherReviewSummary(id)))
+  ).sort((a, b) => b.averageRating - a.averageRating || b.totalReviewsCount - a.totalReviewsCount);
 
   const translations = await reviewTranslationAdapter.translateReviewBatch(
     allReviews.map((rev) => ({
@@ -111,6 +124,56 @@ export default async function AdminReviewModerationPage({
           {arm.pageSubtitle}
         </p>
       </div>
+
+      {/* Per-Teacher Ratings Summary */}
+      {teacherSummaries.length > 0 && (
+        <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-4">
+          <h2 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
+            <Users className="w-5 h-5 text-brand-600" />
+            <span>{isAr ? "متوسط التقييمات لكل معلم" : "Ratings by Teacher"}</span>
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {teacherSummaries.map((summary) => (
+              <div
+                key={summary.teacherId}
+                className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-bold text-slate-900 text-xs truncate">
+                    {teacherNameById.get(summary.teacherId) || summary.teacherId}
+                  </span>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                    <span className="font-mono font-extrabold text-slate-800 text-xs">
+                      {summary.averageRating.toFixed(1)}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-0.5">
+                  {[5, 4, 3, 2, 1].map((star) => {
+                    const count = summary.ratingDistribution[star] || 0;
+                    const pct = summary.totalReviewsCount > 0 ? (count / summary.totalReviewsCount) * 100 : 0;
+                    return (
+                      <div
+                        key={star}
+                        className="h-1.5 rounded-full bg-slate-200 overflow-hidden flex-1"
+                        title={`${star}★: ${count}`}
+                      >
+                        <div className="h-full bg-amber-400" style={{ width: `${pct}%` }} />
+                      </div>
+                    );
+                  })}
+                </div>
+                <span className="text-[11px] text-slate-400">
+                  {isAr
+                    ? `${summary.totalReviewsCount} تقييماً معتمداً`
+                    : `${summary.totalReviewsCount} approved review${summary.totalReviewsCount === 1 ? "" : "s"}`}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Filter Tabs */}
       <div className="flex flex-wrap items-center gap-2 bg-white p-4 rounded-2xl border border-slate-200 text-xs">

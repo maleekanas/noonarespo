@@ -1,6 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { schedulingRepository } from "@/server/repositories/SchedulingRepository";
 import { schedulingService } from "@/server/services/SchedulingService";
 import { academicRepository } from "@/server/repositories/AcademicRepository";
@@ -14,15 +15,19 @@ import {
   ShieldCheck,
   Eye,
   Repeat,
+  AlertTriangle,
 } from "lucide-react";
 
 
 export default async function AdminSchedulePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ locale: string }>;
+  searchParams: Promise<{ recurringError?: string; created?: string; requested?: string }>;
 }) {
   const { locale } = await params;
+  const { recurringError, created: recurringCreated, requested: recurringRequested } = await searchParams;
   await requireAdminSession(locale);
   const sessions = await schedulingRepository.getAllSessions();
   const classGroups = await academicRepository.getAllClassGroups();
@@ -76,6 +81,16 @@ export default async function AdminSchedulePage({
     }
   }
 
+  // This used to be its own manual per-week loop that called
+  // scheduleSession() one week at a time and just logged (not surfaced)
+  // any conflict, silently leaving out whichever weeks failed with no
+  // indication to the admin of how many actually got created.
+  // SchedulingService already has generateWeeklyRecurringSchedule() --
+  // the same bulk method scheduleSession()'s own tests exercise -- doing
+  // exactly this; it just had no caller from the UI. It stops at the
+  // first teacher conflict instead of silently skipping past it, so this
+  // reports back how many sessions actually landed vs. how many were
+  // requested instead of pretending the whole batch always succeeds.
   async function handleGenerateRecurringSessions(formData: FormData) {
     "use server";
     await requireAdminSession(locale);
@@ -93,19 +108,28 @@ export default async function AdminSchedulePage({
       return;
     }
 
-    const firstDate = new Date(firstSessionDateTimeStr);
-    for (let i = 0; i < weeksCount; i++) {
-      const sessionDate = new Date(firstDate.getTime() + i * 7 * 24 * 60 * 60 * 1000);
-      try {
-        await schedulingService.scheduleSession({
-          classGroupId,
-          teacherId,
-          startTimeUtc: sessionDate,
-          durationMinutes,
-        });
-      } catch (err: unknown) {
-        console.error(`Error scheduling recurring session week ${i + 1}:`, err);
-      }
+    const beforeCount = (await schedulingRepository.getSessionsByClassGroupId(classGroupId)).length;
+
+    try {
+      await schedulingService.generateWeeklyRecurringSchedule({
+        classGroupId,
+        teacherId,
+        startEpochDate: new Date(firstSessionDateTimeStr),
+        durationMinutes,
+        numberOfWeeks: weeksCount,
+      });
+    } catch (err: unknown) {
+      const afterCount = (await schedulingRepository.getSessionsByClassGroupId(classGroupId)).length;
+      const createdCount = Math.max(0, afterCount - beforeCount);
+      const reason = err instanceof Error ? err.message : "Unknown scheduling error";
+
+      revalidatePath(`/${locale}/admin/schedule`);
+      revalidatePath(`/${locale}/teacher`);
+      revalidatePath(`/${locale}/student`);
+
+      redirect(
+        `/${locale}/admin/schedule?recurringError=${encodeURIComponent(reason)}&created=${createdCount}&requested=${weeksCount}`
+      );
     }
 
     revalidatePath(`/${locale}/admin/schedule`);
@@ -175,6 +199,19 @@ export default async function AdminSchedulePage({
           <span>محرك رصد التعارضات نشط ويعمل بدقة</span>
         </div>
       </div>
+
+      {/* Recurring Generator Conflict Warning */}
+      {recurringError && (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 shadow-sm flex items-start gap-2 text-sm text-amber-900">
+          <AlertTriangle className="w-5 h-5 shrink-0 text-amber-600 mt-0.5" />
+          <div>
+            <p className="font-bold">
+              توقف مولد الحصص المتكررة عند تعارض في الجدول — تم إنشاء {recurringCreated || 0} من أصل {recurringRequested || "؟"} حصة مطلوبة
+            </p>
+            <p className="text-xs text-amber-800 mt-1">{recurringError}</p>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left 2 Cols: Sessions List */}
