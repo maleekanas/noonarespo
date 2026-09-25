@@ -11,6 +11,10 @@ import { InvoiceStatus } from "@prisma/client";
 import { requireAdminHubAccess } from "@/lib/auth/currentUser";
 import { refundPayment, writeOffInvoice } from "@/server/services/StripeSubscriptionService";
 import {
+  FinanceManagementClient,
+  InvoiceDisplayItem,
+} from "@/components/admin/FinanceManagementClient";
+import {
   Download,
   FileText,
   Tag,
@@ -73,6 +77,66 @@ export default async function AdminFinancePage({
   });
   const coupons = await billingService.getAllCoupons();
   const plans = await billingService.getAllPlans();
+
+  const displayInvoices: InvoiceDisplayItem[] = allInvoices.map((inv) => {
+    const succeededPayment = inv.payments.find((p) => p.status === "SUCCEEDED");
+    return {
+      id: inv.id,
+      invoiceNumber: inv.invoiceNumber,
+      parentName: `${inv.parent.firstName} ${inv.parent.lastName}`,
+      parentEmail: (inv.parent as any).email || "",
+      totalMinorUnits: inv.totalMinorUnits,
+      currency: inv.currency,
+      status: inv.status,
+      createdAt: inv.createdAt.toISOString().split("T")[0],
+      provider: inv.payments[0]?.provider === "STRIPE" ? "Stripe" : inv.payments[0]?.provider || "—",
+      paymentId: succeededPayment?.id,
+      canRefund: inv.status === "PAID" && !!succeededPayment,
+      canWriteOff: inv.status === "ISSUED" || inv.status === "DRAFT",
+    };
+  });
+
+  async function handleToggleCouponAction(code: string) {
+    "use server";
+    const currentAdmin = await requireAdminHubAccess(locale, "finance");
+    const updated = await billingService.toggleCoupon(code);
+
+    const ip = await getClientIp();
+    await administrationRepository.addAuditLog({
+      category: "FINANCE",
+      action: "TOGGLE_COUPON",
+      actorId: currentAdmin.id,
+      actorEmail: currentAdmin.email,
+      actorRole: currentAdmin.role,
+      targetEntityId: code,
+      targetEntityType: "DiscountCoupon",
+      ipAddress: ip,
+      diffSummary: `Coupon ${code} state toggled to active=${updated?.isActive}`,
+    });
+
+    revalidatePath(`/${locale}/admin/finance`);
+  }
+
+  async function handleDeleteCouponAction(code: string) {
+    "use server";
+    const currentAdmin = await requireAdminHubAccess(locale, "finance");
+    await billingService.deleteCoupon(code);
+
+    const ip = await getClientIp();
+    await administrationRepository.addAuditLog({
+      category: "FINANCE",
+      action: "DELETE_COUPON",
+      actorId: currentAdmin.id,
+      actorEmail: currentAdmin.email,
+      actorRole: currentAdmin.role,
+      targetEntityId: code,
+      targetEntityType: "DiscountCoupon",
+      ipAddress: ip,
+      diffSummary: `Coupon ${code} deleted`,
+    });
+
+    revalidatePath(`/${locale}/admin/finance`);
+  }
 
   // Server Action: Create or Update Coupon
   async function handleCreateOrUpdateCoupon(formData: FormData) {
@@ -429,159 +493,6 @@ export default async function AdminFinancePage({
         </div>
       </div>
 
-      {/* Promotion & Coupon Management Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Create / Edit Coupon Form */}
-        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-4">
-          <h3 className="font-extrabold text-slate-900 text-sm flex items-center gap-2">
-            <PlusCircle className="w-4 h-4 text-brand-600" />
-            <span>{isAr ? "إضافة أو تعديل كود خصم ترويجي" : "Create or Edit Promo Coupon"}</span>
-          </h3>
-          <p className="text-xs text-slate-500">
-            {isAr
-              ? "إنشاء كوبونات خصم بنسبة مئوية لأولياء الأمور لتطبيقها عند الدفع في Stripe"
-              : "Define percentage discount coupons for parents during checkout"}
-          </p>
-
-          <form action={handleCreateOrUpdateCoupon} className="space-y-3 text-xs">
-            <div>
-              <label className="block font-bold text-slate-700 mb-1">
-                {isAr ? "رمز الكوبون (Code)" : "Coupon Code"}
-              </label>
-              <input
-                name="code"
-                type="text"
-                required
-                placeholder="PROMO25"
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 uppercase font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500"
-              />
-            </div>
-
-            <div>
-              <label className="block font-bold text-slate-700 mb-1">
-                {isAr ? "نسبة الخصم المئوية (%)" : "Discount Percentage (%)"}
-              </label>
-              <input
-                name="discountPercentage"
-                type="number"
-                min={1}
-                max={100}
-                defaultValue={15}
-                required
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 font-mono text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500"
-              />
-            </div>
-
-            <div>
-              <label className="block font-bold text-slate-700 mb-1">
-                {isAr ? "وصف الكوبون" : "Description (Arabic)"}
-              </label>
-              <input
-                name="descriptionAr"
-                type="text"
-                required
-                placeholder="خصم خاص لمشتركي الموسم الدراسي الجديد"
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500"
-              />
-            </div>
-
-            <label className="flex items-center gap-2 pt-1 cursor-pointer">
-              <input
-                type="checkbox"
-                name="isActive"
-                defaultChecked={true}
-                className="w-4 h-4 text-brand-600 rounded border-slate-300"
-              />
-              <span className="font-bold text-slate-700">
-                {isAr ? "تفعيل الكوبون فوراً للاستخدام" : "Activate coupon immediately"}
-              </span>
-            </label>
-
-            <button
-              type="submit"
-              className="w-full py-2.5 rounded-xl gradient-brand text-white font-bold text-xs shadow-md hover:opacity-95 transition-all flex items-center justify-center gap-2 cursor-pointer pt-2"
-            >
-              <Tag className="w-3.5 h-3.5" />
-              <span>{isAr ? "حفظ وتفعيل الكوبون" : "Save Coupon"}</span>
-            </button>
-          </form>
-        </div>
-
-        {/* Existing Coupons Table */}
-        <div className="lg:col-span-2 bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-            <h3 className="font-extrabold text-slate-900 text-sm flex items-center gap-2">
-              <Percent className="w-4 h-4 text-emerald-600" />
-              <span>{isAr ? "كوبونات الخصم النشطة في المنظومة" : "Active Platform Coupons"}</span>
-            </h3>
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-              {coupons.length} {isAr ? "كوبونات مسجلة" : "Coupons"}
-            </span>
-          </div>
-
-          <div className="divide-y divide-slate-100 text-xs">
-            {coupons.map((coupon) => (
-              <div key={coupon.code} className="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono font-extrabold text-sm px-2.5 py-0.5 rounded-lg bg-slate-100 text-slate-900 border border-slate-200">
-                      {coupon.code}
-                    </span>
-                    <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-brand-50 text-brand-700">
-                      %{coupon.discountPercentage} {isAr ? "خصم" : "OFF"}
-                    </span>
-                    <span
-                      className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
-                        coupon.isActive
-                          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                          : "bg-slate-100 text-slate-500 border-slate-200"
-                      }`}
-                    >
-                      {coupon.isActive ? (isAr ? "نشط" : "Active") : (isAr ? "معطل" : "Inactive")}
-                    </span>
-                  </div>
-                  <p className="text-slate-500 text-[11px]">{coupon.descriptionAr}</p>
-                </div>
-
-                <div className="flex items-center gap-2 self-end sm:self-center">
-                  <form action={handleToggleCoupon}>
-                    <input type="hidden" name="code" value={coupon.code} />
-                    <button
-                      type="submit"
-                      className="px-3 py-1.5 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-semibold flex items-center gap-1.5 transition-colors"
-                      title={coupon.isActive ? "تعطيل الكوبون" : "تفعيل الكوبون"}
-                    >
-                      {coupon.isActive ? (
-                        <>
-                          <ToggleRight className="w-4 h-4 text-emerald-600" />
-                          <span>{isAr ? "تعطيل" : "Deactivate"}</span>
-                        </>
-                      ) : (
-                        <>
-                          <ToggleLeft className="w-4 h-4 text-slate-400" />
-                          <span>{isAr ? "تفعيل" : "Activate"}</span>
-                        </>
-                      )}
-                    </button>
-                  </form>
-
-                  <form action={handleDeleteCoupon}>
-                    <input type="hidden" name="code" value={coupon.code} />
-                    <button
-                      type="submit"
-                      className="p-1.5 rounded-xl text-rose-500 hover:bg-rose-50 hover:text-rose-700 transition-colors"
-                      title={isAr ? "حذف الكوبون نهائياً" : "Delete coupon"}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </form>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
       {/* Subscription Plan Catalog Overview */}
       <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-4">
         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
@@ -674,150 +585,17 @@ export default async function AdminFinancePage({
         </div>
       </div>
 
-      {/* Invoices Master Table */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-6">
-        <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-          <FileText className="w-5 h-5 text-brand-600" />
-          <span>{isAr ? `سجل الفواتير والمعاملات المالية العامة (${allInvoices.length})` : `Invoices Log (${allInvoices.length})`}</span>
-        </h3>
-
-        {allInvoices.length === 0 ? (
-          <p className="text-xs text-slate-400 py-6 text-center">
-            {isAr
-              ? "لا توجد فواتير حتى الآن. ستظهر هنا فور أول اشتراك حقيقي عبر صفحة الدفع."
-              : "No invoices yet. Real subscriptions from checkout will appear here."}
-          </p>
-        ) : (
-          <div className="divide-y divide-slate-100 text-xs">
-            <div className="py-3 flex items-center justify-between font-bold text-slate-500 uppercase tracking-wider">
-              <span>{isAr ? "رقم الفاتورة والعميل" : "Invoice & Parent"}</span>
-              <span>{isAr ? "التاريخ" : "Date"}</span>
-              <span>{isAr ? "طريقة الدفع" : "Payment Provider"}</span>
-              <span>{isAr ? "المبلغ" : "Amount"}</span>
-              <span>{isAr ? "الحالة" : "Status"}</span>
-            </div>
-
-            {allInvoices.map((inv) => {
-              const succeededPayment = inv.payments.find((p) => p.status === "SUCCEEDED");
-              const canRefund = inv.status === "PAID" && !!succeededPayment;
-              const canWriteOff = inv.status === "ISSUED" || inv.status === "DRAFT";
-
-              return (
-                <div
-                  key={inv.id}
-                  className="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-slate-800"
-                >
-                  <div>
-                    <span className="font-bold text-slate-900 block">{inv.invoiceNumber}</span>
-                    <span className="text-slate-400 text-[11px]">
-                      {isAr ? "ولي الأمر: " : "Parent: "}{inv.parent.firstName} {inv.parent.lastName}
-                    </span>
-                  </div>
-
-                  <span className="text-slate-500">
-                    {inv.createdAt.toISOString().split("T")[0]}
-                  </span>
-
-                  <span className="text-slate-600">
-                    {inv.payments[0]?.provider === "STRIPE" ? "Stripe" : inv.payments[0]?.provider || "—"}
-                  </span>
-
-                  <span className="font-bold text-slate-900 text-sm">
-                    {billingService.formatPrice(inv.totalMinorUnits, inv.currency)}
-                  </span>
-
-                  <span
-                    className={`px-3 py-1 rounded-full font-bold text-[11px] border w-fit ${INVOICE_STATUS_STYLES[inv.status]}`}
-                  >
-                    {INVOICE_STATUS_LABELS_AR[inv.status]}
-                  </span>
-
-                  {(canRefund || canWriteOff) && (
-                    <div className="flex items-center gap-2">
-                      {canRefund && (
-                        <details className="relative">
-                          <summary className="cursor-pointer list-none px-2.5 py-1.5 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 font-bold text-[11px] flex items-center gap-1 select-none">
-                            <Undo2 className="w-3 h-3" />
-                            <span>{isAr ? "استرداد" : "Refund"}</span>
-                          </summary>
-                          <form
-                            action={handleRefundPayment}
-                            className="absolute z-10 mt-1 w-56 p-3 rounded-xl bg-white border border-slate-200 shadow-lg space-y-2 text-[11px] end-0"
-                          >
-                            <input type="hidden" name="paymentId" value={succeededPayment!.id} />
-                            <input type="hidden" name="invoiceNumber" value={inv.invoiceNumber} />
-                            <div>
-                              <label className="block font-bold text-slate-600 mb-0.5">
-                                {isAr ? "المبلغ (فارغ = كامل)" : "Amount (blank = full)"}
-                              </label>
-                              <input
-                                type="number"
-                                name="amountDollars"
-                                step="0.01"
-                                min="0.01"
-                                placeholder={(inv.totalMinorUnits / 100).toFixed(2)}
-                                className="w-full px-2 py-1 rounded-lg border border-slate-200 font-mono"
-                              />
-                            </div>
-                            <div>
-                              <label className="block font-bold text-slate-600 mb-0.5">
-                                {isAr ? "السبب" : "Reason"}
-                              </label>
-                              <input
-                                type="text"
-                                name="reason"
-                                className="w-full px-2 py-1 rounded-lg border border-slate-200"
-                              />
-                            </div>
-                            <button
-                              type="submit"
-                              className="w-full py-1.5 rounded-lg bg-rose-600 text-white font-bold hover:bg-rose-700 transition-colors"
-                            >
-                              {isAr ? "تأكيد الاسترداد" : "Confirm refund"}
-                            </button>
-                          </form>
-                        </details>
-                      )}
-
-                      {canWriteOff && (
-                        <details className="relative">
-                          <summary className="cursor-pointer list-none px-2.5 py-1.5 rounded-lg bg-slate-100 text-slate-600 border border-slate-200 hover:bg-slate-200 font-bold text-[11px] flex items-center gap-1 select-none">
-                            <Ban className="w-3 h-3" />
-                            <span>{isAr ? "شطب الدين" : "Write off"}</span>
-                          </summary>
-                          <form
-                            action={handleWriteOffInvoice}
-                            className="absolute z-10 mt-1 w-56 p-3 rounded-xl bg-white border border-slate-200 shadow-lg space-y-2 text-[11px] end-0"
-                          >
-                            <input type="hidden" name="invoiceId" value={inv.id} />
-                            <input type="hidden" name="invoiceNumber" value={inv.invoiceNumber} />
-                            <div>
-                              <label className="block font-bold text-slate-600 mb-0.5">
-                                {isAr ? "السبب" : "Reason"}
-                              </label>
-                              <input
-                                type="text"
-                                name="reason"
-                                className="w-full px-2 py-1 rounded-lg border border-slate-200"
-                              />
-                            </div>
-                            <button
-                              type="submit"
-                              className="w-full py-1.5 rounded-lg bg-slate-700 text-white font-bold hover:bg-slate-800 transition-colors"
-                            >
-                              {isAr ? "تأكيد الشطب" : "Confirm write-off"}
-                            </button>
-                          </form>
-                        </details>
-                      )}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
+      {/* Interactive Finance Operations: Invoices Ledger & Coupons Manager */}
+      <FinanceManagementClient
+        initialInvoices={displayInvoices}
+        initialCoupons={coupons}
+        locale={locale}
+        onSaveCoupon={handleCreateOrUpdateCoupon}
+        onToggleCoupon={handleToggleCouponAction}
+        onDeleteCoupon={handleDeleteCouponAction}
+        onRefundPayment={handleRefundPayment}
+        onWriteOffInvoice={handleWriteOffInvoice}
+      />
     </div>
   );
 }

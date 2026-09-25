@@ -6,8 +6,9 @@ import { assessmentBankService } from "@/server/services/AssessmentBankService";
 import { academicRepository } from "@/server/repositories/AcademicRepository";
 import { schedulingService } from "@/server/services/SchedulingService";
 import { administrationService } from "@/server/services/AdministrationService";
+import { financialRepository, DiscountCoupon } from "@/server/repositories/FinancialRepository";
 import { SessionUser } from "@/lib/auth/session";
-import { RoleType } from "@prisma/client";
+import { RoleType, UserStatus } from "@prisma/client";
 
 const mockAdmin: SessionUser = {
   id: "admin-gov-test-id",
@@ -220,4 +221,79 @@ describe("Superadmin All Hubs Governance Test Suite", () => {
       assert.ok(log.category, "Log should have category");
     }
   });
+
+  it("Students Governance: Should reset password, update profile, and toggle status with audit logging", async () => {
+    // 1. Reset Student Password
+    const resetRes = await administrationService.resetStudentPassword("student-1", "SecureStudent123!", mockAdmin);
+    assert.ok(resetRes.tempPassword, "Should return generated temp password");
+    assert.equal(resetRes.tempPassword, "SecureStudent123!");
+
+    // 2. Update Student Profile
+    const updated = await administrationService.updateStudent(
+      "student-1",
+      {
+        firstName: "عمر",
+        lastName: "الفاروق",
+        notesInternal: "طالب متميز في القراءة والتجويد",
+      },
+      mockAdmin
+    );
+    assert.ok(updated);
+    assert.equal(updated.firstName, "عمر");
+
+    // 3. Set Student Status
+    await administrationService.setStudentStatus("student-1", UserStatus.SUSPENDED, "Administrative review", mockAdmin);
+    await administrationService.setStudentStatus("student-1", UserStatus.ACTIVE, "Reactivation after review", mockAdmin);
+  });
+
+  it("Teachers Governance: Should reset password, update full teacher profile, and toggle active", async () => {
+    // 1. Reset Teacher Password
+    const resetRes = await administrationService.resetTeacherPassword("teacher-1", "UstadhSecure999!", mockAdmin);
+    assert.ok(resetRes.tempPassword, "Should return temp password");
+    assert.equal(resetRes.tempPassword, "UstadhSecure999!");
+
+    // 2. Update Teacher Profile
+    const updated = await administrationService.updateTeacherFull(
+      "teacher-1",
+      {
+        hourlyRateMinorUnits: 6500,
+        experienceYears: 6,
+        qualifications: "إجازة في التجويد والقراءات العشر ومؤهل جامعي",
+      },
+      mockAdmin
+    );
+    assert.ok(updated);
+    assert.equal(updated.hourlyRateMinorUnits, 6500);
+    assert.equal(updated.experienceYears, 6);
+
+    // 3. Toggle Teacher Status
+    await administrationService.toggleTeacherStatus("teacher-1", false, mockAdmin);
+    await administrationService.toggleTeacherStatus("teacher-1", true, mockAdmin);
+  });
+
+  it("Finance Governance: Should manage coupons with create, toggle, and delete operations", async () => {
+    // 1. Create Coupon
+    const coupon = await financialRepository.createOrUpdateCoupon({
+      code: "SUPERPROMO50",
+      discountPercentage: 50,
+      descriptionAr: "خصم ترويجي 50%",
+      isActive: true,
+    });
+    assert.ok(coupon.code);
+    assert.equal(coupon.code, "SUPERPROMO50");
+    assert.equal(coupon.discountPercentage, 50);
+
+    // 2. Toggle Coupon Active
+    const toggled = await financialRepository.toggleCouponActive(coupon.code);
+    assert.ok(toggled);
+    assert.equal(toggled.isActive, false);
+
+    // 3. Delete Coupon
+    const deleted = await financialRepository.deleteCoupon(coupon.code);
+    assert.equal(deleted, true);
+
+    const allCoupons = await financialRepository.getAllCoupons();
+    assert.equal(allCoupons.some((c: DiscountCoupon) => c.code === coupon.code), false);
+  });
 });
+

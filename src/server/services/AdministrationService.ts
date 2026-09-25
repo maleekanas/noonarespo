@@ -149,6 +149,31 @@ export class AdministrationService {
     return updated;
   }
 
+  async resetStudentPassword(
+    studentId: string,
+    customPassword?: string,
+    actor?: SessionUser
+  ): Promise<{ email: string; tempPassword: string }> {
+    const students = await this.getAllStudents();
+    const st = students.find((s) => s.id === studentId);
+    const userId = st?.userId || studentId;
+
+    const result = await userRepository.resetUserPassword(userId, customPassword);
+
+    if (actor) {
+      await this.recordAuditLog({
+        category: "USER_MANAGEMENT",
+        action: "RESET_STUDENT_PASSWORD",
+        actor,
+        targetEntityId: studentId,
+        targetEntityType: "StudentProfile",
+        diffSummary: `إعادة تعيين كلمة مرور الطالب [${st ? st.firstName + " " + st.lastName : studentId}] للمستخدم [${result.email}]`,
+      });
+    }
+
+    return result;
+  }
+
   async archiveStudent(studentId: string, reason: string, actor: SessionUser): Promise<void> {
     await this.setStudentStatus(studentId, UserStatus.ARCHIVED, reason, actor);
   }
@@ -243,6 +268,59 @@ export class AdministrationService {
       targetEntityType: "TeacherProfile",
       diffSummary: `تحديث حالة الاعتماد إلى [${isCertified ? "معتمد" : "غير معتمد"}] ونوع التوظيف إلى [${employmentType}]`,
     });
+  }
+
+  async resetTeacherPassword(
+    teacherId: string,
+    customPassword?: string,
+    actor?: SessionUser
+  ): Promise<{ email: string; tempPassword: string }> {
+    const teachers = await this.getAllTeachers();
+    const tch = teachers.find((t) => t.id === teacherId);
+    const userId = tch?.userId || teacherId;
+
+    const result = await userRepository.resetUserPassword(userId, customPassword);
+
+    if (actor) {
+      await this.recordAuditLog({
+        category: "USER_MANAGEMENT",
+        action: "RESET_TEACHER_PASSWORD",
+        actor,
+        targetEntityId: teacherId,
+        targetEntityType: "TeacherProfile",
+        diffSummary: `إعادة تعيين كلمة مرور المعلم [${tch ? tch.firstName + " " + tch.lastName : teacherId}] للمستخدم [${result.email}]`,
+      });
+    }
+
+    return result;
+  }
+
+  async updateTeacherFull(
+    teacherId: string,
+    data: {
+      firstName?: string;
+      lastName?: string;
+      qualifications?: string;
+      experienceYears?: number;
+      hourlyRateMinorUnits?: number;
+      employmentType?: EmploymentType;
+      isCertified?: boolean;
+      isActive?: boolean;
+    },
+    actor: SessionUser
+  ): Promise<any> {
+    const updated = await userRepository.updateTeacherProfileFull(teacherId, data);
+
+    await this.recordAuditLog({
+      category: "USER_MANAGEMENT",
+      action: "TEACHER_PROFILE_MODIFIED",
+      actor,
+      targetEntityId: teacherId,
+      targetEntityType: "TeacherProfile",
+      diffSummary: `تعديل ملف المعلم [${teacherId}]: ${JSON.stringify(data)}`,
+    });
+
+    return updated;
   }
 
   // --- Curriculum Standards ---
