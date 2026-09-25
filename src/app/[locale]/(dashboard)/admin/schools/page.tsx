@@ -109,6 +109,115 @@ export default async function AdminSchoolsPage({
     return { account, error: null };
   }
 
+  async function handleEditSchoolAction(params: {
+    schoolId: string;
+    data: {
+      nameAr?: string;
+      nameEn?: string;
+      type?: InstitutionType;
+      country?: string;
+      city?: string;
+      curriculumTrackAr?: string;
+      contactPerson?: string;
+      contactEmail?: string;
+    };
+  }) {
+    "use server";
+    const admin = await requireAdminHubAccess(locale, "schools");
+    const updated = await schoolService.updateSchool(params.schoolId, params.data);
+    if (!updated) {
+      throw new Error(`Failed to update school: ${params.schoolId}`);
+    }
+
+    await administrationService.recordAuditLog({
+      category: "USER_MANAGEMENT",
+      action: "UPDATE_SCHOOL_INFO",
+      actor: admin,
+      targetEntityId: params.schoolId,
+      targetEntityType: "PartnerSchool",
+      diffSummary: `تعديل بيانات المؤسسة [${updated.nameAr}]: ${JSON.stringify(params.data)}`,
+    });
+
+    revalidatePath(`/${locale}/admin/schools`);
+    revalidatePath(`/${locale}/schools`);
+    return updated;
+  }
+
+  async function handleAdjustLicensesAction(params: {
+    schoolId: string;
+    licenseSeatsTotal: number;
+    bundleTier: BundleTier;
+    contractStatus?: import("@/server/repositories/SchoolRepository").ContractStatus;
+  }) {
+    "use server";
+    const admin = await requireAdminHubAccess(locale, "schools");
+    const updated = await schoolService.updateSchool(params.schoolId, {
+      licenseSeatsTotal: params.licenseSeatsTotal,
+      bundleTier: params.bundleTier,
+      contractStatus: params.contractStatus,
+    });
+    if (!updated) {
+      throw new Error(`Failed to adjust licenses for school: ${params.schoolId}`);
+    }
+
+    await administrationService.recordAuditLog({
+      category: "USER_MANAGEMENT",
+      action: "ADJUST_SCHOOL_LICENSES",
+      actor: admin,
+      targetEntityId: params.schoolId,
+      targetEntityType: "PartnerSchool",
+      diffSummary: `تعديل باقة وتراخيص المؤسسة [${updated.nameAr}]: باقة ${params.bundleTier}، ${params.licenseSeatsTotal} مقعد، حالة ${params.contractStatus || updated.contractStatus}`,
+    });
+
+    revalidatePath(`/${locale}/admin/schools`);
+    revalidatePath(`/${locale}/schools`);
+    return updated;
+  }
+
+  async function handleResetAdminPasswordAction(params: {
+    schoolId: string;
+    customPassword?: string;
+  }) {
+    "use server";
+    const admin = await requireAdminHubAccess(locale, "schools");
+    const result = await schoolService.resetSchoolAdminPassword(
+      params.schoolId,
+      params.customPassword
+    );
+
+    await administrationService.recordAuditLog({
+      category: "USER_MANAGEMENT",
+      action: "RESET_SCHOOL_ADMIN_PASSWORD",
+      actor: admin,
+      targetEntityId: params.schoolId,
+      targetEntityType: "PartnerSchool",
+      diffSummary: `إعادة تعيين كلمة مرور مدير مؤسسة [${params.schoolId}] للمستخدم [${result.email}]`,
+    });
+
+    return result;
+  }
+
+  async function handleToggleSchoolStatusAction(params: { schoolId: string }) {
+    "use server";
+    const admin = await requireAdminHubAccess(locale, "schools");
+    const updated = await schoolService.toggleSchoolActive(params.schoolId);
+    if (!updated) {
+      throw new Error(`Failed to toggle school status: ${params.schoolId}`);
+    }
+
+    await administrationService.recordAuditLog({
+      category: "USER_MANAGEMENT",
+      action: "TOGGLE_SCHOOL_STATUS",
+      actor: admin,
+      targetEntityId: params.schoolId,
+      targetEntityType: "PartnerSchool",
+      diffSummary: `تغيير حالة تعاقد المؤسسة [${params.schoolId}] إلى [${updated.contractStatus}]`,
+    });
+
+    revalidatePath(`/${locale}/admin/schools`);
+    return updated;
+  }
+
   // Server Action: Register New Partner School
   async function handleCreateSchool(formData: FormData) {
     "use server";
@@ -921,6 +1030,10 @@ export default async function AdminSchoolsPage({
         locale={locale}
         onOnboardBatch={handleOnboardBatchAction}
         onCreateSchoolAdmin={handleCreateSchoolAdminAction}
+        onEditSchool={handleEditSchoolAction}
+        onAdjustLicenses={handleAdjustLicensesAction}
+        onResetAdminPassword={handleResetAdminPasswordAction}
+        onToggleSchoolStatus={handleToggleSchoolStatusAction}
       />
     </div>
   );

@@ -9,7 +9,7 @@ export interface CrmLead {
   name: string;
   email: string;
   phone?: string;
-  type: "CONTACT_INQUIRY" | "ENROLLMENT_INQUIRY" | "TEACHER_APPLICATION" | "NEWSLETTER";
+  type: "CONTACT_INQUIRY" | "ENROLLMENT_INQUIRY" | "TEACHER_APPLICATION" | "NEWSLETTER" | "B2B_INQUIRY";
   source: string;
   status: "NEW" | "IN_PROGRESS" | "RESOLVED";
   notes?: string;
@@ -250,6 +250,59 @@ export class CrmService {
 
     capturedLeads.unshift(lead);
     await this.hubspot.syncContact(lead);
+
+    return lead;
+  }
+
+  async captureInstitutionalInquiry(params: {
+    organizationName: string;
+    contactName: string;
+    email: string;
+    phone?: string;
+    institutionType: string;
+    bundlePreference?: string;
+    country: string;
+    city?: string;
+    studentsEstimate: string | number;
+    message?: string;
+    locale?: string;
+    isTrial?: boolean;
+  }): Promise<CrmLead> {
+    const isTrial =
+      params.isTrial ?? params.bundlePreference === "TRIAL_3_DAYS";
+    const lead: CrmLead = {
+      id: `lead-b2b-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      name: `${params.contactName} (${params.organizationName})`,
+      email: params.email,
+      phone: params.phone,
+      type: "B2B_INQUIRY",
+      source: isTrial
+        ? `3-Day Free Trial Application (${params.locale || "en"})`
+        : `Institutional Inquiry (${params.locale || "en"})`,
+      status: "NEW",
+      metadata: {
+        organizationName: params.organizationName,
+        contactName: params.contactName,
+        institutionType: params.institutionType,
+        bundlePreference: params.bundlePreference,
+        studentsEstimate: params.studentsEstimate,
+        country: params.country,
+        city: params.city,
+        message: params.message,
+        isTrial,
+      },
+      createdAt: new Date(),
+    };
+
+    capturedLeads.unshift(lead);
+    await Promise.all([
+      this.hubspot.syncContact(lead),
+      this.ghl.syncOpportunity(lead),
+      this.mailchimp.subscribe(params.email, [
+        "Institutional Inquiry",
+        isTrial ? "3-Day Free Trial" : params.bundlePreference || "B2B",
+      ]),
+    ]).catch((err) => console.error("[CrmService] Sync error:", err));
 
     return lead;
   }

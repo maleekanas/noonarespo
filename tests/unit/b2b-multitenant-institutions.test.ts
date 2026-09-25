@@ -131,4 +131,66 @@ describe("Multi-Tenant B2B Architecture for Schools, Institutes & Freelancers", 
     const result = await classroomLiveService.getClassroomContext("non-existent-session-id", schoolAdminUser);
     assert.strictEqual(result.status, "NOT_FOUND");
   });
+
+  test("School admin password reset should generate secure temporary password or accept custom password", async () => {
+    const schoolId = "school-riyadh-coop";
+
+    // 1. Auto-generated password reset
+    const resAuto = await schoolService.resetSchoolAdminPassword(schoolId);
+    assert.ok(resAuto.email.length > 0, "Admin email should be present");
+    assert.ok(resAuto.tempPassword.length >= 8, "Auto password should be secure");
+    assert.ok(resAuto.adminName.length > 0, "Admin name should be present");
+
+    // 2. Custom password reset
+    const customPass = "Riyadh#Pass2026";
+    const resCustom = await schoolService.resetSchoolAdminPassword(schoolId, customPass);
+    assert.strictEqual(resCustom.tempPassword, customPass);
+    assert.strictEqual(resCustom.email, resAuto.email);
+
+    // 3. Query school admins list
+    const admins = await schoolService.getSchoolAdmins(schoolId);
+    assert.ok(admins.length >= 1, "Expected at least 1 admin for school");
+    assert.ok(admins.some((a) => a.email === resAuto.email));
+  });
+
+  test("Superadmin can update full school information including location, track, type, and contact person", async () => {
+    const schoolId = "institute-andalus-cordoba";
+
+    const updated = await schoolService.updateSchool(schoolId, {
+      nameAr: "معهد الأندلس للغات والقرآن المطور",
+      nameEn: "Al-Andalus Advanced Languages & Quran Institute",
+      type: "PRIVATE_INSTITUTE",
+      country: "Spain",
+      city: "Seville",
+      curriculumTrackAr: "منهج الفصحى والبيان المكثف",
+      contactPerson: "Prof. Tariq Al-Andalusi",
+      contactEmail: "director@andalus-institute.es",
+    });
+
+    assert.ok(updated !== null);
+    assert.strictEqual(updated.nameAr, "معهد الأندلس للغات والقرآن المطور");
+    assert.strictEqual(updated.city, "Seville");
+    assert.strictEqual(updated.curriculumTrackAr, "منهج الفصحى والبيان المكثف");
+    assert.strictEqual(updated.contactPerson, "Prof. Tariq Al-Andalusi");
+    assert.strictEqual(updated.contactEmail, "director@andalus-institute.es");
+  });
+
+  test("License seat adjustment and contract status toggling should update correctly", async () => {
+    const schoolId = "school-london-iman";
+
+    // 1. Adjust licenses to 150 and change tier to INSTITUTION
+    const adjusted = await schoolService.updateSchool(schoolId, {
+      licenseSeatsTotal: 150,
+      bundleTier: "INSTITUTION",
+    });
+    assert.ok(adjusted !== null);
+    assert.strictEqual(adjusted.licenseSeatsTotal, 150);
+    assert.strictEqual(adjusted.bundleTier, "INSTITUTION");
+
+    // 2. Toggle status between ACTIVE and PENDING_RENEWAL
+    const toggled = await schoolService.toggleSchoolActive(schoolId);
+    assert.ok(toggled !== null);
+    assert.ok(["ACTIVE", "PENDING_RENEWAL"].includes(toggled.contractStatus));
+  });
 });
+

@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { Check, Sparkles, Users, ArrowRight, ShieldCheck, Calculator, Star } from "lucide-react";
-import { B2B_BUNDLES, B2B_TRIAL_BUNDLE, type B2BBundleDefinition } from "@/server/services/SchoolService";
+import { B2B_BUNDLES, B2B_TRIAL_BUNDLE, type B2BBundleDefinition } from "@/lib/constants/b2bBundles";
 import { DirectionalIcon } from "@/components/shared/DirectionalIcon";
 
 interface B2BBundleCalculatorProps {

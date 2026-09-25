@@ -125,8 +125,14 @@ export default async function SchoolsPage({
       message: message || undefined,
     });
 
-    if (!result.isDelivered) {
+    if (!result.isDelivered && !result.isCaptured) {
       fail("server");
+    }
+
+    if (!result.isDelivered) {
+      console.warn(
+        `[SchoolsPage] Institutional inquiry for "${organizationName}" was captured in CRM, but email dispatch was unconfirmed (${result.statusMessage}).`
+      );
     }
 
     redirect(`/${locale}/schools?submitted=true#apply`);

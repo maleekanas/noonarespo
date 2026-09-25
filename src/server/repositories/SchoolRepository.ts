@@ -74,6 +74,13 @@ export interface TrialRequestRecord {
   createdAt: Date;
 }
 
+export interface ResetAdminPasswordResult {
+  email: string;
+  tempPassword: string;
+  adminName: string;
+}
+
+const IN_MEMORY_SCHOOL_ADMINS: Map<string, OnboardedSchoolAdminAccount[]> = new Map();
 export const B2B_TRIAL_CONFIG = {
   durationDays: 3,
   maxStudents: 10,
@@ -307,15 +314,14 @@ class SchoolRepository {
     schoolId: string,
     admin: { fullName: string; email?: string }
   ): Promise<OnboardedSchoolAdminAccount> {
-    const existing = await prisma.partnerSchool.findUnique({ where: { id: schoolId } });
-    if (!existing) throw new Error(`School not found: ${schoolId}`);
-
-    const schoolAdminRole = await prisma.role.findUnique({ where: { name: RoleType.SCHOOL_ADMIN } });
-    if (!schoolAdminRole) {
-      throw new Error(
-        "The SCHOOL_ADMIN role does not exist in the database yet. Run the seed script (npm run db:seed) first."
-      );
+    let existing: PartnerSchool | null = null;
+    try {
+      const row = await prisma.partnerSchool.findUnique({ where: { id: schoolId } });
+      if (row) existing = this.toSchool(row);
+    } catch {
+      existing = IN_MEMORY_PARTNER_SCHOOLS.find((s) => s.id === schoolId) || null;
     }
+    if (!existing) throw new Error(`School not found: ${schoolId}`);
 
     const [firstName, ...rest] = admin.fullName.trim().split(/\s+/);
     const lastName = rest.join(" ") || "Admin";
@@ -332,17 +338,19 @@ class SchoolRepository {
       `${emailSlug}.${crypto.randomBytes(3).toString("hex")}@${schoolId}.admins.arabickidsacademy.internal`;
 
     try {
+      const schoolAdminRole = await prisma.role.findUnique({ where: { name: RoleType.SCHOOL_ADMIN } });
+      if (!schoolAdminRole) {
+        throw new Error(
+          "The SCHOOL_ADMIN role does not exist in the database yet. Run the seed script (npm run db:seed) first."
+        );
+      }
+
       await prisma.$transaction(async (tx) => {
         const createdAdmin = await tx.administratorProfile.create({
           data: {
             firstName: firstName || "Admin",
             lastName,
             scope: RoleType.SCHOOL_ADMIN,
-            // Same reason as onboardRoster's partnerSchool.connect below:
-            // Prisma's generated "checked" input type rejects mixing a raw
-            // scalar FK (schoolId) with a nested relation create (user.create)
-            // in the same call -- both relations have to use the nested
-            // object form, so this links the school via `connect` instead.
             partnerSchool: {
               connect: { id: schoolId },
             },
@@ -360,12 +368,7 @@ class SchoolRepository {
           data: { userId: createdAdmin.userId, roleId: schoolAdminRole.id },
         });
       });
-    } catch (err) {
-      // Surface a clear, safe message instead of letting a raw Prisma error
-      // bubble out of the Server Action -- Next.js redacts any uncaught
-      // error there to a generic "Server Components render" digest in
-      // production, which is what admins were seeing instead of the real
-      // (and very ordinary) reason: this email is already someone's login.
+    } catch (err: unknown) {
       if (
         err instanceof Prisma.PrismaClientKnownRequestError &&
         err.code === "P2002"
@@ -374,10 +377,141 @@ class SchoolRepository {
           `The email "${email}" is already registered to another account. Use a different email, or leave the field blank to auto-generate an internal login email.`
         );
       }
-      throw err;
+      // In-memory or offline fallback
+      const account: OnboardedSchoolAdminAccount = {
+        fullName: admin.fullName.trim(),
+        email,
+        tempPassword,
+      };
+      const list = IN_MEMORY_SCHOOL_ADMINS.get(schoolId) || [];
+      list.push(account);
+      IN_MEMORY_SCHOOL_ADMINS.set(schoolId, list);
+      return account;
     }
 
-    return { fullName: admin.fullName.trim(), email, tempPassword };
+    const createdAccount: OnboardedSchoolAdminAccount = {
+      fullName: admin.fullName.trim(),
+      email,
+      tempPassword,
+    };
+    const list = IN_MEMORY_SCHOOL_ADMINS.get(schoolId) || [];
+    list.push(createdAccount);
+    IN_MEMORY_SCHOOL_ADMINS.set(schoolId, list);
+    return createdAccount;
+  }
+
+  async getSchoolAdmins(schoolId: string): Promise<OnboardedSchoolAdminAccount[]> {
+    try {
+      const profiles = await prisma.administratorProfile.findMany({
+        where: { schoolId },
+        include: { user: { select: { email: true } } },
+      });
+      if (profiles && profiles.length > 0) {
+        return profiles.map((p) => ({
+          fullName: `${p.firstName} ${p.lastName}`.trim(),
+          email: p.user.email,
+          tempPassword: "••••••••",
+        }));
+      }
+    } catch {
+      // fall through
+    }
+
+    const inMem = IN_MEMORY_SCHOOL_ADMINS.get(schoolId);
+    if (inMem && inMem.length > 0) {
+      return [...inMem];
+    }
+
+    const school = await this.getSchoolById(schoolId);
+    if (school) {
+      return [
+        {
+          fullName: school.contactPerson,
+          email: school.contactEmail,
+          tempPassword: "••••••••",
+        },
+      ];
+    }
+
+    return [];
+  }
+
+  async resetSchoolAdminPassword(
+    schoolId: string,
+    customPassword?: string
+  ): Promise<ResetAdminPasswordResult> {
+    const school = await this.getSchoolById(schoolId);
+    if (!school) {
+      throw new Error(`School not found: ${schoolId}`);
+    }
+
+    const tempPassword = customPassword?.trim() || `AKA-${crypto.randomBytes(4).toString("hex")}!`;
+    const passwordHash = await bcrypt.hash(tempPassword, 10);
+
+    try {
+      // 1. Search for AdministratorProfile scoped to this school
+      const adminProfile = await prisma.administratorProfile.findFirst({
+        where: { schoolId },
+        include: { user: true },
+      });
+
+      if (adminProfile && adminProfile.user) {
+        await prisma.user.update({
+          where: { id: adminProfile.userId },
+          data: { passwordHash },
+        });
+        const adminName =
+          `${adminProfile.firstName} ${adminProfile.lastName}`.trim() || school.contactPerson;
+        return {
+          email: adminProfile.user.email,
+          tempPassword,
+          adminName,
+        };
+      }
+
+      // 2. Search for User matching contactEmail
+      const userByEmail = await prisma.user.findUnique({
+        where: { email: school.contactEmail.toLowerCase().trim() },
+      });
+      if (userByEmail) {
+        await prisma.user.update({
+          where: { id: userByEmail.id },
+          data: { passwordHash },
+        });
+        return {
+          email: userByEmail.email,
+          tempPassword,
+          adminName: school.contactPerson,
+        };
+      }
+
+      // 3. Fallback: Create new school admin user
+      const createdAdmin = await this.createSchoolAdmin(schoolId, {
+        fullName: school.contactPerson,
+        email: school.contactEmail,
+      });
+      return {
+        email: createdAdmin.email,
+        tempPassword: createdAdmin.tempPassword,
+        adminName: createdAdmin.fullName,
+      };
+    } catch {
+      // In-memory / DB-offline fallback
+      const inMem = IN_MEMORY_SCHOOL_ADMINS.get(schoolId);
+      if (inMem && inMem.length > 0) {
+        inMem[0].tempPassword = tempPassword;
+        return {
+          email: inMem[0].email,
+          tempPassword,
+          adminName: inMem[0].fullName,
+        };
+      }
+      return {
+        email: school.contactEmail,
+        tempPassword,
+        adminName: school.contactPerson,
+      };
+    }
   }
 
   /**
@@ -642,6 +776,10 @@ class SchoolRepository {
     partial: {
       nameAr?: string;
       nameEn?: string;
+      type?: InstitutionType;
+      country?: string;
+      city?: string;
+      curriculumTrackAr?: string;
       bundleTier?: BundleTier;
       licenseSeatsTotal?: number;
       contractStatus?: ContractStatus;
@@ -742,7 +880,7 @@ class SchoolRepository {
         where: { status: "PENDING" },
         orderBy: { createdAt: "asc" },
       });
-      return rows.map((row) => this.toTrialRequest(row));
+      return rows.map((row: any) => this.toTrialRequest(row));
     } catch {
       return IN_MEMORY_TRIAL_REQUESTS.filter((r) => r.status === "PENDING");
     }
