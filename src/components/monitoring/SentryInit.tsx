@@ -25,6 +25,25 @@ export function SentryInit() {
       environment: process.env.NODE_ENV,
       tracesSampleRate: 0.1,
       sendDefaultPii: false,
+      // Cross-browser spellings of the same benign, framework-internal
+      // failure: the browser's fetch() rejecting with a bare network-level
+      // TypeError because the request was interrupted by something outside
+      // the app's control -- the tab closing/backgrounding mid-navigation,
+      // the connection dropping, or an ad-blocker/privacy extension
+      // blocking the request. Next.js's own App Router client uses fetch()
+      // internally for every client-side navigation (RSC payload fetch,
+      // <Link> prefetch, Server Action submission), so these surface with a
+      // stack trace that is 100% inside Next's minified chunks -- never a
+      // single frame of this app's own code -- and are not fixable here.
+      // This is Sentry's own documented mitigation for this exact pattern;
+      // without it, every flaky mobile connection or ad-blocked user files
+      // a new "issue" that looks like a real outage but isn't one.
+      ignoreErrors: [
+        "Failed to fetch",
+        "NetworkError when attempting to fetch resource",
+        "Load failed",
+        "TypeError: cancelled",
+      ],
     });
   }, []);
 
