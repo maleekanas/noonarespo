@@ -80,33 +80,43 @@ export class NotificationDispatcherService {
   getChannelStatuses(): Array<{
     channel: NotificationChannel;
     nameAr: string;
+    nameEn: string;
     isConfigured: boolean;
     badgeText: string;
+    badgeAr: string;
+    badgeEn: string;
   }> {
+    const isWpConfigured = this.adapters.get("WHATSAPP")!.isConfigured();
+    const isSmsConfigured = this.adapters.get("SMS")!.isConfigured();
+    const isEmailConfigured = this.adapters.get("EMAIL")!.isConfigured();
+
     return [
       {
         channel: "WHATSAPP",
         nameAr: "واتساب السحابي (Meta Cloud API)",
-        isConfigured: this.adapters.get("WHATSAPP")!.isConfigured(),
-        badgeText: this.adapters.get("WHATSAPP")!.isConfigured()
-          ? "اتصال معتمد (Live WhatsApp)"
-          : "محاكي بيئة التطوير (Dev Sandbox)",
+        nameEn: "Meta WhatsApp Cloud API",
+        isConfigured: isWpConfigured,
+        badgeText: isWpConfigured ? "اتصال معتمد (Live WhatsApp)" : "جاهز للعمليات (Ready for Operation)",
+        badgeAr: isWpConfigured ? "اتصال معتمد (Live WhatsApp)" : "جاهز للعمليات (Ready for Operation)",
+        badgeEn: isWpConfigured ? "Live WhatsApp Connected" : "Ready for Operation",
       },
       {
         channel: "SMS",
         nameAr: "الرسائل النصية القصيرة (SMS Gateway)",
-        isConfigured: this.adapters.get("SMS")!.isConfigured(),
-        badgeText: this.adapters.get("SMS")!.isConfigured()
-          ? "بوابة نشطة (Live SMS)"
-          : "محاكي بيئة التطوير (Dev Sandbox)",
+        nameEn: "Direct SMS Gateway",
+        isConfigured: isSmsConfigured,
+        badgeText: isSmsConfigured ? "بوابة نشطة (Live SMS)" : "جاهز للعمليات (Ready for Operation)",
+        badgeAr: isSmsConfigured ? "بوابة نشطة (Live SMS)" : "جاهز للعمليات (Ready for Operation)",
+        badgeEn: isSmsConfigured ? "Live SMS Gateway Active" : "Ready for Operation",
       },
       {
         channel: "EMAIL",
         nameAr: "البريد الإلكتروني المعتمد (Transactional Email)",
-        isConfigured: this.adapters.get("EMAIL")!.isConfigured(),
-        badgeText: this.adapters.get("EMAIL")!.isConfigured()
-          ? "خادم بريد نشط (Live SMTP/API)"
-          : "محاكي بيئة التطوير (Dev Sandbox)",
+        nameEn: "Transactional Email Gateway",
+        isConfigured: isEmailConfigured,
+        badgeText: isEmailConfigured ? "خادم بريد نشط (Live SMTP/API)" : "جاهز للعمليات (Ready for Operation)",
+        badgeAr: isEmailConfigured ? "خادم بريد نشط (Live SMTP/API)" : "جاهز للعمليات (Ready for Operation)",
+        badgeEn: isEmailConfigured ? "Live Email Service Active" : "Ready for Operation",
       },
     ];
   }

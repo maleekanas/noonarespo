@@ -69,7 +69,12 @@ class IntegrationCredentialService {
         labelAr: def.labelAr,
         labelEn: def.labelEn,
         envVar: def.envVar,
-        isConfigured: Boolean(process.env[def.envVar]),
+        isConfigured: Boolean(
+          process.env[def.envVar] ||
+          (def.provider === "WHATSAPP_TOKEN" && (process.env.WHATSAPP_ACCESS_TOKEN || process.env.WHATSAPP_API_TOKEN)) ||
+          (def.provider === "SMS_TOKEN" && (process.env.SMS_API_KEY || process.env.SMS_API_TOKEN || process.env.TWILIO_AUTH_TOKEN)) ||
+          (def.provider === "AI_API_KEY" && (process.env.ANTHROPIC_API_KEY || process.env.GEMINI_API_KEY))
+        ),
         lastRotatedAt: row?.lastRotatedAt ? row.lastRotatedAt.toISOString() : null,
         lastRotatedBy: row?.lastRotatedBy ?? null,
         notes: row?.notes ?? "",

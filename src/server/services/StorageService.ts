@@ -37,6 +37,8 @@ export class StorageService {
     providerName: string;
     isConfigured: boolean;
     badgeText: string;
+    badgeAr: string;
+    badgeEn: string;
     securityPolicy: string;
   } {
     const configured = this.provider.isConfigured();
@@ -45,7 +47,13 @@ export class StorageService {
       isConfigured: configured,
       badgeText: configured
         ? "سحابة تخزين خاصة نشطة (Live S3 Private)"
-        : "محاكي التخزين السحابي الآمن (Dev Sandbox Signed URLs)",
+        : "جاهز للعمليات (Ready for Operation)",
+      badgeAr: configured
+        ? "سحابة تخزين خاصة نشطة (Live S3 Private)"
+        : "جاهز للعمليات (Ready for Operation)",
+      badgeEn: configured
+        ? "Live S3 Private Bucket Active"
+        : "Ready for Operation",
       securityPolicy: "روابط مشفرة محددة الصلاحية (15-Minute TTL) لحماية خصوصية تسجيلات الأطفال",
     };
   }

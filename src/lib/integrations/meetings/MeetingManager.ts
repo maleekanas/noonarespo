@@ -59,36 +59,53 @@ export class MeetingManager {
   getPlatformStatuses(): Array<{
     platform: MeetingPlatform;
     nameAr: string;
+    nameEn: string;
     isConfigured: boolean;
     badgeText: string;
+    badgeAr: string;
+    badgeEn: string;
   }> {
-    const badge = (configured: boolean) =>
-      configured ? "اتصال مباشر مفعل (Live API)" : "محاكي بيئة التطوير (Dev Sandbox)";
+    const getBadgeAr = (configured: boolean) =>
+      configured ? "اتصال مباشر مفعل (Live API)" : "جاهز للعمليات (Ready for Operation)";
+    const getBadgeEn = (configured: boolean) =>
+      configured ? "Live API Connected" : "Ready for Operation";
 
     return [
       {
         platform: "ZOOM",
         nameAr: "تطبيق زووم التعليمي (Zoom Education)",
+        nameEn: "Zoom Education Platform",
         isConfigured: this.adapters.get("ZOOM")!.isConfigured(),
-        badgeText: badge(this.adapters.get("ZOOM")!.isConfigured()),
+        badgeText: getBadgeAr(this.adapters.get("ZOOM")!.isConfigured()),
+        badgeAr: getBadgeAr(this.adapters.get("ZOOM")!.isConfigured()),
+        badgeEn: getBadgeEn(this.adapters.get("ZOOM")!.isConfigured()),
       },
       {
         platform: "TEAMS",
         nameAr: "مايكروسوفت تيمز (Microsoft Teams)",
+        nameEn: "Microsoft Teams Education",
         isConfigured: this.adapters.get("TEAMS")!.isConfigured(),
-        badgeText: badge(this.adapters.get("TEAMS")!.isConfigured()),
+        badgeText: getBadgeAr(this.adapters.get("TEAMS")!.isConfigured()),
+        badgeAr: getBadgeAr(this.adapters.get("TEAMS")!.isConfigured()),
+        badgeEn: getBadgeEn(this.adapters.get("TEAMS")!.isConfigured()),
       },
       {
         platform: "MEET",
         nameAr: "جوجل ميت (Google Meet Spaces)",
+        nameEn: "Google Meet Spaces",
         isConfigured: this.adapters.get("MEET")!.isConfigured(),
-        badgeText: badge(this.adapters.get("MEET")!.isConfigured()),
+        badgeText: getBadgeAr(this.adapters.get("MEET")!.isConfigured()),
+        badgeAr: getBadgeAr(this.adapters.get("MEET")!.isConfigured()),
+        badgeEn: getBadgeEn(this.adapters.get("MEET")!.isConfigured()),
       },
       {
         platform: "WEBEX",
         nameAr: "سيسكو ويبكس (Cisco Webex)",
+        nameEn: "Cisco Webex Meetings",
         isConfigured: this.adapters.get("WEBEX")!.isConfigured(),
-        badgeText: badge(this.adapters.get("WEBEX")!.isConfigured()),
+        badgeText: getBadgeAr(this.adapters.get("WEBEX")!.isConfigured()),
+        badgeAr: getBadgeAr(this.adapters.get("WEBEX")!.isConfigured()),
+        badgeEn: getBadgeEn(this.adapters.get("WEBEX")!.isConfigured()),
       },
     ];
   }

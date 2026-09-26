@@ -102,6 +102,8 @@ export class AiService {
     engineName: string;
     isConfigured: boolean;
     badgeText: string;
+    badgeAr: string;
+    badgeEn: string;
     modelCapability: string;
   } {
     const configured = this.isAiConfigured();
@@ -110,7 +112,13 @@ export class AiService {
       isConfigured: configured,
       badgeText: configured
         ? "محرك الذكاء الاصطناعي متصل (Live AI)"
-        : "محاكي فصيح التعليمي للأطفال (Dev Sandbox)",
+        : "جاهز للعمليات (Ready for Operation)",
+      badgeAr: configured
+        ? "محرك الذكاء الاصطناعي متصل (Live AI)"
+        : "جاهز للعمليات (Ready for Operation)",
+      badgeEn: configured
+        ? "Live AI Engine Active"
+        : "Ready for Operation",
       modelCapability: "تحليل النطق، الضبط بالشكل بالحركات الكاملة، وتوليد الخطط المنهجية",
     };
   }

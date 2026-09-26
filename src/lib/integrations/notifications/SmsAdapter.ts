@@ -11,6 +11,7 @@ export class SmsAdapter implements NotificationChannelAdapter {
   isConfigured(): boolean {
     return Boolean(
       process.env.SMS_API_KEY ||
+      process.env.SMS_API_TOKEN ||
       (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN)
     );
   }

@@ -26,7 +26,7 @@ interface AnthropicResponse {
 }
 
 export function isAnthropicConfigured(): boolean {
-  return Boolean(process.env.ANTHROPIC_API_KEY);
+  return Boolean(process.env.ANTHROPIC_API_KEY || process.env.GEMINI_API_KEY);
 }
 
 export async function callAnthropicTool(params: {
