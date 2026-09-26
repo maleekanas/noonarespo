@@ -15,7 +15,7 @@ export async function generateMetadata({
   const dict = getDictionary(locale);
 
   return {
-    title: `${dict.common.siteName} | ${dict.common.siteTagline}`,
+    title: `Arabic Kids Academy | Inspiring Arabic language and Quran learning for children worldwide`,
     description: dict.footer.platformDescription || dict.common.siteTagline,
     manifest: "/manifest.json",
     icons: {

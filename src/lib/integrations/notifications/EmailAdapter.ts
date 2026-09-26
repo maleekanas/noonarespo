@@ -168,7 +168,7 @@ export class EmailAdapter implements NotificationChannelAdapter {
       <h2 style="color:#0f172a;margin-top:0;">${payload.titleAr}</h2>
       <p style="color:#334155;line-height:1.7;">${payload.bodyAr}</p>
       ${actionButton}
-      <p style="color:#94a3b8;font-size:12px;margin-top:32px;">أكاديمية الأطفال العربية -- Arabic Kids Academy</p>
+      <p style="color:#94a3b8;font-size:12px;margin-top:32px;">Arabic Kids Academy</p>
     </div>
   </body>
 </html>`;

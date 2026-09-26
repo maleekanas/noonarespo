@@ -57,10 +57,10 @@ export function Header({ locale }: HeaderProps) {
           </div>
           <div className="flex flex-col">
             <span className="font-extrabold text-lg sm:text-xl tracking-tight text-slate-900 leading-none">
-              {dict.common.siteName}
+              Arabic Kids Academy
             </span>
             <span className="text-[11px] text-slate-500 font-medium mt-1 line-clamp-1">
-              {dict.common.siteTagline}
+              Inspiring Arabic language and Quran learning for children worldwide
             </span>
           </div>
         </Link>

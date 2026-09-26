@@ -76,7 +76,7 @@ export default async function StudentCertificatesPage({
             <GraduationCap className="w-9 h-9" />
           </div>
           <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-wide">
-            أكاديمية براعم العربية العالمية للأطفال
+            Arabic Kids Academy
           </h2>
           <span className="text-xs text-amber-800 font-bold uppercase tracking-widest block">
             شهادة اجتياز وتفوق أكاديمي • Certificate of Achievement

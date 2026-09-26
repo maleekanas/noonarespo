@@ -1,7 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getDictionary } from "@/lib/localization";
+import { getDictionary, type Locale } from "@/lib/localization";
 import { DirectionalIcon } from "@/components/shared/DirectionalIcon";
 import { checkRateLimit, getClientIp, RATE_LIMITS } from "@/lib/security/rateLimit";
 import { schoolService } from "@/server/services/SchoolService";
@@ -173,38 +173,147 @@ export default async function SchoolsPage({
     },
   ];
 
+  const validLocale = (["ar", "en", "nl", "tr", "it", "es"].includes(locale)
+    ? locale
+    : "en") as Locale;
+
+  const TYPE_LABELS_MAP: Record<Locale, Record<(typeof SCHOOL_TYPES)[number], string>> = {
+    ar: {
+      ISLAMIC_SCHOOL: "مدرسة إسلامية أهلية",
+      PRIVATE_INSTITUTE: "معهد خاص لتعليم العربية والقرآن",
+      COMMUNITY_CENTER: "مركز مجتمعي / مسجد",
+      HOMESCHOOL_COOP: "مجموعة تعليم منزلي (Co-op)",
+      FREELANCER_TEACHER: "معلم / مقرئ مستقل",
+      OTHER: "أخرى",
+    },
+    en: {
+      ISLAMIC_SCHOOL: "Islamic School",
+      PRIVATE_INSTITUTE: "Private Arabic & Quran Institute",
+      COMMUNITY_CENTER: "Community Center / Mosque",
+      HOMESCHOOL_COOP: "Homeschool Co-op",
+      FREELANCER_TEACHER: "Freelance Teacher / Independent Tutor",
+      OTHER: "Other",
+    },
+    nl: {
+      ISLAMIC_SCHOOL: "Islamitische school",
+      PRIVATE_INSTITUTE: "Privé-instituut voor Arabisch & Koran",
+      COMMUNITY_CENTER: "Gemeenschapscentrum / Moskee",
+      HOMESCHOOL_COOP: "Thuisonderwijscoöperatie",
+      FREELANCER_TEACHER: "Freelance docent / Privéleraar",
+      OTHER: "Anders",
+    },
+    tr: {
+      ISLAMIC_SCHOOL: "İslam Okulu",
+      PRIVATE_INSTITUTE: "Özel Arapça & Kuran Enstitüsü",
+      COMMUNITY_CENTER: "Toplum Merkezi / Cami",
+      HOMESCHOOL_COOP: "Ev Okulu Kooperatifi",
+      FREELANCER_TEACHER: "Bağımsız Öğretmen / Özel Eğitmen",
+      OTHER: "Diğer",
+    },
+    it: {
+      ISLAMIC_SCHOOL: "Scuola islamica",
+      PRIVATE_INSTITUTE: "Istituto privato di arabo e Corano",
+      COMMUNITY_CENTER: "Centro comunitario / Moschea",
+      HOMESCHOOL_COOP: "Cooperativa di istruzione parentale",
+      FREELANCER_TEACHER: "Insegnante freelance / Tutor indipendente",
+      OTHER: "Altro",
+    },
+    es: {
+      ISLAMIC_SCHOOL: "Escuela islámica",
+      PRIVATE_INSTITUTE: "Instituto privado de árabe y Corán",
+      COMMUNITY_CENTER: "Centro comunitario / Mezquita",
+      HOMESCHOOL_COOP: "Cooperativa de educación en casa",
+      FREELANCER_TEACHER: "Profesor independiente / Tutor privado",
+      OTHER: "Otro",
+    },
+  };
+
+  const B2B_UI = {
+    hubBadge: {
+      ar: "البوابة الموحدة للمدارس، المعاهد، والمعلمين المستقلين",
+      en: "Unified Hub for Schools, Institutes & Freelance Teachers",
+      nl: "Centraal platform voor scholen, instituten & docenten",
+      tr: "Okullar, Enstitüler ve Öğretmenler İçin Ortak Merkez",
+      it: "Piattaforma integrata per scuole, istituti e insegnanti",
+      es: "Centro unificado para colegios, institutos y profesores",
+    },
+    adminLogin: {
+      ar: "دخول مدراء المؤسسات",
+      en: "School Admin Login",
+      nl: "Inloggen schoolbeheerder",
+      tr: "Okul Yöneticisi Girişi",
+      it: "Accesso amministratore scolastico",
+      es: "Acceso administrador escolar",
+    },
+    exploreBundles: {
+      ar: "استكشف الباقات والأسعار (خصم 35%)",
+      en: "Explore Bundles & Pricing (35% Off)",
+      nl: "Ontdek bundels & prijzen (35% korting)",
+      tr: "Paketleri ve Fiyatları Keşfedin (%35 İndirim)",
+      it: "Scopri i pacchetti e le tariffe (35% di sconto)",
+      es: "Explora paquetes y precios (35% de descuento)",
+    },
+    getTrial: {
+      ar: "طلب تجربة مجانية (3 أيام • 10 طلاب)",
+      en: "Get 3-Day Trial (10 Students)",
+      nl: "Vraag 3-daagse proef aan (10 leerlingen)",
+      tr: "3 Günlük Deneme Talep Et (10 Öğrenci)",
+      it: "Richiedi prova di 3 giorni (10 studenti)",
+      es: "Solicitar prueba de 3 días (10 estudiantes)",
+    },
+    bundlesHeading: {
+      ar: "باقات مخصصة للمؤسسات والمعلمين المستقلين",
+      en: "Bundles Tailored for Institutions & Freelance Educators",
+      nl: "Bundels op maat voor scholen & zelfstandige docenten",
+      tr: "Kurumlar ve Serbest Eğitmenler İçin Özel Paketler",
+      it: "Pacchetti su misura per istituti e docenti freelance",
+      es: "Paquetes a medida para instituciones y educadores",
+    },
+    bundlesSub: {
+      ar: "3 باقات مرنة بحسب عدد المقاعد (Starter، Growth، Institution) مع تطبيق خصم 35% لجميع المؤسسات.",
+      en: "3 flexible tiers (Starter, Growth, Institution) based on enrolled seats with a 35% discount applied across all plans.",
+      nl: "3 flexibele niveaus (Starter, Growth, Institution) op basis van leerlingenaantal met 35% instellingskorting.",
+      tr: "Kayıtlı öğrenci sayısına göre 3 esnek paket (Starter, Growth, Institution) ve tüm planlarda %35 indirim.",
+      it: "3 livelli flessibili (Starter, Growth, Institution) basati sugli studenti con il 35% di sconto riservato.",
+      es: "3 niveles flexibles (Starter, Growth, Institution) según el alumnado con un 35% de descuento aplicado.",
+    },
+    orgNamePlaceholder: {
+      ar: "مثال: مدرسة النور أو حلقة أ. حسن",
+      en: "e.g. Al-Noor Academy",
+      nl: "bijv. Al-Noor Academie",
+      tr: "ör. En-Nur Akademisi",
+      it: "es. Accademia Al-Noor",
+      es: "ej. Academia Al-Noor",
+    },
+    preferredBundle: {
+      ar: "الباقة المفضلة",
+      en: "Preferred Bundle",
+      nl: "Gewenste bundel",
+      tr: "Tercih Edilen Paket",
+      it: "Pacchetto preferito",
+      es: "Paquete preferido",
+    },
+  };
+
   const audiences = [
     {
       icon: School,
-      title: isAr ? "المدارس الإسلامية الأهلية" : "Islamic Schools",
-      desc: isAr
-        ? "مدارس متكاملة أو برامج عطلة نهاية الأسبوع تبحث عن مناهج معتمدة وفصول تفاعلية بإشراف إداري كامل."
-        : "Full-time and weekend Islamic schools adding structured Arabic & Quran classes with complete institutional oversight.",
+      title: dict.schools.audienceSchoolTitle,
+      desc: dict.schools.audienceSchoolDesc,
     },
     {
       icon: Building2,
-      title: isAr ? "المعاهد والمراكز المجتمعية" : "Institutes & Community Centers",
-      desc: isAr
-        ? "معاهد اللغات والمساجد التي تدير حلقات تعليمية جماعية بحاجة إلى لوحة متابعة وتقارير حضور دقيقة."
-        : "Language institutes and community mosques managing group programs that need real-time tracking and reporting.",
+      title: dict.schools.audienceCenterTitle,
+      desc: dict.schools.audienceCenterDesc,
     },
     {
       icon: Home,
-      title: isAr ? "المعلمون المستقلون والمجموعات" : "Freelance Teachers & Co-ops",
-      desc: isAr
-        ? "معلمون مستقلون ومجموعات التعليم المنزلي الراغبون في أدوات فصل متطورة وتراخيص مرنة تبدأ من باقة 25 طالباً."
-        : "Independent educators and homeschool circles seeking advanced classroom tools and flexible licensing starting from 25 students.",
+      title: dict.schools.audienceCoopTitle,
+      desc: dict.schools.audienceCoopDesc,
     },
   ];
 
-  const typeLabels: Record<(typeof SCHOOL_TYPES)[number], string> = {
-    ISLAMIC_SCHOOL: isAr ? "مدرسة إسلامية أهلية" : "Islamic School",
-    PRIVATE_INSTITUTE: isAr ? "معهد خاص لتعليم العربية والقرآن" : "Private Arabic & Quran Institute",
-    COMMUNITY_CENTER: isAr ? "مركز مجتمعي / مسجد" : "Community Center / Mosque",
-    HOMESCHOOL_COOP: isAr ? "مجموعة تعليم منزلي (Co-op)" : "Homeschool Co-op",
-    FREELANCER_TEACHER: isAr ? "معلم / مقرئ مستقل" : "Freelance Teacher / Independent Tutor",
-    OTHER: isAr ? "أخرى" : "Other",
-  };
+  const typeLabels = TYPE_LABELS_MAP[validLocale];
 
   const errorMessages: Record<string, string> = {
     missing: dict.schools.applyErrorMissing,
@@ -221,11 +330,11 @@ export default async function SchoolsPage({
         <div className="text-center space-y-6 max-w-3xl mx-auto">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-100 text-slate-800 text-xs font-bold">
             <Building2 className="w-3.5 h-3.5 text-brand-600" />
-            <span>{isAr ? "البوابة الموحدة للمدارس، المعاهد، والمعلمين المستقلين" : "Unified Hub for Schools, Institutes & Freelance Teachers"}</span>
+            <span>{B2B_UI.hubBadge[validLocale]}</span>
             <span className="text-slate-300">|</span>
             <Link href={`/${locale}/school-admin`} className="text-brand-600 hover:underline flex items-center gap-1 font-extrabold">
               <KeyRound className="w-3 h-3" />
-              <span>{isAr ? "دخول مدراء المؤسسات" : "School Admin Login"}</span>
+              <span>{B2B_UI.adminLogin[validLocale]}</span>
             </Link>
           </div>
 
@@ -235,14 +344,10 @@ export default async function SchoolsPage({
           </div>
 
           <h1 className="text-3xl sm:text-5xl font-extrabold text-slate-900 tracking-tight leading-tight">
-            {isAr
-              ? "حلول مؤسسية متكاملة لمدارس ومعاهد ومعلمي اللغة العربية والقرآن"
-              : "Enterprise B2B Solutions for Schools, Institutes & Freelance Teachers"}
+            {dict.schools.heroTitle}
           </h1>
           <p className="text-slate-600 text-base sm:text-lg leading-relaxed max-w-2xl mx-auto">
-            {isAr
-              ? "سواء كنت مدرسة إسلامية كاملة، أو معهداً لغوياً، أو معلماً مستقلاً يدير حلقاته الخاصة: نوفر لك بنية متعددة المستأجرين مع تسجيل جماعي، فصول تفاعلية حية، ومناهج معتمدة."
-              : "Whether you are a full-time Islamic school, a language institute, or a freelance educator: manage real student rosters, collaborative classrooms, and accredited curriculum from one dedicated portal."}
+            {dict.schools.heroSubtitle}
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
@@ -250,7 +355,7 @@ export default async function SchoolsPage({
               href="#pricing"
               className="inline-flex items-center gap-2 px-6 py-3.5 text-sm font-bold text-white gradient-brand hover:opacity-95 rounded-2xl shadow-md shadow-brand-500/25 transition-all"
             >
-              <span>{isAr ? "استكشف الباقات والأسعار (خصم 35%)" : "Explore Bundles & Pricing (35% Off)"}</span>
+              <span>{B2B_UI.exploreBundles[validLocale]}</span>
               <DirectionalIcon icon={ArrowRight} locale={locale} className="w-4 h-4" />
             </Link>
             <Link
@@ -258,7 +363,7 @@ export default async function SchoolsPage({
               className="inline-flex items-center gap-2 px-6 py-3.5 text-sm font-bold text-emerald-800 bg-emerald-50 border border-emerald-300 hover:bg-emerald-100 rounded-2xl transition-all"
             >
               <Sparkles className="w-4 h-4 text-emerald-600" />
-              <span>{isAr ? "طلب تجربة مجانية (3 أيام • 10 طلاب)" : "Get 3-Day Trial (10 Students)"}</span>
+              <span>{B2B_UI.getTrial[validLocale]}</span>
             </Link>
             <Link
               href="#features"
@@ -348,12 +453,10 @@ export default async function SchoolsPage({
             {dict.schools.pricingTag}
           </div>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900">
-            {isAr ? "باقات مخصصة للمؤسسات والمعلمين المستقلين" : "Bundles Tailored for Institutions & Freelance Educators"}
+            {B2B_UI.bundlesHeading[validLocale]}
           </h2>
           <p className="text-slate-600 max-w-2xl mx-auto">
-            {isAr
-              ? "3 باقات مرنة بحسب عدد المقاعد (Starter، Growth، Institution) مع تطبيق خصم 35% لجميع المؤسسات."
-              : "3 flexible tiers (Starter, Growth, Institution) based on enrolled seats with a 35% discount applied across all plans."}
+            {B2B_UI.bundlesSub[validLocale]}
           </p>
         </div>
 
@@ -394,13 +497,13 @@ export default async function SchoolsPage({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  {isAr ? "اسم المؤسسة / اسم المعلم المستقل" : "Institution / Freelancer Name"}
+                  {dict.schools.applyOrgNameLabel}
                 </label>
                 <input
                   name="organizationName"
                   type="text"
                   required
-                  placeholder={isAr ? "مثال: مدرسة النور أو حلقة أ. حسن" : "e.g. Al-Noor Academy"}
+                  placeholder={B2B_UI.orgNamePlaceholder[validLocale]}
                   className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 text-start"
                 />
               </div>
@@ -469,7 +572,7 @@ export default async function SchoolsPage({
             <BundleAndStudentsFields
               isAr={isAr}
               defaultBundle={defaultBundle}
-              bundleLabel={isAr ? "الباقة المفضلة" : "Preferred Bundle"}
+              bundleLabel={B2B_UI.preferredBundle[validLocale]}
               studentsLabel={dict.schools.applyStudentsLabel}
               trialCapHint={dict.schools.applyTrialCapHint}
             />

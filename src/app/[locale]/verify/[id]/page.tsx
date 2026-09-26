@@ -34,7 +34,7 @@ export default async function PublicCertificateVerificationPage({
             className="text-xs font-bold text-slate-500 hover:text-brand-600 flex items-center gap-1.5 transition-colors"
           >
             <ArrowRight className={`w-3.5 h-3.5 ${isAr ? "" : "rotate-180"}`} />
-            <span>{isAr ? "الرئيسية: أكاديمية براعم العربية" : "Home: Arabic Kids Academy"}</span>
+            <span>{isAr ? "الرئيسية: Arabic Kids Academy" : "Home: Arabic Kids Academy"}</span>
           </Link>
 
           <span className="text-xs font-bold text-slate-400 font-mono">

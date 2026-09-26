@@ -126,7 +126,7 @@ export function SchoolAdminRosterClient({
                 </div>
                 <div className="text-[10px] text-slate-400 pt-1 border-t border-slate-200 flex items-center gap-1">
                   <ShieldCheck className="w-3 h-3 text-emerald-600" />
-                  <span>أكاديمية اللغة العربية للأطفال - بوابة المؤسسات</span>
+                  <span>Arabic Kids Academy - Institutional Portal</span>
                 </div>
               </div>
             ))}

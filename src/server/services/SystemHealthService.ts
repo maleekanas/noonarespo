@@ -330,7 +330,7 @@ export class SystemHealthService {
       status: overallStatus,
       timestamp: new Date().toISOString(),
       version: "0.1.0",
-      platform: "Kids Arabic Academy",
+      platform: "Arabic Kids Academy",
       totalLatencyMs: Date.now() - overallStart,
       subsystems,
       telemetry: this.getRuntimeTelemetry(),

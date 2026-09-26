@@ -52,7 +52,7 @@ const DEFAULT_SETTINGS: SystemSettings = {
 
   announcementActive: false,
   announcementType: "INFO",
-  announcementTextAr: "مرحباً بكم في أكاديمية نون العربية! التسجيل متاح الآن لجميع المسارات.",
+  announcementTextAr: "مرحباً بكم في Arabic Kids Academy! التسجيل متاح الآن لجميع المسارات.",
   announcementTextEn: "Welcome to Arabic Kids Academy! Registration is now open for all tracks.",
   announcementLinkUrl: "/pricing",
 

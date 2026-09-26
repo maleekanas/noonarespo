@@ -266,7 +266,7 @@ export function TeacherManagementClient({
   function handleCopyCredentials() {
     if (!resetResult || !resetModalTeacher) return;
     const text = isAr
-      ? `أهلاً بك أستاذ/ة ${resetModalTeacher.firstName}،\nتم تعيين بيانات تسجيل دخولك إلى بوابة المعلمين في أكاديمية نون العربية:\n- البريد الإلكتروني: ${resetResult.email}\n- كلمة المرور: ${resetResult.tempPassword}\nرابط الدخول: https://arabickidsacademy.com/${locale}/login`
+      ? `أهلاً بك أستاذ/ة ${resetModalTeacher.firstName}،\nتم تعيين بيانات تسجيل دخولك إلى بوابة المعلمين في Arabic Kids Academy:\n- البريد الإلكتروني: ${resetResult.email}\n- كلمة المرور: ${resetResult.tempPassword}\nرابط الدخول: https://arabickidsacademy.com/${locale}/login`
       : `Hello Teacher ${resetModalTeacher.firstName},\nYour login credentials for Arabic Kids Academy have been updated:\n- Email: ${resetResult.email}\n- Password: ${resetResult.tempPassword}\nLogin URL: https://arabickidsacademy.com/${locale}/login`;
 
     navigator.clipboard.writeText(text);

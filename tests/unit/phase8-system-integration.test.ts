@@ -127,7 +127,7 @@ describe("Phase 8: Enterprise System Observability & Diagnostics", () => {
   test("Comprehensive health report should aggregate all 5 subsystems cleanly", async () => {
     const report = await systemHealthService.getComprehensiveHealthReport();
     assert.strictEqual(report.status, "HEALTHY");
-    assert.strictEqual(report.platform, "Kids Arabic Academy");
+    assert.strictEqual(report.platform, "Arabic Kids Academy");
     assert.ok(report.totalLatencyMs >= 0);
     assert.ok("database" in report.subsystems);
     assert.ok("storage" in report.subsystems);
@@ -199,7 +199,7 @@ describe("Phase 8: Data Portability & GDPR / COPPA Compliance", () => {
     const res = await dataExportService.exportFullBundle();
     assert.ok(res.recordCount > 0);
     const parsed = JSON.parse(res.data);
-    assert.strictEqual(parsed.system, "Kids Arabic Academy");
+    assert.strictEqual(parsed.system, "Arabic Kids Academy");
     assert.ok(parsed.compliance.includes("GDPR Article 20 (Data Portability)"));
     assert.ok(parsed.data.students.length > 0);
     assert.ok(parsed.data.classes.length > 0);

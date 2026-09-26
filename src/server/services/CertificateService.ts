@@ -30,8 +30,8 @@ export interface CertificateVerificationResult {
   verifiedAt: Date;
 }
 
-const INSTITUTION_NAME_AR = "أكاديمية براعم العربية العالمية للأطفال";
-const INSTITUTION_NAME_EN = "Kids Arabic Academy International";
+const INSTITUTION_NAME_AR = "Arabic Kids Academy";
+const INSTITUTION_NAME_EN = "Arabic Kids Academy";
 
 type CertificateRow = {
   id: string;
@@ -182,7 +182,7 @@ export class CertificateService {
       issuedAtDate: row.issuedAt.toLocaleDateString("ar-EG-u-nu-latn", { year: "numeric", month: "long", day: "numeric" }),
       gradeDistinctionAr: gradeAr,
       gradeDistinctionEn: gradeEn,
-      signatoryTeacher: "الإدارة الأكاديمية -- أكاديمية براعم العربية",
+      signatoryTeacher: "Academic Administration -- Arabic Kids Academy",
       verificationHash: crypto
         .createHash("sha256")
         .update(row.verificationCode)

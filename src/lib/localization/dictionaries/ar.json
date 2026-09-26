@@ -1,7 +1,7 @@
 {
   "common": {
-    "siteName": "أكاديمية براعم العربية للأطفال",
-    "siteTagline": "تعليم اللغة العربية والقرآن الكريم للأطفال بأسلوب ممتع وتفاعلي",
+    "siteName": "Arabic Kids Academy",
+    "siteTagline": "Inspiring Arabic language and Quran learning for children worldwide",
     "login": "تسجيل الدخول",
     "register": "تسجيل ولي الأمر",
     "logout": "تسجيل الخروج",
@@ -119,7 +119,7 @@
       "وصول كامل لجميع الألعاب واستوديو القرآن"
     ],
     "trialBadge": "تجربة مجانية ليوم واحد",
-    "trialTitle": "جرّب أكاديمية الأطفال العرب مجاناً ليوم واحد",
+    "trialTitle": "جرّب Arabic Kids Academy مجاناً ليوم واحد",
     "trialSubtitle": "اكتشف قوة منهجنا التعليمي — وصول كامل لتدريبات النطق، وألعاب الصوتيات، وقراءة القصص، وتلاوة القرآن، دون أي التزام.",
     "trialFeature1": "استوديو النطق",
     "trialFeature2": "استوديو القرآن",
@@ -172,7 +172,7 @@
     "invalidCredentials": "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
     "tooManyAttempts": "محاولات كثيرة جداً. الرجاء الانتظار قليلاً ثم المحاولة مرة أخرى.",
     "registerTitle": "إنشاء حساب ولي أمر جديد",
-    "registerSubtitle": "أنشئ حسابك للبدء برحلة طفلك التعليمية مع أكاديمية براعم العربية للأطفال",
+    "registerSubtitle": "أنشئ حسابك للبدء برحلة طفلك التعليمية مع Arabic Kids Academy",
     "firstNameLabel": "الاسم الأول",
     "lastNameLabel": "اسم العائلة",
     "phoneLabel": "رقم الهاتف",
@@ -221,7 +221,7 @@
     "signOutButton": "تسجيل الخروج"
   },
   "footer": {
-    "copyright": "جميع الحقوق محفوظة © 2026 أكاديمية براعم العربية للأطفال.",
+    "copyright": "جميع الحقوق محفوظة © 2026 Arabic Kids Academy.",
     "privacyPolicy": "سياسة الخصوصية وحماية الطفل",
     "termsOfService": "شروط الاستخدام",
     "safetyBadge": "بيئة تعليمية آمنة وخالية من الإعلانات بنسبة 100%",
@@ -425,7 +425,7 @@
     "sections": {
       "s1": {
         "title": "1. من نحن وقبول هذه الشروط",
-        "body": "تشكّل هذه الشروط اتفاقاً بينك، بصفتك ولي الأمر أو الوصي الذي ينشئ الحساب ويديره، وبين 3-Tech (\"نحن\")، ومقرها غرونينغن، هولندا، والتي تشغّل منصة أكاديمية براعم العربية للأطفال على arabickidsacademy.com. بإنشائك حساباً أو اشتراكك في إحدى الباقات، فإنك توافق على هذه الشروط."
+        "body": "تشكّل هذه الشروط اتفاقاً بينك، بصفتك ولي الأمر أو الوصي الذي ينشئ الحساب ويديره، وبين 3-Tech (\"نحن\")، ومقرها غرونينغن، هولندا، والتي تشغّل منصة Arabic Kids Academy على arabickidsacademy.com. بإنشائك حساباً أو اشتراكك في إحدى الباقات، فإنك توافق على هذه الشروط."
       },
       "s2": {
         "title": "2. أهلية التسجيل وحسابات أولياء الأمور",
@@ -453,7 +453,7 @@
       },
       "s8": {
         "title": "8. الملكية الفكرية",
-        "body": "جميع المناهج والمواد التعليمية والتسجيلات والعلامات التجارية المستخدمة في أكاديمية براعم العربية للأطفال هي ملكية فكرية حصرية لـ 3-Tech، ولا يجوز نسخها أو إعادة توزيعها تجارياً دون إذن خطي مسبق."
+        "body": "جميع المناهج والمواد التعليمية والتسجيلات والعلامات التجارية المستخدمة في Arabic Kids Academy هي ملكية فكرية حصرية لـ 3-Tech، ولا يجوز نسخها أو إعادة توزيعها تجارياً دون إذن خطي مسبق."
       },
       "s9": {
         "title": "9. حدود المسؤولية",
@@ -488,7 +488,7 @@
     "sections": {
       "s1": {
         "title": "1. من يقدّم هذه الخدمة",
-        "body": "منصة \"أكاديمية براعم العربية للأطفال\" (arabickidsacademy.com) يُشغّلها ويديرها كيان 3-Tech، ومقره غرونينغن، هولندا. 3-Tech هو \"المتحكم بالبيانات\" (Data Controller) المسؤول عن المعلومات الشخصية الموضحة في هذه السياسة، ويمكن التواصل معه عبر: privacy@arabickidsacademy.com."
+        "body": "منصة \"Arabic Kids Academy\" (arabickidsacademy.com) يُشغّلها ويديرها كيان 3-Tech، ومقره غرونينغن، هولندا. 3-Tech هو \"المتحكم بالبيانات\" (Data Controller) المسؤول عن المعلومات الشخصية الموضحة في هذه السياسة، ويمكن التواصل معه عبر: privacy@arabickidsacademy.com."
       },
       "s2": {
         "title": "2. التزامنا بخصوصية الأطفال (COPPA و GDPR)",
@@ -642,12 +642,18 @@
     "module13Desc": "اعتماد تقييمات المعلمين، تدقيق الجودة، وفحص الملاحظات المعلقة",
     "module14Title": "المدارس والشراكات المؤسسية (B2B)",
     "module14Desc": "إدارة تراخيص الفصول الجماعية، توزيع المقاعد، واستيراد القوائم",
+    "module15Title": "إعدادات المنظومة والخصائص",
+    "module15Desc": "التحكم في الميزات التشغيلية، وضع الصيانة، شريط الإعلانات، والسياسات الأمنية",
     "masterAdminGovernance": "لوحة الإدارة العامة والمراقبة",
     "opsCenter": "مركز العمليات الأكاديمية والمالية ⚡",
     "liveMonitoring": "متابعة حية للفصول، الاشتراكات، مؤشرات الجودة، وسجلات الأمان الشاملة",
     "viewAggregateReports": "عرض التقارير المجمعة",
     "systemsOperational": "الأنظمة تعمل بكفاءة 100%",
-    "governanceHubHeading": "منظومة الحوكمة والتشغيل الإداري الشامل (14 بوابة متخصصة)",
+    "maintenanceActive": "وضع الصيانة مفعل",
+    "announcementActive": "إعلان عام نشط",
+    "forbiddenAccess": "لا تملك صلاحية الوصول لهذا القسم",
+    "forbiddenDesc": "حسابك الحالي لا يشمل صلاحية \"{module}\". تواصل مع المشرف العام إذا كنت تحتاج هذا الوصول.",
+    "governanceHubHeading": "منظومة الحوكمة والتشغيل الإداري الشامل (15 بوابة متخصصة)",
     "openHub": "فتح البوابة",
     "auditTrailLiveHeading": "سجل العمليات والتدقيق الأمني المباشر (SHA-256 Live Trail)",
     "viewFullArchive": "عرض الأرشيف الكامل ←",
@@ -771,7 +777,7 @@
     "verifiedTestimonialsHeading": "آراء أولياء الأمور الموثقة",
     "reviewsSuffix": "تقييمات",
     "verifiedParentBadge": "ولي أمر معتمد",
-    "academyReplyLabel": "رد إدارة أكاديمية براعم العربية:",
+    "academyReplyLabel": "رد إدارة Arabic Kids Academy:",
     "translatedBadgeLabel": "مُترجَم"
   },
   "studentQuranStudio": {
@@ -1109,7 +1115,7 @@
     "printButton": "طباعة فورية 🖨️",
     "modalSubtitle": "ورقة تدريب منزلية عالية الدقة مجهزة لمقاس A4",
     "printNowButton": "طباعة الآن (A4)",
-    "worksheetTaglineLabel": "أكاديمية براعم العربية للغات والقرآن",
+    "worksheetTaglineLabel": "Arabic Kids Academy",
     "homeLearningBookletLabel": "كراسة التعلم المنزلي",
     "studentNameLabel": "اسْمُ الطَّالِبِ:",
     "dateLabel": "التَّارِيخُ:",
@@ -1283,7 +1289,7 @@
     "pageSubtitleTemplate": "إيصال سداد مالي معتمد برقم ترخيص: {invoiceNumber}",
     "backToInvoicesButton": "العودة لسجل الفواتير",
     "printInvoiceButton": "طباعة الفاتورة (PDF)",
-    "academyNameLabel": "أكاديمية براعم العربية للأطفال",
+    "academyNameLabel": "Arabic Kids Academy",
     "companyLegalTemplate": "شركة براعم التعليمية المحدودة • الرقم الضريبي: {taxId}",
     "invoiceStatusPaidFull": "مدفوعة بالكامل ✓",
     "invoiceDateTemplate": "تاريخ الفاتورة: {date}",
@@ -1306,7 +1312,7 @@
     "couponDiscountLabel": "خصم الكوبون:",
     "vatLabelTemplate": "ضريبة القيمة المضافة ({rate}%):",
     "totalPaidLabel": "الإجمالي المسدد:",
-    "thankYouNote": "شكراً لثقتكم بأكاديمية براعم العربية. نتمنى لأبنائكم رحلة تعليمية مباركة وممتعة.",
+    "thankYouNote": "شكراً لثقتكم بـ Arabic Kids Academy. نتمنى لأبنائكم رحلة تعليمية مباركة وممتعة.",
     "financeContactNote": "لأي استفسارات بخصوص الفاتورة، يُرجى التواصل مع قسم المالية: billing@arabickidsacademy.com"
   }
 }

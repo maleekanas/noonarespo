@@ -84,11 +84,11 @@ export function Footer({ locale }: FooterProps) {
                 <GraduationCap className="w-6 h-6" />
               </div>
               <span className="font-extrabold text-xl text-white group-hover:text-brand-300 transition-colors">
-                {dict.common.siteName}
+                Arabic Kids Academy
               </span>
             </Link>
             <p className="text-sm text-slate-400 max-w-md leading-relaxed">
-              {dict.common.siteTagline}. {dict.footer.platformDescription}
+              Inspiring Arabic language and Quran learning for children worldwide. {dict.footer.platformDescription}
             </p>
             <div className="flex items-center gap-2 text-xs text-emerald-400 bg-emerald-950/60 border border-emerald-800/60 px-3 py-1.5 rounded-lg w-fit">
               <ShieldCheck className="w-4 h-4 text-emerald-400" />

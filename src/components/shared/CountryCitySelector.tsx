@@ -27,6 +27,78 @@ interface CountryCitySelectorProps {
   onCityChange?: (city: string) => void;
 }
 
+const SELECTOR_LABELS: Record<string, {
+  country: string;
+  city: string;
+  countryPlaceholder: string;
+  cityPlaceholderSelected: string;
+  cityPlaceholderEmpty: string;
+  searchPlaceholder: string;
+  noCountriesFound: string;
+  suggested: string;
+}> = {
+  ar: {
+    country: "الدولة",
+    city: "المدينة",
+    countryPlaceholder: "اختر أو ابحث عن دولتك...",
+    cityPlaceholderSelected: "اختر المدينة أو اكتبها...",
+    cityPlaceholderEmpty: "اختر الدولة أولاً...",
+    searchPlaceholder: "ابحث بالاسم أو الرمز...",
+    noCountriesFound: "لم يتم العثور على دول مطابقة",
+    suggested: "مدن مقترحة:",
+  },
+  nl: {
+    country: "Land",
+    city: "Stad",
+    countryPlaceholder: "Kies of zoek uw land...",
+    cityPlaceholderSelected: "Kies of typ uw stad...",
+    cityPlaceholderEmpty: "Kies eerst een land...",
+    searchPlaceholder: "Zoek op naam of code...",
+    noCountriesFound: "Geen overeenkomende landen gevonden",
+    suggested: "Aanbevolen:",
+  },
+  tr: {
+    country: "Ülke",
+    city: "Şehir",
+    countryPlaceholder: "Ülkenizi seçin veya arayın...",
+    cityPlaceholderSelected: "Şehrinizi seçin veya yazın...",
+    cityPlaceholderEmpty: "Önce ülkeyi seçin...",
+    searchPlaceholder: "İsim veya kod ile ara...",
+    noCountriesFound: "Eşleşen ülke bulunamadı",
+    suggested: "Önerilen:",
+  },
+  it: {
+    country: "Paese",
+    city: "Città",
+    countryPlaceholder: "Seleziona o cerca il tuo paese...",
+    cityPlaceholderSelected: "Seleziona o scrivi la tua città...",
+    cityPlaceholderEmpty: "Seleziona prima il paese...",
+    searchPlaceholder: "Cerca per nome o codice...",
+    noCountriesFound: "Nessun paese corrispondente trovato",
+    suggested: "Suggerite:",
+  },
+  es: {
+    country: "País",
+    city: "Ciudad",
+    countryPlaceholder: "Selecciona o busca tu país...",
+    cityPlaceholderSelected: "Selecciona o escribe tu ciudad...",
+    cityPlaceholderEmpty: "Selecciona primero el país...",
+    searchPlaceholder: "Buscar por nombre o código...",
+    noCountriesFound: "No se encontraron países coincidentes",
+    suggested: "Sugeridas:",
+  },
+  en: {
+    country: "Country",
+    city: "City",
+    countryPlaceholder: "Select or search your country...",
+    cityPlaceholderSelected: "Select or type your city...",
+    cityPlaceholderEmpty: "Select country first...",
+    searchPlaceholder: "Search by name or code...",
+    noCountriesFound: "No matching countries found",
+    suggested: "Suggested:",
+  },
+};
+
 export function CountryCitySelector({
   nameCountry = "country",
   nameCity = "city",
@@ -44,6 +116,7 @@ export function CountryCitySelector({
   onCityChange,
 }: CountryCitySelectorProps) {
   const isAr = locale === "ar";
+  const locLabels = SELECTOR_LABELS[locale] || SELECTOR_LABELS.en;
 
   // Initial country resolution
   const initialCountry = useMemo(() => {
@@ -124,21 +197,15 @@ export function CountryCitySelector({
   };
 
   const labels = {
-    country: countryLabel || (isAr ? "الدولة" : "Country"),
-    city: cityLabel || (isAr ? "المدينة" : "City"),
-    countryPlaceholder:
-      countryPlaceholder || (isAr ? "اختر أو ابحث عن دولتك..." : "Select or search your country..."),
+    country: countryLabel || locLabels.country,
+    city: cityLabel || locLabels.city,
+    countryPlaceholder: countryPlaceholder || locLabels.countryPlaceholder,
     cityPlaceholder:
       cityPlaceholder ||
-      (isAr
-        ? selectedCountry
-          ? "اختر المدينة أو اكتبها..."
-          : "اختر الدولة أولاً..."
-        : selectedCountry
-        ? "Select or type your city..."
-        : "Select country first..."),
-    searchPlaceholder: isAr ? "ابحث بالاسم أو الرمز..." : "Search by name or code...",
-    noCountriesFound: isAr ? "لم يتم العثور على دول مطابقة" : "No matching countries found",
+      (selectedCountry ? locLabels.cityPlaceholderSelected : locLabels.cityPlaceholderEmpty),
+    searchPlaceholder: locLabels.searchPlaceholder,
+    noCountriesFound: locLabels.noCountriesFound,
+    suggested: locLabels.suggested,
   };
 
   // Values passed in form data (we store English country name by default for standardized B2B/B2C backend storage, while displaying localized label)
@@ -310,7 +377,7 @@ export function CountryCitySelector({
         {selectedCountry && availableCities.length > 0 && (
           <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
             <span className="text-[10px] text-slate-400">
-              {isAr ? "مدن مقترحة:" : "Suggested:"}
+              {labels.suggested}
             </span>
             {availableCities.slice(0, 5).map((city, i) => {
               const cityName = isAr ? city.nameAr : city.nameEn;

@@ -1,7 +1,7 @@
 {
   "common": {
-    "siteName": "Accademia Araba per Bambini",
-    "siteTagline": "Ispirare l'apprendimento della lingua araba e del Corano per bambini in tutto il mondo",
+    "siteName": "Arabic Kids Academy",
+    "siteTagline": "Inspiring Arabic language and Quran learning for children worldwide",
     "login": "Accedi",
     "register": "Registrazione Genitore",
     "logout": "Esci",
@@ -143,7 +143,7 @@
     "finance": "Finanze"
   },
   "auth": {
-    "signInTitle": "Accedi all'Accademia Araba per Bambini",
+    "signInTitle": "Accedi ad Arabic Kids Academy",
     "signInSubtitle": "Bentornato! Inserisci le tue credenziali per accedere al tuo pannello",
     "emailLabel": "Indirizzo Email",
     "passwordLabel": "Password",
@@ -172,7 +172,7 @@
     "invalidCredentials": "Email o password non corretti.",
     "tooManyAttempts": "Troppi tentativi. Attendi un momento e riprova.",
     "registerTitle": "Crea il tuo account genitore",
-    "registerSubtitle": "Registrati per iniziare il percorso di apprendimento di tuo figlio con l'Accademia Araba per Bambini",
+    "registerSubtitle": "Registrati per iniziare il percorso di apprendimento di tuo figlio con Arabic Kids Academy",
     "firstNameLabel": "Nome",
     "lastNameLabel": "Cognome",
     "phoneLabel": "Numero di telefono",
@@ -221,7 +221,7 @@
     "signOutButton": "Esci"
   },
   "footer": {
-    "copyright": "Tutti i diritti riservati © 2026 Accademia Araba per Bambini.",
+    "copyright": "Tutti i diritti riservati © 2026 Arabic Kids Academy.",
     "privacyPolicy": "Sicurezza dei Minori e Politica sulla Privacy",
     "termsOfService": "Termini di Servizio",
     "safetyBadge": "Ambiente di apprendimento 100% privo di pubblicità e sicuro per i bambini",
@@ -642,12 +642,18 @@
     "module13Desc": "Approvazione delle recensioni degli insegnanti, moderazione della qualità e revisione dei feedback",
     "module14Title": "Scuole Islamiche e Partnership B2B",
     "module14Desc": "Licenze per gruppi multi-scuola, allocazioni dei posti e importazione elenchi CSV",
+    "module15Title": "Impostazioni di Sistema e Governance",
+    "module15Desc": "Flag di funzionalità, blocco manutenzione, annunci globali e criteri di sicurezza",
     "masterAdminGovernance": "Amministrazione Generale e Governance",
     "opsCenter": "Centro Operativo Accademico e Finanziario ⚡",
     "liveMonitoring": "Monitoraggio in tempo reale di coorti, abbonamenti, indicatori di qualità e log di controllo",
     "viewAggregateReports": "Visualizza Rapporti Aggregati",
     "systemsOperational": "Sistemi Operativi al 100%",
-    "governanceHubHeading": "Hub Completo di Governance e Amministrazione (14 Portali)",
+    "maintenanceActive": "Modalità Manutenzione Attiva",
+    "announcementActive": "Annuncio Attivo",
+    "forbiddenAccess": "Non hai accesso a questa sezione",
+    "forbiddenDesc": "Il tuo account non include l'accesso a \"{module}\". Contatta un super amministratore se ne hai bisogno.",
+    "governanceHubHeading": "Hub Completo di Governance e Amministrazione (15 Portali)",
     "openHub": "Apri Portale",
     "auditTrailLiveHeading": "Registro di Controllo Crittografico (SHA-256 Live)",
     "viewFullArchive": "Visualizza Archivio Completo →",

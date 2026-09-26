@@ -125,7 +125,7 @@ export default async function RegisterPage({
       recipientName: `${firstName} ${lastName}`,
       eventName: "EMAIL_VERIFICATION",
       titleAr: trialParam === "1" ? "أكّد بريدك الإلكتروني لبدء تجربتك المجانية ليوم واحد" : "أكّد بريدك الإلكتروني",
-      bodyAr: `مرحباً ${firstName}، شكراً لتسجيلك في أكاديمية الأطفال العرب. اضغط على الزر أدناه لتأكيد بريدك الإلكتروني وتفعيل حسابك. هذا الرابط صالح لمدة 24 ساعة.`,
+      bodyAr: `مرحباً ${firstName}، شكراً لتسجيلك في Arabic Kids Academy. اضغط على الزر أدناه لتأكيد بريدك الإلكتروني وتفعيل حسابك. هذا الرابط صالح لمدة 24 ساعة.`,
       actionUrl: verifyUrl,
     });
 

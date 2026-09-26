@@ -207,8 +207,8 @@ export default async function AdminDashboardPage({
       hub: "schools",
     },
     {
-      title: locale === "ar" ? "إعدادات المنظومة والخصائص" : "System Settings & Governance",
-      desc: locale === "ar" ? "التحكم في الميزات التشغيلية، وضع الصيانة، شريط الإعلانات، والسياسات الأمنية" : "Feature flags, maintenance lockdown, global announcements, and security policies",
+      title: ad.module15Title,
+      desc: ad.module15Desc,
       href: `/${locale}/admin/settings`,
       icon: Sliders,
       color: "text-rose-600 bg-rose-50 border-rose-200",
@@ -251,14 +251,14 @@ export default async function AdminDashboardPage({
           {settings.maintenanceMode && (
             <div className="px-3 py-1.5 rounded-xl bg-rose-50 text-rose-800 border border-rose-200 text-xs font-bold flex items-center gap-1.5 animate-pulse">
               <span className="w-2 h-2 rounded-full bg-rose-500" />
-              <span>{locale === "ar" ? "وضع الصيانة مفعل" : "Maintenance Mode ON"}</span>
+              <span>{ad.maintenanceActive}</span>
             </div>
           )}
 
           {settings.announcementActive && (
             <div className="px-3 py-1.5 rounded-xl bg-amber-50 text-amber-800 border border-amber-200 text-xs font-bold flex items-center gap-1.5">
               <span>📢</span>
-              <span>{locale === "ar" ? "إعلان عام نشط" : "Announcement Active"}</span>
+              <span>{ad.announcementActive}</span>
             </div>
           )}
 
@@ -302,12 +302,10 @@ export default async function AdminDashboardPage({
           <Lock className="w-5 h-5 shrink-0 mt-0.5" />
           <div className="text-xs">
             <span className="font-extrabold block mb-0.5">
-              {locale === "ar" ? "لا تملك صلاحية الوصول لهذا القسم" : "You don't have access to that section"}
+              {ad.forbiddenAccess}
             </span>
             <span className="text-rose-700">
-              {locale === "ar"
-                ? `حسابك الحالي لا يشمل صلاحية "${forbiddenModule?.title ?? forbidden}". تواصل مع المشرف العام إذا كنت تحتاج هذا الوصول.`
-                : `Your account doesn't include access to "${forbiddenModule?.title ?? forbidden}". Contact a super admin if you need this.`}
+              {ad.forbiddenDesc.replace("{module}", forbiddenModule?.title ?? forbidden)}
             </span>
           </div>
         </div>

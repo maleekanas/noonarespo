@@ -1,7 +1,7 @@
 {
   "common": {
-    "siteName": "Academia Árabe para Niños",
-    "siteTagline": "Inspirando el aprendizaje del idioma árabe y el Corán para niños en todo el mundo",
+    "siteName": "Arabic Kids Academy",
+    "siteTagline": "Inspiring Arabic language and Quran learning for children worldwide",
     "login": "Iniciar Sesión",
     "register": "Registro de Padres",
     "logout": "Cerrar Sesión",
@@ -143,7 +143,7 @@
     "finance": "Finanzas"
   },
   "auth": {
-    "signInTitle": "Iniciar Sesión en Academia Árabe para Niños",
+    "signInTitle": "Iniciar Sesión en Arabic Kids Academy",
     "signInSubtitle": "¡Bienvenido de nuevo! Ingresa tus credenciales para acceder a tu panel",
     "emailLabel": "Correo Electrónico",
     "passwordLabel": "Contraseña",
@@ -172,7 +172,7 @@
     "invalidCredentials": "Correo electrónico o contraseña incorrectos.",
     "tooManyAttempts": "Demasiados intentos. Espera un momento e inténtalo de nuevo.",
     "registerTitle": "Crea tu cuenta de padre",
-    "registerSubtitle": "Regístrate para comenzar el viaje de aprendizaje de tu hijo con Academia Árabe para Niños",
+    "registerSubtitle": "Regístrate para comenzar el viaje de aprendizaje de tu hijo con Arabic Kids Academy",
     "firstNameLabel": "Nombre",
     "lastNameLabel": "Apellido",
     "phoneLabel": "Número de teléfono",
@@ -221,7 +221,7 @@
     "signOutButton": "Cerrar Sesión"
   },
   "footer": {
-    "copyright": "Todos los derechos reservados © 2026 Academia Árabe para Niños.",
+    "copyright": "Todos los derechos reservados © 2026 Arabic Kids Academy.",
     "privacyPolicy": "Seguridad Infantil y Política de Privacidad",
     "termsOfService": "Términos de Servicio",
     "safetyBadge": "Entorno de aprendizaje 100% libre de publicidad y seguro para niños",
@@ -642,12 +642,18 @@
     "module13Desc": "Aprobación de reseñas de profesores, moderación de calidad y auditoría de comentarios",
     "module14Title": "Escuelas Islámicas y Asociaciones B2B",
     "module14Desc": "Licencias de cohortes multiescolares, asignaciones de plazas e importación de listas CSV",
+    "module15Title": "Configuración del Sistema y Gobernanza",
+    "module15Desc": "Indicadores de funciones, bloqueo por mantenimiento, avisos globales y políticas de seguridad",
     "masterAdminGovernance": "Administración General y Gobernanza",
     "opsCenter": "Centro de Operaciones Académicas y Financieras ⚡",
     "liveMonitoring": "Monitoreo en vivo de cohortes, suscripciones, indicadores de calidad y registros de auditoría",
     "viewAggregateReports": "Ver Informes Agregados",
     "systemsOperational": "Sistemas 100% Operativos",
-    "governanceHubHeading": "Centro Integral de Gobernanza y Administración (14 Portales)",
+    "maintenanceActive": "Modo de Mantenimiento Activo",
+    "announcementActive": "Anuncio Activo",
+    "forbiddenAccess": "No tienes acceso a esta sección",
+    "forbiddenDesc": "Tu cuenta no incluye acceso a \"{module}\". Contacta con un superadministrador si necesitas acceso.",
+    "governanceHubHeading": "Centro Integral de Gobernanza y Administración (15 Portales)",
     "openHub": "Abrir Portal",
     "auditTrailLiveHeading": "Registro de Auditoría Criptográfico (SHA-256 en Vivo)",
     "viewFullArchive": "Ver Archivo Completo →",

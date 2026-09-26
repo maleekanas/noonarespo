@@ -303,7 +303,7 @@ export function StudentManagementClient({
   function handleCopyCredentials() {
     if (!resetResult || !resetModalStudent) return;
     const text = isAr
-      ? `مرحباً ولي أمر الطالب ${resetModalStudent.firstName}،\nتم تعيين بيانات تسجيل دخول طفلكم في أكاديمية نون العربية:\n- البريد الإلكتروني: ${resetResult.email}\n- كلمة المرور: ${resetResult.tempPassword}\nرابط الدخول: https://arabickidsacademy.com/${locale}/login`
+      ? `مرحباً ولي أمر الطالب ${resetModalStudent.firstName}،\nتم تعيين بيانات تسجيل دخول طفلكم في Arabic Kids Academy:\n- البريد الإلكتروني: ${resetResult.email}\n- كلمة المرور: ${resetResult.tempPassword}\nرابط الدخول: https://arabickidsacademy.com/${locale}/login`
       : `Hello Parent of ${resetModalStudent.firstName},\nLogin credentials for Arabic Kids Academy have been updated:\n- Email: ${resetResult.email}\n- Password: ${resetResult.tempPassword}\nLogin URL: https://arabickidsacademy.com/${locale}/login`;
 
     navigator.clipboard.writeText(text);

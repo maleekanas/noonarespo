@@ -84,7 +84,7 @@ export default async function WeeklyReportPage({
             </div>
             <div>
               <h2 className="text-xl font-extrabold text-slate-900">
-                أكاديمية براعم العربية للأطفال
+                Arabic Kids Academy
               </h2>
               <span className="text-xs text-slate-500 font-medium">
                 تقرير الأداء الأكاديمي واللغوي الأسبوعي

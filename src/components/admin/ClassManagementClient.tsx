@@ -581,7 +581,7 @@ export function ClassManagementClient({
                           </div>
                         ) : (
                           <span className="text-xs text-slate-400">
-                            {isAr ? "أكاديمية نون (منصة عامة)" : "Direct Platform"}
+                            Arabic Kids Academy (Direct Platform)
                           </span>
                         )}
                       </td>

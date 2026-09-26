@@ -22,6 +22,276 @@ import {
   Sparkles,
 } from "lucide-react";
 
+const SUPPORT_I18N: Record<
+  string,
+  {
+    consoleBadge: string;
+    hubTitle: string;
+    agentSubtext: (email: string) => string;
+    openInquiries: string;
+    activeSessions: string;
+    searchHeading: string;
+    searchPlaceholder: string;
+    lookupButton: string;
+    studentProfiles: string;
+    noStudentsFound: string;
+    certifiedTeachers: string;
+    noTeachersFound: string;
+    inquiriesInbox: string;
+    inquiriesCount: (c: number) => string;
+    thName: string;
+    thEmailPhone: string;
+    thInquiryType: string;
+    thStatusNotes: string;
+    thSourceDate: string;
+    thAction: string;
+    statusResolved: string;
+    statusInProgress: string;
+    statusNew: string;
+    updateBtn: string;
+    changeStatus: string;
+    followUpNotes: string;
+    notePlaceholder: string;
+    saveUpdate: string;
+    liveDiagnostics: string;
+    sessionsCount: (c: number) => string;
+    thSessionId: string;
+    thClassGroup: string;
+    thStatus: string;
+    thMeetingLink: string;
+    thScheduledTime: string;
+  }
+> = {
+  ar: {
+    consoleBadge: "لوحة وكيل الدعم الفني والأكاديمي",
+    hubTitle: "تشخيص الحسابات والدعم الفني",
+    agentSubtext: (email) =>
+      `وكيل الدعم النشط: ${email} • الصلاحيات: فحص الحسابات، تشخيص الجلسات، واستفسارات التسجيل.`,
+    openInquiries: "استفسارات جديدة",
+    activeSessions: "الجلسات المجدولة",
+    searchHeading: "البحث التشخيصي عن المستخدمين (طلاب، أولياء أمور، معلمين)",
+    searchPlaceholder: "ابحث بالاسم أو البريد الإلكتروني...",
+    lookupButton: "بحث",
+    studentProfiles: "ملفات الطلاب",
+    noStudentsFound: "لا توجد نتائج مطابقة",
+    certifiedTeachers: "ملفات المعلمين المعتمدين",
+    noTeachersFound: "لا توجد نتائج مطابقة",
+    inquiriesInbox: "صندوق استفسارات أولياء الأمور وطلبات التسجيل",
+    inquiriesCount: (c) => `${c} استفسارات`,
+    thName: "الاسم",
+    thEmailPhone: "البريد / الهاتف",
+    thInquiryType: "نوع الطلب",
+    thStatusNotes: "الحالة والملاحظات",
+    thSourceDate: "المصدر والتاريخ",
+    thAction: "الإجراء",
+    statusResolved: "مكتمل ومغلق ✓",
+    statusInProgress: "قيد المتابعة ⏳",
+    statusNew: "جديد ✉",
+    updateBtn: "تحديث ✎",
+    changeStatus: "تغيير الحالة",
+    followUpNotes: "ملاحظات المتابعة",
+    notePlaceholder: "تم التواصل مع ولي الأمر...",
+    saveUpdate: "حفظ التحديث",
+    liveDiagnostics: "تشخيص الجلسات المباشرة وروابط الغرف",
+    sessionsCount: (c) => `${c} جلسات`,
+    thSessionId: "معرف الجلسة",
+    thClassGroup: "المجموعة",
+    thStatus: "الحالة",
+    thMeetingLink: "رابط الغرفة",
+    thScheduledTime: "الوقت (UTC)",
+  },
+  en: {
+    consoleBadge: "Support & Operations Console",
+    hubTitle: "Customer Support & Diagnostic Hub",
+    agentSubtext: (email) =>
+      `Active Agent: ${email} • Diagnostic scope: Account lookups, session checks, and inquiries.`,
+    openInquiries: "Open Inquiries",
+    activeSessions: "Active Sessions",
+    searchHeading: "User Diagnostic Lookup",
+    searchPlaceholder: "Search by student/teacher name, email, or account ID...",
+    lookupButton: "Lookup",
+    studentProfiles: "Student Profiles",
+    noStudentsFound: "No student records found",
+    certifiedTeachers: "Certified Teachers",
+    noTeachersFound: "No teacher records found",
+    inquiriesInbox: "Parent Inquiries & Admissions Inbox",
+    inquiriesCount: (c) => `${c} inquiries`,
+    thName: "Contact Name",
+    thEmailPhone: "Email & Phone",
+    thInquiryType: "Inquiry Type",
+    thStatusNotes: "Status & Notes",
+    thSourceDate: "Source & Date",
+    thAction: "Action",
+    statusResolved: "Resolved ✓",
+    statusInProgress: "In Progress ⏳",
+    statusNew: "New ✉",
+    updateBtn: "Update ✎",
+    changeStatus: "Change Status",
+    followUpNotes: "Follow-up Notes",
+    notePlaceholder: "Follow-up note...",
+    saveUpdate: "Save Update",
+    liveDiagnostics: "Live Session & Meeting Diagnostics",
+    sessionsCount: (c) => `${c} sessions`,
+    thSessionId: "Session ID",
+    thClassGroup: "Class Group",
+    thStatus: "Status",
+    thMeetingLink: "Meeting Link",
+    thScheduledTime: "Scheduled Time (UTC)",
+  },
+  nl: {
+    consoleBadge: "Support- & Beheerconsole",
+    hubTitle: "Klantenservice & Diagnostische Hub",
+    agentSubtext: (email) =>
+      `Actieve Agent: ${email} • Diagnostische scope: Accountzoekopdrachten, sessiecontroles en aanvragen.`,
+    openInquiries: "Open Aanvragen",
+    activeSessions: "Actieve Sessies",
+    searchHeading: "Diagnostisch Zoeken naar Gebruikers",
+    searchPlaceholder: "Zoek op naam, e-mail of account-ID...",
+    lookupButton: "Zoeken",
+    studentProfiles: "Leerlingprofielen",
+    noStudentsFound: "Geen leerlingendossiers gevonden",
+    certifiedTeachers: "Gecertificeerde Docenten",
+    noTeachersFound: "Geen docentengegevens gevonden",
+    inquiriesInbox: "Inbox voor Ouderaanvragen & Toelating",
+    inquiriesCount: (c) => `${c} aanvragen`,
+    thName: "Naam",
+    thEmailPhone: "E-mail & Telefoon",
+    thInquiryType: "Type Aanvraag",
+    thStatusNotes: "Status & Notities",
+    thSourceDate: "Bron & Datum",
+    thAction: "Actie",
+    statusResolved: "Afgehandeld ✓",
+    statusInProgress: "In Behandeling ⏳",
+    statusNew: "Nieuw ✉",
+    updateBtn: "Bijwerken ✎",
+    changeStatus: "Status Wijzigen",
+    followUpNotes: "Vervolgnotities",
+    notePlaceholder: "Contact opgenomen met ouder...",
+    saveUpdate: "Update Opslaan",
+    liveDiagnostics: "Diagnostiek van Live Sessies & Ruimtelinks",
+    sessionsCount: (c) => `${c} sessies`,
+    thSessionId: "Sessie-ID",
+    thClassGroup: "Klasgroep",
+    thStatus: "Status",
+    thMeetingLink: "Meetinglink",
+    thScheduledTime: "Geplande Tijd (UTC)",
+  },
+  tr: {
+    consoleBadge: "Destek ve Operasyon Konsolu",
+    hubTitle: "Müşteri Desteği ve Tanı Merkezi",
+    agentSubtext: (email) =>
+      `Aktif Temsilci: ${email} • Tanı kapsamı: Hesap sorgulama, oturum kontrolleri ve talepler.`,
+    openInquiries: "Açık Talepler",
+    activeSessions: "Aktif Oturumlar",
+    searchHeading: "Kullanıcı Tanı Araması",
+    searchPlaceholder: "Öğrenci/öğretmen adı, e-posta veya hesap ID ile ara...",
+    lookupButton: "Ara",
+    studentProfiles: "Öğrenci Profilleri",
+    noStudentsFound: "Eşleşen öğrenci kaydı bulunamadı",
+    certifiedTeachers: "Sertifikalı Öğretmenler",
+    noTeachersFound: "Eşleşen öğretmen kaydı bulunamadı",
+    inquiriesInbox: "Veli Talepleri ve Kayıt Başvuruları Gelen Kutusu",
+    inquiriesCount: (c) => `${c} talep`,
+    thName: "İletişim Adı",
+    thEmailPhone: "E-posta ve Telefon",
+    thInquiryType: "Talep Türü",
+    thStatusNotes: "Durum ve Notlar",
+    thSourceDate: "Kaynak ve Tarih",
+    thAction: "İşlem",
+    statusResolved: "Çözüldü ✓",
+    statusInProgress: "İşlemde ⏳",
+    statusNew: "Yeni ✉",
+    updateBtn: "Güncelle ✎",
+    changeStatus: "Durumu Değiştir",
+    followUpNotes: "Takip Notları",
+    notePlaceholder: "Veli ile görüşüldü...",
+    saveUpdate: "Güncellemeyi Kaydet",
+    liveDiagnostics: "Canlı Oturum ve Toplantı Bağlantısı Tanısı",
+    sessionsCount: (c) => `${c} oturum`,
+    thSessionId: "Oturum Kimliği",
+    thClassGroup: "Sınıf Grubu",
+    thStatus: "Durum",
+    thMeetingLink: "Toplantı Bağlantısı",
+    thScheduledTime: "Planlanan Saat (UTC)",
+  },
+  it: {
+    consoleBadge: "Console Supporto e Operazioni",
+    hubTitle: "Hub Diagnostico e Supporto Clienti",
+    agentSubtext: (email) =>
+      `Agente Attivo: ${email} • Ambito diagnostico: Ricerca account, controlli sessioni e richieste.`,
+    openInquiries: "Richieste Aperte",
+    activeSessions: "Sessioni Attive",
+    searchHeading: "Ricerca Diagnostica Utente",
+    searchPlaceholder: "Cerca per nome studente/insegnante, email o ID account...",
+    lookupButton: "Cerca",
+    studentProfiles: "Profili Studenti",
+    noStudentsFound: "Nessun record studente trovato",
+    certifiedTeachers: "Insegnanti Certificati",
+    noTeachersFound: "Nessun record insegnante trovato",
+    inquiriesInbox: "Posta in Arrivo Richieste Genitori e Ammissioni",
+    inquiriesCount: (c) => `${c} richieste`,
+    thName: "Nome Contatto",
+    thEmailPhone: "Email e Telefono",
+    thInquiryType: "Tipo di Richiesta",
+    thStatusNotes: "Stato e Note",
+    thSourceDate: "Origine e Data",
+    thAction: "Azione",
+    statusResolved: "Risolto ✓",
+    statusInProgress: "In Corso ⏳",
+    statusNew: "Nuovo ✉",
+    updateBtn: "Aggiorna ✎",
+    changeStatus: "Cambia Stato",
+    followUpNotes: "Note di Follow-up",
+    notePlaceholder: "Contattato il genitore...",
+    saveUpdate: "Salva Aggiornamento",
+    liveDiagnostics: "Diagnostica Sessioni Live e Link Aula",
+    sessionsCount: (c) => `${c} sessioni`,
+    thSessionId: "ID Sessione",
+    thClassGroup: "Gruppo Classe",
+    thStatus: "Stato",
+    thMeetingLink: "Link Riunione",
+    thScheduledTime: "Orario Previsto (UTC)",
+  },
+  es: {
+    consoleBadge: "Consola de Soporte y Operaciones",
+    hubTitle: "Centro de Soporte al Cliente y Diagnóstico",
+    agentSubtext: (email) =>
+      `Agente Activo: ${email} • Alcance diagnóstico: Búsqueda de cuentas, verificación de sesiones y consultas.`,
+    openInquiries: "Consultas Abiertas",
+    activeSessions: "Sesiones Activas",
+    searchHeading: "Búsqueda Diagnóstica de Usuarios",
+    searchPlaceholder: "Buscar por nombre de alumno/profesor, email o ID de cuenta...",
+    lookupButton: "Buscar",
+    studentProfiles: "Perfiles de Alumnos",
+    noStudentsFound: "No se encontraron alumnos",
+    certifiedTeachers: "Profesores Certificados",
+    noTeachersFound: "No se encontraron profesores",
+    inquiriesInbox: "Bandeja de Consultas de Padres y Admisiones",
+    inquiriesCount: (c) => `${c} consultas`,
+    thName: "Nombre de Contacto",
+    thEmailPhone: "Email y Teléfono",
+    thInquiryType: "Tipo de Consulta",
+    thStatusNotes: "Estado y Notas",
+    thSourceDate: "Origen y Fecha",
+    thAction: "Acción",
+    statusResolved: "Resuelto ✓",
+    statusInProgress: "En Proceso ⏳",
+    statusNew: "Nuevo ✉",
+    updateBtn: "Actualizar ✎",
+    changeStatus: "Cambiar Estado",
+    followUpNotes: "Notas de Seguimiento",
+    notePlaceholder: "Contacto realizado con el padre...",
+    saveUpdate: "Guardar Actualización",
+    liveDiagnostics: "Diagnóstico de Sesiones en Vivo y Enlaces",
+    sessionsCount: (c) => `${c} sesiones`,
+    thSessionId: "ID de Sesión",
+    thClassGroup: "Grupo de Clase",
+    thStatus: "Estado",
+    thMeetingLink: "Enlace de Reunión",
+    thScheduledTime: "Hora Programada (UTC)",
+  },
+};
+
 export default async function SupportAgentDashboardPage({
   params,
   searchParams,
@@ -32,6 +302,7 @@ export default async function SupportAgentDashboardPage({
   const { locale } = await params;
   const { q } = await searchParams;
   const isRtl = isRtlLocale(locale);
+  const t = SUPPORT_I18N[locale] || SUPPORT_I18N.en;
   const session = await requireSupportAgentSession(locale);
 
   async function handleUpdateLeadStatus(formData: FormData) {
@@ -84,25 +355,23 @@ export default async function SupportAgentDashboardPage({
         <div className="space-y-2">
           <div className="inline-flex items-center gap-2 text-xs font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-800/60 px-3 py-1 rounded-full">
             <ShieldCheck className="w-3.5 h-3.5" />
-            <span>{isRtl ? "لوحة وكيل الدعم الفني والأكاديمي" : "Support & Operations Console"}</span>
+            <span>{t.consoleBadge}</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-black">
-            {isRtl ? "تشخيص الحسابات والدعم الفني" : "Customer Support & Diagnostic Hub"}
+            {t.hubTitle}
           </h1>
           <p className="text-xs sm:text-sm text-slate-400">
-            {isRtl
-              ? `وكيل الدعم النشط: ${session.email} • الصلاحيات: فحص الحسابات، تشخيص الجلسات، واستفسارات التسجيل.`
-              : `Active Agent: ${session.email} • Diagnostic scope: Account lookups, session checks, and inquiries.`}
+            {t.agentSubtext(session.email)}
           </p>
         </div>
 
         <div className="flex items-center gap-4">
           <div className="text-right rtl:text-left bg-slate-800/80 px-4 py-3 rounded-2xl border border-slate-700">
-            <div className="text-xs text-slate-400">{isRtl ? "استفسارات جديدة" : "Open Inquiries"}</div>
+            <div className="text-xs text-slate-400">{t.openInquiries}</div>
             <div className="text-xl font-black text-brand-400">{leads.length}</div>
           </div>
           <div className="text-right rtl:text-left bg-slate-800/80 px-4 py-3 rounded-2xl border border-slate-700">
-            <div className="text-xs text-slate-400">{isRtl ? "الجلسات المجدولة" : "Active Sessions"}</div>
+            <div className="text-xs text-slate-400">{t.activeSessions}</div>
             <div className="text-xl font-black text-emerald-400">{sessions.length}</div>
           </div>
         </div>
@@ -111,7 +380,7 @@ export default async function SupportAgentDashboardPage({
       {/* Diagnostic Search Bar */}
       <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
         <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-3">
-          {isRtl ? "البحث التشخيصي عن المستخدمين (طلاب، أولياء أمور، معلمين)" : "User Diagnostic Lookup"}
+          {t.searchHeading}
         </h2>
         <form method="GET" className="flex gap-3">
           <div className="relative flex-1">
@@ -120,11 +389,7 @@ export default async function SupportAgentDashboardPage({
               type="text"
               name="q"
               defaultValue={q || ""}
-              placeholder={
-                isRtl
-                  ? "ابحث بالاسم أو البريد الإلكتروني..."
-                  : "Search by student/teacher name, email, or account ID..."
-              }
+              placeholder={t.searchPlaceholder}
               className="w-full pl-11 pr-4 rtl:pl-4 rtl:pr-11 py-3 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
             />
           </div>
@@ -132,7 +397,7 @@ export default async function SupportAgentDashboardPage({
             type="submit"
             className="px-6 py-3 gradient-brand text-white font-bold text-sm rounded-xl hover:opacity-95 transition-all"
           >
-            {isRtl ? "بحث" : "Lookup"}
+            {t.lookupButton}
           </button>
         </form>
       </div>
@@ -145,7 +410,7 @@ export default async function SupportAgentDashboardPage({
             <div className="flex items-center gap-2">
               <Users className="w-5 h-5 text-emerald-600" />
               <h3 className="font-bold text-slate-900 text-base">
-                {isRtl ? "ملفات الطلاب" : "Student Profiles"}
+                {t.studentProfiles}
               </h3>
             </div>
             <span className="text-xs text-slate-400">{filteredStudents.length} matching</span>
@@ -154,7 +419,7 @@ export default async function SupportAgentDashboardPage({
           <div className="divide-y divide-slate-100">
             {filteredStudents.length === 0 ? (
               <div className="p-6 text-center text-xs text-slate-400">
-                {isRtl ? "لا توجد نتائج مطابقة" : "No student records found"}
+                {t.noStudentsFound}
               </div>
             ) : (
               filteredStudents.map((s) => (
@@ -191,7 +456,7 @@ export default async function SupportAgentDashboardPage({
             <div className="flex items-center gap-2">
               <Users className="w-5 h-5 text-brand-600" />
               <h3 className="font-bold text-slate-900 text-base">
-                {isRtl ? "ملفات المعلمين المعتمدين" : "Certified Teachers"}
+                {t.certifiedTeachers}
               </h3>
             </div>
             <span className="text-xs text-slate-400">{filteredTeachers.length} matching</span>
@@ -200,18 +465,18 @@ export default async function SupportAgentDashboardPage({
           <div className="divide-y divide-slate-100">
             {filteredTeachers.length === 0 ? (
               <div className="p-6 text-center text-xs text-slate-400">
-                {isRtl ? "لا توجد نتائج مطابقة" : "No teacher records found"}
+                {t.noTeachersFound}
               </div>
             ) : (
-              filteredTeachers.map((t) => (
-                <div key={t.id} className="p-4 hover:bg-slate-50/60 transition-colors flex items-center justify-between">
+              filteredTeachers.map((tRec) => (
+                <div key={tRec.id} className="p-4 hover:bg-slate-50/60 transition-colors flex items-center justify-between">
                   <div>
                     <div className="font-bold text-slate-900 text-sm">
-                      {t.firstName} {t.lastName}
+                      {tRec.firstName} {tRec.lastName}
                     </div>
-                    <div className="text-xs text-slate-500 font-mono">{t.user.email}</div>
+                    <div className="text-xs text-slate-500 font-mono">{tRec.user.email}</div>
                     <div className="text-xs text-brand-600 font-medium mt-0.5">
-                      {t.languagesSpoken || "Arabic"} • {t.experienceYears} yrs exp
+                      {tRec.languagesSpoken || "Arabic"} • {tRec.experienceYears} yrs exp
                     </div>
                   </div>
                   <Link
@@ -233,11 +498,11 @@ export default async function SupportAgentDashboardPage({
           <div className="flex items-center gap-2">
             <MessageSquare className="w-5 h-5 text-purple-600" />
             <h3 className="font-bold text-slate-900 text-lg">
-              {isRtl ? "صندوق استفسارات أولياء الأمور وطلبات التسجيل" : "Parent Inquiries & Admissions Inbox"}
+              {t.inquiriesInbox}
             </h3>
           </div>
           <span className="text-xs text-slate-500 font-medium">
-            {leads.length} {isRtl ? "استفسارات" : "inquiries"}
+            {t.inquiriesCount(leads.length)}
           </span>
         </div>
 
@@ -245,12 +510,12 @@ export default async function SupportAgentDashboardPage({
           <table className="w-full text-sm text-left rtl:text-right">
             <thead className="text-xs font-bold text-slate-400 uppercase bg-slate-50/70 border-b border-slate-100">
               <tr>
-                <th className="px-6 py-4">{isRtl ? "الاسم" : "Contact Name"}</th>
-                <th className="px-6 py-4">{isRtl ? "البريد / الهاتف" : "Email & Phone"}</th>
-                <th className="px-6 py-4">{isRtl ? "نوع الطلب" : "Inquiry Type"}</th>
-                <th className="px-6 py-4">{isRtl ? "الحالة والملاحظات" : "Status & Notes"}</th>
-                <th className="px-6 py-4">{isRtl ? "المصدر والتاريخ" : "Source & Date"}</th>
-                <th className="px-6 py-4">{isRtl ? "الإجراء" : "Action"}</th>
+                <th className="px-6 py-4">{t.thName}</th>
+                <th className="px-6 py-4">{t.thEmailPhone}</th>
+                <th className="px-6 py-4">{t.thInquiryType}</th>
+                <th className="px-6 py-4">{t.thStatusNotes}</th>
+                <th className="px-6 py-4">{t.thSourceDate}</th>
+                <th className="px-6 py-4">{t.thAction}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -278,10 +543,10 @@ export default async function SupportAgentDashboardPage({
                         }`}
                       >
                         {l.status === "RESOLVED"
-                          ? isRtl ? "مكتمل ومغلق ✓" : "Resolved"
+                          ? t.statusResolved
                           : l.status === "IN_PROGRESS"
-                          ? isRtl ? "قيد المتابعة ⏳" : "In Progress"
-                          : isRtl ? "جديد ✉" : "New"}
+                          ? t.statusInProgress
+                          : t.statusNew}
                       </span>
                       {l.notes && (
                         <p className="text-xs text-slate-500 max-w-xs truncate" title={l.notes}>
@@ -297,7 +562,7 @@ export default async function SupportAgentDashboardPage({
                   <td className="px-6 py-4">
                     <details className="group relative">
                       <summary className="cursor-pointer text-xs font-bold text-slate-600 hover:text-brand-600 select-none bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 transition-colors">
-                        {isRtl ? "تحديث ✎" : "Update"}
+                        {t.updateBtn}
                       </summary>
                       <form
                         action={handleUpdateLeadStatus}
@@ -306,26 +571,26 @@ export default async function SupportAgentDashboardPage({
                         <input type="hidden" name="leadId" value={l.id} />
                         <div>
                           <label className="block text-[10px] font-bold text-slate-600 mb-1">
-                            {isRtl ? "تغيير الحالة" : "Status"}
+                            {t.changeStatus}
                           </label>
                           <select
                             name="status"
                             defaultValue={l.status}
                             className="w-full p-1.5 rounded-lg border border-slate-200 text-xs bg-white"
                           >
-                            <option value="NEW">{isRtl ? "جديد" : "New"}</option>
-                            <option value="IN_PROGRESS">{isRtl ? "قيد المتابعة" : "In Progress"}</option>
-                            <option value="RESOLVED">{isRtl ? "تم الحل / مكتمل" : "Resolved"}</option>
+                            <option value="NEW">{t.statusNew}</option>
+                            <option value="IN_PROGRESS">{t.statusInProgress}</option>
+                            <option value="RESOLVED">{t.statusResolved}</option>
                           </select>
                         </div>
                         <div>
                           <label className="block text-[10px] font-bold text-slate-600 mb-1">
-                            {isRtl ? "ملاحظات المتابعة" : "Notes"}
+                            {t.followUpNotes}
                           </label>
                           <input
                             name="notes"
                             defaultValue={l.notes || ""}
-                            placeholder={isRtl ? "تم التواصل مع ولي الأمر..." : "Follow-up note..."}
+                            placeholder={t.notePlaceholder}
                             className="w-full p-1.5 rounded-lg border border-slate-200 text-xs"
                           />
                         </div>
@@ -333,7 +598,7 @@ export default async function SupportAgentDashboardPage({
                           type="submit"
                           className="w-full py-1.5 rounded-lg gradient-brand text-white font-bold text-xs shadow-sm hover:opacity-95"
                         >
-                          {isRtl ? "حفظ التحديث" : "Save Update"}
+                          {t.saveUpdate}
                         </button>
                       </form>
                     </details>
@@ -351,11 +616,11 @@ export default async function SupportAgentDashboardPage({
           <div className="flex items-center gap-2">
             <Video className="w-5 h-5 text-brand-600" />
             <h3 className="font-bold text-slate-900 text-lg">
-              {isRtl ? "تشخيص الجلسات المباشرة وروابط الغرف" : "Live Session & Meeting Diagnostics"}
+              {t.liveDiagnostics}
             </h3>
           </div>
           <span className="text-xs text-slate-500 font-medium">
-            {sessions.length} {isRtl ? "جلسات" : "sessions"}
+            {t.sessionsCount(sessions.length)}
           </span>
         </div>
 
@@ -363,11 +628,11 @@ export default async function SupportAgentDashboardPage({
           <table className="w-full text-sm text-left rtl:text-right">
             <thead className="text-xs font-bold text-slate-400 uppercase bg-slate-50/70 border-b border-slate-100">
               <tr>
-                <th className="px-6 py-4">{isRtl ? "معرف الجلسة" : "Session ID"}</th>
-                <th className="px-6 py-4">{isRtl ? "المجموعة" : "Class Group"}</th>
-                <th className="px-6 py-4">{isRtl ? "الحالة" : "Status"}</th>
-                <th className="px-6 py-4">{isRtl ? "رابط الغرفة" : "Meeting Link"}</th>
-                <th className="px-6 py-4">{isRtl ? "الوقت (UTC)" : "Scheduled Time"}</th>
+                <th className="px-6 py-4">{t.thSessionId}</th>
+                <th className="px-6 py-4">{t.thClassGroup}</th>
+                <th className="px-6 py-4">{t.thStatus}</th>
+                <th className="px-6 py-4">{t.thMeetingLink}</th>
+                <th className="px-6 py-4">{t.thScheduledTime}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">

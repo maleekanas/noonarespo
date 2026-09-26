@@ -1,7 +1,7 @@
 {
   "common": {
-    "siteName": "Arapça Çocuk Akademisi",
-    "siteTagline": "Dünya genelindeki çocuklar için ilham verici Arapça ve Kur'an eğitimi",
+    "siteName": "Arabic Kids Academy",
+    "siteTagline": "Inspiring Arabic language and Quran learning for children worldwide",
     "login": "Giriş Yap",
     "register": "Veli Kaydı",
     "logout": "Çıkış Yap",
@@ -143,7 +143,7 @@
     "finance": "Mali İşler"
   },
   "auth": {
-    "signInTitle": "Arapça Çocuk Akademisine Giriş",
+    "signInTitle": "Arabic Kids Academy'ye Giriş",
     "signInSubtitle": "Tekrar hoş geldiniz! Kontrol panelinize erişmek için bilgilerinizi girin",
     "emailLabel": "E-posta Adresi",
     "passwordLabel": "Şifre",
@@ -172,7 +172,7 @@
     "invalidCredentials": "E-posta veya şifre hatalı.",
     "tooManyAttempts": "Çok fazla deneme yapıldı. Lütfen biraz bekleyip tekrar deneyin.",
     "registerTitle": "Veli Hesabınızı Oluşturun",
-    "registerSubtitle": "Çocuğunuzun öğrenme yolculuğuna Arapça Çocuk Akademisi ile başlamak için kaydolun",
+    "registerSubtitle": "Çocuğunuzun öğrenme yolculuğuna Arabic Kids Academy ile başlamak için kaydolun",
     "firstNameLabel": "Ad",
     "lastNameLabel": "Soyad",
     "phoneLabel": "Telefon Numarası",
@@ -221,7 +221,7 @@
     "signOutButton": "Çıkış Yap"
   },
   "footer": {
-    "copyright": "Tüm hakları saklıdır © 2026 Arapça Çocuk Akademisi.",
+    "copyright": "Tüm hakları saklıdır © 2026 Arabic Kids Academy.",
     "privacyPolicy": "Çocuk Güvenliği ve Gizlilik Politikası",
     "termsOfService": "Kullanım Şartları",
     "safetyBadge": "%100 Reklamsız ve Çocuklar İçin Güvenli Öğrenme Ortamı",
@@ -642,12 +642,18 @@
     "module13Desc": "Öğretmen değerlendirmelerini onaylama, kalite denetimi ve geri bildirim incelemesi",
     "module14Title": "İslami Okullar ve B2B Ortaklıkları",
     "module14Desc": "Çok okullu grup lisansları, koltuk tahsisleri ve CSV liste içe aktarma",
+    "module15Title": "Sistem Ayarları ve Yönetişim",
+    "module15Desc": "Özellik bayrakları, bakım kilidi, genel duyurular ve güvenlik politikaları",
     "masterAdminGovernance": "Genel Yönetim ve Denetim",
     "opsCenter": "Akademik ve Mali İşlemler Merkezi ⚡",
     "liveMonitoring": "Grupların, aboneliklerin, kalite göstergelerinin ve denetim kayıtlarının canlı izlenmesi",
     "viewAggregateReports": "Toplu Raporları Görüntüle",
     "systemsOperational": "Sistemler %100 Çalışır Durumda",
-    "governanceHubHeading": "Kapsamlı Yönetişim ve Yönetim Merkezi (14 Portal)",
+    "maintenanceActive": "Bakım Modu Açık",
+    "announcementActive": "Aktif Duyuru",
+    "forbiddenAccess": "Bu bölüme erişim yetkiniz yok",
+    "forbiddenDesc": "Hesabınız \"{module}\" erişimini içermemektedir. İhtiyacınız varsa süper yöneticiyle iletişime geçin.",
+    "governanceHubHeading": "Kapsamlı Yönetişim ve Yönetim Merkezi (15 Portal)",
     "openHub": "Portalı Aç",
     "auditTrailLiveHeading": "Kriptografik Denetim İzi (SHA-256 Canlı)",
     "viewFullArchive": "Tüm Arşivi Görüntüle →",

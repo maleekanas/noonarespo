@@ -124,10 +124,84 @@ const PHONEMES: PhonemeData[] = [
   },
 ];
 
+const SOUNDBOARD_UI: Record<string, {
+  badge: string;
+  title: string;
+  desc: string;
+  exampleWord: string;
+  playBtn: string;
+  makhrajTitle: string;
+  mistakeTitle: string;
+  secretTitle: string;
+}> = {
+  ar: {
+    badge: "لوحة مخارج الحروف الصوتية التفاعلية",
+    title: "لماذا يحتاج طفلك إلى معلم ناطق أصلي معتمد؟",
+    desc: "انقر على أي حرف لتسمع مخارج الحروف الفصيحة وتكتشف كيف ندرّب أطفال المهجر على التحدث بلسان عربي مبين دون عجمة.",
+    exampleWord: "نموذج الكلمة: ",
+    playBtn: "استمع للنطق النموذجي",
+    makhrajTitle: "المخرج التشريحي الدقيق",
+    mistakeTitle: "الخطأ الشائع في المهجر",
+    secretTitle: "سر أسلوبنا التعليمي",
+  },
+  nl: {
+    badge: "Interactief Klankbord voor Arabische Uitspraak & Makharij",
+    title: "Waarom generieke apps tekortschieten: de kunst van Arabische klanken",
+    desc: "Klik op een letter om de authentieke moedertaaluitspraak te horen en ontdek hoe onze docenten diaspora-kinderen leren spreken met vlekkeloze welsprekendheid.",
+    exampleWord: "Voorbeeldwoord: ",
+    playBtn: "Luister naar authentieke uitspraak",
+    makhrajTitle: "Anatomisch articulatiepunt (Makhraj)",
+    mistakeTitle: "Veelgemaakte fout in de diaspora",
+    secretTitle: "Het geheim van onze academie",
+  },
+  tr: {
+    badge: "İnteraktif Arapça Fonem ve Mahreç Ses Panosu",
+    title: "Standart Uygulamalar Neden Yetersiz Kalır: Arapça Fonetik Sanatı",
+    desc: "Özgün ana dil telaffuzunu duymak ve sertifikalı eğitmenlerimizin çocuklara nasıl kusursuz Arapça öğrettiğini görmek için herhangi bir harfe tıklayın.",
+    exampleWord: "Örnek kelime: ",
+    playBtn: "Özgün Telaffuzu Dinle",
+    makhrajTitle: "Anatomik Mahreç Noktası",
+    mistakeTitle: "Yurt Dışında Sık Yapılan Hata",
+    secretTitle: "Akademimizin Öğretim Sırrı",
+  },
+  it: {
+    badge: "Tavola Sonora Interattiva dei Fonemi e Makharij Arabi",
+    title: "Perché le app generiche falliscono: l'arte della fonetica araba",
+    desc: "Clicca su qualsiasi lettera per ascoltare l'articolazione madrelingua autentica e scoprire come i nostri docenti guidano i bambini a parlare con perfetta eloquenza.",
+    exampleWord: "Parola di esempio: ",
+    playBtn: "Ascolta l'articolazione autentica",
+    makhrajTitle: "Punto di articolazione anatomico (Makhraj)",
+    mistakeTitle: "Errore comune nella diaspora",
+    secretTitle: "Il segreto della nostra accademia",
+  },
+  es: {
+    badge: "Panel Sonoro Interactivo de Fonemas y Majárij Árabes",
+    title: "Por qué las apps genéricas fallan: el arte de la fonética árabe",
+    desc: "Haz clic en cualquier letra para escuchar la articulación nativa auténtica y ver cómo nuestros tutores certificados enseñan a los niños a hablar con elocuencia impecable.",
+    exampleWord: "Palabra de ejemplo: ",
+    playBtn: "Escuchar pronunciación nativa",
+    makhrajTitle: "Punto de articulación anatómico (Makhraj)",
+    mistakeTitle: "Error común en la diáspora",
+    secretTitle: "El secreto de nuestra academia",
+  },
+  en: {
+    badge: "Interactive Arabic Phoneme & Makharij Soundboard",
+    title: "Why Generic Apps Fail: The Art of Arabic Phonetics",
+    desc: "Click any letter below to hear authentic native articulation and see how our certified tutors teach diaspora children to speak with flawless Arabic eloquence.",
+    exampleWord: "Example word: ",
+    playBtn: "Play Native Articulation",
+    makhrajTitle: "Anatomical Makhraj Point",
+    mistakeTitle: "Common Diaspora Stumble",
+    secretTitle: "Our Academy Secret",
+  },
+};
+
 export function InteractivePhonemeSoundboard({
   locale,
   isRtl = false,
 }: InteractivePhonemeSoundboardProps) {
+  const ui = SOUNDBOARD_UI[locale] || SOUNDBOARD_UI.en;
+  const isAr = locale === "ar";
   const [selectedLetter, setSelectedLetter] = useState<string>("ض");
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
 
@@ -203,17 +277,13 @@ export function InteractivePhonemeSoundboard({
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-xs font-bold mb-2">
               <Volume2 className="w-3.5 h-3.5" />
-              <span>{isRtl ? "لوحة مخارج الحروف الصوتية التفاعلية" : "Interactive Arabic Phoneme & Makharij Soundboard"}</span>
+              <span>{ui.badge}</span>
             </div>
             <h3 className="text-xl sm:text-2xl font-black">
-              {isRtl
-                ? "لماذا يحتاج طفلك إلى معلم ناطق أصلي معتمد؟"
-                : "Why Generic Apps Fail: The Art of Arabic Phonetics"}
+              {ui.title}
             </h3>
             <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-2xl">
-              {isRtl
-                ? "انقر على أي حرف لتسمع مخارج الحروف الفصيحة وتكتشف كيف ندرّب أطفال المهجر على التحدث بلسان عربي مبين دون عجمة."
-                : "Click any letter below to hear authentic native articulation and see how our certified tutors teach diaspora children to speak with flawless Arabic eloquence."}
+              {ui.desc}
             </p>
           </div>
         </div>
@@ -266,14 +336,14 @@ export function InteractivePhonemeSoundboard({
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <h4 className="text-xl sm:text-2xl font-black text-slate-900">
-                  {isRtl ? activePhoneme.nameAr : activePhoneme.nameEn}
+                  {isAr ? activePhoneme.nameAr : activePhoneme.nameEn}
                 </h4>
                 <span className="text-xs px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 font-mono font-bold">
                   {activePhoneme.ipa}
                 </span>
               </div>
               <p className="text-xs text-slate-500">
-                {isRtl ? "نموذج الكلمة: " : "Example word: "}
+                {ui.exampleWord}
                 <span className="font-bold text-slate-900 text-sm font-serif">
                   {activePhoneme.sampleWordAr}
                 </span>{" "}
@@ -296,7 +366,7 @@ export function InteractivePhonemeSoundboard({
             <Volume2
               className={`w-4 h-4 ${isPlaying ? "animate-bounce text-amber-300" : ""}`}
             />
-            <span>{isRtl ? "استمع للنطق النموذجي" : "Play Native Articulation"}</span>
+            <span>{ui.playBtn}</span>
           </button>
         </div>
 
@@ -306,10 +376,10 @@ export function InteractivePhonemeSoundboard({
           <div className="bg-slate-50 rounded-2xl p-5 border border-slate-200/80 space-y-2">
             <div className="flex items-center gap-2 text-brand-700 text-xs font-bold uppercase tracking-wider">
               <CheckCircle2 className="w-4 h-4" />
-              <span>{isRtl ? "المخرج التشريحي الدقيق" : "Anatomical Makhraj Point"}</span>
+              <span>{ui.makhrajTitle}</span>
             </div>
             <p className="text-xs sm:text-sm text-slate-700 leading-relaxed font-medium">
-              {isRtl ? activePhoneme.makhrajAr : activePhoneme.makhrajEn}
+              {isAr ? activePhoneme.makhrajAr : activePhoneme.makhrajEn}
             </p>
           </div>
 
@@ -317,10 +387,10 @@ export function InteractivePhonemeSoundboard({
           <div className="bg-amber-50/70 rounded-2xl p-5 border border-amber-200/70 space-y-2">
             <div className="flex items-center gap-2 text-amber-800 text-xs font-bold uppercase tracking-wider">
               <AlertCircle className="w-4 h-4" />
-              <span>{isRtl ? "الخطأ الشائع في المهجر" : "Common Diaspora Stumble"}</span>
+              <span>{ui.mistakeTitle}</span>
             </div>
             <p className="text-xs sm:text-sm text-amber-900 leading-relaxed">
-              {isRtl ? activePhoneme.mistakeAr : activePhoneme.mistakeEn}
+              {isAr ? activePhoneme.mistakeAr : activePhoneme.mistakeEn}
             </p>
           </div>
 
@@ -328,10 +398,10 @@ export function InteractivePhonemeSoundboard({
           <div className="bg-emerald-50/70 rounded-2xl p-5 border border-emerald-200/70 space-y-2">
             <div className="flex items-center gap-2 text-emerald-800 text-xs font-bold uppercase tracking-wider">
               <Sparkles className="w-4 h-4" />
-              <span>{isRtl ? "سر أسلوبنا التعليمي" : "Our Academy Secret"}</span>
+              <span>{ui.secretTitle}</span>
             </div>
             <p className="text-xs sm:text-sm text-emerald-900 leading-relaxed">
-              {isRtl ? activePhoneme.tipAr : activePhoneme.tipEn}
+              {isAr ? activePhoneme.tipAr : activePhoneme.tipEn}
             </p>
           </div>
         </div>

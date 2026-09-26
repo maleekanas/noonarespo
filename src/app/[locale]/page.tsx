@@ -89,30 +89,69 @@ export default async function HomePage({
     },
   ];
 
+  const validLocale = (["ar", "en", "nl", "tr", "it", "es"].includes(locale)
+    ? locale
+    : "en") as "ar" | "en" | "nl" | "tr" | "it" | "es";
+
+  const AGE_BADGES = {
+    sprouts: {
+      ar: "البراعم الصغار",
+      en: "Little Sprouts",
+      nl: "Kleine Spruiten",
+      tr: "Küçük Filizler",
+      it: "Piccoli Germogli",
+      es: "Pequeños Brotes",
+    },
+    explorers: {
+      ar: "المستكشفون الصغار",
+      en: "Junior Explorers",
+      nl: "Jonge Verkenners",
+      tr: "Genç Kâşifler",
+      it: "Giovani Esploratori",
+      es: "Jóvenes Exploradores",
+    },
+    navigators: {
+      ar: "الرواد اليافعون",
+      en: "Intermediate Navigators",
+      nl: "Middelbare Navigators",
+      tr: "Orta Düzey Öncüler",
+      it: "Navigatori Intermedi",
+      es: "Navegantes Intermedios",
+    },
+    scholars: {
+      ar: "العلماء اليافعون",
+      en: "Young Scholars",
+      nl: "Jonge Geleerden",
+      tr: "Genç Bilginler",
+      it: "Giovani Studiosi",
+      es: "Jóvenes Eruditos",
+    },
+  };
+
   const ageGroupsList = [
     {
       title: dict.ageGroups.sprouts,
       tagline: dict.ageGroups.sproutsTagline,
       description: dict.ageGroups.sproutsDesc,
-      badge: "Little Sprouts",
+      badge: AGE_BADGES.sprouts[validLocale],
     },
     {
       title: dict.ageGroups.explorers,
       tagline: dict.ageGroups.explorersTagline,
       description: dict.ageGroups.explorersDesc,
-      badge: "Junior Explorers",
+      badge: AGE_BADGES.explorers[validLocale],
     },
     {
       title: dict.ageGroups.navigators,
       tagline: dict.ageGroups.navigatorsTagline,
       description: dict.ageGroups.navigatorsDesc,
-      badge: "Intermediate Navigators",
+      badge: AGE_BADGES.navigators[validLocale],
     },
     {
       title: dict.ageGroups.scholars,
       tagline: dict.ageGroups.scholarsTagline,
       description: dict.ageGroups.scholarsDesc,
-      badge: "Young Scholars",
+      badge: AGE_BADGES.scholars[validLocale],
     },
   ];
 
@@ -278,15 +317,40 @@ export default async function HomePage({
       <section id="placement-diagnostic" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 scroll-mt-28">
         <div className="text-center space-y-4 mb-12">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold uppercase tracking-wider">
-            {isRtl ? "تحديد المستوى التفاعلي" : "Interactive Diagnostic"}
+            {
+              {
+                ar: "تحديد المستوى التفاعلي",
+                en: "Interactive Diagnostic",
+                nl: "Interactieve Niveautest",
+                tr: "Etkileşimli Seviye Tespiti",
+                it: "Test di Livello Interattivo",
+                es: "Diagnóstico Interactivo",
+              }[validLocale]
+            }
           </div>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900">
-            {isRtl ? "لا تعرف من أين تبدأ؟ حدد مستوى طفلك في 60 ثانية" : "Not Sure Where to Start? Find Your Child's Level in 60 Seconds"}
+            {
+              {
+                ar: "لا تعرف من أين تبدأ؟ حدد مستوى طفلك في 60 ثانية",
+                en: "Not Sure Where to Start? Find Your Child's Level in 60 Seconds",
+                nl: "Weet je niet waar te beginnen? Bepaal het niveau van je kind in 60 seconden",
+                tr: "Nereden başlayacağınızı bilmiyor musunuz? Çocuğunuzun seviyesini 60 saniyede belirleyin",
+                it: "Non sai da dove iniziare? Scopri il livello di tuo figlio in 60 secondi",
+                es: "¿No sabes por dónde empezar? Descubre el nivel de tu hijo en 60 segundos",
+              }[validLocale]
+            }
           </h2>
           <p className="text-slate-600 max-w-2xl mx-auto">
-            {isRtl
-              ? "أداة ذكية تحدد المستوى المعياري، المجموعة المصغرة المناسبة، وخارطة طريق تمتد لـ 12 أسبوعاً."
-              : "Our smart diagnostic matches your child to the right micro-cohort, CEFR benchmark, and a customized 12-week roadmap."}
+            {
+              {
+                ar: "أداة ذكية تحدد المستوى المعياري، المجموعة المصغرة المناسبة، وخارطة طريق تمتد لـ 12 أسبوعاً.",
+                en: "Our smart diagnostic matches your child to the right micro-cohort, CEFR benchmark, and a customized 12-week roadmap.",
+                nl: "Onze slimme test koppelt je kind aan de juiste microgroep, CEFR-niveau en een op maat gemaakt 12-weken leertraject.",
+                tr: "Akıllı seviye testimiz çocuğunuzu doğru mikro gruba, CEFR seviyesine ve 12 haftalık özel yol haritasına yerleştirir.",
+                it: "Il nostro test intelligente assegna tuo figlio al gruppo ideale, al livello QCER e a un percorso personalizzato di 12 settimane.",
+                es: "Nuestro diagnóstico inteligente asigna a tu hijo al grupo adecuado, nivel MCER y una hoja de ruta de 12 semanas personalizada.",
+              }[validLocale]
+            }
           </p>
         </div>
         <InteractivePlacementCalculator locale={locale} isRtl={isRtl} />
@@ -296,15 +360,40 @@ export default async function HomePage({
       <section id="soundboard" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 scroll-mt-28">
         <div className="text-center space-y-4 mb-12">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-700 text-xs font-bold uppercase tracking-wider">
-            {isRtl ? "فصاحة النطق والتجويد" : "Authentic Pronunciation"}
+            {
+              {
+                ar: "فصاحة النطق والتجويد",
+                en: "Authentic Pronunciation",
+                nl: "Authentieke Uitspraak & Tajweed",
+                tr: "Fasih Telaffuz ve Tecvid",
+                it: "Pronuncia Autentica e Tajweed",
+                es: "Pronunciación Auténtica y Taywid",
+              }[validLocale]
+            }
           </div>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900">
-            {isRtl ? "مخارج الحروف الفصيحة: تجربة تفاعلية مباشرة" : "The Art of Arabic Makharij: Interactive Soundboard"}
+            {
+              {
+                ar: "مخارج الحروف الفصيحة: تجربة تفاعلية مباشرة",
+                en: "The Art of Arabic Makharij: Interactive Soundboard",
+                nl: "De Kunst van Arabische Makharij: Interactief Klankbord",
+                tr: "Arapça Mahreç Sanatı: Etkileşimli Ses Tahtası",
+                it: "L'Arte dei Makharij Arabi: Tavola Sonora Interattiva",
+                es: "El Arte de los Majárij Árabes: Tablero de Sonido Interactivo",
+              }[validLocale]
+            }
           </h2>
           <p className="text-slate-600 max-w-2xl mx-auto">
-            {isRtl
-              ? "استمع لأصوات الحروف العربية المميزة، واكتشف كيف يتقن أطفال المهجر النطق الفصيح دون عجمة."
-              : "Hear the unique sounds that define Arabic, and discover how our certified native tutors help diaspora kids pronounce them with pure native confidence."}
+            {
+              {
+                ar: "استمع لأصوات الحروف العربية المميزة، واكتشف كيف يتقن أطفال المهجر النطق الفصيح دون عجمة.",
+                en: "Hear the unique sounds that define Arabic, and discover how our certified native tutors help diaspora kids pronounce them with pure native confidence.",
+                nl: "Luister naar de unieke klanken van het Arabisch en ontdek hoe onze gecertificeerde docenten kinderen in de diaspora helpen met zuivere uitspraak.",
+                tr: "Arapça'yı niteleyen eşsiz sesleri dinleyin ve sertifikalı eğitmenlerimizin gurbetteki çocuklara fasih telaffuzu nasıl kazandırdığını keşfedin.",
+                it: "Ascolta i suoni unici dell'arabo e scopri come i nostri insegnanti madrelingua certificati guidano i bambini della diaspora verso una pronuncia impeccabile.",
+                es: "Escucha los sonidos únicos que definen el árabe y descubre cómo nuestros profesores nativos certificados ayudan a los niños en la diáspora a pronunciar con total confianza.",
+              }[validLocale]
+            }
           </p>
         </div>
         <InteractivePhonemeSoundboard locale={locale} isRtl={isRtl} />

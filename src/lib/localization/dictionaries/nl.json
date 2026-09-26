@@ -1,7 +1,7 @@
 {
   "common": {
-    "siteName": "Arabische Kids Academie",
-    "siteTagline": "Inspirerend Arabisch taal- en Koranonderwijs voor kinderen wereldwijd",
+    "siteName": "Arabic Kids Academy",
+    "siteTagline": "Inspiring Arabic language and Quran learning for children worldwide",
     "login": "Inloggen",
     "register": "Ouder Registratie",
     "logout": "Uitloggen",
@@ -143,7 +143,7 @@
     "finance": "Financiën"
   },
   "auth": {
-    "signInTitle": "Inloggen bij Arabische Kids Academie",
+    "signInTitle": "Inloggen bij Arabic Kids Academy",
     "signInSubtitle": "Welkom terug! Voer uw inloggegevens in om toegang te krijgen tot uw dashboard",
     "emailLabel": "E-mailadres",
     "passwordLabel": "Wachtwoord",
@@ -172,7 +172,7 @@
     "invalidCredentials": "Onjuist e-mailadres of wachtwoord.",
     "tooManyAttempts": "Te veel pogingen. Wacht even en probeer het opnieuw.",
     "registerTitle": "Maak uw ouderaccount aan",
-    "registerSubtitle": "Registreer om de leerreis van uw kind te starten bij Arabische Kids Academie",
+    "registerSubtitle": "Registreer om de leerreis van uw kind te starten bij Arabic Kids Academy",
     "firstNameLabel": "Voornaam",
     "lastNameLabel": "Achternaam",
     "phoneLabel": "Telefoonnummer",
@@ -221,7 +221,7 @@
     "signOutButton": "Uitloggen"
   },
   "footer": {
-    "copyright": "Alle rechten voorbehouden © 2026 Arabische Kids Academie.",
+    "copyright": "Alle rechten voorbehouden © 2026 Arabic Kids Academy.",
     "privacyPolicy": "Kindveiligheid & Privacybeleid",
     "termsOfService": "Gebruiksvoorwaarden",
     "safetyBadge": "100% Advertentievrije en kindveilige leeromgeving",
@@ -642,12 +642,18 @@
     "module13Desc": "Goedkeuren van docentbeoordelingen, kwaliteitsmoderatie, en feedbackaudit",
     "module14Title": "Islamitische Scholen en B2B-partnerschappen",
     "module14Desc": "Licenties voor meerdere scholen, plaatstoewijzingen, en CSV-import van klassenlijsten",
+    "module15Title": "Systeeminstellingen & Governance",
+    "module15Desc": "Functievlaggen, onderhoudsmodus, algemene aankondigingen en beveiligingsbeleid",
     "masterAdminGovernance": "Algemeen Beheer en Bestuur",
     "opsCenter": "Centrum voor Academische en Financiële Activiteiten ⚡",
     "liveMonitoring": "Live monitoring van groepen, abonnementen, kwaliteitsindicatoren, en auditlogs",
     "viewAggregateReports": "Geaggregeerde Rapporten Bekijken",
     "systemsOperational": "Systemen 100% Operationeel",
-    "governanceHubHeading": "Uitgebreid Bestuurs- en Beheercentrum (14 Portalen)",
+    "maintenanceActive": "Onderhoudsmodus Actief",
+    "announcementActive": "Aankondiging Actief",
+    "forbiddenAccess": "U heeft geen toegang tot dit onderdeel",
+    "forbiddenDesc": "Uw account heeft geen toegang tot \"{module}\". Neem contact op met de hoofdbeheerder indien nodig.",
+    "governanceHubHeading": "Uitgebreid Bestuurs- en Beheercentrum (15 Portalen)",
     "openHub": "Portaal Openen",
     "auditTrailLiveHeading": "Cryptografisch Auditspoor (SHA-256 Live)",
     "viewFullArchive": "Volledig Archief Bekijken →",
