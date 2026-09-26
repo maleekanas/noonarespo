@@ -22,7 +22,14 @@ export const CREDENTIAL_PROVIDERS: CredentialProviderDefinition[] = [
   { provider: "WHATSAPP_TOKEN", labelAr: "رمز واتساب السحابي", labelEn: "WhatsApp Cloud API Token", envVar: "WHATSAPP_API_TOKEN" },
   { provider: "SMS_TOKEN", labelAr: "رمز مزود الرسائل النصية", labelEn: "SMS Provider Token", envVar: "SMS_API_TOKEN" },
   { provider: "EMAIL_API_KEY", labelAr: "مفتاح Resend للبريد الإلكتروني", labelEn: "Resend Email API Key", envVar: "RESEND_API_KEY" },
-  { provider: "AI_API_KEY", labelAr: "مفتاح محرك الذكاء الاصطناعي", labelEn: "AI Engine API Key", envVar: "GEMINI_API_KEY" },
+  // The AI Tutor adapter (KidsArabicAiTutorAdapter -> anthropicClient.ts)
+  // only ever calls the Anthropic API and only ever reads ANTHROPIC_API_KEY
+  // -- it never actually calls Gemini. This row used to point at
+  // GEMINI_API_KEY, which meant the rotation log could show "configured"
+  // for a key the live code never reads. Pointed at the real env var so the
+  // label here always matches what actually has to be set for Faseeh to go
+  // live.
+  { provider: "AI_API_KEY", labelAr: "مفتاح Anthropic Claude للذكاء الاصطناعي", labelEn: "Anthropic Claude API Key", envVar: "ANTHROPIC_API_KEY" },
 ];
 
 export interface CredentialRecordView {
@@ -72,8 +79,11 @@ class IntegrationCredentialService {
         isConfigured: Boolean(
           process.env[def.envVar] ||
           (def.provider === "WHATSAPP_TOKEN" && (process.env.WHATSAPP_ACCESS_TOKEN || process.env.WHATSAPP_API_TOKEN)) ||
-          (def.provider === "SMS_TOKEN" && (process.env.SMS_API_KEY || process.env.SMS_API_TOKEN || process.env.TWILIO_AUTH_TOKEN)) ||
-          (def.provider === "AI_API_KEY" && (process.env.ANTHROPIC_API_KEY || process.env.GEMINI_API_KEY))
+          (def.provider === "SMS_TOKEN" && (process.env.SMS_API_KEY || process.env.SMS_API_TOKEN || process.env.TWILIO_AUTH_TOKEN))
+          // AI_API_KEY no longer needs a special case: envVar is now
+          // ANTHROPIC_API_KEY itself, the one env var the adapter actually
+          // reads, so the generic process.env[def.envVar] check above is
+          // already correct for it.
         ),
         lastRotatedAt: row?.lastRotatedAt ? row.lastRotatedAt.toISOString() : null,
         lastRotatedBy: row?.lastRotatedBy ?? null,

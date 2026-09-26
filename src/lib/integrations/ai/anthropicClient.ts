@@ -26,7 +26,13 @@ interface AnthropicResponse {
 }
 
 export function isAnthropicConfigured(): boolean {
-  return Boolean(process.env.ANTHROPIC_API_KEY || process.env.GEMINI_API_KEY);
+  // callAnthropicTool() below only ever reads ANTHROPIC_API_KEY -- it never
+  // reads GEMINI_API_KEY. This used to report "configured" whenever EITHER
+  // was set, which meant a Faseeh AI Tutor "Live" badge could show even
+  // when only a Gemini key existed and every real call would immediately
+  // throw "ANTHROPIC_API_KEY is not configured" and fall back to the
+  // scripted responses. The badge now only ever means what it says.
+  return Boolean(process.env.ANTHROPIC_API_KEY);
 }
 
 export async function callAnthropicTool(params: {

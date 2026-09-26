@@ -53,7 +53,6 @@ interface IntegrationsTranslations {
   p3Policy: string;
   p3Desc: string;
   p4Title: string;
-  faseehBadge: string;
   p4Capabilities: string;
   p4Desc: string;
   p5Title: string;
@@ -132,12 +131,11 @@ const INTEGRATIONS_I18N: Record<string, IntegrationsTranslations> = {
     p3Policy: "روابط مشفرة محددة الصلاحية (15-Minute TTL) لحماية خصوصية تسجيلات الأطفال.",
     p3Desc: "روابط موقعة HMAC بمدة صلاحية 15 دقيقة لتسجيلات التلاوة والصوتيات.",
     p4Title: "4. محرك فصيح الذكي (AI Tutor)",
-    faseehBadge: "Faseeh v2.4 جاهز للعمليات",
     p4Capabilities: "تحليل النطق، الضبط بالشكل بالحركات الكاملة، وتوليد الخطط المنهجية.",
     p4Desc: "دعم Gemini / Claude مع توجيه الحركات وتقييم مخارج الحروف.",
     p5Title: "5. بوابة الدفع السحابية (Stripe)",
     liveProduction: "متصل بالإنتاج (Live)",
-    operational: "جاهز للعمليات",
+    operational: "وضع تجريبي - بحاجة إلى مفتاح API",
     secretKey: "المفتاح السري:",
     webhookSecret: "سر بوابة الويب هوك:",
     customerPortal: "بوابة العملاء:",
@@ -158,7 +156,7 @@ const INTEGRATIONS_I18N: Record<string, IntegrationsTranslations> = {
     markRotatedBtn: "تسجيل تدوير",
     optionalNote: "ملاحظة اختيارية",
     configuredActive: "مُهيّأ ونشط حالياً ✓",
-    readyForOp: "جاهز للعمليات",
+    readyForOp: "وضع تجريبي - بحاجة إلى مفتاح API",
     webhooksTitle: "روابط الـ Webhook الحقيقية للعمليات",
     webhooksLive: "نشط ومُفعل",
     webhooksDesc: "استخدم هذا الرابط المباشر عند إعداد Webhook في لوحة تحكم Stripe لضمان معالجة الاشتراكات وتجديدها فورياً.",
@@ -209,12 +207,11 @@ const INTEGRATIONS_I18N: Record<string, IntegrationsTranslations> = {
     p3Policy: "HMAC signed URLs with 15-minute TTL for student Quran recitations and child data privacy.",
     p3Desc: "Tamper-evident HMAC signed download/upload tickets expiring in 15 minutes.",
     p4Title: "4. Faseeh AI Conversational Engine (AI Tutor)",
-    faseehBadge: "Faseeh v2.4 Operational",
     p4Capabilities: "Speech analysis, full tashkeel vowelization, and automated lesson plan generation.",
     p4Desc: "Powered by Gemini / Claude with real-time vocalization guidance and phonetic feedback.",
     p5Title: "5. Cloud Payment Gateway (Stripe)",
     liveProduction: "Live Production Connected",
-    operational: "Ready for Operation",
+    operational: "Sandbox Mode — Needs API Key",
     secretKey: "Secret Key:",
     webhookSecret: "Webhook Secret:",
     customerPortal: "Customer Portal:",
@@ -235,7 +232,7 @@ const INTEGRATIONS_I18N: Record<string, IntegrationsTranslations> = {
     markRotatedBtn: "Record rotation",
     optionalNote: "Optional note",
     configuredActive: "Configured & Active ✓",
-    readyForOp: "Ready for Operation",
+    readyForOp: "Sandbox Mode — Needs API Key",
     webhooksTitle: "Operational Live Webhook Endpoints",
     webhooksLive: "LIVE & ACTIVE",
     webhooksDesc: "Use this exact URL when configuring webhooks in the Stripe dashboard to ensure real-time subscription lifecycle updates.",
@@ -286,12 +283,11 @@ const INTEGRATIONS_I18N: Record<string, IntegrationsTranslations> = {
     p3Policy: "HMAC-ondertekende URL's met 15 minuten TTL voor koranrecitaties en privacybescherming.",
     p3Desc: "Beveiligde download- en uploadtickets met automatische vervaltijd.",
     p4Title: "4. Faseeh AI Gespreksmotor (AI Tutor)",
-    faseehBadge: "Faseeh v2.4 Operationeel",
     p4Capabilities: "Spraakanalyse, volledige harakat-vocalisatie en lesplangeneratie.",
     p4Desc: "Aangedreven door Gemini / Claude met realtime uitspraakbegeleiding.",
     p5Title: "5. Cloud Betalingsgateway (Stripe)",
     liveProduction: "Live Productie Verbonden",
-    operational: "Klaar voor Gebruik",
+    operational: "Sandbox-modus — API-sleutel nodig",
     secretKey: "Geheime Sleutel:",
     webhookSecret: "Webhook Geheim:",
     customerPortal: "Klantenportaal:",
@@ -312,7 +308,7 @@ const INTEGRATIONS_I18N: Record<string, IntegrationsTranslations> = {
     markRotatedBtn: "Rotatie registreren",
     optionalNote: "Optionele notitie",
     configuredActive: "Geconfigureerd & Actief ✓",
-    readyForOp: "Klaar voor Gebruik",
+    readyForOp: "Sandbox-modus — API-sleutel nodig",
     webhooksTitle: "Operationele Live Webhook-eindpunten",
     webhooksLive: "LIVE & ACTIEF",
     webhooksDesc: "Gebruik deze exacte URL bij het instellen van webhooks in het Stripe-dashboard.",
@@ -363,12 +359,11 @@ const INTEGRATIONS_I18N: Record<string, IntegrationsTranslations> = {
     p3Policy: "Kuran tilaveti kayıtları ve çocuk gizliliği için 15 dakikalık HMAC imzalı bağlantılar.",
     p3Desc: "15 dakikalık süre sonu ile kurcalamaya karşı korumalı HMAC imzalı biletler.",
     p4Title: "4. Fasih Yapay Zeka Motoru (AI Eğitmen)",
-    faseehBadge: "Fasih v2.4 Operasyonel",
     p4Capabilities: "Ses analizi, tam harekeleme ve otomatik ders planı üretimi.",
     p4Desc: "Gerçek zamanlı sesletim rehberliği ile Gemini / Claude destekli.",
     p5Title: "5. Bulut Ödeme Ağ Geçidi (Stripe)",
     liveProduction: "Canlı Üretim Bağlantısı",
-    operational: "Operasyona Hazır",
+    operational: "Sandbox Modu — API Anahtarı Gerekli",
     secretKey: "Gizli Anahtar:",
     webhookSecret: "Webhook Anahtarı:",
     customerPortal: "Müşteri Portalı:",
@@ -389,7 +384,7 @@ const INTEGRATIONS_I18N: Record<string, IntegrationsTranslations> = {
     markRotatedBtn: "Döndürmeyi kaydet",
     optionalNote: "İsteğe bağlı not",
     configuredActive: "Yapılandırıldı ve Aktif ✓",
-    readyForOp: "Operasyona Hazır",
+    readyForOp: "Sandbox Modu — API Anahtarı Gerekli",
     webhooksTitle: "Operasyonel Canlı Webhook Uç Noktaları",
     webhooksLive: "CANLI VE AKTİF",
     webhooksDesc: "Abonelik yaşam döngüsünü gerçek zamanlı işlemek için Stripe panelinde bu URL'yi kullanın.",
@@ -440,12 +435,11 @@ const INTEGRATIONS_I18N: Record<string, IntegrationsTranslations> = {
     p3Policy: "URL firmati HMAC con validità di 15 minuti per le registrazioni delle recitazioni e la tutela dei minori.",
     p3Desc: "Ticket di upload e download con firma HMAC a prova di manomissione con scadenza a 15 minuti.",
     p4Title: "4. Motore di Conversazione AI Faseeh (Tutor AI)",
-    faseehBadge: "Faseeh v2.4 Operativo",
     p4Capabilities: "Analisi vocale, vocalizzazione completa harakat e generazione piani di lezione.",
     p4Desc: "Basato su Gemini / Claude con guida fonetica in tempo reale e feedback accurato.",
     p5Title: "5. Gateway di Pagamento Cloud (Stripe)",
     liveProduction: "Connesso in Produzione (Live)",
-    operational: "Pronto per l'Uso",
+    operational: "Modalità Sandbox — Serve una Chiave API",
     secretKey: "Chiave Segreta:",
     webhookSecret: "Segreto Webhook:",
     customerPortal: "Portale Clienti:",
@@ -466,7 +460,7 @@ const INTEGRATIONS_I18N: Record<string, IntegrationsTranslations> = {
     markRotatedBtn: "Registra rotazione",
     optionalNote: "Nota opzionale",
     configuredActive: "Configurato e Attivo ✓",
-    readyForOp: "Pronto per l'Uso",
+    readyForOp: "Modalità Sandbox — Serve una Chiave API",
     webhooksTitle: "Endpoint Webhook Operativi Live",
     webhooksLive: "ATTIVO E OPERATIVO",
     webhooksDesc: "Usa questo URL esatto nella dashboard di Stripe per gestire il ciclo di vita degli abbonamenti.",
@@ -517,12 +511,11 @@ const INTEGRATIONS_I18N: Record<string, IntegrationsTranslations> = {
     p3Policy: "URL firmadas con HMAC con caducidad de 15 minutos para grabaciones del Corán y protección infantil.",
     p3Desc: "Tickets firmados con HMAC resistentes a manipulaciones con caducidad de 15 minutos.",
     p4Title: "4. Motor Conversacional de IA Faseeh (Tutor de IA)",
-    faseehBadge: "Faseeh v2.4 Operativo",
     p4Capabilities: "Análisis vocal, vocalización completa con harakat y generación de planes de estudio.",
     p4Desc: "Impulsado por Gemini / Claude con orientación fonética en tiempo real.",
     p5Title: "5. Pasarela de Pagos en la Nube (Stripe)",
     liveProduction: "Conectado a Producción (Live)",
-    operational: "Listo para Operar",
+    operational: "Modo de Prueba — Necesita Clave API",
     secretKey: "Clave Secreta:",
     webhookSecret: "Secreto de Webhook:",
     customerPortal: "Portal de Clientes:",
@@ -543,7 +536,7 @@ const INTEGRATIONS_I18N: Record<string, IntegrationsTranslations> = {
     markRotatedBtn: "Registrar rotación",
     optionalNote: "Nota opcional",
     configuredActive: "Configurado y Activo ✓",
-    readyForOp: "Listo para Operar",
+    readyForOp: "Modo de Prueba — Necesita Clave API",
     webhooksTitle: "Puntos de Conexión de Webhook Operativos en Vivo",
     webhooksLive: "ACTIVO Y OPERATIVO",
     webhooksDesc: "Utilice esta URL exacta al configurar los webhooks en el panel de Stripe.",
@@ -889,9 +882,11 @@ export default async function AdminIntegrationsPage({
                 <Bot className="w-4 h-4 text-amber-500" />
                 <span>{t.p4Title}</span>
               </h2>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
-                {t.faseehBadge}
-              </span>
+              {/* This used to be a hardcoded "Operational"/"Ready for Operation" pill
+                  shown here regardless of whether Faseeh was actually configured --
+                  removed rather than left misleading. The real status (aiStatus.badgeAr/
+                  badgeEn, driven by whether ANTHROPIC_API_KEY is actually set) is
+                  already shown just below. */}
             </div>
 
             <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2 text-xs">

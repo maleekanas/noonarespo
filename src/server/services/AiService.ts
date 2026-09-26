@@ -112,13 +112,13 @@ export class AiService {
       isConfigured: configured,
       badgeText: configured
         ? "محرك الذكاء الاصطناعي متصل (Live AI)"
-        : "جاهز للعمليات (Ready for Operation)",
+        : "وضع تجريبي - بحاجة إلى مفتاح API (Sandbox Mode — Needs API Key)",
       badgeAr: configured
         ? "محرك الذكاء الاصطناعي متصل (Live AI)"
-        : "جاهز للعمليات (Ready for Operation)",
+        : "وضع تجريبي - بحاجة إلى مفتاح API (Sandbox Mode — Needs API Key)",
       badgeEn: configured
         ? "Live AI Engine Active"
-        : "Ready for Operation",
+        : "Sandbox Mode — Needs API Key",
       modelCapability: "تحليل النطق، الضبط بالشكل بالحركات الكاملة، وتوليد الخطط المنهجية",
     };
   }

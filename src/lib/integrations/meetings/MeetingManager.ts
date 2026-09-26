@@ -66,9 +66,9 @@ export class MeetingManager {
     badgeEn: string;
   }> {
     const getBadgeAr = (configured: boolean) =>
-      configured ? "اتصال مباشر مفعل (Live API)" : "جاهز للعمليات (Ready for Operation)";
+      configured ? "اتصال مباشر مفعل (Live API)" : "وضع تجريبي - بحاجة إلى مفتاح API (Sandbox Mode — Needs API Key)";
     const getBadgeEn = (configured: boolean) =>
-      configured ? "Live API Connected" : "Ready for Operation";
+      configured ? "Live API Connected" : "Sandbox Mode — Needs API Key";
 
     return [
       {
