@@ -16,6 +16,9 @@ import {
 import { getDictionary } from "@/lib/localization";
 import { requireAdminHubAccess } from "@/lib/auth/currentUser";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function DataExportPage({
   params,
 }: {

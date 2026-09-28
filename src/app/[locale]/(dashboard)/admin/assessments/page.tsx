@@ -9,6 +9,9 @@ import AssessmentManagementClient, {
   SerializedManagedAssessment,
 } from "@/components/admin/AssessmentManagementClient";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function AdminAssessmentsPage({
   params,
 }: {

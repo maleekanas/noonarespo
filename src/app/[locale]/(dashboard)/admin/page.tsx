@@ -32,6 +32,9 @@ import { destroySession } from "@/lib/auth/session";
 import { systemSettingsService } from "@/server/services/SystemSettingsService";
 import { canAccessAdminHub, type AdminHub } from "@/server/policies";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function AdminDashboardPage({
   params,
   searchParams,

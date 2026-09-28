@@ -31,6 +31,9 @@ const TOOL_ICONS: Record<string, { labelAr: string; labelEn: string; icon: React
   FLASHCARDS: { labelAr: "بطاقات التكرار", labelEn: "Flashcards", icon: Layers, color: "text-sky-600 bg-sky-50 border-sky-200" },
 };
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function AdminCurriculumPage({
   params,
   searchParams,

@@ -48,6 +48,9 @@ const INVOICE_STATUS_STYLES: Record<InvoiceStatus, string> = {
   UNCOLLECTIBLE: "bg-red-50 text-red-700 border-red-200",
 };
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function AdminFinancePage({
   params,
   searchParams,

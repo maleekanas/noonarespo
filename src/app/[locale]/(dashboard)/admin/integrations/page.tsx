@@ -14,6 +14,10 @@ import { administrationRepository } from "@/server/repositories/AdministrationRe
 import { isStripeConfigured } from "@/lib/integrations/stripe";
 import { isRealtimeConfigured, triggerClassroomEvent } from "@/lib/integrations/realtime/RealtimeServer";
 import { integrationCredentialService } from "@/server/services/IntegrationCredentialService";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 import {
   Video,
   MessageSquare,
