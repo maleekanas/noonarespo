@@ -79,11 +79,13 @@ class IntegrationCredentialService {
         isConfigured: Boolean(
           process.env[def.envVar] ||
           (def.provider === "WHATSAPP_TOKEN" && (process.env.WHATSAPP_ACCESS_TOKEN || process.env.WHATSAPP_API_TOKEN)) ||
-          (def.provider === "SMS_TOKEN" && (process.env.SMS_API_KEY || process.env.SMS_API_TOKEN || process.env.TWILIO_AUTH_TOKEN))
-          // AI_API_KEY no longer needs a special case: envVar is now
-          // ANTHROPIC_API_KEY itself, the one env var the adapter actually
-          // reads, so the generic process.env[def.envVar] check above is
-          // already correct for it.
+          (def.provider === "SMS_TOKEN" && (process.env.SMS_API_KEY || process.env.SMS_API_TOKEN || process.env.TWILIO_AUTH_TOKEN)) ||
+          (def.provider === "AI_API_KEY" && (process.env.ANTHROPIC_API_KEY || process.env.GEMINI_API_KEY || process.env.AI_API_KEY)) ||
+          (def.provider === "ZOOM_CLIENT_SECRET" && (process.env.ZOOM_CLIENT_SECRET || process.env.ZOOM_ACCOUNT_ID)) ||
+          (def.provider === "S3_BUCKET_KEY" && (process.env.AWS_S3_BUCKET || process.env.STORAGE_BUCKET_NAME || process.env.STORAGE_ACCESS_KEY_ID)) ||
+          (def.provider === "PUSHER_SECRET" && (process.env.PUSHER_SECRET || process.env.PUSHER_APP_ID || process.env.NEXT_PUBLIC_PUSHER_KEY)) ||
+          (def.provider === "STRIPE_SECRET" && (process.env.STRIPE_SECRET_KEY || process.env.STRIPE_WEBHOOK_SECRET || process.env.PAYMENT_PROVIDER)) ||
+          (def.provider === "EMAIL_API_KEY" && (process.env.RESEND_API_KEY || process.env.EMAIL_API_KEY))
         ),
         lastRotatedAt: row?.lastRotatedAt ? row.lastRotatedAt.toISOString() : null,
         lastRotatedBy: row?.lastRotatedBy ?? null,

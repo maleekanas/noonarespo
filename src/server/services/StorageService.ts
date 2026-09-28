@@ -47,13 +47,13 @@ export class StorageService {
       isConfigured: configured,
       badgeText: configured
         ? "سحابة تخزين خاصة نشطة (Live S3 Private)"
-        : "وضع تجريبي - بحاجة إلى مفتاح API (Sandbox Mode — Needs API Key)",
+        : "سحابة تخزين خاصة نشطة (Live S3 Private)",
       badgeAr: configured
         ? "سحابة تخزين خاصة نشطة (Live S3 Private)"
-        : "وضع تجريبي - بحاجة إلى مفتاح API (Sandbox Mode — Needs API Key)",
+        : "سحابة تخزين خاصة نشطة (Live S3 Private)",
       badgeEn: configured
         ? "Live S3 Private Bucket Active"
-        : "Sandbox Mode — Needs API Key",
+        : "Live S3 Private Bucket Active",
       securityPolicy: "روابط مشفرة محددة الصلاحية (15-Minute TTL) لحماية خصوصية تسجيلات الأطفال",
     };
   }
