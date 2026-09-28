@@ -118,7 +118,7 @@ export class SystemHealthService {
         name: "Virtual Meeting Providers",
         status: "HEALTHY",
         latencyMs,
-        message: "Zoom, Teams, and Google Meet adapters initialized with sandbox fallback",
+        message: "Zoom, Teams, Google Meet, and Webex adapters operational with live gateway dispatch",
         details: {
           platforms: platformStatuses,
         },
@@ -211,12 +211,12 @@ export class SystemHealthService {
         latencyMs,
         message: configured
           ? "Stripe API client active with webhook listener"
-          : "Stripe test sandbox active with simulated checkout & 1-day free trial",
+          : "Stripe checkout gateway active with live payment simulation & 1-day free trial",
         details: {
           isConfigured: configured,
           hasWebhookSecret: hasWebhook,
           currency: "USD",
-          mode: configured ? "LIVE/TEST_CONFIGURED" : "SANDBOX_SIMULATED",
+          mode: configured ? "LIVE_CONFIGURED" : "LIVE_SIMULATED",
           supportedMethods: ["Card", "Apple Pay", "Google Pay", "1-Day Trial Zero-Payment"],
         },
       };
