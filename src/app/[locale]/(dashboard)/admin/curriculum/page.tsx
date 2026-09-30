@@ -20,6 +20,10 @@ import {
   FileText,
   Award,
   Pencil,
+  ClipboardCheck,
+  FileCheck2,
+  LibraryBig,
+  Video,
 } from "lucide-react";
 
 const TOOL_ICONS: Record<string, { labelAr: string; labelEn: string; icon: React.ComponentType<{ className?: string }>; color: string }> = {
@@ -64,6 +68,24 @@ export default async function AdminCurriculumPage({
       : AgeGroup.AGE_4_6;
 
   const lessons = await administrationService.getLessonsByAgeGroup(selectedAgeGroup);
+  const allAgeGroupLessons = await Promise.all(
+    Object.values(AgeGroup).map(async (ageGroup) => ({
+      ageGroup,
+      lessons: await administrationService.getLessonsByAgeGroup(ageGroup),
+    }))
+  );
+  const coverageByAge = allAgeGroupLessons.map(({ ageGroup, lessons: ageLessons }) => ({
+    ageGroup,
+    lessons: ageLessons.length,
+    homework: ageLessons.filter((lesson) => Boolean(lesson.homeworkTitleAr && lesson.homeworkTitleEn)).length,
+    objectives: ageLessons.filter((lesson) => lesson.objectivesAr.length > 0 && lesson.objectivesEn.length > 0).length,
+    interactive: ageLessons.filter((lesson) => lesson.interactiveTools.length > 0).length,
+    library: ageLessons.filter((lesson) => Boolean(lesson.libraryStoryId || lesson.printableId)).length,
+    assessment: ageLessons.filter((lesson) => Boolean(lesson.bloomStage && lesson.steamDomain)).length,
+  }));
+  const completeMaterialRecords = coverageByAge.reduce((total, coverage) => total + coverage.homework + coverage.objectives + coverage.interactive + coverage.library + coverage.assessment, 0);
+  const materialRecordTarget = Math.max(1, coverageByAge.reduce((total, coverage) => total + coverage.lessons * 5, 0));
+  const materialReadiness = Math.round((completeMaterialRecords / materialRecordTarget) * 100);
 
   async function handleAddModule(formData: FormData) {
     "use server";
@@ -128,6 +150,8 @@ export default async function AdminCurriculumPage({
     const durationMinutes = parseInt(formData.get("durationMinutes")?.toString() || "40", 10);
     const homeworkTitleAr = formData.get("homeworkTitleAr")?.toString().trim() || "واجب تطبيقي منزلي";
     const homeworkTitleEn = formData.get("homeworkTitleEn")?.toString().trim() || "Practical Homework";
+    const libraryStoryId = formData.get("libraryStoryId")?.toString().trim() || undefined;
+    const printableId = formData.get("printableId")?.toString().trim() || undefined;
     const vocabStr = formData.get("targetVocabulary")?.toString() || "";
     const targetVocabulary = vocabStr.split(",").map((v) => v.trim()).filter(Boolean);
     const bloomStage = (formData.get("bloomStage")?.toString() || "REMEMBER") as any;
@@ -156,6 +180,8 @@ export default async function AdminCurriculumPage({
         interactiveTools: ["WHITEBOARD", "AUDIO_RECORDER"],
         homeworkTitleAr,
         homeworkTitleEn,
+        libraryStoryId,
+        printableId,
         bloomStage,
         steamDomain,
         steamConnectionAr,
@@ -316,6 +342,34 @@ export default async function AdminCurriculumPage({
         })}
       </div>
 
+      <section className="bg-slate-950 text-white rounded-3xl p-6 sm:p-8 shadow-lg space-y-6" aria-labelledby="materials-coverage-heading">
+        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+          <div>
+            <p className="text-[11px] uppercase tracking-[0.18em] font-extrabold text-cyan-300">Content operations</p>
+            <h2 id="materials-coverage-heading" className="text-xl font-extrabold mt-1">خريطة اكتمال المواد التعليمية لكل الفئات</h2>
+            <p className="text-xs text-slate-300 mt-1 max-w-3xl">مراجعة موحدة للمنهج، الواجبات، الأهداف، الأدوات التفاعلية، مواد المكتبة، والتقييمات لكل الفئات العمرية المعتمدة من 4 إلى 16 سنة.</p>
+          </div>
+          <div className="rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3 text-right"><span className="text-[11px] text-slate-400 block">جاهزية المواد</span><strong className="text-2xl text-cyan-300">{materialReadiness}%</strong></div>
+        </div>
+        <div className="h-2 rounded-full bg-slate-800 overflow-hidden"><div className="h-full rounded-full bg-cyan-400" style={{ width: `${materialReadiness}%` }} /></div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+          {coverageByAge.map((coverage) => {
+            const ageCard = ageGroupCards.find((card) => card.group === coverage.ageGroup);
+            const lessonTarget = Math.max(1, coverage.lessons);
+            const resources = [coverage.homework, coverage.objectives, coverage.interactive, coverage.library, coverage.assessment];
+            const complete = resources.filter((count) => count >= lessonTarget).length;
+            return <Link key={coverage.ageGroup} href={`/${locale}/admin/curriculum?age=${coverage.ageGroup}&program=${selectedSlug}`} className="rounded-2xl border border-slate-700 bg-slate-900/80 p-4 hover:border-cyan-400 transition-colors">
+              <div className="flex items-center justify-between gap-2"><span className="text-xs font-extrabold text-white">{ageCard?.nameEn}</span><span className="text-[10px] font-bold text-cyan-300">{coverage.lessons} lessons</span></div>
+              <div className="mt-3 grid grid-cols-5 gap-1" aria-label={`${complete} of 5 material categories complete`}>{resources.map((count, index) => <span key={index} title={count >= lessonTarget ? "Complete" : "Needs material"} className={`h-2 rounded-full ${count >= lessonTarget ? "bg-emerald-400" : "bg-amber-400"}`} />)}</div>
+              <p className="text-[10px] text-slate-400 mt-2">{complete}/5 material categories complete</p>
+            </Link>;
+          })}
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-2 text-[10px] font-bold text-slate-300">
+          <span className="flex items-center gap-1.5"><BookOpen className="w-3.5 h-3.5 text-cyan-300" />Curriculum</span><span className="flex items-center gap-1.5"><ClipboardCheck className="w-3.5 h-3.5 text-cyan-300" />Objectives</span><span className="flex items-center gap-1.5"><FileCheck2 className="w-3.5 h-3.5 text-cyan-300" />Homework</span><span className="flex items-center gap-1.5"><LibraryBig className="w-3.5 h-3.5 text-cyan-300" />Library/printables</span><span className="flex items-center gap-1.5"><Video className="w-3.5 h-3.5 text-cyan-300" />Interactive tools</span>
+        </div>
+      </section>
+
       {/* Add New Lesson Form Section */}
       <details className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden group">
         <summary className="p-6 cursor-pointer flex items-center justify-between font-extrabold text-slate-900 text-base select-none hover:bg-slate-50 transition-colors">
@@ -391,6 +445,14 @@ export default async function AdminCurriculumPage({
               />
             </div>
 
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">قصة المكتبة المرتبطة (اختياري)</label>
+              <input name="libraryStoryId" placeholder="story-id" className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-brand-500 font-mono" />
+            </div>
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">ورقة العمل القابلة للطباعة (اختياري)</label>
+              <input name="printableId" placeholder="printable-id" className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-brand-500 font-mono" />
+            </div>
             <div>
               <label className="block font-bold text-slate-700 mb-1">مرحلة هرم بلوم المعرفي (Bloom)</label>
               <select
