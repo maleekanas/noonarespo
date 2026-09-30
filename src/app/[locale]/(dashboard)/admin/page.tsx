@@ -24,6 +24,12 @@ import {
   UserCog,
   LogOut,
   Sliders,
+  Settings2,
+  Landmark,
+  Workflow,
+  ShieldAlert,
+  ClipboardCheck,
+  CheckCircle2,
 } from "lucide-react";
 import { redirect } from "next/navigation";
 import { getDictionary } from "@/lib/localization";
@@ -376,6 +382,118 @@ export default async function AdminDashboardPage({
           })}
         </div>
       </div>
+
+      {/* Governance configuration workspace */}
+      <section className="space-y-4" aria-labelledby="configuration-workspace-heading">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+          <div>
+            <p className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-brand-600">
+              {locale === "ar" ? "مساحة التحكم المتقدمة" : "Advanced control workspace"}
+            </p>
+            <h2 id="configuration-workspace-heading" className="text-xl font-extrabold text-slate-900 mt-1">
+              {locale === "ar" ? "مركز إعدادات العمليات الأكاديمية والمالية" : "Academic & Financial Operations Center"}
+            </h2>
+            <p className="text-xs text-slate-500 mt-1 max-w-3xl">
+              {locale === "ar"
+                ? "لوحات إعداد مترابطة لإدارة الحوكمة الأكاديمية والمالية، مع مسارات مؤسسية جاهزة لنماذج B2B التجارية."
+                : "Connected configuration surfaces for academic and financial governance, with enterprise-ready paths for commercial B2B models."}
+            </p>
+          </div>
+          <Link
+            href={`/${locale}/admin/settings`}
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition-colors"
+          >
+            <Settings2 className="w-4 h-4" />
+            {locale === "ar" ? "فتح الإعدادات المركزية" : "Open central settings"}
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="p-5 border-b border-slate-100 bg-brand-50/50">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-brand-100 text-brand-700 flex items-center justify-center">
+                  <Landmark className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-slate-900">{locale === "ar" ? "الحوكمة الأكاديمية" : "Academic governance"}</h3>
+                  <p className="text-[11px] text-slate-500">{locale === "ar" ? "دورة التعلم والامتثال" : "Learning and compliance lifecycle"}</p>
+                </div>
+              </div>
+            </div>
+            <div className="p-5 space-y-3">
+              {[
+                { label: locale === "ar" ? "المنهج والمستويات" : "Curriculum and levels", href: `/${locale}/admin/curriculum`, icon: BookOpen },
+                { label: locale === "ar" ? "الفصول والتسجيل" : "Classes and enrollment", href: `/${locale}/admin/classes`, icon: Users },
+                { label: locale === "ar" ? "الجدولة والحضور" : "Scheduling and attendance", href: `/${locale}/admin/schedule`, icon: Calendar },
+                { label: locale === "ar" ? "التقييمات والمراجعة" : "Assessments and review", href: `/${locale}/admin/assessments`, icon: ClipboardCheck },
+              ].map((item) => {
+                const ItemIcon = item.icon;
+                return (
+                  <Link key={item.href} href={item.href} className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 px-3.5 py-3 hover:border-brand-300 hover:bg-brand-50/40 transition-colors group">
+                    <span className="flex items-center gap-2.5 text-xs font-bold text-slate-700 group-hover:text-brand-700"><ItemIcon className="w-4 h-4 text-brand-600" />{item.label}</span>
+                    <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-brand-600" />
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="p-5 border-b border-slate-100 bg-amber-50/60">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center"><Workflow className="w-5 h-5" /></div>
+                <div>
+                  <h3 className="font-extrabold text-slate-900">{locale === "ar" ? "العمليات المالية" : "Financial operations"}</h3>
+                  <p className="text-[11px] text-slate-500">{locale === "ar" ? "الإيرادات والتسوية" : "Revenue and reconciliation"}</p>
+                </div>
+              </div>
+            </div>
+            <div className="p-5 space-y-3">
+              {[
+                { label: locale === "ar" ? "الفواتير والاشتراكات" : "Invoices and subscriptions", href: `/${locale}/admin/finance`, icon: CreditCard },
+                { label: locale === "ar" ? "التقارير والتصدير" : "Reports and exports", href: `/${locale}/admin/reports`, icon: FileSpreadsheet },
+                { label: locale === "ar" ? "التكاملات وموفرو الدفع" : "Integrations and payment providers", href: `/${locale}/admin/integrations`, icon: Zap },
+                { label: locale === "ar" ? "سجل التدقيق المالي" : "Financial audit trail", href: `/${locale}/admin/audit-logs`, icon: Lock },
+              ].map((item) => {
+                const ItemIcon = item.icon;
+                return (
+                  <Link key={item.href} href={item.href} className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 px-3.5 py-3 hover:border-amber-300 hover:bg-amber-50/50 transition-colors group">
+                    <span className="flex items-center gap-2.5 text-xs font-bold text-slate-700 group-hover:text-amber-800"><ItemIcon className="w-4 h-4 text-amber-600" />{item.label}</span>
+                    <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-amber-600" />
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="bg-slate-950 rounded-3xl border border-slate-800 shadow-sm overflow-hidden text-white">
+            <div className="p-5 border-b border-slate-800 bg-slate-900">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-slate-800 text-cyan-300 flex items-center justify-center"><ShieldAlert className="w-5 h-5" /></div>
+                <div>
+                  <h3 className="font-extrabold">{locale === "ar" ? "حزمة B2B التجارية" : "Commercial B2B controls"}</h3>
+                  <p className="text-[11px] text-slate-400">{locale === "ar" ? "حوكمة المؤسسات وقابلية التوسع" : "Enterprise governance and scale"}</p>
+                </div>
+              </div>
+            </div>
+            <div className="p-5 space-y-3">
+              {[
+                { label: locale === "ar" ? "المؤسسات والمدارس" : "Organizations and schools", href: `/${locale}/admin/schools` },
+                { label: locale === "ar" ? "الصلاحيات والحسابات" : "Roles and admin accounts", href: `/${locale}/admin/settings` },
+                { label: locale === "ar" ? "سياسات التجربة B2B" : "B2B trial policies", href: `/${locale}/admin/settings` },
+                { label: locale === "ar" ? "تصدير بيانات المؤسسة" : "Organization data export", href: `/${locale}/admin/data-export` },
+              ].map((item) => (
+                <Link key={item.label} href={item.href} className="flex items-center justify-between gap-3 rounded-2xl border border-slate-700 px-3.5 py-3 hover:border-cyan-400 hover:bg-slate-900 transition-colors group">
+                  <span className="text-xs font-bold text-slate-200 group-hover:text-cyan-200">{item.label}</span>
+                  <ArrowRight className="w-3.5 h-3.5 text-slate-500 group-hover:text-cyan-300" />
+                </Link>
+              ))}
+              <div className="pt-2 flex items-center gap-2 text-[11px] text-emerald-300"><CheckCircle2 className="w-3.5 h-3.5" />{locale === "ar" ? "مسارات التدقيق والتصدير مفعلة" : "Audit and export paths enabled"}</div>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* Cryptographic Audit Log Preview */}
       <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-4">
