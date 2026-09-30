@@ -61,6 +61,7 @@ export class SchedulingService {
     teacherId: string;
     startTimeUtc: Date;
     durationMinutes: number;
+    platform?: import("@/lib/integrations/meetings/types").MeetingPlatform;
   }): Promise<DomainClassSession> {
     const endTimeUtc = new Date(
       params.startTimeUtc.getTime() + params.durationMinutes * 60 * 1000
@@ -85,7 +86,15 @@ export class SchedulingService {
     // 3. Virtual Classroom Generation -- uses whichever real platform (Zoom/
     // Teams/Google Meet/Webex) the school has actually connected, honestly
     // falling back to a sandbox link when none are configured yet.
-    const meeting = await meetingManager.createBestAvailableSession({
+    const meeting = params.platform
+      ? await meetingManager.createSession(params.platform, {
+          sessionId: "temp",
+          classGroupName: classGroup.name,
+          teacherName: `Teacher ${params.teacherId}`,
+          startTimeUtc: params.startTimeUtc,
+          durationMinutes: params.durationMinutes,
+        })
+      : await meetingManager.createBestAvailableSession({
       sessionId: "temp",
       classGroupName: classGroup.name,
       teacherName: `Teacher ${params.teacherId}`,
