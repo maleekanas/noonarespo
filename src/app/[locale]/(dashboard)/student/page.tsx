@@ -16,6 +16,14 @@ import {
   Compass,
   Layers,
   UserCog,
+  BarChart3,
+  MessageSquare,
+  Bell,
+  Library,
+  FileText,
+  Target,
+  Medal,
+  ListChecks,
 } from "lucide-react";
 import { gamificationService } from "@/server/services/GamificationService";
 import { schedulingService } from "@/server/services/SchedulingService";
@@ -256,6 +264,29 @@ export default async function StudentDashboardPage({
           </div>
         </Link>
       </div>
+
+      {/* Learning overview and student services */}
+      <section className="space-y-4" aria-labelledby="learning-overview-heading">
+        <div className="flex items-end justify-between gap-3">
+          <div><p className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-brand-600">Student Dashboard</p><h2 id="learning-overview-heading" className="text-xl font-extrabold text-slate-900 mt-1">Learning Overview</h2></div>
+          <Link href={`/${locale}/student/progress`} className="text-xs font-bold text-brand-700 hover:text-brand-800">View progress reports</Link>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+          {[
+            { title: "Current Courses", detail: "Your active learning programs", href: `/${locale}/student/classes`, icon: BookOpen, tone: "bg-brand-50 text-brand-700" },
+            { title: "Academic Grades", detail: "Grades and assessment results", href: `/${locale}/student/grades`, icon: BarChart3, tone: "bg-emerald-50 text-emerald-700" },
+            { title: "Learning Goals", detail: "Personalized targets and milestones", href: `/${locale}/student/goals`, icon: Target, tone: "bg-amber-50 text-amber-700" },
+            { title: "Progress Reports", detail: "Shareable learning summaries", href: `/${locale}/student/progress`, icon: FileText, tone: "bg-purple-50 text-purple-700" },
+          ].map((item) => { const Icon = item.icon; return <Link key={item.title} href={item.href} className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm hover:border-brand-300 transition-colors"><div className={`w-10 h-10 rounded-xl flex items-center justify-center ${item.tone}`}><Icon className="w-5 h-5" /></div><h3 className="text-sm font-extrabold text-slate-900 mt-3">{item.title}</h3><p className="text-xs text-slate-500 mt-1">{item.detail}</p></Link>; })}
+        </div>
+      </section>
+
+      <section className="grid grid-cols-1 lg:grid-cols-3 gap-4" aria-label="Student services">
+        <div className="lg:col-span-2 bg-white rounded-3xl border border-slate-200 p-6 shadow-sm"><div className="flex items-center justify-between gap-3"><div><h2 className="text-lg font-extrabold text-slate-900">AI Learning Assistant</h2><p className="text-xs text-slate-500 mt-1">Personalized learning path, tutor support, recommendations, and practice.</p></div><Bot className="w-6 h-6 text-cyan-600" /></div><div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-5">{[{ label: "Personalized Path", href: `/${locale}/student/roadmap`, icon: Compass }, { label: "AI Tutor", href: `/${locale}/student/ai-tutor`, icon: Bot }, { label: "Practice Exercises", href: `/${locale}/student/activities`, icon: ListChecks }].map((item) => { const Icon = item.icon; return <Link key={item.label} href={item.href} className="rounded-xl border border-slate-200 p-3 hover:bg-cyan-50/50 hover:border-cyan-300 transition-colors"><Icon className="w-4 h-4 text-cyan-600" /><span className="text-xs font-bold text-slate-800 block mt-2">{item.label}</span></Link>; })}</div></div>
+        <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm"><h2 className="text-lg font-extrabold text-slate-900">Engagement</h2><div className="space-y-2 mt-4">{[{ label: "Badges and Rewards", href: `/${locale}/student/leaderboard`, icon: Medal }, { label: "Achievements", href: `/${locale}/student/certificates`, icon: Award }, { label: "Leaderboard", href: `/${locale}/student/leaderboard`, icon: Trophy }].map((item) => { const Icon = item.icon; return <Link key={item.label} href={item.href} className="flex items-center gap-3 rounded-xl bg-slate-50 p-3 hover:bg-amber-50 transition-colors"><Icon className="w-4 h-4 text-amber-600" /><span className="text-xs font-bold text-slate-800">{item.label}</span></Link>; })}</div></div>
+      </section>
+
+      <section className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm" aria-labelledby="communication-library-heading"><div className="flex items-center justify-between gap-3"><div><h2 id="communication-library-heading" className="text-lg font-extrabold text-slate-900">Communication & Learning Library</h2><p className="text-xs text-slate-500 mt-1">Stay informed and access your learning resources.</p></div><Library className="w-6 h-6 text-brand-600" /></div><div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-5">{[{ label: "Teacher Messages", href: `/${locale}/messages`, icon: MessageSquare }, { label: "Notifications", href: `/${locale}/notifications`, icon: Bell }, { label: "Announcements", href: `/${locale}/announcements`, icon: FileText }, { label: "Videos & Recordings", href: `/${locale}/student/library`, icon: Video }, { label: "Worksheets", href: `/${locale}/student/worksheets`, icon: FileCheck }, { label: "Learning Resources", href: `/${locale}/student/library`, icon: Library }].map((item) => { const Icon = item.icon; return <Link key={item.label} href={item.href} className="flex items-center gap-2.5 rounded-xl border border-slate-200 px-3 py-3 hover:border-brand-300 hover:bg-brand-50/40 transition-colors"><Icon className="w-4 h-4 text-brand-600" /><span className="text-xs font-bold text-slate-700">{item.label}</span></Link>; })}</div></section>
 
       {/* Main Grid: Today's Class & Homework */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
