@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect } from "react";
-import * as Sentry from "@sentry/nextjs";
 
 /**
  * Catches errors thrown above src/app/[locale]/error.tsx's reach -- i.e. in
@@ -20,7 +19,6 @@ export default function GlobalError({
 }) {
   useEffect(() => {
     console.error("Application error (root):", error);
-    Sentry.captureException(error);
   }, [error]);
 
   return (
