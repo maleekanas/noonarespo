@@ -838,7 +838,11 @@ export default async function AdminSettingsPage({
           </p>
 
           <PlatformAdminClient
-            initialAdmins={platformAdmins.map((a) => ({ ...a, createdAt: a.createdAt.toISOString() }))}
+            initialAdmins={platformAdmins.map((a) => ({
+              ...a,
+              scope: a.scope as "SUPER_ADMIN" | "ACADEMIC_ADMIN" | "FINANCE_ADMIN",
+              createdAt: a.createdAt.toISOString(),
+            }))}
             currentAdminUserId={admin.id}
             locale={locale}
             onCreate={handleCreatePlatformAdminAction}
