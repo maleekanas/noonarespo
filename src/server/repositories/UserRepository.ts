@@ -497,6 +497,7 @@ class UserRepository {
     hourlyRateMinorUnits: number;
     employmentType: EmploymentType;
     isCertified: boolean;
+  schoolId?: string | null;
   }): Promise<DomainTeacherProfile> {
     try {
       const teacherRole = await prisma.role.findUnique({ where: { name: RoleType.TEACHER } });
@@ -528,8 +529,9 @@ class UserRepository {
             experienceYears: data.experienceYears,
             hourlyRateMinorUnits: data.hourlyRateMinorUnits,
             employmentType: data.employmentType,
-            isCertified: data.isCertified,
-            isActive: true,
+  isCertified: data.isCertified,
+  schoolId: data.schoolId ?? null,
+  isActive: true,
           },
         });
       });

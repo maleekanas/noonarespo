@@ -193,6 +193,7 @@ export class AdministrationService {
       hourlyRateMinorUnits: number;
       employmentType: EmploymentType;
       isCertified: boolean;
+      schoolId?: string | null;
     },
     actor: SessionUser
   ): Promise<any> {

@@ -8,6 +8,8 @@ import { academicService } from "@/server/services/AcademicService";
 import { academicRepository } from "@/server/repositories/AcademicRepository";
 import { administrationService } from "@/server/services/AdministrationService";
 import { SchoolAdminRosterClient } from "@/components/admin/SchoolAdminRosterClient";
+import { TeacherManagementClient } from "@/components/admin/TeacherManagementClient";
+import type { TeacherAdminRecord } from "@/server/repositories/AdministrationRepository";
 import {
   SchoolAdminAttendanceClient,
   type StudentAttendanceRow,
@@ -44,12 +46,30 @@ export default async function SchoolAdminDashboardPage({
     notFound();
   }
 
-  const [classes, overview, allLevels, allCourses] = await Promise.all([
+  const [classes, overview, allLevels, allCourses, schoolTeacherRows] = await Promise.all([
     academicService.getClassGroupsForSchool(schoolId),
     administrationService.getSchoolAnalyticsOverviewForSchool(schoolId),
     academicRepository.getAllLevels(),
     academicRepository.getAllCourses(),
+    prisma.teacherProfile.findMany({ where: { schoolId }, include: { user: { select: { email: true } }, assignments: true }, orderBy: { firstName: "asc" } }),
   ]);
+
+  const schoolTeachers: TeacherAdminRecord[] = schoolTeacherRows.map((teacher) => ({
+    id: teacher.id,
+    userId: teacher.userId,
+    firstName: teacher.firstName,
+    lastName: teacher.lastName,
+    email: teacher.user.email,
+    qualifications: teacher.qualifications || "",
+    languagesSpoken: teacher.languagesSpoken || "",
+    experienceYears: teacher.experienceYears,
+    hourlyRateMinorUnits: teacher.hourlyRateMinorUnits,
+    isActive: teacher.isActive,
+    isCertified: teacher.isCertified,
+    employmentType: teacher.employmentType,
+    assignedClassesCount: teacher.assignments.length,
+    totalHoursTaught: 0,
+  }));
 
   const classEnrollmentCounts: Record<string, number> = {};
   const classTeachers: Record<string, string> = {};
@@ -153,6 +173,64 @@ export default async function SchoolAdminDashboardPage({
     revalidatePath(`/${locale}/school-admin`);
     revalidatePath(`/${locale}/admin/schools`);
     return result;
+  }
+
+  async function handleAssignTeacher(formData: FormData) {
+    "use server";
+    const { schoolId: scopedSchoolId } = await requireSchoolAdminSession(locale);
+    const teacherId = formData.get("teacherId")?.toString();
+    const classGroupId = formData.get("classGroupId")?.toString();
+    if (!teacherId || !classGroupId) return;
+    const teacher = await prisma.teacherProfile.findFirst({ where: { id: teacherId, schoolId: scopedSchoolId } });
+    const classGroup = await academicRepository.getClassGroupById(classGroupId);
+    if (!teacher || !classGroup || classGroup.schoolId !== scopedSchoolId) throw new Error("UNAUTHORIZED_SCHOOL_SCOPE");
+    await academicService.assignTeacherToClass(teacherId, classGroupId);
+    revalidatePath(`/${locale}/school-admin`);
+  }
+
+  async function handleAddSchoolTeacher(formData: FormData) {
+    "use server";
+    const actor = await requireSchoolAdminSession(locale);
+    const firstName = formData.get("firstName")?.toString().trim();
+    const lastName = formData.get("lastName")?.toString().trim();
+    const email = formData.get("email")?.toString().trim();
+    if (!firstName || !lastName || !email) return;
+    await administrationService.addTeacher({ email, firstName, lastName, qualifications: formData.get("qualifications")?.toString().trim() || "معلم معتمد", experienceYears: Number(formData.get("experienceYears") || 5), hourlyRateMinorUnits: Math.round(Number(formData.get("rateDollars") || 30) * 100), employmentType: (formData.get("employmentType")?.toString() || "CONTRACT") as any, isCertified: formData.get("isCertified") === "true", schoolId: actor.schoolId }, actor.session);
+    revalidatePath(`/${locale}/school-admin`);
+  }
+
+  async function handleResetSchoolTeacher(params: { teacherId: string; customPassword?: string }) {
+    "use server";
+    const actor = await requireSchoolAdminSession(locale);
+    const teacher = await prisma.teacherProfile.findFirst({ where: { id: params.teacherId, schoolId: actor.schoolId } });
+    if (!teacher) throw new Error("UNAUTHORIZED_TEACHER_SCOPE");
+    return administrationService.resetTeacherPassword(params.teacherId, params.customPassword, actor.session);
+  }
+
+  async function handleUpdateSchoolTeacher(params: any) {
+    "use server";
+    const actor = await requireSchoolAdminSession(locale);
+    const teacher = await prisma.teacherProfile.findFirst({ where: { id: params.teacherId, schoolId: actor.schoolId } });
+    if (!teacher) throw new Error("UNAUTHORIZED_TEACHER_SCOPE");
+    return administrationService.updateTeacherFull(params.teacherId, params.data, actor.session);
+  }
+
+  async function handleToggleSchoolTeacher(params: { teacherId: string; currentActive: boolean }) {
+    "use server";
+    const actor = await requireSchoolAdminSession(locale);
+    const teacher = await prisma.teacherProfile.findFirst({ where: { id: params.teacherId, schoolId: actor.schoolId } });
+    if (!teacher) throw new Error("UNAUTHORIZED_TEACHER_SCOPE");
+    await administrationService.toggleTeacherStatus(params.teacherId, !params.currentActive, actor.session);
+    revalidatePath(`/${locale}/school-admin`);
+  }
+
+  async function handleArchiveSchoolTeacher(params: { teacherId: string }) {
+    "use server";
+    const actor = await requireSchoolAdminSession(locale);
+    const teacher = await prisma.teacherProfile.findFirst({ where: { id: params.teacherId, schoolId: actor.schoolId } });
+    if (!teacher) throw new Error("UNAUTHORIZED_TEACHER_SCOPE");
+    await administrationService.archiveTeacher(params.teacherId, actor.session);
+    revalidatePath(`/${locale}/school-admin`);
   }
 
   async function handleCreateClass(formData: FormData) {
@@ -443,6 +521,14 @@ export default async function SchoolAdminDashboardPage({
             classes={classes.map((c) => ({ id: c.id, name: c.name }))}
             onOnboardRoster={handleOnboardRoster}
           />
+
+          <section className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-5" aria-labelledby="school-teachers-heading">
+            <div><h2 id="school-teachers-heading" className="text-lg font-extrabold text-slate-900">إدارة معلمي المؤسسة</h2><p className="text-xs text-slate-500 mt-1">إضافة وتعديل وتعليق المعلمين وربطهم بالفصول من قائمة فصول المؤسسة.</p></div>
+            <TeacherManagementClient initialTeachers={schoolTeachers} locale={locale} onResetPassword={handleResetSchoolTeacher} onUpdateTeacher={handleUpdateSchoolTeacher} onToggleActive={handleToggleSchoolTeacher} onArchiveTeacher={handleArchiveSchoolTeacher} onAddTeacher={handleAddSchoolTeacher} />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 border-t border-slate-100 pt-5">
+              {schoolTeachers.map((teacher) => <form key={teacher.id} action={handleAssignTeacher} className="flex items-center gap-2 rounded-2xl border border-slate-200 p-3"><input type="hidden" name="teacherId" value={teacher.id} /><span className="text-xs font-bold text-slate-800 flex-1">{teacher.firstName} {teacher.lastName}</span><select name="classGroupId" required className="rounded-lg border border-slate-200 px-2 py-2 text-xs"><option value="">اختر الفصل</option>{classes.map((cg) => <option key={cg.id} value={cg.id}>{cg.name}</option>)}</select><button type="submit" className="rounded-lg bg-brand-600 px-3 py-2 text-[11px] font-bold text-white hover:bg-brand-700">تعيين</button></form>)}
+            </div>
+          </section>
 
           {/* Attendance & Progress Reporting */}
           <SchoolAdminAttendanceClient
