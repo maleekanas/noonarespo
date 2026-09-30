@@ -1758,32 +1758,6 @@ class AdministrationRepository {
       entries = [...this.fallbackAuditLogs];
     }
 
-    if (entries.length === 0) {
-      const now = new Date();
-      const defaultEntry: AuditLogEntry = {
-        id: "mock-audit-default",
-        timestamp: now,
-        category: "SECURITY",
-        action: "SYSTEM_INITIALIZATION",
-        actorId: "system-1",
-        actorEmail: "security@arabickidsacademy.com",
-        actorRole: "SUPER_ADMIN",
-        targetEntityId: "global-system",
-        targetEntityType: "SecurityConfig",
-        ipAddress: "127.0.0.1",
-        diffSummary: "Academy security framework initialized",
-        hash: this.computeHash(
-          "SECURITY",
-          "SYSTEM_INITIALIZATION",
-          "system-1",
-          "global-system",
-          now,
-          "Academy security framework initialized"
-        ),
-      };
-      entries = [defaultEntry];
-    }
-
     if (filters?.category) {
       entries = entries.filter((e) => e.category === filters.category);
     }
